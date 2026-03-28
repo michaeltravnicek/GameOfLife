@@ -10,6 +10,11 @@ from django.db.models import F
 from django.utils import timezone
 from django.conf import settings
 from django.db import connections
+from django.db.models import Count, Sum, Q
+from django.utils import timezone
+from datetime import timedelta
+from django.db.models.functions import Coalesce
+
 
 def home_view(request):
     print(settings.MEDIA_ROOT)
@@ -19,14 +24,105 @@ def home_view(request):
 from django.core.cache import cache
 from datetime import timedelta
 
+MINUTES = 5
 CACHE_KEY = "leaderboard_data"
-CACHE_TTL = 5 * 60
+CACHE_TTL = MINUTES * 60
+CACHE_KEY_MONTH = "leaderboard_data_month"
+
+# Konfigurace časového rámce pro "This month" tab:
+# None = od začátku aktuálního měsíce, int = posledních N dní (např. 30)
+MONTH_DAYS = None
+
+
+def get_month_start():
+    now = timezone.now()
+    if MONTH_DAYS is None:
+        return now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    return now - timedelta(days=MONTH_DAYS)
+
+
+def leaderboard_total():
+    return (
+        User.objects
+        .annotate(
+            events_count=Count(
+                "usertoevent", distinct=True
+            ),
+            total_points=Sum(
+                "usertoevent__points",
+            )
+        )
+        .order_by("-total_points")
+    )
+
+
+def leaderboard_month():
+    from django.utils import timezone
+    from datetime import timedelta
+
+    first_day_this_month = timezone.now().replace(day=1, hour=0, minute=0, second=0)
+
+    qs = UserToEvent.objects.filter(event__date__gte=first_day_this_month)
+
+    print("UserToEvent count:", qs.count())
+
+    for x in qs[:10]:
+        print(x.user.name, "|", x.event.name, "|", x.event.date, "|", x.points)
+
+
+    
+    now = timezone.now()
+    first_day_this_month = now.replace(day=1, hour=0, minute=0, second=0)
+
+
+    for e in Event.objects.filter(date__gte=first_day_this_month):
+        print(e.name, e.date)
+
+    
+
+
+
+    return (
+        User.objects
+        .annotate(
+            events_count=Count(
+                "usertoevent",
+                filter=Q(usertoevent__event__date__date__gte=first_day_this_month),
+                distinct=True
+            ),
+            total_points=Coalesce(
+                Sum(
+                    "usertoevent__points",
+                    filter=Q(usertoevent__event__date__date__gte=first_day_this_month)
+                ),
+                0
+            )
+        )
+        .filter(total_points__gt=0)
+        .order_by("-total_points")
+    )
+
+
+def create_leaderboard(leaderboard):
+    leaderboard_list = list(leaderboard)
+    previous_points = None
+    rank = 0
+
+    for i, user in enumerate(leaderboard_list, start=1):
+        if user.total_points == previous_points:
+            user.rank = rank
+        else:
+            rank = i
+            user.rank = rank
+            previous_points = user.total_points
+    return leaderboard_list
 
 
 def leaderboard_view(request):
-    leaderboard_list = cache.get(CACHE_KEY)
+    leaderboard_list_t = cache.get(CACHE_KEY)
+    leaderboard_list_m = cache.get(CACHE_KEY_MONTH)
 
-    if leaderboard_list is None:
+    if leaderboard_list_t is None:
         print("Cache miss")
         last_update_obj = LastUpdate.objects.all().first()
         if last_update_obj is None:
@@ -38,7 +134,7 @@ def leaderboard_view(request):
         now = timezone.now()
         run_all = now.hour < last_update_obj.last_update.hour or last_update_obj.last_complete_update is None
 
-        if now - last_update_obj.last_update > timedelta(minutes=5):
+        if now - last_update_obj.last_update > timedelta(minutes=MINUTES):
             for conn in connections.all():
                 conn.close()
             p = multiprocessing.Process(target=main, args=(run_all,))
@@ -49,32 +145,19 @@ def leaderboard_view(request):
             last_update_obj.save()
             p.join()
 
-        leaderboard = (
-            User.objects
-            .annotate(
-                events_count=Count("usertoevent", distinct=True),
-                total_points=Sum("usertoevent__points")
-            )
-            .order_by("-total_points")
-        )
+        leaderboard_list_t = create_leaderboard(leaderboard_total())
+        cache.set(CACHE_KEY, leaderboard_list_t, CACHE_TTL)
 
-        leaderboard_list = list(leaderboard)
-        previous_points = None
-        rank = 0
+        leaderboard_list_m = create_leaderboard(leaderboard_month())
+        cache.set(CACHE_KEY_MONTH, leaderboard_list_m, CACHE_TTL)
 
-        for i, user in enumerate(leaderboard_list, start=1):
-            if user.total_points == previous_points:
-                user.rank = rank
-            else:
-                rank = i
-                user.rank = rank
-                previous_points = user.total_points
-
-        cache.set(CACHE_KEY, leaderboard_list, CACHE_TTL)
+        print("TTL:", CACHE_TTL)
+        print("leaderboard_total count:", len(leaderboard_list_t))
+        print("leaderboard_month count:", len(leaderboard_list_m))
     else:
         print("Cache hit")
 
-    return render(request, "leaderboard.html", {"leaderboard": leaderboard_list})
+    return render(request, "leaderboard.html", {"leaderboard_month": leaderboard_list_m, "leaderboard_total": leaderboard_list_t})
 
 
 def user_detail_view(request, user_id):

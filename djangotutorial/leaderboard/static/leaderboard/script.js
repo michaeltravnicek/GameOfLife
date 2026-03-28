@@ -1,8 +1,14 @@
-window.addEventListener('load', function(){
-    document.querySelectorAll('table tr td').forEach((td, i) => {
-        td.style.animationDelay = (i * 0.01) + "s";
-    });
-});
+
+function openTab(evt, tabName) {
+    const tabContents = document.querySelectorAll(".tab-content");
+    const tabButtons = document.querySelectorAll(".tab-button");
+
+    tabContents.forEach(tc => tc.style.display = "none");
+    tabButtons.forEach(tb => tb.classList.remove("active"));
+
+    document.getElementById(tabName).style.display = "block";
+    evt.currentTarget.classList.add("active");
+}
 
 function showSection(sectionId, event) {
     document.querySelectorAll('.container').forEach(function(section) {
@@ -203,3 +209,65 @@ window.addEventListener('scroll', function() {
 
     lastScrollTop = scrollTop <= 0 ? 0 : scrollTop;
 });
+
+// Funkce pro spuštění animace při aktualizaci leaderboardu
+function animateLeaderboard() {
+    const rows = document.querySelectorAll('#leaderboard-table tr');
+
+    // Nastav počáteční stav před animací
+    rows.forEach((row, index) => {
+        if (index === 0) return;
+        row.style.opacity = '0';
+        row.style.transform = 'translateY(20px)';
+        row.style.animation = 'none';
+    });
+
+    // Force reflow
+    document.querySelector('#leaderboard-table')?.offsetHeight;
+
+    rows.forEach((row, index) => {
+        if (index === 0) return;
+        row.style.animation = `fadeInUp 0.6s ease-in-out ${index * 0.05}s both`;
+    });
+}
+
+// Spuštění animace při načtení stránky
+window.addEventListener('load', animateLeaderboard);
+
+// Příklad: Spuštění animace po aktualizaci leaderboardu
+function updateLeaderboard() {
+    // Zde by byl kód pro aktualizaci leaderboardu (např. AJAX volání)
+
+    // Po aktualizaci spustíme animaci
+    animateLeaderboard();
+}
+
+// Úprava filtrování pro odstranění všech animací
+function filterLeaderboard() {
+    const input = document.getElementById('search-bar');
+    const filter = input.value.toLowerCase();
+    const rows = document.querySelectorAll('#leaderboard-table tr');
+
+    let visibleRowIndex = 0; // Index pro střídavé zbarvení
+
+    rows.forEach((row, index) => {
+        if (index === 0) return; // Přeskočit hlavičku tabulky
+        const nameCell = row.querySelector('.user-name');
+        if (nameCell) {
+            const name = nameCell.textContent.toLowerCase();
+            const matches = name.includes(filter);
+
+            // Zobrazení nebo skrytí řádku
+            row.style.display = matches || filter === '' ? '' : 'none';
+
+            // Pokud je řádek viditelný, nastavíme střídavé zbarvení
+            if (matches || filter === '') {
+                row.style.backgroundColor = visibleRowIndex % 2 === 0 ? '#f9f9f9' : '#f0f0f0'; // Upravená tmavá barva
+                visibleRowIndex++;
+            }
+
+            // Odstranění všech animací
+            row.style.animation = 'none';
+        }
+    });
+}

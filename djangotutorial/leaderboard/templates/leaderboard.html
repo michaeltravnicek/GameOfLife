@@ -6,25 +6,61 @@
 {% block content %}
 <div class="container" id="leaderboard">
     <h1>Leaderboard</h1>
-    
-    <table>
-        <colgroup>
-            <col style="width: 20%;">
-            <col style="width: auto;">
-            <col style="width: 20%;">
-        </colgroup>
-        <tr>
-            <th>Umístění</th>
-            <th>Uživatel</th>
-            <th>Celkové body</th>
-        </tr>
-        {% for user in leaderboard %}
-        <tr onclick="loadUser({{ user.id }})" class="clickable-row" style="animation-delay: {{ forloop.counter0|add:'0.1' }}s">
-            <td>{{ user.rank }}</td>
-            <td>{{ user.name }}</td>
-            <td>{{ user.total_points }}</td>
-        </tr>
-        {% endfor %}
-    </table>
+
+    <!-- Tabs and Search -->
+    <div class="tabs-and-search">
+        <div class="tabs">
+            <button class="tab-button active" onclick="openTab(event, 'total')">Total</button>
+            <button class="tab-button" onclick="openTab(event, 'month')">This month</button>
+        </div>
+        <div class="search-container">
+            <input type="text" id="search-bar" placeholder="Vyhledat uživatele..." onkeyup="filterLeaderboard()">
+        </div>
+    </div>
+
+    <!-- Leaderboard tabulka -->
+    <div id="total" class="tab-content" style="display: block;">
+        <table id="leaderboard-table">
+            <colgroup>
+                <col style="width: 20%;">
+                <col style="width: auto;">
+                <col style="width: 20%;">
+            </colgroup>
+            <tr>
+                <th>Umístění</th>
+                <th>Uživatel</th>
+                <th>Celkové body</th>
+            </tr>
+            {% for user in leaderboard_total %}
+            <tr onclick="loadUser('{{ user.id|escapejs }}')" class="clickable-row">
+                <td>{{ user.rank }}</td>
+                <td class="user-name">{{ user.name }}</td>
+                <td>{{ user.total_points }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+
+    <div id="month" class="tab-content" style="display: none;">
+        <table>
+            <colgroup>
+                <col style="width: 20%;">
+                <col style="width: auto;">
+                <col style="width: 20%;">
+            </colgroup>
+            <tr>
+                <th>Umístění</th>
+                <th>Uživatel</th>
+                <th>Body za měsíc</th>
+            </tr>
+            {% for user in leaderboard_month %}
+            <tr onclick="loadUser('{{ user.id|escapejs }}')" class="clickable-row">
+                <td>{{ user.rank }}</td>
+                <td>{{ user.name }}</td>
+                <td>{{ user.total_points }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
 </div>
 {% endblock %}
