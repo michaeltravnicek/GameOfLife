@@ -1,6 +1,7 @@
-/* Globální styly pro kompletní redesign aplikace */
+* {
+    box-sizing: border-box;
+}
 
-/* Tělo stránky */
 body {
     font-family: 'Roboto', sans-serif;
     background-color: #f4f7fc;
@@ -11,7 +12,6 @@ body {
     padding-top: 90px;
 }
 
-/* Kontejner */
 .container {
     max-width: 1200px;
     margin: 0 auto;
@@ -79,14 +79,16 @@ body {
     color: white;
 }
 
-/* Nadpisy */
+.center-title {
+    text-align: center;
+}
+
 h1, h2, h3 {
     font-family: 'Roboto', sans-serif;
     color: #004a80;
     margin-bottom: 20px;
 }
 
-/* Tlačítka */
 button {
     background-color: #004a80;
     color: white;
@@ -127,10 +129,19 @@ table tr:nth-child(even) {
 }
 
 table tr:hover {
-    background-color: #f1f1f1;
+    background-color: #f1f1f1 !important;
 }
 
-/* Vyhledávací pole */
+table th:first-child, 
+    table td:first-child {
+        padding-left: 25px; 
+    }
+
+    table th:nth-child(2), 
+    table td:nth-child(2) {
+        padding-left: 25px; 
+    }
+
 #search-bar {
     padding: 12px;
     font-size: 16px;
@@ -457,7 +468,7 @@ table tr:hover {
     }
 
     h1 {
-        font-size: 1.3em;
+        font-size: 1.7em;
         padding-left: 10px;
         padding-right: 10px;
     }
@@ -478,8 +489,18 @@ table tr:hover {
         padding: 0 10px;
     }
 
+    .tabs {
+        display: flex;
+        width: 100%; 
+        gap: 10px; 
+    }
+
     .tab-button {
-        width: auto;
+        flex: 1;             
+        text-align: center;  
+        padding: 12px 10px;  
+        box-sizing: border-box;
+        width: auto; 
     }
 
     .search-container {
@@ -487,15 +508,17 @@ table tr:hover {
     }
 
     #search-bar {
-        width: 100%;
-        max-width: none;
-        box-sizing: border-box;
-        padding: 10px;
+        padding: 12px;
         font-size: 16px;
         border: 2px solid #ccc;
-        border-radius: 5px;
-        background-color: #ffffff;
+        border-radius: 8px;
+        width: 100% !important;
+        max-width: none !important;
+        background-color: #f9f9f9;
         color: #333;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        transition: border-color 0.3s, box-shadow 0.3s;
+        box-sizing: border-box;
     }
 
     table {
@@ -505,10 +528,12 @@ table tr:hover {
         margin-top: 10px;
     }
 
-    table th,
-    table td {
-        padding: 6px;
+    table th, table td {
+        padding: 12px;
+        border-bottom: 1px solid #ddd;
     }
+
+
 
     colgroup col {
         width: auto !important;
@@ -523,6 +548,30 @@ table tr:hover {
     .user-table td {
         padding: 6px;
         font-size: 0.85rem;
+    }
+
+    .user-header {
+        padding-right: 15px;       
+        margin-bottom: 15px;  
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .back-button {
+        margin-top: 0;
+        margin-bottom: 0;
+        margin-right: 0;
+        margin-left: 10px; 
+    }
+
+    table th:first-child, 
+    table td:first-child {
+        padding-left: 20px; 
+    }
+
+    table th:nth-child(2), 
+    table td:nth-child(2) {
+        padding-left: 25px; 
     }
 }
 

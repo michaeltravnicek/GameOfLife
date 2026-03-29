@@ -32,13 +32,20 @@ CACHE_KEY_MONTH = "leaderboard_data_month"
 # Konfigurace časového rámce pro "This month" tab:
 # None = od začátku aktuálního měsíce, int = posledních N dní (např. 30)
 MONTH_DAYS = None
-
+YEAR_DAYS = None
 
 def get_month_start():
     now = timezone.now()
     if MONTH_DAYS is None:
         return now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     return now - timedelta(days=MONTH_DAYS)
+
+def get_year_start():
+    now = timezone.now()
+    if YEAR_DAYS is None:
+        return now.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
+    return now - timedelta(days=YEAR_DAYS)
+
 
 
 def leaderboard_total():
@@ -57,43 +64,19 @@ def leaderboard_total():
 
 
 def leaderboard_month():
-    from django.utils import timezone
-    from datetime import timedelta
-
-    first_day_this_month = timezone.now().replace(day=1, hour=0, minute=0, second=0)
-
-    qs = UserToEvent.objects.filter(event__date__gte=first_day_this_month)
-
-    print("UserToEvent count:", qs.count())
-
-    for x in qs[:10]:
-        print(x.user.name, "|", x.event.name, "|", x.event.date, "|", x.points)
-
-
-    
-    now = timezone.now()
-    first_day_this_month = now.replace(day=1, hour=0, minute=0, second=0)
-
-
-    for e in Event.objects.filter(date__gte=first_day_this_month):
-        print(e.name, e.date)
-
-    
-
-
-
+    first_day = get_year_start()
     return (
         User.objects
         .annotate(
             events_count=Count(
                 "usertoevent",
-                filter=Q(usertoevent__event__date__date__gte=first_day_this_month),
+                filter=Q(usertoevent__event__date__gte=first_day),
                 distinct=True
             ),
             total_points=Coalesce(
                 Sum(
                     "usertoevent__points",
-                    filter=Q(usertoevent__event__date__date__gte=first_day_this_month)
+                    filter=Q(usertoevent__event__date__gte=first_day)
                 ),
                 0
             )
@@ -150,33 +133,49 @@ def leaderboard_view(request):
 
         leaderboard_list_m = create_leaderboard(leaderboard_month())
         cache.set(CACHE_KEY_MONTH, leaderboard_list_m, CACHE_TTL)
-
-        print("TTL:", CACHE_TTL)
-        print("leaderboard_total count:", len(leaderboard_list_t))
-        print("leaderboard_month count:", len(leaderboard_list_m))
+    elif leaderboard_list_m is None:
+        leaderboard_list_m = create_leaderboard(leaderboard_month())
+        cache.set(CACHE_KEY_MONTH, leaderboard_list_m, CACHE_TTL)
     else:
         print("Cache hit")
 
-    return render(request, "leaderboard.html", {"leaderboard_month": leaderboard_list_m, "leaderboard_total": leaderboard_list_t})
+    last_update_obj = LastUpdate.objects.first()
+    last_update_ts = int(last_update_obj.last_update.timestamp()) if last_update_obj else 0
+    month_start_ts = int(get_month_start().timestamp())
+
+    return render(request, "leaderboard.html", {
+        "leaderboard_month": leaderboard_list_m,
+        "leaderboard_total": leaderboard_list_t,
+        "last_update_ts": last_update_ts,
+        "month_start_ts": month_start_ts,
+    })
 
 
 def user_detail_view(request, user_id):
     user = get_object_or_404(User, id=user_id)
 
-    actions = (
+    qs = (
         UserToEvent.objects
         .filter(user=user)
         .select_related("event")
         .annotate(user_points=F("points"))
-        .values(
-            "event__name",
-            "event__description",
-            "event__place",
-            "event__date",
-            "user_points"
-        )
-        .order_by("event__date")
     )
+
+    from_date_ts = request.GET.get('from_date')
+    if from_date_ts:
+        try:
+            from_dt = datetime.fromtimestamp(int(from_date_ts), tz=dt_timezone.utc)
+            qs = qs.filter(event__date__gte=from_dt)
+        except (ValueError, TypeError):
+            pass
+
+    actions = qs.values(
+        "event__name",
+        "event__description",
+        "event__place",
+        "event__date",
+        "user_points"
+    ).order_by("event__date")
 
     data = {
         "user_name": user.name,

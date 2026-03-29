@@ -21,16 +21,17 @@ function showSection(sectionId, event) {
     });
     event.target.classList.add('active');
 }
-
-function loadUser(userId) {
+function loadUser(userId, tab) {
     const content = document.getElementById("leaderboard");
     content.classList.add("fade-out");
 
+    let url = `/api/user/${userId}/`;
+
     setTimeout(() => {
-        fetch(`/api/user/${userId}/`)
+        fetch(url)
             .then(response => response.json())
             .then(data => {
-                console.log(data)
+                console.log(data);
                 content.innerHTML = `
                     <div class="user-header">
                         <button class="back-button" onclick="loadLeaderboard()">Back</button>
@@ -210,64 +211,80 @@ window.addEventListener('scroll', function() {
     lastScrollTop = scrollTop <= 0 ? 0 : scrollTop;
 });
 
-// Funkce pro spuštění animace při aktualizaci leaderboardu
 function animateLeaderboard() {
     const rows = document.querySelectorAll('#leaderboard-table tr');
 
-    // Nastav počáteční stav před animací
     rows.forEach((row, index) => {
         if (index === 0) return;
-        row.style.opacity = '0';
-        row.style.transform = 'translateY(20px)';
+        // Vyčistíme případné staré styly
+        row.style.opacity = '';
+        row.style.transform = '';
         row.style.animation = 'none';
     });
 
-    // Force reflow
+    // Force reflow (aby prohlížeč animaci restartoval)
     document.querySelector('#leaderboard-table')?.offsetHeight;
 
     rows.forEach((row, index) => {
         if (index === 0) return;
+        // Animace s parametrem 'both' se postará o počáteční i konečný stav
         row.style.animation = `fadeInUp 0.6s ease-in-out ${index * 0.05}s both`;
     });
 }
 
-// Spuštění animace při načtení stránky
-window.addEventListener('load', animateLeaderboard);
+// Animace jen při změně last_update_ts (nová data z background procesu)
+window.addEventListener('load', function() {
+    const container = document.getElementById('leaderboard');
+    if (!container) return;
+    const lastUpdate = container.dataset.lastUpdate;
+    const stored = localStorage.getItem('leaderboard_last_update');
+    if (lastUpdate && lastUpdate !== stored) {
+        animateLeaderboard();
+        localStorage.setItem('leaderboard_last_update', lastUpdate);
+    }
+});
 
-// Příklad: Spuštění animace po aktualizaci leaderboardu
-function updateLeaderboard() {
-    // Zde by byl kód pro aktualizaci leaderboardu (např. AJAX volání)
-
-    // Po aktualizaci spustíme animaci
-    animateLeaderboard();
-}
-
-// Úprava filtrování pro odstranění všech animací
 function filterLeaderboard() {
     const input = document.getElementById('search-bar');
+    if (!input) return;
     const filter = input.value.toLowerCase();
-    const rows = document.querySelectorAll('#leaderboard-table tr');
 
-    let visibleRowIndex = 0; // Index pro střídavé zbarvení
+    // Spolehlivější nalezení aktivní záložky
+    const activeTab = document.querySelector('.tab-content[style*="display: block"]') || document.getElementById('total');
+    const rows = activeTab.querySelectorAll('tr');
+
+    let visibleRowIndex = 0;
 
     rows.forEach((row, index) => {
-        if (index === 0) return; // Přeskočit hlavičku tabulky
+        // Ignorovat první řádek (hlavičku tabulky)
+        if (index === 0) return;
+        
         const nameCell = row.querySelector('.user-name');
-        if (nameCell) {
-            const name = nameCell.textContent.toLowerCase();
-            const matches = name.includes(filter);
-
-            // Zobrazení nebo skrytí řádku
-            row.style.display = matches || filter === '' ? '' : 'none';
-
-            // Pokud je řádek viditelný, nastavíme střídavé zbarvení
-            if (matches || filter === '') {
-                row.style.backgroundColor = visibleRowIndex % 2 === 0 ? '#f9f9f9' : '#f0f0f0'; // Upravená tmavá barva
-                visibleRowIndex++;
-            }
-
-            // Odstranění všech animací
-            row.style.animation = 'none';
+        if (!nameCell) return;
+        
+        const name = nameCell.textContent.toLowerCase();
+        const matches = name.includes(filter);
+        
+        if (matches || filter === '') {
+            // Zobrazíme řádek
+            row.style.display = '';
+            
+            // 1. Zcela vymažeme styly, které mohla přidat/zaseknout funkce animateLeaderboard()
+            row.style.removeProperty('opacity');
+            row.style.removeProperty('transform');
+            row.style.removeProperty('animation');
+            
+            // 2. Vynutíme viditelnost natvrdo pro případ, že chyba vězí jinde
+            row.style.opacity = '1';
+            row.style.visibility = 'visible';
+            row.style.color = '#333'; // Pojistka: text bude vždy tmavý, nikdy ne bílý
+            
+            // 3. Aplikujeme střídavé pruhování
+            row.style.backgroundColor = visibleRowIndex % 2 === 0 ? '#f9f9f9' : 'white';
+            
+            visibleRowIndex++;
+        } else {
+            row.style.display = 'none';
         }
     });
 }

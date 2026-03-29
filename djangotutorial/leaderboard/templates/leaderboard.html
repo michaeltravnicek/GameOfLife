@@ -4,14 +4,14 @@
 {% block title %}Leaderboard {% endblock %}
 
 {% block content %}
-<div class="container" id="leaderboard">
-    <h1>Leaderboard</h1>
+<div class="container" id="leaderboard" data-last-update="{{ last_update_ts }}" data-month-start="{{ month_start_ts }}">
+    <h1 class="center-title">Leaderboard</h1>
 
     <!-- Tabs and Search -->
     <div class="tabs-and-search">
         <div class="tabs">
-            <button class="tab-button active" onclick="openTab(event, 'total')">Total</button>
-            <button class="tab-button" onclick="openTab(event, 'month')">This month</button>
+            <button class="tab-button active" onclick="openTab(event, 'total')">Celkem</button>
+            <button class="tab-button" onclick="openTab(event, 'month')">Tento rok</button>
         </div>
         <div class="search-container">
             <input type="text" id="search-bar" placeholder="Vyhledat uživatele..." onkeyup="filterLeaderboard()">
@@ -22,7 +22,7 @@
     <div id="total" class="tab-content" style="display: block;">
         <table id="leaderboard-table">
             <colgroup>
-                <col style="width: 20%;">
+                <col style="width: 22%;">
                 <col style="width: auto;">
                 <col style="width: 20%;">
             </colgroup>
@@ -44,19 +44,19 @@
     <div id="month" class="tab-content" style="display: none;">
         <table>
             <colgroup>
-                <col style="width: 20%;">
+                <col style="width: 22%;">
                 <col style="width: auto;">
                 <col style="width: 20%;">
             </colgroup>
             <tr>
                 <th>Umístění</th>
                 <th>Uživatel</th>
-                <th>Body za měsíc</th>
+                <th>Celkové body</th>
             </tr>
             {% for user in leaderboard_month %}
-            <tr onclick="loadUser('{{ user.id|escapejs }}')" class="clickable-row">
+            <tr onclick="loadUser('{{ user.id|escapejs }}', 'month')" class="clickable-row">
                 <td>{{ user.rank }}</td>
-                <td>{{ user.name }}</td>
+                <td class="user-name">{{ user.name }}</td>
                 <td>{{ user.total_points }}</td>
             </tr>
             {% endfor %}
