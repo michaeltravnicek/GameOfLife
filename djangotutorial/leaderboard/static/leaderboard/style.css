@@ -1,7 +1,41 @@
 * {
     box-sizing: border-box;
 }
+/* Základní tvar pro umístění */
+.rank-circle {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    width: 28px;        /* Zvětšeno, aby se tam vešlo číslo */
+    height: 28px;
+    border-radius: 50%;
+    font-weight: bold;
+    font-size: 14px;
+}
 
+/* Barvy pro Top 3 */
+.rank-gold {
+    background-color: #FFD700;
+    color: white;
+    box-shadow: 0 2px 4px rgba(255, 215, 0, 0.4);
+}
+
+.rank-silver {
+    background-color: #C0C0C0;
+    color: white;
+    box-shadow: 0 2px 4px rgba(192, 192, 192, 0.4);
+}
+
+.rank-bronze {
+    background-color: #CD7F32;
+    color: white;
+    box-shadow: 0 2px 4px rgba(205, 127, 50, 0.4);
+}
+
+/* Pro ostatní (4. a horší místo) - jen číslo bez pozadí, ať Top 3 vynikne */
+.rank-standard {
+    color: #333;
+}
 body {
     font-family: 'Roboto', sans-serif;
     background-color: #f4f7fc;
