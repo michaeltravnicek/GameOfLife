@@ -1,107 +1,68 @@
 {% extends "base.html" %}
 
-{% block title %}Leaderboard — GameOfYolo{% endblock %}
+{% block title %}Žebříček — Game of Yolo{% endblock %}
 
 {% block content %}
-<section class="section pt-32">
+<section class="section" style="margin-top: 1.5rem;">
     <div id="leaderboard"
-         class="max-w-5xl mx-auto"
          data-last-update="{{ last_update_ts }}"
          data-month-start="{{ month_start_ts }}">
 
-        <div class="text-center mb-10">
-            <div class="section-eyebrow">Ranking</div>
-            <h1 class="section-title mb-0">Leaderboard</h1>
-        </div>
+        <div class="section-eyebrow">Ranking</div>
+        <h1 class="section-title">Žebříček</h1>
 
-        <div class="tabs-and-search flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6 border-b border-yolo-border pb-6">
-            <div class="tabs flex gap-3">
+        <div style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.5rem;">
+            <div class="tab-row">
                 <button class="tab-button active" onclick="openTab(event, 'total')">Celkem</button>
                 <button class="tab-button" onclick="openTab(event, 'month')">Tento rok</button>
             </div>
-            <div class="search-container md:max-w-xs w-full">
-                <input type="text"
-                       id="search-bar"
-                       class="yolo-search"
-                       placeholder="Vyhledat uživatele…"
+            <div>
+                <input type="text" id="search-bar"
+                       class="gol-input"
+                       style="max-width: 320px;"
+                       placeholder="Vyhledat hráče…"
                        onkeyup="filterLeaderboard()">
             </div>
         </div>
 
         <div id="total" class="tab-content" style="display: block;">
-            <div class="overflow-x-auto">
-                <table id="leaderboard-table" class="yolo-table">
-                    <colgroup>
-                        <col style="width: 110px;">
-                        <col>
-                        <col style="width: 140px;">
-                    </colgroup>
-                    <thead>
-                        <tr>
-                            <th>Umístění</th>
-                            <th>Uživatel</th>
-                            <th class="text-right">Celkové body</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    {% for user in leaderboard_total %}
-                        <tr onclick="loadUser('{{ user.id|escapejs }}')" class="clickable-row">
-                            <td>
-                                {% if user.rank == 1 %}
-                                    <span class="rank-circle rank-gold">{{ user.rank }}</span>
-                                {% elif user.rank == 2 %}
-                                    <span class="rank-circle rank-silver">{{ user.rank }}</span>
-                                {% elif user.rank == 3 %}
-                                    <span class="rank-circle rank-bronze">{{ user.rank }}</span>
-                                {% else %}
-                                    <span class="rank-circle">{{ user.rank }}</span>
-                                {% endif %}
-                            </td>
-                            <td class="user-name">{{ user.name }}</td>
-                            <td class="text-right font-mono">{{ user.total_points }}</td>
-                        </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+            {% for user in leaderboard_total %}
+                {% if user.profile_username %}
+                    <a href="{% url 'profile' user.profile_username %}" class="lb-row {% if user.rank == 1 %}lb-row-first{% elif user.rank <= 3 %}lb-row-podium{% endif %}" data-user-id="{{ user.id }}">
+                        <span class="rank user-rank">#{{ user.rank }}</span>
+                        <span class="name user-name">{{ user.name }}</span>
+                        <span class="points">{{ user.total_points|default:0 }} bodů</span>
+                    </a>
+                {% else %}
+                    <div class="lb-row {% if user.rank == 1 %}lb-row-first{% elif user.rank <= 3 %}lb-row-podium{% endif %}" style="cursor: pointer;" data-user-id="{{ user.id }}" onclick="loadUser('{{ user.id|escapejs }}')">
+                        <span class="rank user-rank">#{{ user.rank }}</span>
+                        <span class="name user-name">{{ user.name }}</span>
+                        <span class="points">{{ user.total_points|default:0 }} bodů</span>
+                    </div>
+                {% endif %}
+            {% empty %}
+                <p class="text-muted">Žebříček je zatím prázdný.</p>
+            {% endfor %}
         </div>
 
         <div id="month" class="tab-content" style="display: none;">
-            <div class="overflow-x-auto">
-                <table class="yolo-table">
-                    <colgroup>
-                        <col style="width: 110px;">
-                        <col>
-                        <col style="width: 140px;">
-                    </colgroup>
-                    <thead>
-                        <tr>
-                            <th>Umístění</th>
-                            <th>Uživatel</th>
-                            <th class="text-right">Celkové body</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    {% for user in leaderboard_month %}
-                        <tr onclick="loadUser('{{ user.id|escapejs }}', 'month')" class="clickable-row">
-                            <td>
-                                {% if user.rank == 1 %}
-                                    <span class="rank-circle rank-gold">{{ user.rank }}</span>
-                                {% elif user.rank == 2 %}
-                                    <span class="rank-circle rank-silver">{{ user.rank }}</span>
-                                {% elif user.rank == 3 %}
-                                    <span class="rank-circle rank-bronze">{{ user.rank }}</span>
-                                {% else %}
-                                    <span class="rank-circle">{{ user.rank }}</span>
-                                {% endif %}
-                            </td>
-                            <td class="user-name">{{ user.name }}</td>
-                            <td class="text-right font-mono">{{ user.total_points }}</td>
-                        </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+            {% for user in leaderboard_month %}
+                {% if user.profile_username %}
+                    <a href="{% url 'profile' user.profile_username %}" class="lb-row {% if user.rank == 1 %}lb-row-first{% elif user.rank <= 3 %}lb-row-podium{% endif %}">
+                        <span class="rank user-rank">#{{ user.rank }}</span>
+                        <span class="name user-name">{{ user.name }}</span>
+                        <span class="points">{{ user.total_points|default:0 }} bodů</span>
+                    </a>
+                {% else %}
+                    <div class="lb-row {% if user.rank == 1 %}lb-row-first{% elif user.rank <= 3 %}lb-row-podium{% endif %}" style="cursor: pointer;" onclick="loadUser('{{ user.id|escapejs }}', 'month')">
+                        <span class="rank user-rank">#{{ user.rank }}</span>
+                        <span class="name user-name">{{ user.name }}</span>
+                        <span class="points">{{ user.total_points|default:0 }} bodů</span>
+                    </div>
+                {% endif %}
+            {% empty %}
+                <p class="text-muted">Žebříček je zatím prázdný.</p>
+            {% endfor %}
         </div>
     </div>
 </section>

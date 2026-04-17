@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Game of Yolo — Komunita plná výzev{% endblock %}
+
+{% block content %}
+
+<section class="hero" style="margin-top: 1rem;">
+    <span class="hero-sparkle" style="top: 2rem; left: 8%;" aria-hidden="true">✦</span>
+    <span class="hero-sparkle" style="top: 30%; right: 10%; font-size: 28px;" aria-hidden="true">✦</span>
+    <span class="hero-sparkle" style="bottom: 15%; left: 14%; font-size: 24px;" aria-hidden="true">✦</span>
+    <span class="hero-sparkle" style="bottom: 20%; right: 8%; font-size: 40px;" aria-hidden="true">✦</span>
+
+    <h1 class="hero-title">Game of Yolo</h1>
+    <p class="hero-subtitle">Komunita, která miluje výzvy, zábavu a nové kamarády.</p>
+
+    {% if request.user.is_authenticated %}
+        <a href="{% url 'events' %}" class="btn btn-outline-light">Nadcházející akce</a>
+    {% else %}
+        <a href="{% url 'login' %}" class="btn btn-outline-light">Přihlásit se do hry</a>
+    {% endif %}
+</section>
+
+<section class="section">
+    <div class="section-eyebrow">Kalendář</div>
+    <h2 class="section-title">Nadcházející akce</h2>
+
+    {% if upcoming_events %}
+        <div class="grid-auto">
+            {% for event in upcoming_events %}
+                <article class="card event-card">
+                    <a href="{% url 'event_detail' event.slug %}" style="text-decoration:none; color:inherit;">
+                        <div class="card-photo"
+                             style="background-image: linear-gradient(135deg, rgba(71, 81, 133, 0.55), rgba(54, 60, 99, 0.55)), url('{% if event.image %}{{ event.image.url }}{% else %}https://picsum.photos/seed/event{{ event.id }}/600/400{% endif %}');">
+                            <span class="badge badge-green" style="position:relative; z-index:1;">Akce</span>
+                        </div>
+                        <div class="card-body">
+                            <h3 class="card-title">{{ event.name }}</h3>
+                            <p class="card-meta">📍 {{ event.place }}</p>
+                            <p class="card-meta">📅 {{ event.date|date:"d. m. Y" }} · {{ event.date|time:"H:i" }}</p>
+                            <span class="card-link">Zjistit více →</span>
+                        </div>
+                    </a>
+                </article>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="text-muted text-center" style="padding: 2rem 0;">Zatím nejsou žádné nadcházející akce. Sleduj nás na Instagramu!</p>
+    {% endif %}
+</section>
+
+<section class="section">
+    <div class="section-eyebrow">Ranking</div>
+    <h2 class="section-title">Žebříček hráčů</h2>
+
+    {% if top_players %}
+        <div style="max-width: 720px;">
+            {% for player in top_players %}
+                {% if player.profile_username %}
+                    <a href="{% url 'profile' player.profile_username %}" class="lb-row {% if forloop.first %}lb-row-first{% elif forloop.counter <= 3 %}lb-row-podium{% endif %}">
+                        <span class="rank">#{{ forloop.counter }}</span>
+                        <span class="name">{{ player.name }}</span>
+                        <span class="points">{{ player.total_points }} bodů</span>
+                    </a>
+                {% else %}
+                    <div class="lb-row {% if forloop.first %}lb-row-first{% elif forloop.counter <= 3 %}lb-row-podium{% endif %}" style="cursor: default;">
+                        <span class="rank">#{{ forloop.counter }}</span>
+                        <span class="name">{{ player.name }}</span>
+                        <span class="points">{{ player.total_points }} bodů</span>
+                    </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+        <div style="margin-top: 1.5rem;">
+            <a href="{% url 'leaderboard' %}" class="btn btn-primary">Zobrazit celý žebříček</a>
+        </div>
+    {% else %}
+        <p class="text-muted">Žebříček zatím nemá žádné hráče.</p>
+    {% endif %}
+</section>
+
+{% endblock %}

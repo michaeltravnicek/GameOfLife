@@ -1,130 +1,109 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="cs" class="dark">
+<html lang="cs">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}GameOfYolo{% endblock %}</title>
+    <title>{% block title %}Game of Yolo{% endblock %}</title>
     <link rel="icon" href="{% static 'images/logo.png' %}" type="image/png">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Poppins:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-      tailwind.config = {
-        darkMode: 'class',
-        theme: {
-          extend: {
-            colors: {
-              'yolo-bg':      '#0a0a0a',
-              'yolo-surface': '#141414',
-              'yolo-elev':    '#1c1c1c',
-              'yolo-text':    '#f0ede8',
-              'yolo-muted':   '#9a9690',
-              'yolo-accent':  '#c9a84c',
-              'yolo-accent-hover': '#e3be5a',
-              'yolo-border':  '#2a2a2a',
-            },
-            fontFamily: {
-              'display': ['"Playfair Display"', 'serif'],
-              'sans':    ['Inter', 'system-ui', 'sans-serif'],
-            },
-          }
-        }
-      }
-    </script>
-
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <link rel="stylesheet" href="{% static 'leaderboard/custom.css' %}">
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
     {% block extra_head %}{% endblock %}
 </head>
-<body class="bg-yolo-bg text-yolo-text font-sans antialiased min-h-screen flex flex-col">
+<body>
 
-    <nav x-data="{ scrolled: false, open: false }"
-         @scroll.window="scrolled = window.scrollY > 30"
-         :class="scrolled ? 'bg-yolo-bg/85 backdrop-blur-md border-b border-yolo-border' : 'bg-transparent'"
-         class="fixed top-0 left-0 right-0 z-50 transition-all duration-300">
-        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-            <a href="{% url 'home' %}" class="flex items-center gap-3 group">
-                <img src="{% static 'images/logo.png' %}" alt="GameOfYolo" class="h-9 w-auto">
-                <span class="font-display text-xl tracking-wider uppercase">GameOfYolo</span>
-            </a>
+<nav class="gol-nav" x-data="{ open: false }">
+    <div class="gol-nav-inner">
+        <a href="{% url 'home' %}" class="gol-brand">
+            <img src="{% static 'images/logo.png' %}" alt="Game of Yolo">
+            <span>Game of Yolo</span>
+        </a>
 
-            <button @click="open = !open" class="md:hidden text-yolo-text p-2" aria-label="Menu">
-                <svg x-show="!open" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5" />
-                </svg>
-                <svg x-show="open" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-            </button>
+        <button class="gol-nav-toggle" @click="open = !open" aria-label="Menu">
+            <svg x-show="!open" xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5" /></svg>
+            <svg x-show="open" xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
+        </button>
 
-            <div class="hidden md:flex items-center gap-8">
-                <a href="{% url 'home' %}" class="nav-link">Domů</a>
-                <a href="{% url 'leaderboard' %}" class="nav-link">Leaderboard</a>
-                <a href="{% url 'events' %}" class="nav-link">Eventy</a>
-                {% if request.user.is_authenticated %}
-                    <a href="{% url 'profile' %}" class="nav-link">Profil</a>
-                    <form method="post" action="{% url 'logout' %}" class="inline m-0">
-                        {% csrf_token %}
-                        <button type="submit" class="btn-outline text-sm">Odhlásit</button>
-                    </form>
-                {% else %}
-                    <a href="{% url 'login' %}" class="nav-link">Přihlásit</a>
-                    <a href="{% url 'register' %}" class="btn-accent text-sm">Registrovat</a>
-                {% endif %}
-            </div>
+        <div class="gol-nav-links desktop">
+            <a href="{% url 'home' %}" class="gol-nav-link">Domů</a>
+            <a href="{% url 'events' %}" class="gol-nav-link">Akce</a>
+            <a href="{% url 'leaderboard' %}" class="gol-nav-link">Žebříček</a>
+            {% if request.user.is_authenticated %}
+                <a href="{% url 'profile' request.user.username %}" class="gol-nav-link">Profil</a>
+                <form method="post" action="{% url 'logout' %}" style="margin:0;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-pink" style="padding:0.5rem 1rem; font-size:14px;">Odhlásit</button>
+                </form>
+            {% else %}
+                <a href="{% url 'login' %}" class="btn btn-outline-light" style="padding:0.5rem 1rem; font-size:14px;">Přihlášení</a>
+                <a href="{% url 'register' %}" class="btn btn-pink" style="padding:0.5rem 1rem; font-size:14px;">Registrace</a>
+            {% endif %}
         </div>
+    </div>
 
-        <div x-show="open" x-transition @click.outside="open = false"
-             class="md:hidden border-t border-yolo-border bg-yolo-bg/95 backdrop-blur-md">
-            <div class="px-6 py-4 flex flex-col gap-3">
-                <a href="{% url 'home' %}" class="nav-link-mobile">Domů</a>
-                <a href="{% url 'leaderboard' %}" class="nav-link-mobile">Leaderboard</a>
-                <a href="{% url 'events' %}" class="nav-link-mobile">Eventy</a>
-                {% if request.user.is_authenticated %}
-                    <a href="{% url 'profile' %}" class="nav-link-mobile">Profil</a>
-                    <form method="post" action="{% url 'logout' %}">
-                        {% csrf_token %}
-                        <button type="submit" class="btn-outline w-full">Odhlásit</button>
-                    </form>
-                {% else %}
-                    <a href="{% url 'login' %}" class="nav-link-mobile">Přihlásit</a>
-                    <a href="{% url 'register' %}" class="btn-accent w-full text-center">Registrovat</a>
-                {% endif %}
-            </div>
+    <div class="gol-nav-mobile" x-show="open" x-transition @click.outside="open = false" style="display: none;">
+        <div>
+            <a href="{% url 'home' %}" class="gol-nav-link">Domů</a>
+            <a href="{% url 'events' %}" class="gol-nav-link">Akce</a>
+            <a href="{% url 'leaderboard' %}" class="gol-nav-link">Žebříček</a>
+            {% if request.user.is_authenticated %}
+                <a href="{% url 'profile' request.user.username %}" class="gol-nav-link">Profil</a>
+                <form method="post" action="{% url 'logout' %}" style="margin:0;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-pink btn-block">Odhlásit</button>
+                </form>
+            {% else %}
+                <a href="{% url 'login' %}" class="btn btn-outline-light btn-block">Přihlášení</a>
+                <a href="{% url 'register' %}" class="btn btn-pink btn-block">Registrace</a>
+            {% endif %}
         </div>
-    </nav>
+    </div>
+</nav>
 
-    <main class="flex-grow">
-        {% if messages %}
-        <div class="max-w-3xl mx-auto px-6 pt-24">
-            {% for message in messages %}
-            <div class="border border-yolo-border bg-yolo-surface px-4 py-3 rounded-md mb-2 text-sm text-yolo-text">
-                {{ message }}
-            </div>
-            {% endfor %}
+<main class="container-gol">
+    {% if messages %}
+        {% for message in messages %}
+            <div class="gol-message">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    {% block content %}{% endblock %}
+</main>
+
+<footer class="gol-footer">
+    <div class="gol-footer-inner">
+        <div>
+            <h3>Game of Yolo</h3>
+            <p>Celoroční komunitní hra plná zábavy, výzev a nezapomenutelných zážitků. Vytvořil Vojta Tomann s láskou ke komunitě.</p>
         </div>
-        {% endif %}
-
-        {% block content %}{% endblock %}
-    </main>
-
-    <footer class="border-t border-yolo-border mt-24 py-10 bg-yolo-bg">
-        <div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4">
-            <div class="font-display text-lg tracking-wider uppercase">GameOfYolo</div>
-            <div class="flex gap-6 text-sm text-yolo-muted">
-                <a href="https://www.instagram.com/gameofyolo/" target="_blank" rel="noopener" class="hover:text-yolo-accent transition">Instagram</a>
-                <a href="tel:+420731005976" class="hover:text-yolo-accent transition">+420 731 005 976</a>
-            </div>
-            <div class="text-xs text-yolo-muted">© {% now "Y" %} GameOfYolo</div>
+        <div>
+            <h4>Navigace</h4>
+            <p><a href="{% url 'home' %}">Domů</a></p>
+            <p><a href="{% url 'leaderboard' %}">Žebříček</a></p>
+            <p><a href="{% url 'events' %}">Kalendář</a></p>
         </div>
-    </footer>
+        <div>
+            <h4>Sleduj nás</h4>
+            <div class="social">
+                <a href="https://www.instagram.com/gameofyolo/" target="_blank" rel="noopener" title="Instagram">IG</a>
+                <a href="https://www.youtube.com/@gameofyolo" target="_blank" rel="noopener" title="YouTube">YT</a>
+                <a href="mailto:info@gameofyolo.cz" title="E-mail">@</a>
+            </div>
+            <p style="margin-top:1rem;">info@gameofyolo.cz</p>
+        </div>
+    </div>
+    <div class="gol-footer-bottom">
+        © {% now "Y" %} Game of Yolo by Vojta Tomann
+    </div>
+</footer>
 
-    <script src="{% static 'leaderboard/script.js' %}"></script>
-    {% block extra_js %}{% endblock %}
+<script src="{% static 'leaderboard/script.js' %}"></script>
+{% block extra_js %}{% endblock %}
 </body>
 </html>

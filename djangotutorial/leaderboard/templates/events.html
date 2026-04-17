@@ -1,57 +1,36 @@
 {% extends "base.html" %}
 
-{% block title %}Eventy — GameOfYolo{% endblock %}
+{% block title %}Kalendář akcí — Game of Yolo{% endblock %}
 
 {% block content %}
-<section class="section pt-32">
-    <div class="text-center mb-12">
-        <div class="section-eyebrow">Kalendář akcí</div>
-        <h1 class="section-title mb-0">Eventy</h1>
-    </div>
+<section class="section" style="margin-top: 1.5rem;">
+    <div class="section-eyebrow">Kalendář</div>
+    <h1 class="section-title">Akce</h1>
 
-    <div class="card-grid">
+    <div class="grid-auto">
         {% for event in events %}
-        <article class="card event-card" data-event-id="{{ event.id }}">
-            <div class="card-media">
-                {% if event.image %}
-                    <img src="{{ event.image.url }}" alt="{{ event.name }}">
-                {% else %}
-                    <img src="https://picsum.photos/seed/event{{ event.id }}/900/700" alt="{{ event.name }}">
-                {% endif %}
-                <div class="card-media-overlay"></div>
-            </div>
-            <div class="card-body">
-                <h2 class="card-title">{{ event.name }}</h2>
-                <p class="text-yolo-accent text-xs tracking-widest uppercase event-place">{{ event.place }}</p>
-                <p class="card-desc description">{{ event.description }}</p>
-                <div class="card-footer event-footer">
-                    <span class="card-date event-date">{{ event.date|date:"d. m. Y" }}</span>
-                    {% if event.is_past %}
-                        <span class="card-badge-past event-past">Proběhlo</span>
-                    {% endif %}
-                </div>
-            </div>
-        </article>
+            <article class="card event-card" data-event-id="{{ event.id }}">
+                <a href="{% url 'event_detail' event.slug %}" style="text-decoration:none; color:inherit; display:block;">
+                    <div class="card-photo"
+                         style="background-image: linear-gradient(135deg, rgba(71, 81, 133, 0.45), rgba(54, 60, 99, 0.55)), url('{% if event.image %}{{ event.image.url }}{% else %}https://picsum.photos/seed/event{{ event.id }}/600/400{% endif %}');">
+                        <div style="position:relative; z-index:1; display:flex; gap:0.4rem; flex-wrap:wrap;">
+                            <span class="badge badge-green">{{ event.place }}</span>
+                            {% if event.is_past %}
+                                <span class="badge badge-muted">Proběhlo</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <h3 class="card-title">{{ event.name }}</h3>
+                        <p class="card-meta description" style="color: var(--gol-text-dark); font-size: 14px;">{{ event.description|truncatechars:120 }}</p>
+                        <p class="card-meta"><span class="event-place" style="display:none;">{{ event.place }}</span>📅 <span class="event-date">{{ event.date|date:"d. m. Y" }}</span></p>
+                        <span class="card-link">Detail akce →</span>
+                    </div>
+                </a>
+            </article>
         {% empty %}
-        <p class="text-yolo-muted col-span-full text-center py-12">Zatím tu nejsou žádné akce.</p>
+            <p class="text-muted text-center">Zatím tu nejsou žádné akce.</p>
         {% endfor %}
     </div>
 </section>
-
-<div id="event-modal" class="modal">
-    <div class="modal-content">
-        <span class="close">&times;</span>
-        <div class="gallery">
-            <button id="prev-btn" class="nav-btn" aria-label="Předchozí">&#10094;</button>
-            <img id="modal-image" src="" alt="">
-            <button id="next-btn" class="nav-btn" aria-label="Další">&#10095;</button>
-        </div>
-        <div class="modal-body">
-            <h2 id="modal-name"></h2>
-            <p id="modal-place" class="text-yolo-accent text-xs tracking-widest uppercase"></p>
-            <p id="modal-description"></p>
-            <p id="modal-date" class="modal-date mt-3"></p>
-        </div>
-    </div>
-</div>
 {% endblock %}

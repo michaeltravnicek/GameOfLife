@@ -1,4 +1,6 @@
+from django.conf import settings
 from django.db import models
+from django.utils.text import slugify
 
 
 class Event(models.Model):
@@ -11,9 +13,22 @@ class Event(models.Model):
     points = models.IntegerField()
     image = models.ImageField(upload_to="event_images/", blank=True, null=True)
 
+    slug = models.SlugField(max_length=280, unique=True, null=True, blank=True)
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            base = slugify(self.name) or "akce"
+            slug = base
+            n = 2
+            while Event.objects.exclude(pk=self.pk).filter(slug=slug).exists():
+                slug = f"{base}-{n}"
+                n += 1
+            self.slug = slug
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return f"{self.name} - {self.date} - {self.place} - {self.sheet_id}"
-    
+
     class Meta:
         unique_together = ("sheet_id", "sheet_list_id")
 
@@ -26,7 +41,7 @@ class ImageToEvent(models.Model):
 class User(models.Model):
     number = models.IntegerField(unique=True)
     name = models.CharField(max_length=255)
-    
+
     def __str__(self):
         return self.name
 
@@ -41,8 +56,43 @@ class UserToEvent(models.Model):
 
     def __str__(self):
         return f"{self.user} → {self.event}"
-    
-    
+
+
 class LastUpdate(models.Model):
     last_update = models.DateTimeField(auto_now=True)
-    last_complete_update = models.DateTimeField(blank=True, null=True) 
+    last_complete_update = models.DateTimeField(blank=True, null=True)
+
+
+class EventRSVP(models.Model):
+    auth_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="rsvps",
+    )
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name="rsvps")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("auth_user", "event")
+
+    def __str__(self):
+        return f"RSVP {self.auth_user} → {self.event}"
+
+
+class EventFeedback(models.Model):
+    auth_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="feedbacks",
+    )
+    event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name="feedbacks")
+    rating = models.PositiveSmallIntegerField()
+    comment = models.TextField(blank=True, default="")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ("auth_user", "event")
+
+    def __str__(self):
+        return f"Feedback {self.rating}★ {self.auth_user} → {self.event}"

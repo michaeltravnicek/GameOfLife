@@ -1,10 +1,6 @@
 function openTab(evt, tabName) {
-    const tabContents = document.querySelectorAll(".tab-content");
-    const tabButtons = document.querySelectorAll(".tab-button");
-
-    tabContents.forEach(tc => tc.style.display = "none");
-    tabButtons.forEach(tb => tb.classList.remove("active"));
-
+    document.querySelectorAll(".tab-content").forEach(tc => tc.style.display = "none");
+    document.querySelectorAll(".tab-button").forEach(tb => tb.classList.remove("active"));
     document.getElementById(tabName).style.display = "block";
     evt.currentTarget.classList.add("active");
 }
@@ -18,47 +14,34 @@ function loadUser(userId) {
 
     setTimeout(() => {
         fetch(url)
-            .then(response => response.json())
+            .then(r => r.json())
             .then(data => {
-                const rows = data.actions.map(action => `
-                    <tr>
-                        <td>${escapeHtml(action.event__name)}</td>
-                        <td>${escapeHtml(action.event__place)}</td>
-                        <td>${new Date(action.event__date).toLocaleDateString('cs-CZ')}</td>
-                        <td class="text-right font-mono">${action.user_points}</td>
-                    </tr>
+                const rows = (data.actions || []).map(action => `
+                    <div class="lb-row" style="cursor: default;">
+                        <span class="rank">📅</span>
+                        <span class="name">
+                            <strong>${escapeHtml(action.event__name)}</strong>
+                            <br>
+                            <span style="font-size: 13px; color: var(--gol-text-muted);">
+                                ${escapeHtml(action.event__place)} · ${new Date(action.event__date).toLocaleDateString('cs-CZ')}
+                            </span>
+                        </span>
+                        <span class="points">+${action.user_points}</span>
+                    </div>
                 `).join('');
 
                 content.innerHTML = `
-                    <div class="user-header flex items-center justify-between mb-6">
+                    <div class="user-header">
                         <button class="back-button" onclick="loadLeaderboard()">← Zpět</button>
                     </div>
-                    <h1 class="section-title text-center mb-8">${escapeHtml(data.user_name)}</h1>
-                    <div class="overflow-x-auto">
-                        <table class="yolo-table user-table">
-                            <colgroup>
-                                <col>
-                                <col style="width: 25%;">
-                                <col style="width: 20%;">
-                                <col style="width: 15%;">
-                            </colgroup>
-                            <thead>
-                                <tr>
-                                    <th>Akce</th>
-                                    <th>Lokace</th>
-                                    <th>Datum</th>
-                                    <th class="text-right">Body</th>
-                                </tr>
-                            </thead>
-                            <tbody>${rows}</tbody>
-                        </table>
-                    </div>
+                    <h1 class="section-title text-center">${escapeHtml(data.user_name)}</h1>
+                    <div style="max-width: 720px; margin: 0 auto;">${rows || '<p class="text-muted text-center">Žádné akce.</p>'}</div>
                 `;
                 content.classList.remove("fade-out");
                 content.classList.add("fade-in");
             })
             .catch(err => console.error(err));
-    }, 300);
+    }, 200);
 }
 
 function loadLeaderboard() {
@@ -77,6 +60,22 @@ function escapeHtml(value) {
         .replace(/'/g, "&#039;");
 }
 
+function filterLeaderboard() {
+    const input = document.getElementById('search-bar');
+    if (!input) return;
+    const filter = input.value.toLowerCase();
+
+    const activeTab = document.querySelector('.tab-content[style*="display: block"]') || document.getElementById('total');
+    if (!activeTab) return;
+
+    activeTab.querySelectorAll('.lb-row').forEach(row => {
+        const nameEl = row.querySelector('.user-name') || row.querySelector('.name');
+        if (!nameEl) return;
+        const match = filter === '' || nameEl.textContent.toLowerCase().includes(filter);
+        row.style.display = match ? '' : 'none';
+    });
+}
+
 document.addEventListener("DOMContentLoaded", function () {
     const modal = document.getElementById("event-modal");
     if (!modal) return;
@@ -93,9 +92,11 @@ document.addEventListener("DOMContentLoaded", function () {
     let images = [];
     let currentIndex = 0;
 
-    document.querySelectorAll(".event-card").forEach(card => {
+    document.querySelectorAll(".event-card[data-event-id]").forEach(card => {
+        const innerLink = card.querySelector('a[href]');
+        if (innerLink) return;
         card.addEventListener("click", async function () {
-            const name = card.querySelector(".card-title, h2")?.innerText || "";
+            const name = card.querySelector(".card-title, h2, h3")?.innerText || "";
             const place = card.querySelector(".event-place")?.innerText || "";
             const description = card.querySelector(".description")?.innerText || "";
             const date = card.querySelector(".event-date")?.innerText || "";
@@ -110,7 +111,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 currentIndex = 0;
                 showImage(currentIndex);
             } catch (e) {
-                console.error("Nepodařilo se načíst obrázky:", e);
+                console.error(e);
                 images = [];
                 showImage(0);
             }
@@ -127,80 +128,27 @@ document.addEventListener("DOMContentLoaded", function () {
         if (images.length > 0) {
             modalImage.src = images[index];
             modalImage.style.display = "block";
-            prevBtn.classList.toggle("hidden", index === 0);
-            nextBtn.classList.toggle("hidden", index + 1 === images.length);
+            prevBtn?.classList.toggle("hidden", index === 0);
+            nextBtn?.classList.toggle("hidden", index + 1 === images.length);
         } else {
-            prevBtn.classList.add("hidden");
-            nextBtn.classList.add("hidden");
+            prevBtn?.classList.add("hidden");
+            nextBtn?.classList.add("hidden");
             modalImage.src = "";
             modalImage.style.display = "none";
         }
     }
 
-    prevBtn?.addEventListener("click", function () {
+    prevBtn?.addEventListener("click", () => {
         if (!images.length) return;
         currentIndex = (currentIndex - 1 + images.length) % images.length;
         showImage(currentIndex);
     });
-
-    nextBtn?.addEventListener("click", function () {
+    nextBtn?.addEventListener("click", () => {
         if (!images.length) return;
         currentIndex = (currentIndex + 1) % images.length;
         showImage(currentIndex);
     });
-
     closeBtn?.addEventListener("click", () => modal.classList.remove("show"));
-    window.addEventListener("click", (e) => {
-        if (e.target === modal) modal.classList.remove("show");
-    });
-    window.addEventListener("keydown", (e) => {
-        if (e.key === "Escape") modal.classList.remove("show");
-    });
+    window.addEventListener("click", (e) => { if (e.target === modal) modal.classList.remove("show"); });
+    window.addEventListener("keydown", (e) => { if (e.key === "Escape") modal.classList.remove("show"); });
 });
-
-function animateLeaderboard() {
-    const rows = document.querySelectorAll('#leaderboard-table tbody tr');
-    rows.forEach((row) => {
-        row.style.opacity = '';
-        row.style.transform = '';
-        row.style.animation = 'none';
-    });
-    document.querySelector('#leaderboard-table')?.offsetHeight;
-    rows.forEach((row, index) => {
-        row.style.animation = `fadeInUp 0.5s ease-out ${index * 0.035}s both`;
-    });
-}
-
-window.addEventListener('load', function () {
-    const container = document.getElementById('leaderboard');
-    if (!container) return;
-    const lastUpdate = container.dataset.lastUpdate;
-    const stored = localStorage.getItem('leaderboard_last_update');
-    if (lastUpdate && lastUpdate !== stored) {
-        animateLeaderboard();
-        localStorage.setItem('leaderboard_last_update', lastUpdate);
-    }
-});
-
-function filterLeaderboard() {
-    const input = document.getElementById('search-bar');
-    if (!input) return;
-    const filter = input.value.toLowerCase();
-
-    const activeTab = document.querySelector('.tab-content[style*="display: block"]') || document.getElementById('total');
-    if (!activeTab) return;
-    const rows = activeTab.querySelectorAll('tbody tr');
-
-    rows.forEach((row) => {
-        const nameCell = row.querySelector('.user-name');
-        if (!nameCell) return;
-        const name = nameCell.textContent.toLowerCase();
-        const matches = filter === '' || name.includes(filter);
-        row.style.display = matches ? '' : 'none';
-        if (matches) {
-            row.style.removeProperty('opacity');
-            row.style.removeProperty('transform');
-            row.style.removeProperty('animation');
-        }
-    });
-}

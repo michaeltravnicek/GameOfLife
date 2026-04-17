@@ -1,59 +1,89 @@
 {% extends "base.html" %}
 
-{% block title %}Profil — GameOfYolo{% endblock %}
+{% block title %}{{ profile_user.first_name|default:profile_user.username }} — Profil{% endblock %}
 
 {% block content %}
-<section class="section pt-32">
-    <div class="max-w-3xl mx-auto">
-        <div class="text-center mb-10">
-            <div class="section-eyebrow">Můj účet</div>
-            <h1 class="section-title mb-0">Profil</h1>
+<section class="section" style="margin-top: 1rem;" x-data="{ tab: 'upcoming' }">
+
+    <div class="card" style="padding: 2rem; background: #fff; display: flex; gap: 1.5rem; align-items: center; flex-wrap: wrap;">
+        <span class="avatar-initial">
+            {% firstof profile_user.first_name profile_user.username|slice:":1" as initial_src %}
+            {{ initial_src|slice:":1"|upper }}
+        </span>
+        <div style="flex: 1; min-width: 200px;">
+            <h1 style="font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 32px; margin: 0 0 0.3rem; color: var(--gol-text-dark);">
+                {{ profile_user.first_name|default:profile_user.username }}
+            </h1>
+            <p class="text-muted" style="margin: 0; font-size: 14px;">
+                @{{ profile_user.username }}
+                {% if is_own_profile %}<span class="badge badge-indigo" style="margin-left: 0.5rem;">Tvůj profil</span>{% endif %}
+            </p>
+        </div>
+        {% if is_own_profile %}
+        <form method="post" action="{% url 'logout' %}" style="margin: 0;">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-ghost">Odhlásit se</button>
+        </form>
+        {% endif %}
+    </div>
+
+    <div class="grid-3" style="margin-top: 1.5rem;">
+        <div class="stat-card">
+            <div class="label">Celkem bodů</div>
+            <div class="value">{{ total_points }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="label">Akcí</div>
+            <div class="value">{{ total_events }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="label">Nadcházející</div>
+            <div class="value">{{ upcoming_rsvps|length }}</div>
+        </div>
+    </div>
+
+    <div style="margin-top: 2.5rem;">
+        <div class="tab-row">
+            <button class="tab-button" :class="tab === 'upcoming' ? 'active' : ''" @click="tab = 'upcoming'">Nadcházející akce</button>
+            <button class="tab-button" :class="tab === 'past' ? 'active' : ''" @click="tab = 'past'">Proběhlé akce</button>
         </div>
 
-        <div class="border border-yolo-border bg-yolo-surface p-8 md:p-10">
-            <div class="flex flex-col sm:flex-row items-center sm:items-start gap-6">
-                <div class="w-24 h-24 rounded-full border border-yolo-border bg-yolo-elev flex items-center justify-center font-display text-4xl text-yolo-accent shrink-0">
-                    {{ user_obj.username|slice:":1"|upper }}
-                </div>
-                <div class="flex-1 text-center sm:text-left">
-                    <h2 class="font-display text-2xl mb-1">{{ user_obj.username }}</h2>
-                    {% if user_obj.email %}
-                        <p class="text-yolo-muted text-sm mb-4">{{ user_obj.email }}</p>
-                    {% endif %}
-                    <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3 text-sm mt-6">
-                        {% if user_obj.first_name or user_obj.last_name %}
-                        <div>
-                            <dt class="field-label">Jméno</dt>
-                            <dd>{{ user_obj.get_full_name }}</dd>
-                        </div>
-                        {% endif %}
-                        <div>
-                            <dt class="field-label">Registrace</dt>
-                            <dd>{{ user_obj.date_joined|date:"d. m. Y" }}</dd>
-                        </div>
-                        {% if user_obj.last_login %}
-                        <div>
-                            <dt class="field-label">Poslední přihlášení</dt>
-                            <dd>{{ user_obj.last_login|date:"d. m. Y H:i" }}</dd>
-                        </div>
-                        {% endif %}
-                        <div>
-                            <dt class="field-label">Status</dt>
-                            <dd>
-                                {% if user_obj.is_staff %}Admin{% else %}Člen{% endif %}
-                            </dd>
-                        </div>
-                    </dl>
-                </div>
-            </div>
+        <div x-show="tab === 'upcoming'" x-transition>
+            {% if upcoming_rsvps %}
+                {% for rsvp in upcoming_rsvps %}
+                    <a href="{% url 'event_detail' rsvp.event.slug %}" class="lb-row" style="text-decoration: none;">
+                        <span class="rank">📅</span>
+                        <span class="name">
+                            <strong>{{ rsvp.event.name }}</strong><br>
+                            <span style="font-size: 13px; color: var(--gol-text-muted);">
+                                {{ rsvp.event.place }} · {{ rsvp.event.date|date:"d. m. Y H:i" }}
+                            </span>
+                        </span>
+                        <span class="points">+{{ rsvp.event.points }}</span>
+                    </a>
+                {% endfor %}
+            {% else %}
+                <p class="text-muted text-center" style="padding: 2rem 0;">Žádné nadcházející akce. <a href="{% url 'events' %}">Přidej se na nějakou!</a></p>
+            {% endif %}
+        </div>
 
-            <div class="border-t border-yolo-border mt-8 pt-6 flex flex-wrap gap-3 justify-between items-center">
-                <a href="{% url 'leaderboard' %}" class="btn-ghost">Leaderboard</a>
-                <form method="post" action="{% url 'logout' %}" class="m-0">
-                    {% csrf_token %}
-                    <button type="submit" class="btn-outline">Odhlásit</button>
-                </form>
-            </div>
+        <div x-show="tab === 'past'" x-transition style="display: none;">
+            {% if past_events %}
+                {% for ute in past_events %}
+                    <a href="{% url 'event_detail' ute.event.slug %}" class="lb-row" style="text-decoration: none;">
+                        <span class="rank">🏆</span>
+                        <span class="name">
+                            <strong>{{ ute.event.name }}</strong><br>
+                            <span style="font-size: 13px; color: var(--gol-text-muted);">
+                                {{ ute.event.place }} · {{ ute.event.date|date:"d. m. Y" }}
+                            </span>
+                        </span>
+                        <span class="points">+{{ ute.points }}</span>
+                    </a>
+                {% endfor %}
+            {% else %}
+                <p class="text-muted text-center" style="padding: 2rem 0;">Ještě žádné proběhlé akce.</p>
+            {% endif %}
         </div>
     </div>
 </section>

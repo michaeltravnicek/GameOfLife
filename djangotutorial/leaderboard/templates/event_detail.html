@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}{{ event.name }} — Game of Yolo{% endblock %}
+
+{% block content %}
+<section style="margin-top: 1rem;">
+
+    <div class="event-hero">
+        <img src="{% if event.image %}{{ event.image.url }}{% else %}https://picsum.photos/seed/event{{ event.id }}/1200/600{% endif %}"
+             alt="{{ event.name }}">
+        <div class="top-badge">
+            {% if is_future %}
+                <span class="badge badge-green">Nadcházející</span>
+            {% else %}
+                <span class="badge badge-muted">Proběhlo</span>
+            {% endif %}
+        </div>
+        <div class="overlay">
+            <h1>{{ event.name }}</h1>
+        </div>
+    </div>
+
+    <div class="separator"></div>
+
+    <div class="event-card-box">
+        <div style="margin-bottom: 1rem;">
+            <span class="badge badge-green">Akce</span>
+            {% if rsvp_count %}
+                <span class="badge badge-muted" style="margin-left: 0.3rem;">{{ rsvp_count }} přihlášen{{ rsvp_count|pluralize:"ý,í" }}</span>
+            {% endif %}
+        </div>
+
+        <div class="detail-grid">
+            <div>
+                <p class="col-label">Datum</p>
+                <p class="col-value">{{ event.date|date:"d. m. Y" }}</p>
+            </div>
+            <div>
+                <p class="col-label">Čas</p>
+                <p class="col-value">{{ event.date|time:"H:i" }}</p>
+            </div>
+            <div>
+                <p class="col-label">Místo</p>
+                <p class="col-value">{{ event.place }}</p>
+            </div>
+        </div>
+
+        {% if event.description %}
+        <div style="margin-bottom: 2rem;">
+            <h3 style="font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 18px; color: var(--gol-indigo-primary); margin: 0 0 0.5rem;">Popis</h3>
+            <p style="font-family: 'Inter', sans-serif; font-size: 15px; line-height: 1.7; color: var(--gol-text-dark); margin: 0;">{{ event.description|linebreaksbr }}</p>
+        </div>
+        {% endif %}
+
+        <div style="display: inline-block; margin-bottom: 2rem;">
+            <span class="badge badge-indigo" style="font-size: 14px; padding: 8px 16px;">+{{ event.points }} bodů</span>
+        </div>
+
+        {% if images %}
+        <div style="margin-bottom: 2rem;">
+            <h3 style="font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 18px; color: var(--gol-indigo-primary); margin: 0 0 0.75rem;">Galerie</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 0.6rem;">
+                {% for img in images %}
+                    <img src="{{ img }}" alt="" style="width: 100%; height: 140px; object-fit: cover; border-radius: 8px; border: 1px solid var(--gol-tan-border);">
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <div>
+            {% if request.user.is_authenticated %}
+                {% if is_future %}
+                    <form method="post" action="{% url 'event_rsvp' event.slug %}" style="margin: 0;">
+                        {% csrf_token %}
+                        {% if has_rsvp %}
+                            <button type="submit" class="btn btn-ghost btn-block" style="padding: 0.95rem 1.25rem; font-size: 16px;">Zrušit přihlášení</button>
+                        {% else %}
+                            <button type="submit" class="btn btn-primary btn-block" style="padding: 0.95rem 1.25rem; font-size: 16px;">Přihlásit se na akci</button>
+                        {% endif %}
+                    </form>
+                {% else %}
+                    <form method="post" action="{% url 'event_feedback' event.slug %}" style="margin: 0;">
+                        {% csrf_token %}
+                        <div class="field-group">
+                            <label class="field-label" for="id_rating">Tvůj rating (1–5)</label>
+                            <select name="rating" id="id_rating" class="gol-input" required>
+                                <option value="">Vyber rating…</option>
+                                {% for n in "12345" %}
+                                    <option value="{{ n }}" {% if existing_feedback and existing_feedback.rating|stringformat:"s" == n %}selected{% endif %}>{{ n }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="field-group">
+                            <label class="field-label" for="id_comment">Komentář (volitelně)</label>
+                            <textarea name="comment" id="id_comment" class="gol-input" rows="4" placeholder="Jaké to bylo?">{% if existing_feedback %}{{ existing_feedback.comment }}{% endif %}</textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block" style="padding: 0.95rem 1.25rem; font-size: 16px;">
+                            {% if existing_feedback %}Uložit zpětnou vazbu{% else %}Odeslat zpětnou vazbu{% endif %}
+                        </button>
+                    </form>
+                {% endif %}
+            {% else %}
+                <a href="{% url 'login' %}?next={{ request.path }}" class="btn btn-primary btn-block" style="padding: 0.95rem 1.25rem; font-size: 16px;">Přihlaš se pro registraci</a>
+            {% endif %}
+        </div>
+
+        <div style="margin-top: 1.5rem;">
+            <a href="{% url 'events' %}" class="btn btn-ghost">← Zpět na akce</a>
+        </div>
+    </div>
+</section>
+{% endblock %}
