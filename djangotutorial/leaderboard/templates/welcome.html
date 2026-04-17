@@ -1,52 +1,90 @@
 {% extends "base.html" %}
+{% load static %}
 
-{% block title %}GameOfLive{% endblock %}
+{% block title %}GameOfYolo — Žij naplno{% endblock %}
 
 {% block content %}
-<div class="container" id="welcome" style="text-align: center; padding: 20px;">
-  <h1 style="
-    font-size: 2.4rem;
-    color: #8B008B;
-    margin-bottom: 10px;
-  ">
-    ✨ Game Of Life ✨
-  </h1>
+<section class="hero">
+    <div class="hero-content">
+        <div class="hero-eyebrow">Community · Akce · Zážitky</div>
+        <h1 class="hero-title">
+            Game of <em>Yolo</em>
+        </h1>
+        <p class="hero-subtitle">
+            Oficiální stránka komunity Game of Yolo. Sleduj bodovanou soutěž,
+            přidej se na nadcházející akce a žij naplno.
+        </p>
+        <div class="flex flex-col sm:flex-row gap-4 items-center justify-center">
+            <a href="{% url 'leaderboard' %}" class="btn-accent">Zobrazit leaderboard</a>
+            <a href="{% url 'events' %}" class="btn-outline">Nadcházející akce</a>
+        </div>
+    </div>
+</section>
 
-  <section style="margin-top: 30px;">
-    <p>
-      Ahoj! 👋 Právě si prohlížíš oficiální stránku <br>
-      <strong>Game of Life</strong>.
-    </p>
+<section class="section">
+    <div class="grid md:grid-cols-2 gap-16 items-center">
+        <div>
+            <div class="section-eyebrow">O komunitě</div>
+            <h2 class="section-title">Sem se propisují<br>body všem účastníkům.</h2>
+            <p class="text-yolo-muted leading-relaxed text-base md:text-lg mb-6">
+                Ahoj! Právě si prohlížíš oficiální stránku <strong class="text-yolo-text">Game of Yolo</strong>.
+                S trochou štěstí tady už teď najdeš i svoje jméno — a pokud ne,
+                na co čekáš?
+            </p>
+            <p class="text-yolo-muted leading-relaxed mb-8">
+                Koukni na náš Instagram a přidej se na příští akci.
+                Doufáme, že se brzy vidíme.
+            </p>
+            <div class="flex flex-wrap gap-4">
+                <a href="https://www.instagram.com/gameofyolo/" target="_blank" rel="noopener" class="btn-outline">Instagram</a>
+                <a href="tel:+420731005976" class="btn-ghost">+420 731 005 976</a>
+            </div>
+        </div>
+        <div class="relative aspect-[4/5] overflow-hidden border border-yolo-border">
+            <img src="https://picsum.photos/seed/yolo-community/800/1000"
+                 alt="Community"
+                 class="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-700">
+            <div class="absolute inset-0 bg-gradient-to-t from-yolo-bg via-transparent to-transparent pointer-events-none"></div>
+        </div>
+    </div>
+</section>
 
-    <p>
-      Sem se propisují body všem účastníkům <br>
-      bodovaných akcí Game of Life. <br>
-    </p>
-    <p>
-      S trochou štěstí tady už teď najdeš i svoje jméno, <br>
-      ale pokud tam pořád ještě nejsi, na co čekáš? <br>
-      Koukni na 
-      <a href="https://www.instagram.com/gameofyolo" 
-         target="_blank"
-         style="color: #8B008B; text-decoration: none; font-weight: bold;">
-        Instagram
-      </a> 
-      a doufám, <br>
-      že se vidíme na příští akcičce! 💖
-    </p>
+<section class="section">
+    <div class="grid md:grid-cols-3 gap-8">
+        <div class="border border-yolo-border bg-yolo-surface p-8 hover:border-yolo-accent transition-colors duration-300">
+            <div class="font-display text-5xl text-yolo-accent mb-4">01</div>
+            <h3 class="font-display text-xl mb-3">Akce</h3>
+            <p class="text-yolo-muted text-sm leading-relaxed">
+                Pravidelné společenské akce po celé České republice —
+                od Prahy po Brno a dál.
+            </p>
+        </div>
+        <div class="border border-yolo-border bg-yolo-surface p-8 hover:border-yolo-accent transition-colors duration-300">
+            <div class="font-display text-5xl text-yolo-accent mb-4">02</div>
+            <h3 class="font-display text-xl mb-3">Body</h3>
+            <p class="text-yolo-muted text-sm leading-relaxed">
+                Za každou účast sbíráš body.
+                Sleduj svůj pokrok v žebříčku a soutěž s ostatními.
+            </p>
+        </div>
+        <div class="border border-yolo-border bg-yolo-surface p-8 hover:border-yolo-accent transition-colors duration-300">
+            <div class="font-display text-5xl text-yolo-accent mb-4">03</div>
+            <h3 class="font-display text-xl mb-3">Komunita</h3>
+            <p class="text-yolo-muted text-sm leading-relaxed">
+                Lidé, zážitky, přátelství. Žij naplno — Yolo.
+            </p>
+        </div>
+    </div>
+</section>
 
-    <p style="margin-top: 15px;">
-      Kdyby cokoliv, maily mě nebaví, <br>
-      raději rovnou volej  
-      <a href="tel:+420731005976" style="color: #8B008B; text-decoration: none; font-weight: bold;">
-        731 005 976
-      </a>.
-    </p>
-
-    <p style="font-weight: 600; margin-top: 5px;">
-      Vojta
-    </p>
-  </section>
-</div>
-
+<section class="section text-center pt-0">
+    <div class="max-w-2xl mx-auto">
+        <div class="section-eyebrow">Kontakt</div>
+        <p class="font-display text-3xl md:text-4xl mb-6 leading-tight">
+            Kdyby cokoliv, maily nebaví.<br>Radši rovnou volej.
+        </p>
+        <a href="tel:+420731005976" class="btn-accent">+420 731 005 976</a>
+        <p class="text-yolo-muted text-sm mt-6">— Vojta</p>
+    </div>
+</section>
 {% endblock %}

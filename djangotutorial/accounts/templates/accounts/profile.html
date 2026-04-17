@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}Profil — GameOfYolo{% endblock %}
+
+{% block content %}
+<section class="section pt-32">
+    <div class="max-w-3xl mx-auto">
+        <div class="text-center mb-10">
+            <div class="section-eyebrow">Můj účet</div>
+            <h1 class="section-title mb-0">Profil</h1>
+        </div>
+
+        <div class="border border-yolo-border bg-yolo-surface p-8 md:p-10">
+            <div class="flex flex-col sm:flex-row items-center sm:items-start gap-6">
+                <div class="w-24 h-24 rounded-full border border-yolo-border bg-yolo-elev flex items-center justify-center font-display text-4xl text-yolo-accent shrink-0">
+                    {{ user_obj.username|slice:":1"|upper }}
+                </div>
+                <div class="flex-1 text-center sm:text-left">
+                    <h2 class="font-display text-2xl mb-1">{{ user_obj.username }}</h2>
+                    {% if user_obj.email %}
+                        <p class="text-yolo-muted text-sm mb-4">{{ user_obj.email }}</p>
+                    {% endif %}
+                    <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3 text-sm mt-6">
+                        {% if user_obj.first_name or user_obj.last_name %}
+                        <div>
+                            <dt class="field-label">Jméno</dt>
+                            <dd>{{ user_obj.get_full_name }}</dd>
+                        </div>
+                        {% endif %}
+                        <div>
+                            <dt class="field-label">Registrace</dt>
+                            <dd>{{ user_obj.date_joined|date:"d. m. Y" }}</dd>
+                        </div>
+                        {% if user_obj.last_login %}
+                        <div>
+                            <dt class="field-label">Poslední přihlášení</dt>
+                            <dd>{{ user_obj.last_login|date:"d. m. Y H:i" }}</dd>
+                        </div>
+                        {% endif %}
+                        <div>
+                            <dt class="field-label">Status</dt>
+                            <dd>
+                                {% if user_obj.is_staff %}Admin{% else %}Člen{% endif %}
+                            </dd>
+                        </div>
+                    </dl>
+                </div>
+            </div>
+
+            <div class="border-t border-yolo-border mt-8 pt-6 flex flex-wrap gap-3 justify-between items-center">
+                <a href="{% url 'leaderboard' %}" class="btn-ghost">Leaderboard</a>
+                <form method="post" action="{% url 'logout' %}" class="m-0">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-outline">Odhlásit</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

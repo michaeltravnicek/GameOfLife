@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}Přihlásit — GameOfYolo{% endblock %}
+
+{% block content %}
+<section class="min-h-[calc(100vh-5rem)] flex items-center justify-center px-6 py-24">
+    <div class="auth-card">
+        <div class="text-center mb-8">
+            <div class="section-eyebrow">Přihlášení</div>
+            <h1 class="font-display text-3xl">Vítej zpět</h1>
+        </div>
+
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+                <div class="form-errors">{{ form.non_field_errors }}</div>
+            {% endif %}
+
+            <div class="field-group">
+                <label for="{{ form.username.id_for_label }}" class="field-label">{{ form.username.label }}</label>
+                {{ form.username }}
+                {% if form.username.errors %}<div class="field-error">{{ form.username.errors|join:", " }}</div>{% endif %}
+            </div>
+
+            <div class="field-group">
+                <label for="{{ form.password.id_for_label }}" class="field-label">{{ form.password.label }}</label>
+                {{ form.password }}
+                {% if form.password.errors %}<div class="field-error">{{ form.password.errors|join:", " }}</div>{% endif %}
+            </div>
+
+            {% if request.GET.next %}
+                <input type="hidden" name="next" value="{{ request.GET.next }}">
+            {% endif %}
+
+            <button type="submit" class="btn-accent w-full text-center mt-2">Přihlásit</button>
+        </form>
+
+        <p class="text-center text-sm text-yolo-muted mt-6">
+            Nemáš účet?
+            <a href="{% url 'register' %}" class="text-yolo-accent hover:underline">Registruj se</a>
+        </p>
+    </div>
+</section>
+{% endblock %}

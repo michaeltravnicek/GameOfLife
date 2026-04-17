@@ -52,9 +52,15 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'background_task',
     'leaderboard',
+    'accounts',
     #"background_task.apps.BackgroundTaskConfig",  # correct
 
 ]
+
+LOGIN_URL = '/accounts/login/'
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/'
+AUTHENTICATION_BACKENDS = ['django.contrib.auth.backends.ModelBackend']
 
 MIDDLEWARE = [
     'mysite.middleware.Debug500Middleware',

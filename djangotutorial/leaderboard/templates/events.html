@@ -1,47 +1,57 @@
 {% extends "base.html" %}
 
-{% block title %}Events{% endblock %}
+{% block title %}Eventy — GameOfYolo{% endblock %}
 
 {% block content %}
-<div class="events-grid">
-    {% for event in events %}
-    <div class="event-card" data-event-id="{{ event.id }}">
-        {% if event.image %}
-            <img src="{{ event.image.url }}" alt="{{ event.name }}">
-        {% endif %}
-
-        <h2>{{ event.name }}, {{ event.place }}</h2>
-
-        <p class="description">{{ event.description }}</p>
-
-        <div class="event-footer">
-            <p class="event-date">{{ event.date|date:"d.m.Y" }}</p>
-
-            {% if event.is_past %}
-                <p class="event-past">JIŽ PROBĚHLA</p>
-            {% endif %}
-        </div>
+<section class="section pt-32">
+    <div class="text-center mb-12">
+        <div class="section-eyebrow">Kalendář akcí</div>
+        <h1 class="section-title mb-0">Eventy</h1>
     </div>
-    {% endfor %}
-</div>
 
-<!-- Modal -->
+    <div class="card-grid">
+        {% for event in events %}
+        <article class="card event-card" data-event-id="{{ event.id }}">
+            <div class="card-media">
+                {% if event.image %}
+                    <img src="{{ event.image.url }}" alt="{{ event.name }}">
+                {% else %}
+                    <img src="https://picsum.photos/seed/event{{ event.id }}/900/700" alt="{{ event.name }}">
+                {% endif %}
+                <div class="card-media-overlay"></div>
+            </div>
+            <div class="card-body">
+                <h2 class="card-title">{{ event.name }}</h2>
+                <p class="text-yolo-accent text-xs tracking-widest uppercase event-place">{{ event.place }}</p>
+                <p class="card-desc description">{{ event.description }}</p>
+                <div class="card-footer event-footer">
+                    <span class="card-date event-date">{{ event.date|date:"d. m. Y" }}</span>
+                    {% if event.is_past %}
+                        <span class="card-badge-past event-past">Proběhlo</span>
+                    {% endif %}
+                </div>
+            </div>
+        </article>
+        {% empty %}
+        <p class="text-yolo-muted col-span-full text-center py-12">Zatím tu nejsou žádné akce.</p>
+        {% endfor %}
+    </div>
+</section>
+
 <div id="event-modal" class="modal">
     <div class="modal-content">
         <span class="close">&times;</span>
-        
         <div class="gallery">
-            <button id="prev-btn" class="nav-btn">&#10094;</button>
+            <button id="prev-btn" class="nav-btn" aria-label="Předchozí">&#10094;</button>
             <img id="modal-image" src="" alt="">
-            <button id="next-btn" class="nav-btn">&#10095;</button>
+            <button id="next-btn" class="nav-btn" aria-label="Další">&#10095;</button>
         </div>
-
-        <h2 id="modal-name"></h2>
-        <p id="modal-place"></p>
-        <p id="modal-description"></p>
-        <p id="modal-date"></p>
+        <div class="modal-body">
+            <h2 id="modal-name"></h2>
+            <p id="modal-place" class="text-yolo-accent text-xs tracking-widest uppercase"></p>
+            <p id="modal-description"></p>
+            <p id="modal-date" class="modal-date mt-3"></p>
+        </div>
     </div>
 </div>
-
 {% endblock %}
-

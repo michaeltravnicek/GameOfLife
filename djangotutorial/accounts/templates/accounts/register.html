@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}Registrace — GameOfYolo{% endblock %}
+
+{% block content %}
+<section class="min-h-[calc(100vh-5rem)] flex items-center justify-center px-6 py-24">
+    <div class="auth-card">
+        <div class="text-center mb-8">
+            <div class="section-eyebrow">Registrace</div>
+            <h1 class="font-display text-3xl">Přidej se</h1>
+        </div>
+
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+                <div class="form-errors">{{ form.non_field_errors }}</div>
+            {% endif %}
+
+            <div class="field-group">
+                <label for="{{ form.username.id_for_label }}" class="field-label">{{ form.username.label }}</label>
+                {{ form.username }}
+                {% if form.username.help_text %}<div class="field-help">{{ form.username.help_text|safe }}</div>{% endif %}
+                {% if form.username.errors %}<div class="field-error">{{ form.username.errors|join:", " }}</div>{% endif %}
+            </div>
+
+            <div class="field-group">
+                <label for="{{ form.email.id_for_label }}" class="field-label">{{ form.email.label }}</label>
+                {{ form.email }}
+                {% if form.email.errors %}<div class="field-error">{{ form.email.errors|join:", " }}</div>{% endif %}
+            </div>
+
+            <div class="field-group">
+                <label for="{{ form.password1.id_for_label }}" class="field-label">{{ form.password1.label }}</label>
+                {{ form.password1 }}
+                {% if form.password1.help_text %}<div class="field-help">{{ form.password1.help_text|safe }}</div>{% endif %}
+                {% if form.password1.errors %}<div class="field-error">{{ form.password1.errors|join:", " }}</div>{% endif %}
+            </div>
+
+            <div class="field-group">
+                <label for="{{ form.password2.id_for_label }}" class="field-label">{{ form.password2.label }}</label>
+                {{ form.password2 }}
+                {% if form.password2.errors %}<div class="field-error">{{ form.password2.errors|join:", " }}</div>{% endif %}
+            </div>
+
+            <button type="submit" class="btn-accent w-full text-center mt-2">Vytvořit účet</button>
+        </form>
+
+        <p class="text-center text-sm text-yolo-muted mt-6">
+            Už máš účet?
+            <a href="{% url 'login' %}" class="text-yolo-accent hover:underline">Přihlásit se</a>
+        </p>
+    </div>
+</section>
+{% endblock %}
