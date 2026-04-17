@@ -1,4 +1,6 @@
+import json
 import multiprocessing
+import random
 from datetime import datetime, timedelta, timezone as dt_timezone
 
 from django.conf import settings
@@ -125,15 +127,44 @@ def _attach_profile_usernames(players):
     return players
 
 
+def _pick_hero_images(count=12):
+    """Pick a list of image URLs from ImageToEvent + Event, up to `count`."""
+    urls = []
+    for img in ImageToEvent.objects.exclude(image="").filter(image__isnull=False)[:200]:
+        if img.image:
+            urls.append(img.image.url)
+    for ev in Event.objects.exclude(image="").filter(image__isnull=False)[:200]:
+        if ev.image:
+            urls.append(ev.image.url)
+    urls = list(dict.fromkeys(urls))  # de-dupe, keep order
+    random.shuffle(urls)
+    if not urls:
+        return []
+    # Repeat to ensure we have `count` tiles
+    while len(urls) < count:
+        urls.extend(urls[: count - len(urls)])
+    return urls[:count]
+
+
 def home_view(request):
     now = timezone.now()
     upcoming_events = list(
         Event.objects.filter(date__gte=now).order_by("date")[:3]
     )
     top_players = _attach_profile_usernames(_top_players(5))
+    hero_images = _pick_hero_images(24)
+
+    about_stats = {
+        "players": User.objects.count(),
+        "events": Event.objects.count(),
+        "points": UserToEvent.objects.aggregate(s=Sum("points"))["s"] or 0,
+    }
+
     return render(request, "home.html", {
         "upcoming_events": upcoming_events,
         "top_players": top_players,
+        "hero_images": hero_images,
+        "about_stats": about_stats,
     })
 
 
@@ -219,12 +250,22 @@ def user_detail_view(request, user_id):
 
 
 def events_view(request):
-    events = Event.objects.all()
+    events = list(Event.objects.all())
     today = timezone.now().date()
     for event in events:
         event.is_past = event.date.date() < today if event.date else False
-    events = sorted(events, key=lambda e: e.date, reverse=True)
-    return render(request, "events.html", {"events": events})
+    events.sort(key=lambda e: e.date, reverse=True)
+
+    city_counts = {}
+    for e in events:
+        if e.place:
+            city_counts[e.place] = city_counts.get(e.place, 0) + 1
+    cities = [{"name": name, "count": city_counts[name]} for name in sorted(city_counts)]
+
+    return render(request, "events.html", {
+        "events": events,
+        "cities": cities,
+    })
 
 
 def events_image_views(request, event_id: str):
@@ -264,6 +305,7 @@ def event_detail_view(request, slug):
         "has_rsvp": has_rsvp,
         "existing_feedback": existing_feedback,
         "images": images,
+        "images_json": json.dumps(images),
         "rsvp_count": rsvp_count,
     })
 

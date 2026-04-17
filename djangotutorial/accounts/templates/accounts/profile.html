@@ -1,11 +1,12 @@
 {% extends "base.html" %}
+{% load event_extras %}
 
-{% block title %}{{ profile_user.first_name|default:profile_user.username }} — Profil{% endblock %}
+{% block title %}{{ profile_user.first_name|default:profile_user.username }} — Profile{% endblock %}
 
 {% block content %}
 <section class="section" style="margin-top: 1rem;" x-data="{ tab: 'upcoming' }">
 
-    <div class="card" style="padding: 2rem; background: #fff; display: flex; gap: 1.5rem; align-items: center; flex-wrap: wrap;">
+    <div class="card anim-fade-up" style="padding: 2rem; background: #fff; display: flex; gap: 1.5rem; align-items: center; flex-wrap: wrap; border-top: 4px solid var(--gol-indigo-primary);">
         <span class="avatar-initial">
             {% firstof profile_user.first_name profile_user.username|slice:":1" as initial_src %}
             {{ initial_src|slice:":1"|upper }}
@@ -27,7 +28,7 @@
         {% endif %}
     </div>
 
-    <div class="grid-3" style="margin-top: 1.5rem;">
+    <div class="grid-3 anim-fade-up-delay-1" style="margin-top: 1.5rem;">
         <div class="stat-card">
             <div class="label">Celkem bodů</div>
             <div class="value">{{ total_points }}</div>
@@ -42,47 +43,77 @@
         </div>
     </div>
 
-    <div style="margin-top: 2.5rem;">
+    <div style="margin-top: 2.5rem;" class="anim-fade-up-delay-2">
         <div class="tab-row">
-            <button class="tab-button" :class="tab === 'upcoming' ? 'active' : ''" @click="tab = 'upcoming'">Nadcházející akce</button>
-            <button class="tab-button" :class="tab === 'past' ? 'active' : ''" @click="tab = 'past'">Proběhlé akce</button>
+            <button class="tab-button" :class="tab === 'upcoming' ? 'active' : ''" @click="tab = 'upcoming'">Nadcházející events</button>
+            <button class="tab-button" :class="tab === 'past' ? 'active' : ''" @click="tab = 'past'">Absolvované events</button>
         </div>
 
         <div x-show="tab === 'upcoming'" x-transition>
             {% if upcoming_rsvps %}
+                <div class="grid-auto">
                 {% for rsvp in upcoming_rsvps %}
-                    <a href="{% url 'event_detail' rsvp.event.slug %}" class="lb-row" style="text-decoration: none;">
-                        <span class="rank">📅</span>
-                        <span class="name">
-                            <strong>{{ rsvp.event.name }}</strong><br>
-                            <span style="font-size: 13px; color: var(--gol-text-muted);">
-                                {{ rsvp.event.place }} · {{ rsvp.event.date|date:"d. m. Y H:i" }}
-                            </span>
-                        </span>
-                        <span class="points">+{{ rsvp.event.points }}</span>
+                    {% with cat=rsvp.event|event_category %}
+                    <a href="{% url 'event_detail' rsvp.event.slug %}" class="card event-card evt-{{ cat }}" style="text-decoration:none; color:inherit; display:block;">
+                        <div class="card-photo"
+                             style="background-image: linear-gradient(135deg, rgba(71, 81, 133, 0.35), rgba(54, 60, 99, 0.5)), url('{% if rsvp.event.image %}{{ rsvp.event.image.url }}{% else %}https://picsum.photos/seed/event{{ rsvp.event.id }}/600/400{% endif %}'); height: 140px;">
+                            <span class="badge-evt evt-{{ cat }}" style="position: relative; z-index: 1;">{{ rsvp.event|event_category_label }}</span>
+                        </div>
+                        <div class="card-body">
+                            <h3 class="card-title">{{ rsvp.event.name }}</h3>
+                            <p class="card-meta">📍 {{ rsvp.event.place }}</p>
+                            <p class="card-meta">📅 {{ rsvp.event.date|date:"d. m. Y H:i" }}</p>
+                            <div style="margin-top: 0.6rem;">
+                                <span class="points-evt evt-{{ cat }}">+{{ rsvp.event.points }} bodů</span>
+                            </div>
+                        </div>
                     </a>
+                    {% endwith %}
                 {% endfor %}
+                </div>
             {% else %}
-                <p class="text-muted text-center" style="padding: 2rem 0;">Žádné nadcházející akce. <a href="{% url 'events' %}">Přidej se na nějakou!</a></p>
+                <p class="text-muted text-center" style="padding: 2rem 0;">
+                    Žádné nadcházející events.
+                    <a href="{% url 'events' %}" class="slide-link" style="font-weight: 600;">Přidej se na nějakou!</a>
+                </p>
             {% endif %}
         </div>
 
         <div x-show="tab === 'past'" x-transition style="display: none;">
             {% if past_events %}
+                <div class="grid-auto">
                 {% for ute in past_events %}
-                    <a href="{% url 'event_detail' ute.event.slug %}" class="lb-row" style="text-decoration: none;">
-                        <span class="rank">🏆</span>
-                        <span class="name">
-                            <strong>{{ ute.event.name }}</strong><br>
-                            <span style="font-size: 13px; color: var(--gol-text-muted);">
-                                {{ ute.event.place }} · {{ ute.event.date|date:"d. m. Y" }}
-                            </span>
-                        </span>
-                        <span class="points">+{{ ute.points }}</span>
+                    {% with cat=ute.event|event_category %}
+                    <a href="{% url 'event_detail' ute.event.slug %}" class="card event-card evt-{{ cat }}" style="text-decoration:none; color:inherit; display:block;">
+                        <div class="card-photo"
+                             style="background-image: linear-gradient(135deg, rgba(71, 81, 133, 0.35), rgba(54, 60, 99, 0.55)), url('{% if ute.event.image %}{{ ute.event.image.url }}{% else %}https://picsum.photos/seed/event{{ ute.event.id }}/600/400{% endif %}'); height: 140px;">
+                            <span class="badge-evt evt-{{ cat }}" style="position: relative; z-index: 1;">{{ ute.event|event_category_label }}</span>
+                        </div>
+                        <div class="card-body">
+                            <h3 class="card-title">{{ ute.event.name }}</h3>
+                            <p class="card-meta">📍 {{ ute.event.place }}</p>
+                            <p class="card-meta">📅 {{ ute.event.date|date:"d. m. Y" }}</p>
+                            <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 0.6rem; gap: 0.5rem; flex-wrap: wrap;">
+                                <span class="points-evt evt-{{ cat }}">+{{ ute.points }} bodů</span>
+                                {% if ute.feedback %}
+                                    <span class="stars" title="Tvůj rating: {{ ute.feedback.rating }}/5">
+                                        {% for i in "12345" %}
+                                            {% if forloop.counter <= ute.feedback.rating %}
+                                                <span class="star">★</span>
+                                            {% else %}
+                                                <span class="star off">★</span>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </span>
+                                {% endif %}
+                            </div>
+                        </div>
                     </a>
+                    {% endwith %}
                 {% endfor %}
+                </div>
             {% else %}
-                <p class="text-muted text-center" style="padding: 2rem 0;">Ještě žádné proběhlé akce.</p>
+                <p class="text-muted text-center" style="padding: 2rem 0;">Ještě žádné absolvované events.</p>
             {% endif %}
         </div>
     </div>

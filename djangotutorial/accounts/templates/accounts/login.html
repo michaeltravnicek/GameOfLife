@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 
-{% block title %}Přihlášení — Game of Yolo{% endblock %}
+{% block title %}Login — Game of Yolo{% endblock %}
 
 {% block content %}
-<div class="auth-card">
+<div class="auth-card-v2 anim-fade-up">
     <h1>Přihlášení</h1>
 
     <form method="post" novalidate>
@@ -15,14 +15,14 @@
             </div>
         {% endif %}
 
-        <div class="field-group">
-            <label for="{{ form.identifier.id_for_label }}" class="field-label">{{ form.identifier.label }}</label>
+        <div class="field-group-v2">
+            <label for="{{ form.identifier.id_for_label }}" class="field-label-modern">{{ form.identifier.label }}</label>
             {{ form.identifier }}
             {% if form.identifier.errors %}<div class="field-error">{{ form.identifier.errors|join:", " }}</div>{% endif %}
         </div>
 
-        <div class="field-group">
-            <label for="{{ form.password.id_for_label }}" class="field-label">{{ form.password.label }}</label>
+        <div class="field-group-v2">
+            <label for="{{ form.password.id_for_label }}" class="field-label-modern">{{ form.password.label }}</label>
             {{ form.password }}
             {% if form.password.errors %}<div class="field-error">{{ form.password.errors|join:", " }}</div>{% endif %}
         </div>
@@ -31,14 +31,12 @@
             <input type="hidden" name="next" value="{{ request.GET.next }}">
         {% endif %}
 
-        <button type="submit" class="btn btn-primary btn-block" style="padding: 0.85rem 1.25rem; font-size: 16px; margin-top: 0.25rem;">
-            Přihlásit se
-        </button>
+        <button type="submit" class="btn-submit-v2" style="margin-top: 0.5rem;">Přihlásit se</button>
     </form>
 
-    <p class="text-muted text-center" style="margin-top: 1.5rem; font-size: 14px;">
+    <p class="text-muted text-center" style="margin-top: 1.75rem; font-size: 14px;">
         Nemáš účet?
-        <a href="{% url 'register' %}" style="color: var(--gol-indigo-primary); font-weight: 600;">Zaregistruj se</a>
+        <a href="{% url 'register' %}" class="slide-link" style="font-weight: 600;">Začni hrát</a>
     </p>
 </div>
 {% endblock %}

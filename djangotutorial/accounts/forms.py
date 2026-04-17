@@ -11,19 +11,9 @@ from leaderboard.models import User as LeaderboardUser
 from .models import Profile
 
 
-FIELD_CLASS = "w-full px-3 py-3 rounded-md border focus:outline-none"
-FIELD_STYLE = (
-    "background-color: rgba(245, 240, 232, 1); "
-    "border-color: rgba(196, 185, 154, 1); "
-    "color: rgba(26, 26, 46, 1); "
-    "font-family: 'Inter', sans-serif; font-size: 15px;"
-)
-
-
 def _input_attrs(placeholder="", autocomplete=""):
     return {
-        "class": FIELD_CLASS,
-        "style": FIELD_STYLE,
+        "class": "field-input",
         "placeholder": placeholder,
         "autocomplete": autocomplete,
     }

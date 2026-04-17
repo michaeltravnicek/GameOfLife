@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 
-{% block title %}Registrace — Game of Yolo{% endblock %}
+{% block title %}Start Playing — Game of Yolo{% endblock %}
 
 {% block content %}
-<div class="auth-card">
-    <h1>Registrace</h1>
+<div class="auth-card-v2 anim-fade-up">
+    <h1>Začni hrát</h1>
 
     <form method="post" novalidate>
         {% csrf_token %}
@@ -15,46 +15,44 @@
             </div>
         {% endif %}
 
-        <div class="field-group">
-            <label for="{{ form.first_name.id_for_label }}" class="field-label">{{ form.first_name.label }}</label>
+        <div class="field-group-v2">
+            <label for="{{ form.first_name.id_for_label }}" class="field-label-modern">{{ form.first_name.label }}</label>
             {{ form.first_name }}
             {% if form.first_name.errors %}<div class="field-error">{{ form.first_name.errors|join:", " }}</div>{% endif %}
         </div>
 
-        <div class="field-group">
-            <label for="{{ form.email.id_for_label }}" class="field-label">{{ form.email.label }}</label>
+        <div class="field-group-v2">
+            <label for="{{ form.email.id_for_label }}" class="field-label-modern">{{ form.email.label }}</label>
             {{ form.email }}
             {% if form.email.errors %}<div class="field-error">{{ form.email.errors|join:", " }}</div>{% endif %}
         </div>
 
-        <div class="field-group">
-            <label for="{{ form.phone.id_for_label }}" class="field-label">{{ form.phone.label }}</label>
+        <div class="field-group-v2">
+            <label for="{{ form.phone.id_for_label }}" class="field-label-modern">{{ form.phone.label }}</label>
             {{ form.phone }}
             {% if form.phone.help_text %}<div class="field-help">{{ form.phone.help_text }}</div>{% endif %}
             {% if form.phone.errors %}<div class="field-error">{{ form.phone.errors|join:", " }}</div>{% endif %}
         </div>
 
-        <div class="field-group">
-            <label for="{{ form.password1.id_for_label }}" class="field-label">{{ form.password1.label }}</label>
+        <div class="field-group-v2">
+            <label for="{{ form.password1.id_for_label }}" class="field-label-modern">{{ form.password1.label }}</label>
             {{ form.password1 }}
             {% if form.password1.help_text %}<div class="field-help">{{ form.password1.help_text|safe }}</div>{% endif %}
             {% if form.password1.errors %}<div class="field-error">{{ form.password1.errors|join:", " }}</div>{% endif %}
         </div>
 
-        <div class="field-group">
-            <label for="{{ form.password2.id_for_label }}" class="field-label">{{ form.password2.label }}</label>
+        <div class="field-group-v2">
+            <label for="{{ form.password2.id_for_label }}" class="field-label-modern">{{ form.password2.label }}</label>
             {{ form.password2 }}
             {% if form.password2.errors %}<div class="field-error">{{ form.password2.errors|join:", " }}</div>{% endif %}
         </div>
 
-        <button type="submit" class="btn btn-primary btn-block" style="padding: 0.85rem 1.25rem; font-size: 16px; margin-top: 0.25rem;">
-            Vytvořit účet
-        </button>
+        <button type="submit" class="btn-submit-v2" style="margin-top: 0.5rem;">Vytvořit účet</button>
     </form>
 
-    <p class="text-muted text-center" style="margin-top: 1.5rem; font-size: 14px;">
+    <p class="text-muted text-center" style="margin-top: 1.75rem; font-size: 14px;">
         Už máš účet?
-        <a href="{% url 'login' %}" style="color: var(--gol-indigo-primary); font-weight: 600;">Přihlaš se</a>
+        <a href="{% url 'login' %}" class="slide-link" style="font-weight: 600;">Přihlas se</a>
     </p>
 </div>
 {% endblock %}

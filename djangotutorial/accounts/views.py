@@ -7,7 +7,7 @@ from django.http import HttpResponseNotAllowed
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_http_methods
 
-from leaderboard.models import UserToEvent
+from leaderboard.models import EventFeedback, UserToEvent
 
 from .forms import CustomUserCreationForm, PhoneOrUsernameLoginForm
 
@@ -74,11 +74,22 @@ def public_profile_view(request, username):
         )
         total_points = agg["total_points"] or 0
         total_events = agg["total_events"] or 0
-        past_events = (
+        past_events_qs = (
             UserToEvent.objects.filter(user=lb_user)
             .select_related("event")
             .order_by("-event__date")[:20]
         )
+        feedback_map = {
+            fb.event_id: fb
+            for fb in EventFeedback.objects.filter(
+                auth_user=profile_user,
+                event__in=[ute.event_id for ute in past_events_qs],
+            )
+        }
+        past_events = []
+        for ute in past_events_qs:
+            ute.feedback = feedback_map.get(ute.event_id)
+            past_events.append(ute)
 
     upcoming_rsvps = (
         profile_user.rsvps.select_related("event").order_by("event__date")

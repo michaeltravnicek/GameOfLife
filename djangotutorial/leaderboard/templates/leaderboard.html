@@ -1,17 +1,25 @@
 {% extends "base.html" %}
 
-{% block title %}Žebříček — Game of Yolo{% endblock %}
+{% block title %}Leaderboard — Game of Yolo{% endblock %}
 
 {% block content %}
 <section class="section" style="margin-top: 1.5rem;">
     <div id="leaderboard"
+         class="lb-stage"
          data-last-update="{{ last_update_ts }}"
          data-month-start="{{ month_start_ts }}">
 
-        <div class="section-eyebrow">Ranking</div>
-        <h1 class="section-title">Žebříček</h1>
+        <span class="lb-sparkle"       style="top: 6%;  left: 5%;">✦</span>
+        <span class="lb-sparkle pink"  style="top: 12%; right: 8%; font-size: 28px;">✦</span>
+        <span class="lb-sparkle green" style="top: 48%; left: 2%;  font-size: 18px;">✦</span>
+        <span class="lb-sparkle"       style="bottom: 10%; right: 4%; font-size: 30px;">✦</span>
+        <span class="lb-sparkle pink"  style="bottom: 30%; left: 12%;">✦</span>
+        <span class="lb-sparkle"       style="top: 70%; right: 20%; font-size: 16px;">✦</span>
 
-        <div style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.5rem;">
+        <div class="section-eyebrow">Ranking</div>
+        <h1 class="section-title">Leaderboard</h1>
+
+        <div style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.5rem; position: relative; z-index: 2;">
             <div class="tab-row">
                 <button class="tab-button active" onclick="openTab(event, 'total')">Celkem</button>
                 <button class="tab-button" onclick="openTab(event, 'month')">Tento rok</button>
@@ -25,43 +33,43 @@
             </div>
         </div>
 
-        <div id="total" class="tab-content" style="display: block;">
+        <div id="total" class="tab-content" style="display: block; position: relative; z-index: 1;">
             {% for user in leaderboard_total %}
                 {% if user.profile_username %}
-                    <a href="{% url 'profile' user.profile_username %}" class="lb-row {% if user.rank == 1 %}lb-row-first{% elif user.rank <= 3 %}lb-row-podium{% endif %}" data-user-id="{{ user.id }}">
+                    <a href="{% url 'profile' user.profile_username %}" class="lb-row {% if user.rank == 1 %}lb-row-first anim-glow{% elif user.rank <= 3 %}lb-row-podium{% endif %}" data-user-id="{{ user.id }}">
                         <span class="rank user-rank">#{{ user.rank }}</span>
                         <span class="name user-name">{{ user.name }}</span>
                         <span class="points">{{ user.total_points|default:0 }} bodů</span>
                     </a>
                 {% else %}
-                    <div class="lb-row {% if user.rank == 1 %}lb-row-first{% elif user.rank <= 3 %}lb-row-podium{% endif %}" style="cursor: pointer;" data-user-id="{{ user.id }}" onclick="loadUser('{{ user.id|escapejs }}')">
+                    <div class="lb-row {% if user.rank == 1 %}lb-row-first anim-glow{% elif user.rank <= 3 %}lb-row-podium{% endif %}" style="cursor: pointer;" data-user-id="{{ user.id }}" onclick="loadUser('{{ user.id|escapejs }}')">
                         <span class="rank user-rank">#{{ user.rank }}</span>
                         <span class="name user-name">{{ user.name }}</span>
                         <span class="points">{{ user.total_points|default:0 }} bodů</span>
                     </div>
                 {% endif %}
             {% empty %}
-                <p class="text-muted">Žebříček je zatím prázdný.</p>
+                <p class="text-muted">Leaderboard je zatím prázdný.</p>
             {% endfor %}
         </div>
 
-        <div id="month" class="tab-content" style="display: none;">
+        <div id="month" class="tab-content" style="display: none; position: relative; z-index: 1;">
             {% for user in leaderboard_month %}
                 {% if user.profile_username %}
-                    <a href="{% url 'profile' user.profile_username %}" class="lb-row {% if user.rank == 1 %}lb-row-first{% elif user.rank <= 3 %}lb-row-podium{% endif %}">
+                    <a href="{% url 'profile' user.profile_username %}" class="lb-row {% if user.rank == 1 %}lb-row-first anim-glow{% elif user.rank <= 3 %}lb-row-podium{% endif %}">
                         <span class="rank user-rank">#{{ user.rank }}</span>
                         <span class="name user-name">{{ user.name }}</span>
                         <span class="points">{{ user.total_points|default:0 }} bodů</span>
                     </a>
                 {% else %}
-                    <div class="lb-row {% if user.rank == 1 %}lb-row-first{% elif user.rank <= 3 %}lb-row-podium{% endif %}" style="cursor: pointer;" onclick="loadUser('{{ user.id|escapejs }}', 'month')">
+                    <div class="lb-row {% if user.rank == 1 %}lb-row-first anim-glow{% elif user.rank <= 3 %}lb-row-podium{% endif %}" style="cursor: pointer;" onclick="loadUser('{{ user.id|escapejs }}', 'month')">
                         <span class="rank user-rank">#{{ user.rank }}</span>
                         <span class="name user-name">{{ user.name }}</span>
                         <span class="points">{{ user.total_points|default:0 }} bodů</span>
                     </div>
                 {% endif %}
             {% empty %}
-                <p class="text-muted">Žebříček je zatím prázdný.</p>
+                <p class="text-muted">Leaderboard je zatím prázdný.</p>
             {% endfor %}
         </div>
     </div>
