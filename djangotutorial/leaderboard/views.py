@@ -55,7 +55,7 @@ def leaderboard_total():
         User.objects
         .annotate(
             events_count=Count("usertoevent", distinct=True),
-            total_points=Sum("usertoevent__points"),
+            total_points=Coalesce(Sum("usertoevent__points"), 0),
         )
         .order_by("-total_points")
     )
@@ -89,6 +89,7 @@ def create_leaderboard(leaderboard):
     previous_points = None
     rank = 0
     for i, user in enumerate(leaderboard_list, start=1):
+        
         if user.total_points == previous_points:
             user.rank = rank
         else:
