@@ -162,3 +162,53 @@ class CustomUserCreationForm(UserCreationForm):
             )
         Profile.objects.create(user=user, leaderboard_user=lb_user)
         return user
+
+
+class ProfileEditForm(forms.Form):
+    photo = forms.ImageField(
+        label="Profilová fotka",
+        required=False,
+        widget=forms.FileInput(attrs={"class": "field-input", "accept": "image/*"}),
+    )
+    instagram = forms.CharField(
+        label="Instagram",
+        max_length=255,
+        required=False,
+        widget=forms.TextInput(attrs=_input_attrs("@tvoj_instagram", "url")),
+    )
+
+    def __init__(self, *args, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.user = user
+        if user:
+            from leaderboard.models import ProfileQuestion
+            for question in ProfileQuestion.objects.all():
+                field_name = f"question_{question.id}"
+                self.fields[field_name] = forms.CharField(
+                    label=question.text,
+                    required=False,
+                    widget=forms.Textarea(attrs={
+                        "class": "field-input",
+                        "rows": "3",
+                        "placeholder": "Tvá odpověď...",
+                    }),
+                )
+
+    def save(self):
+        if not self.user:
+            return
+        profile, _ = Profile.objects.get_or_create(user=self.user)
+        if "photo" in self.cleaned_data and self.cleaned_data["photo"]:
+            profile.photo = self.cleaned_data["photo"]
+        profile.instagram = self.cleaned_data.get("instagram", "")
+        profile.save()
+
+        from leaderboard.models import ProfileQuestion, ProfileAnswer
+        for question in ProfileQuestion.objects.all():
+            field_name = f"question_{question.id}"
+            answer_text = self.cleaned_data.get(field_name, "")
+            ProfileAnswer.objects.update_or_create(
+                auth_user=self.user,
+                question=question,
+                defaults={"answer": answer_text},
+            )

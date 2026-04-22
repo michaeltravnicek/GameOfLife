@@ -17,6 +17,7 @@ urlpatterns = [
     path("events/<slug:slug>/rsvp/", views.event_rsvp_view, name="event_rsvp"),
     path("events/<slug:slug>/feedback/", views.event_feedback_view, name="event_feedback"),
     path("leaderboard/", views.leaderboard_view, name="leaderboard"),
+    path("o-bodech/", views.about_points_view, name="about_points"),
 
     # Auth (mounted at root so /prihlasit/, /registrace/, /profil/<username>/ work)
     path("", include("accounts.urls")),

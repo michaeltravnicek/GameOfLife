@@ -1,4 +1,5 @@
 {% load static %}
+{% load event_extras %}
 <!DOCTYPE html>
 <html lang="cs">
 <head>
@@ -15,6 +16,8 @@
     {% block extra_head %}{% endblock %}
 </head>
 <body>
+
+<div class="global-sparkles" id="globalSparkles"></div>
 
 <nav class="gol-nav" x-data="{ open: false }">
     <div class="gol-nav-inner">
@@ -63,13 +66,18 @@
     </div>
 </nav>
 
-<main class="container-gol">
-    {% if messages %}
-        {% for message in messages %}
-            <div class="gol-message">{{ message }}</div>
-        {% endfor %}
-    {% endif %}
+<div class="gol-notification-bar"
+     x-data="notificationBar()"
+     x-show="showNotification"
+     x-transition
+     style="display: none;">
+    <div class="gol-notification-inner">
+        <span x-text="currentMessage"></span>
+        <button @click="closeNotification()" aria-label="Zavřít" style="background: none; border: none; font-size: 20px; cursor: pointer; color: inherit; padding: 0; margin-left: 1rem;">×</button>
+    </div>
+</div>
 
+<main class="container-gol">
     {% block content %}{% endblock %}
 </main>
 
@@ -98,7 +106,41 @@
     </div>
 </footer>
 
+<script>
+function notificationBar() {
+    const msgs = document.querySelector('[data-messages]');
+    const messageList = msgs ? JSON.parse(msgs.dataset.messages) : [];
+    return {
+        showNotification: false,
+        currentMessage: '',
+        timeoutId: null,
+        messages: Array.from(messageList),
+        init() {
+            if (this.messages.length > 0) {
+                this.showNext();
+            }
+        },
+        showNext() {
+            if (this.messages.length === 0) return;
+            this.currentMessage = this.messages.shift();
+            this.showNotification = true;
+            if (this.timeoutId) clearTimeout(this.timeoutId);
+            this.timeoutId = setTimeout(() => {
+                this.closeNotification();
+            }, 5000);
+        },
+        closeNotification() {
+            this.showNotification = false;
+            if (this.timeoutId) clearTimeout(this.timeoutId);
+            if (this.messages.length > 0) {
+                setTimeout(() => this.showNext(), 300);
+            }
+        }
+    };
+}
+</script>
 <script src="{% static 'leaderboard/script.js' %}"></script>
 {% block extra_js %}{% endblock %}
+<div data-messages='{% if messages %}{{ messages|as_json }}{% else %}[]{% endif %}'></div>
 </body>
 </html>

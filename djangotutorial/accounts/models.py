@@ -17,6 +17,8 @@ class Profile(models.Model):
         null=True,
         blank=True,
     )
+    photo = models.ImageField(upload_to="profile_photos/", blank=True, null=True)
+    instagram = models.CharField(max_length=255, blank=True, default="")
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -27,3 +29,9 @@ class Profile(models.Model):
         if self.leaderboard_user_id is None:
             return None
         return self.leaderboard_user.number
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if self.photo:
+            from leaderboard.image_utils import resize_image
+            resize_image(self.photo, max_width=400, max_height=400, quality=85)

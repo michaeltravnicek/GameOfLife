@@ -37,9 +37,26 @@ MEDIA_ROOT = os.getenv("MEDIA_ROOT", BASE_DIR / "media")
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True #True # if MODE == "PRODUCTION" else False
+DEBUG = True # if MODE == "PRODUCTION" else False
 ALLOWED_HOSTS = ["*"]
-SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+# Only trust the SSL proxy header in production (behind a real proxy).
+# In local dev with DEBUG=True, trusting this header causes Django to
+# mis-detect HTTPS and mark CSRF cookies as Secure, which breaks forms over HTTP.
+if not DEBUG:
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+# CSRF trusted origins for local dev + any hosted domains.
+# Django 4+ requires this for POST from origins not matching the Host header.
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+    "http://localhost",
+    "http://127.0.0.1",
+]
+_prod_origin = os.getenv("CSRF_TRUSTED_ORIGIN")
+if _prod_origin:
+    CSRF_TRUSTED_ORIGINS.append(_prod_origin)
 
 # Application definition
 
@@ -154,3 +171,17 @@ WHITENOISE_AUTOREFRESH = True
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Email (password reset)
+# In DEBUG: default to console backend so emails print to terminal.
+# In PROD: set EMAIL_BACKEND and EMAIL_HOST_USER/PASSWORD env vars to use SMTP.
+if DEBUG:
+    EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend")
+else:
+    EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend")
+EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
+EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "Game of Yolo <noreply@gameofyolo.cz>")

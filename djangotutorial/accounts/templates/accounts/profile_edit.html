@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% load event_extras %}
+
+{% block title %}Upravit profil — Game of Yolo{% endblock %}
+
+{% block content %}
+<section class="section" style="margin-top: 1.5rem; max-width: 720px; margin-left: auto; margin-right: auto;">
+    <div class="card anim-fade-up" style="padding: 3rem 2rem; background: #fff; border-top: 4px solid var(--gol-indigo-primary);">
+        <h1 style="font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 32px; margin: 0 0 0.5rem; color: var(--gol-indigo-primary);">
+            Upravit profil
+        </h1>
+        <p class="text-muted" style="margin: 0 0 2rem;">Doplň si své informace.</p>
+
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <!-- Photo upload -->
+            <div style="margin-bottom: 1.5rem;">
+                <label style="font-family: 'Inter', sans-serif; font-weight: 500; font-size: 11px; text-transform: uppercase; color: var(--gol-text-muted); display: block; margin-bottom: 0.5rem; letter-spacing: 0.5px;">
+                    {{ form.photo.label }}
+                </label>
+                {% if form.photo %}
+                    {{ form.photo }}
+                {% endif %}
+                {% if form.photo.errors %}
+                    <p style="color: #d32f2f; font-size: 13px; margin-top: 0.5rem;">{{ form.photo.errors }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Instagram field -->
+            <div style="margin-bottom: 1.5rem;">
+                <label style="font-family: 'Inter', sans-serif; font-weight: 500; font-size: 11px; text-transform: uppercase; color: var(--gol-text-muted); display: block; margin-bottom: 0.5rem; letter-spacing: 0.5px;">
+                    {{ form.instagram.label }}
+                </label>
+                {{ form.instagram }}
+                {% if form.instagram.errors %}
+                    <p style="color: #d32f2f; font-size: 13px; margin-top: 0.5rem;">{{ form.instagram.errors }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Profile questions -->
+            {% for field in form %}
+                {% if field.name|startswith:'question_' %}
+                    <div style="margin-bottom: 1.5rem;">
+                        <label style="font-family: 'Inter', sans-serif; font-weight: 500; font-size: 11px; text-transform: uppercase; color: var(--gol-text-muted); display: block; margin-bottom: 0.5rem; letter-spacing: 0.5px;">
+                            {{ field.label }}
+                        </label>
+                        {{ field }}
+                        {% if field.errors %}
+                            <p style="color: #d32f2f; font-size: 13px; margin-top: 0.5rem;">{{ field.errors }}</p>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            {% endfor %}
+
+            <!-- Buttons -->
+            <div style="display: flex; gap: 1rem; margin-top: 2.5rem; flex-wrap: wrap;">
+                <button type="submit" class="btn btn-primary" style="flex: 1; min-width: 160px;">Uložit změny</button>
+                <a href="{% url 'profile' request.user.username %}" class="btn btn-ghost" style="flex: 1; min-width: 160px; text-align: center; text-decoration: none;">Zrušit</a>
+            </div>
+        </form>
+    </div>
+</section>
+{% endblock %}

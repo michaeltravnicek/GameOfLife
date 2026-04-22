@@ -8,8 +8,15 @@
          data-last-update="{{ last_update_ts }}"
          data-month-start="{{ month_start_ts }}">
 
-        <div class="section-eyebrow">Ranking</div>
-        <h1 class="section-title">Leaderboard</h1>
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem;">
+            <div>
+                <div class="section-eyebrow">Ranking</div>
+                <h1 class="section-title" style="margin: 0;">Leaderboard</h1>
+            </div>
+            <a href="{% url 'about_points' %}" class="btn btn-ghost lb-info-tab">
+                Co jsou to body?
+            </a>
+        </div>
 
         <div style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.5rem; position: relative; z-index: 2;">
             <div class="tab-row">

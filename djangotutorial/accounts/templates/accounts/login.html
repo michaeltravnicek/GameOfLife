@@ -23,7 +23,12 @@
 
         <div class="field-group-v2">
             <label for="{{ form.password.id_for_label }}" class="field-label-modern">{{ form.password.label }}</label>
-            {{ form.password }}
+            <div class="pw-wrap">
+                {{ form.password }}
+                <button type="button" class="pw-toggle" onclick="togglePassword(this)" aria-label="Zobrazit heslo">
+                    <span class="pw-eye">👁</span>
+                </button>
+            </div>
             {% if form.password.errors %}<div class="field-error">{{ form.password.errors|join:", " }}</div>{% endif %}
         </div>
 
@@ -34,7 +39,10 @@
         <button type="submit" class="btn-submit-v2" style="margin-top: 0.5rem;">Přihlásit se</button>
     </form>
 
-    <p class="text-muted text-center" style="margin-top: 1.75rem; font-size: 14px;">
+    <p class="text-muted text-center" style="margin-top: 1.25rem; font-size: 14px;">
+        <a href="{% url 'password_reset' %}" class="slide-link">Zapomenuté heslo?</a>
+    </p>
+    <p class="text-muted text-center" style="margin-top: 0.75rem; font-size: 14px;">
         Nemáš účet?
         <a href="{% url 'register' %}" class="slide-link" style="font-weight: 600;">Začni hrát</a>
     </p>

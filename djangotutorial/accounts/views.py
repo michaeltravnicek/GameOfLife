@@ -7,9 +7,10 @@ from django.http import HttpResponseNotAllowed
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_http_methods
 
-from leaderboard.models import EventFeedback, UserToEvent
+from leaderboard.models import EventFeedback, UserToEvent, ProfileAnswer
 
-from .forms import CustomUserCreationForm, PhoneOrUsernameLoginForm
+from .forms import CustomUserCreationForm, PhoneOrUsernameLoginForm, ProfileEditForm
+from .models import Profile
 
 
 @require_http_methods(["GET", "POST"])
@@ -96,13 +97,32 @@ def public_profile_view(request, username):
         if profile else []
     )
 
+    profile_answers = {}
+    if profile:
+        from django.utils import timezone as tz
+        from leaderboard.models import ProfileQuestion
+        profile_answers = {
+            pa.question_id: pa
+            for pa in ProfileAnswer.objects.filter(auth_user=profile_user)
+            .select_related("question")
+        }
+        # Attach question objects to each answer so template can access question.text
+        questions_with_answers = [
+            {"question": q, "answer": profile_answers.get(q.id)}
+            for q in ProfileQuestion.objects.all()
+            if q.id in profile_answers and profile_answers[q.id].answer
+        ]
+        upcoming_rsvps = [rsvp for rsvp in upcoming_rsvps if rsvp.event.date >= tz.now()]
+
     context = {
         "profile_user": profile_user,
+        "profile": profile,
         "is_own_profile": request.user == profile_user,
         "total_points": total_points,
         "total_events": total_events,
         "upcoming_rsvps": upcoming_rsvps,
         "past_events": past_events,
+        "questions_with_answers": questions_with_answers if profile else [],
     }
     return render(request, "accounts/profile.html", context)
 
@@ -110,3 +130,28 @@ def public_profile_view(request, username):
 @login_required
 def my_profile_redirect(request):
     return redirect("profile", username=request.user.username)
+
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def profile_edit_view(request):
+    # Auto-create Profile for users created outside the registration form
+    # (e.g., superusers, legacy accounts from before the Profile model existed).
+    profile, _ = Profile.objects.get_or_create(user=request.user)
+
+    if request.method == "POST":
+        form = ProfileEditForm(request.POST, request.FILES, user=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Profil aktualizován!")
+            return redirect("profile", username=request.user.username)
+    else:
+        initial = {
+            "instagram": profile.instagram,
+        }
+        from leaderboard.models import ProfileAnswer
+        for answer in ProfileAnswer.objects.filter(auth_user=request.user):
+            initial[f"question_{answer.question_id}"] = answer.answer
+        form = ProfileEditForm(initial=initial, user=request.user)
+
+    return render(request, "accounts/profile_edit.html", {"form": form})

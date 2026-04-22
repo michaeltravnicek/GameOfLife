@@ -1,5 +1,4 @@
 import json
-import multiprocessing
 import random
 from datetime import datetime, timedelta, timezone as dt_timezone
 
@@ -7,7 +6,6 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.cache import cache
-from django.db import connections
 from django.db.models import Count, F, Q, Sum
 from django.db.models.functions import Coalesce
 from django.http import HttpResponseNotAllowed, JsonResponse
@@ -24,13 +22,20 @@ from .models import (
     User,
     UserToEvent,
 )
-from .tasks import main
 
 
 MINUTES = 5
 CACHE_KEY = "leaderboard_data"
 CACHE_TTL = MINUTES * 60
 CACHE_KEY_MONTH = "leaderboard_data_month"
+
+# RAM optimization: cache heavy queries
+CACHE_KEY_HERO_IMAGES = "home_hero_images"
+CACHE_TTL_HERO_IMAGES = 60 * 60  # 1 hour — images rarely change
+CACHE_KEY_HOME_CONTEXT = "home_context"
+CACHE_TTL_HOME_CONTEXT = 5 * 60  # 5 min — stats/upcoming
+CACHE_KEY_EVENTS_LIST = "events_list"
+CACHE_TTL_EVENTS_LIST = 5 * 60
 
 MONTH_DAYS = None
 YEAR_DAYS = None
@@ -129,43 +134,71 @@ def _attach_profile_usernames(players):
 
 
 def _pick_hero_images(count=12):
-    """Pick a list of image URLs from ImageToEvent + Event, up to `count`."""
-    urls = []
-    for img in ImageToEvent.objects.exclude(image="").filter(image__isnull=False)[:200]:
-        if img.image:
-            urls.append(img.image.url)
-    for ev in Event.objects.exclude(image="").filter(image__isnull=False)[:200]:
-        if ev.image:
-            urls.append(ev.image.url)
-    urls = list(dict.fromkeys(urls))  # de-dupe, keep order
-    random.shuffle(urls)
+    """Pick a list of image URLs from ImageToEvent + Event, up to `count`.
+
+    Cached for 1 hour — images rarely change, and querying 400 rows on every
+    homepage load was a significant hot spot.
+    """
+    cached = cache.get(CACHE_KEY_HERO_IMAGES)
+    if cached is not None:
+        urls = list(cached)
+    else:
+        # Use values_list to avoid loading full model instances into memory
+        img_paths = list(
+            ImageToEvent.objects
+            .exclude(image="")
+            .filter(image__isnull=False)
+            .values_list("image", flat=True)[:100]
+        )
+        ev_paths = list(
+            Event.objects
+            .exclude(image="")
+            .filter(image__isnull=False)
+            .values_list("image", flat=True)[:100]
+        )
+        media_url = settings.MEDIA_URL
+        urls = [f"{media_url}{p}" for p in img_paths if p]
+        urls.extend(f"{media_url}{p}" for p in ev_paths if p)
+        urls = list(dict.fromkeys(urls))  # de-dupe
+        cache.set(CACHE_KEY_HERO_IMAGES, urls, CACHE_TTL_HERO_IMAGES)
+
     if not urls:
         return []
-    # Repeat to ensure we have `count` tiles
+    random.shuffle(urls)
     while len(urls) < count:
         urls.extend(urls[: count - len(urls)])
     return urls[:count]
 
 
 def home_view(request):
-    now = timezone.now()
-    upcoming_events = list(
-        Event.objects.filter(date__gte=now).order_by("date")[:3]
-    )
-    top_players = _attach_profile_usernames(_top_players(5))
+    # Cache the expensive context (stats, top_players, upcoming events) for 5 min
+    cached = cache.get(CACHE_KEY_HOME_CONTEXT)
+    if cached is None:
+        now = timezone.now()
+        upcoming_events = list(
+            Event.objects.filter(date__gte=now).order_by("date")[:3]
+        )
+        top_players = _attach_profile_usernames(_top_players(5))
+        about_stats = {
+            "players": User.objects.count(),
+            "events": Event.objects.count(),
+            "points": UserToEvent.objects.aggregate(s=Sum("points"))["s"] or 0,
+        }
+        cached = {
+            "upcoming_events": upcoming_events,
+            "top_players": top_players,
+            "about_stats": about_stats,
+        }
+        cache.set(CACHE_KEY_HOME_CONTEXT, cached, CACHE_TTL_HOME_CONTEXT)
+
+    # Hero images cached separately (1 hour) — shuffled fresh each request
     hero_images = _pick_hero_images(24)
 
-    about_stats = {
-        "players": User.objects.count(),
-        "events": Event.objects.count(),
-        "points": UserToEvent.objects.aggregate(s=Sum("points"))["s"] or 0,
-    }
-
     return render(request, "home.html", {
-        "upcoming_events": upcoming_events,
-        "top_players": top_players,
+        "upcoming_events": cached["upcoming_events"],
+        "top_players": cached["top_players"],
         "hero_images": hero_images,
-        "about_stats": about_stats,
+        "about_stats": cached["about_stats"],
     })
 
 
@@ -174,30 +207,6 @@ def leaderboard_view(request):
     leaderboard_list_m = cache.get(CACHE_KEY_MONTH)
 
     if leaderboard_list_t is None:
-        last_update_obj = LastUpdate.objects.all().first()
-        if last_update_obj is None:
-            last_update_obj = LastUpdate.objects.create(
-                last_update=datetime.fromtimestamp(0, tz=dt_timezone.utc),
-                last_complete_update=None,
-            )
-
-        now = timezone.now()
-        run_all = (
-            now.hour < last_update_obj.last_update.hour
-            or last_update_obj.last_complete_update is None
-        )
-
-        if now - last_update_obj.last_update > timedelta(minutes=MINUTES):
-            for conn in connections.all():
-                conn.close()
-            p = multiprocessing.Process(target=main, args=(run_all,))
-            p.start()
-            last_update_obj.last_update = now
-            if run_all:
-                last_update_obj.last_complete_update = now
-            last_update_obj.save()
-            p.join()
-
         leaderboard_list_t = create_leaderboard(leaderboard_total())
         cache.set(CACHE_KEY, leaderboard_list_t, CACHE_TTL)
 
@@ -250,23 +259,28 @@ def user_detail_view(request, user_id):
     return JsonResponse({"user_name": user.name, "actions": list(actions)})
 
 
+def about_points_view(request):
+    return render(request, "about_points.html")
+
+
 def events_view(request):
-    events = list(Event.objects.all())
-    today = timezone.now().date()
-    for event in events:
-        event.is_past = event.date.date() < today if event.date else False
-    events.sort(key=lambda e: e.date, reverse=True)
+    cached = cache.get(CACHE_KEY_EVENTS_LIST)
+    if cached is None:
+        events = list(Event.objects.all().order_by("-date"))
+        today = timezone.now().date()
+        for event in events:
+            event.is_past = event.date.date() < today if event.date else False
 
-    city_counts = {}
-    for e in events:
-        if e.place:
-            city_counts[e.place] = city_counts.get(e.place, 0) + 1
-    cities = [{"name": name, "count": city_counts[name]} for name in sorted(city_counts)]
+        city_counts = {}
+        for e in events:
+            if e.place:
+                city_counts[e.place] = city_counts.get(e.place, 0) + 1
+        cities = [{"name": name, "count": city_counts[name]} for name in sorted(city_counts)]
 
-    return render(request, "events.html", {
-        "events": events,
-        "cities": cities,
-    })
+        cached = {"events": events, "cities": cities}
+        cache.set(CACHE_KEY_EVENTS_LIST, cached, CACHE_TTL_EVENTS_LIST)
+
+    return render(request, "events.html", cached)
 
 
 def events_image_views(request, event_id: str):
@@ -299,6 +313,7 @@ def event_detail_view(request, slug):
     ]
 
     rsvp_count = EventRSVP.objects.filter(event=event).count()
+    is_full = event.capacity is not None and rsvp_count >= event.capacity
 
     return render(request, "event_detail.html", {
         "event": event,
@@ -308,6 +323,7 @@ def event_detail_view(request, slug):
         "images": images,
         "images_json": json.dumps(images),
         "rsvp_count": rsvp_count,
+        "is_full": is_full,
     })
 
 
@@ -320,8 +336,12 @@ def event_rsvp_view(request, slug):
         rsvp.delete()
         messages.info(request, f"Odhlášeno z akce {event.name}.")
     else:
-        EventRSVP.objects.create(auth_user=request.user, event=event)
-        messages.success(request, f"Přihlášeno na akci {event.name}.")
+        rsvp_count = EventRSVP.objects.filter(event=event).count()
+        if event.capacity is not None and rsvp_count >= event.capacity:
+            messages.error(request, f"Akce {event.name} je plně obsazena.")
+        else:
+            EventRSVP.objects.create(auth_user=request.user, event=event)
+            messages.success(request, f"Přihlášeno na akci {event.name}.")
     return redirect("event_detail", slug=slug)
 
 

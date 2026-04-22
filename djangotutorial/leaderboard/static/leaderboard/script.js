@@ -152,3 +152,45 @@ document.addEventListener("DOMContentLoaded", function () {
     window.addEventListener("click", (e) => { if (e.target === modal) modal.classList.remove("show"); });
     window.addEventListener("keydown", (e) => { if (e.key === "Escape") modal.classList.remove("show"); });
 });
+
+function togglePassword(btn) {
+    const wrap = btn.closest('.pw-wrap');
+    if (!wrap) return;
+    const input = wrap.querySelector('input');
+    const eye = btn.querySelector('.pw-eye');
+    if (!input) return;
+    if (input.type === 'password') {
+        input.type = 'text';
+        if (eye) eye.textContent = '🙈';
+        btn.setAttribute('aria-label', 'Skrýt heslo');
+    } else {
+        input.type = 'password';
+        if (eye) eye.textContent = '👁';
+        btn.setAttribute('aria-label', 'Zobrazit heslo');
+    }
+}
+
+function initializeRandomSparkles() {
+    const container = document.getElementById('globalSparkles');
+    if (!container) return;
+
+    const sparkleCount = 9;
+    for (let i = 0; i < sparkleCount; i++) {
+        const sparkle = document.createElement('span');
+        sparkle.className = 'g-sparkle';
+        sparkle.textContent = '✨';
+
+        const top = Math.random() * 100;
+        const left = Math.random() * 100;
+        const duration = 3.5 + Math.random() * 2.3;
+        const delay = -(Math.random() * 6);
+
+        sparkle.style.top = top + '%';
+        sparkle.style.left = left + '%';
+        sparkle.style.animation = `gTwinkle ${duration}s ease-in-out ${delay}s infinite`;
+
+        container.appendChild(sparkle);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', initializeRandomSparkles);

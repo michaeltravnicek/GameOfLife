@@ -6,26 +6,67 @@
 {% block content %}
 <section class="section" style="margin-top: 1rem;" x-data="{ tab: 'upcoming' }">
 
-    <div class="card anim-fade-up" style="padding: 2rem; background: #fff; display: flex; gap: 1.5rem; align-items: center; flex-wrap: wrap; border-top: 4px solid var(--gol-indigo-primary);">
-        <span class="avatar-initial">
-            {% firstof profile_user.first_name profile_user.username|slice:":1" as initial_src %}
-            {{ initial_src|slice:":1"|upper }}
-        </span>
-        <div style="flex: 1; min-width: 200px;">
-            <h1 style="font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 32px; margin: 0 0 0.3rem; color: var(--gol-text-dark);">
+    <!-- Top: name + actions (no email shown) -->
+    <div class="card anim-fade-up" style="padding: 1.5rem 2rem; background: #fff; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; border-top: 4px solid var(--gol-indigo-primary);">
+        <div>
+            <h1 style="font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 32px; margin: 0; color: var(--gol-text-dark);">
                 {{ profile_user.first_name|default:profile_user.username }}
+                {% if is_own_profile %}<span class="badge badge-indigo" style="margin-left: 0.5rem; vertical-align: middle; font-size: 12px;">Tvůj profil</span>{% endif %}
             </h1>
-            <p class="text-muted" style="margin: 0; font-size: 14px;">
-                @{{ profile_user.username }}
-                {% if is_own_profile %}<span class="badge badge-indigo" style="margin-left: 0.5rem;">Tvůj profil</span>{% endif %}
-            </p>
         </div>
         {% if is_own_profile %}
-        <form method="post" action="{% url 'logout' %}" style="margin: 0;">
-            {% csrf_token %}
-            <button type="submit" class="btn btn-ghost">Odhlásit se</button>
-        </form>
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <a href="{% url 'profile_edit' %}" class="btn btn-primary">Upravit</a>
+            <form method="post" action="{% url 'logout' %}" style="margin: 0;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-ghost">Odhlásit se</button>
+            </form>
+        </div>
         {% endif %}
+    </div>
+
+    <!-- O mně container: photo + instagram + questions -->
+    <div class="card anim-fade-up-delay-1" style="padding: 2rem; background: var(--gol-cream-card); border: 2px solid var(--gol-tan-border); margin-top: 1.5rem;">
+        <div style="display: flex; gap: 2rem; flex-wrap: wrap; align-items: flex-start;">
+            <!-- Left: photo + instagram -->
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 1rem; flex-shrink: 0;">
+                {% if profile and profile.photo %}
+                    <img src="{{ profile.photo.url }}" alt="Profilová fotka" style="width: 140px; height: 140px; border-radius: 50%; object-fit: cover; border: 3px solid var(--gol-indigo-primary);">
+                {% else %}
+                    <span class="avatar-initial" style="width: 140px; height: 140px; font-size: 48px;">
+                        {% firstof profile_user.first_name profile_user.username|slice:":1" as initial_src %}
+                        {{ initial_src|slice:":1"|upper }}
+                    </span>
+                {% endif %}
+                {% if profile and profile.instagram %}
+                    <a href="https://instagram.com/{{ profile.instagram|cut:'@' }}" target="_blank" rel="noopener"
+                       style="color: var(--gol-indigo-primary); text-decoration: none; font-size: 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 0.3rem;">
+                        📷 {{ profile.instagram }}
+                    </a>
+                {% endif %}
+            </div>
+
+            <!-- Right: questions/answers -->
+            <div style="flex: 1; min-width: 240px;">
+                <h3 style="font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 20px; margin: 0 0 1.5rem; color: var(--gol-indigo-primary);">O mně</h3>
+                {% if questions_with_answers %}
+                    {% for qa in questions_with_answers %}
+                        <div style="margin-bottom: 1.5rem;">
+                            <p style="font-family: 'Inter', sans-serif; font-weight: 500; font-size: 14px; margin: 0 0 0.4rem; color: var(--gol-text-muted);">{{ qa.question.text }}</p>
+                            <p style="font-family: 'Inter', sans-serif; font-weight: 400; font-size: 15px; margin: 0; color: var(--gol-text-dark); line-height: 1.6;">{{ qa.answer.answer }}</p>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted" style="margin: 0; font-size: 14px;">
+                        {% if is_own_profile %}
+                            Zatím nic nevíme. <a href="{% url 'profile_edit' %}" class="slide-link" style="font-weight: 600;">Doplň svůj profil</a>
+                        {% else %}
+                            Tento hráč o sobě ještě nic nenapsal.
+                        {% endif %}
+                    </p>
+                {% endif %}
+            </div>
+        </div>
     </div>
 
     <div class="grid-3 anim-fade-up-delay-1" style="margin-top: 1.5rem;">

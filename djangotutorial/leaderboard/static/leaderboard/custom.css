@@ -174,6 +174,25 @@ a { color: var(--gol-indigo-primary); }
   .gol-nav-mobile > div { padding: 1rem 1.5rem; display: flex; flex-direction: column; gap: 0.85rem; }
 }
 
+/* ---------- Notification bar ---------- */
+.gol-notification-bar {
+  position: sticky;
+  top: 64px;
+  z-index: 999;
+  background: var(--gol-indigo-primary);
+  color: var(--gol-text-light);
+  padding: 0.85rem 1.5rem;
+  font-size: 14px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+.gol-notification-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
 /* ---------- Buttons ---------- */
 .btn {
   display: inline-flex;
@@ -401,6 +420,129 @@ a { color: var(--gol-indigo-primary); }
 .lb-row-podium {
   background: var(--gol-cream-card);
   border-color: var(--gol-tan-border);
+}
+
+/* ---------- Leaderboard info tab (top-right) ---------- */
+.lb-info-tab {
+  background: var(--gol-cream-card);
+  border: 2px solid var(--gol-tan-border);
+  color: var(--gol-indigo-primary);
+  font-weight: 600;
+  padding: 0.6rem 1.1rem;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+.lb-info-tab:hover {
+  background: var(--gol-indigo-primary);
+  color: var(--gol-text-light);
+  border-color: var(--gol-indigo-primary);
+  transform: translateY(-1px);
+}
+
+/* ---------- Leaderboard Layout (sidebar — kept for /o-bodech/ page) ---------- */
+.lb-container {
+  display: flex;
+  gap: 2rem;
+  align-items: flex-start;
+  position: relative;
+  z-index: 1;
+}
+.lb-main {
+  flex: 1;
+  min-width: 0;
+}
+.lb-sidebar {
+  width: 30%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  position: sticky;
+  top: 90px;
+}
+.lb-sidebar-card {
+  background: var(--gol-cream-card);
+  border: 2px solid var(--gol-tan-border);
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: var(--shadow-subtle);
+}
+.lb-sidebar-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 24px;
+  color: var(--gol-indigo-primary);
+  margin: 0 0 1rem 0;
+}
+.lb-sidebar-content {
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--gol-text-dark);
+}
+.lb-sidebar-content p {
+  margin: 0;
+}
+.lb-rewards-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.lb-reward-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(196, 185, 154, 0.3);
+}
+.lb-reward-item:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+.lb-reward-rank {
+  font-weight: 600;
+  color: var(--gol-indigo-primary);
+  font-size: 15px;
+}
+.lb-reward-desc {
+  font-size: 13px;
+  color: var(--gol-text-muted);
+}
+
+/* Responsive: stack sidebar below 900px */
+@media (max-width: 900px) {
+  .lb-container {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  .lb-sidebar {
+    width: 100%;
+    position: static;
+    flex-direction: row;
+  }
+  .lb-sidebar-card {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+/* Responsive: stack sidebar cards below 600px */
+@media (max-width: 600px) {
+  .lb-sidebar {
+    flex-direction: column;
+  }
+  .lb-sidebar-card {
+    flex: none;
+    width: 100%;
+  }
+  .lb-sidebar-title {
+    font-size: 20px;
+  }
+  .lb-sidebar-content {
+    font-size: 14px;
+  }
 }
 
 /* ---------- Tabs (leaderboard + profile) ---------- */
@@ -985,6 +1127,43 @@ a { color: var(--gol-indigo-primary); }
   color: var(--gol-text-muted);
   font-style: italic;
 }
+
+/* Password show/hide toggle */
+.pw-wrap {
+  position: relative;
+  display: block;
+}
+.pw-wrap .field-input {
+  padding-right: 42px;
+}
+.pw-toggle {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px 8px;
+  font-size: 18px;
+  line-height: 1;
+  color: var(--gol-text-muted);
+  border-radius: 6px;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.pw-toggle:hover {
+  background: rgba(71, 81, 133, 0.08);
+  color: var(--gol-indigo-primary);
+}
+.pw-toggle:focus-visible {
+  outline: 2px solid var(--gol-indigo-primary);
+  outline-offset: 2px;
+}
+.pw-eye {
+  display: inline-block;
+  user-select: none;
+}
+
 .btn-submit-v2 {
   display: block;
   width: 100%;

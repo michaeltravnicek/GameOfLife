@@ -1,4 +1,5 @@
 from django import template
+import json
 
 register = template.Library()
 
@@ -47,3 +48,14 @@ def event_category(event):
 def event_category_label(event):
     name = getattr(event, "name", "") if not isinstance(event, str) else event
     return _match(name)[1]
+
+
+@register.filter
+def as_json(value):
+    messages = [str(msg) for msg in value] if hasattr(value, '__iter__') else [str(value)]
+    return json.dumps(messages)
+
+
+@register.filter
+def startswith(value, prefix):
+    return str(value).startswith(prefix)

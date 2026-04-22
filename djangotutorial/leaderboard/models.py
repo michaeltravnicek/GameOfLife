@@ -12,6 +12,7 @@ class Event(models.Model):
     date = models.DateTimeField()
     points = models.IntegerField()
     image = models.ImageField(upload_to="event_images/", blank=True, null=True)
+    capacity = models.IntegerField(null=True, blank=True)
 
     slug = models.SlugField(max_length=280, unique=True, null=True, blank=True)
 
@@ -25,6 +26,14 @@ class Event(models.Model):
                 n += 1
             self.slug = slug
         super().save(*args, **kwargs)
+        if self.image:
+            from .image_utils import resize_image
+            resize_image(self.image, max_width=1200, max_height=1200, quality=85)
+        # Invalidate caches that depend on events
+        from django.core.cache import cache
+        cache.delete("home_hero_images")
+        cache.delete("home_context")
+        cache.delete("events_list")
 
     def __str__(self):
         return f"{self.name} - {self.date} - {self.place} - {self.sheet_id}"
@@ -36,6 +45,14 @@ class Event(models.Model):
 class ImageToEvent(models.Model):
     event_id = models.ForeignKey(Event, on_delete=models.CASCADE)
     image = models.ImageField(upload_to="event_images/", blank=True, null=True)
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if self.image:
+            from .image_utils import resize_image
+            resize_image(self.image, max_width=1200, max_height=1200, quality=85)
+        from django.core.cache import cache
+        cache.delete("home_hero_images")
 
 
 class User(models.Model):
@@ -96,3 +113,31 @@ class EventFeedback(models.Model):
 
     def __str__(self):
         return f"Feedback {self.rating}★ {self.auth_user} → {self.event}"
+
+
+class ProfileQuestion(models.Model):
+    text = models.CharField(max_length=255)
+    order = models.IntegerField(default=0)
+
+    class Meta:
+        ordering = ["order"]
+
+    def __str__(self):
+        return self.text
+
+
+class ProfileAnswer(models.Model):
+    auth_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="profile_answers",
+    )
+    question = models.ForeignKey(ProfileQuestion, on_delete=models.CASCADE)
+    answer = models.TextField(blank=True, default="")
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ("auth_user", "question")
+
+    def __str__(self):
+        return f"{self.auth_user} → {self.question}"

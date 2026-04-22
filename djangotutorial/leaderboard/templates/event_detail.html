@@ -9,7 +9,9 @@
 
     <div class="event-hero anim-fade-up">
         <img src="{% if event.image %}{{ event.image.url }}{% else %}https://picsum.photos/seed/event{{ event.id }}/1200/600{% endif %}"
-             alt="{{ event.name }}">
+             alt="{{ event.name }}"
+             fetchpriority="high"
+             decoding="async">
         <div class="top-badge">
             <span class="badge-evt evt-{{ cat }}">{{ event|event_category_label }}</span>
             {% if is_future %}
@@ -42,7 +44,7 @@
                 @click.stop="lbIndex = (lbIndex - 1 + images.length) % images.length"
                 aria-label="Předchozí">‹</button>
         <div class="lightbox-inner">
-            <img :src="images[lbIndex]" alt="">
+            <img :src="images[lbIndex]" alt="" loading="lazy" decoding="async">
         </div>
         <button class="lightbox-btn next"
                 x-show="images.length > 1"
@@ -56,7 +58,12 @@
     <div class="event-card-box anim-fade-up-delay-1">
         <div style="margin-bottom: 1rem; display: flex; gap: 0.4rem; flex-wrap: wrap; align-items: center;">
             <span class="badge-evt evt-{{ cat }}">{{ event|event_category_label }}</span>
-            {% if rsvp_count %}
+            {% if event.capacity %}
+                <span class="badge {% if is_full %}badge-pink{% else %}badge-muted{% endif %}">
+                    {{ rsvp_count }}/{{ event.capacity }} přihlášen{{ rsvp_count|pluralize:"ý,í" }}
+                    {% if is_full %}• Plně obsazeno{% endif %}
+                </span>
+            {% elif rsvp_count %}
                 <span class="badge badge-muted">{{ rsvp_count }} přihlášen{{ rsvp_count|pluralize:"ý,í" }}</span>
             {% endif %}
         </div>
@@ -94,6 +101,8 @@
                         {% csrf_token %}
                         {% if has_rsvp %}
                             <button type="submit" class="btn btn-ghost btn-block anim-pulse" style="padding: 0.95rem 1.25rem; font-size: 16px;">Zrušit přihlášení</button>
+                        {% elif is_full %}
+                            <button type="submit" class="btn btn-primary btn-block" style="padding: 0.95rem 1.25rem; font-size: 16px; opacity: 0.5; cursor: not-allowed;" disabled>Plně obsazeno</button>
                         {% else %}
                             <button type="submit" class="btn btn-primary btn-block anim-pulse" style="padding: 0.95rem 1.25rem; font-size: 16px;">Přihlásit se na akci</button>
                         {% endif %}

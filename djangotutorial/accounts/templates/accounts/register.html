@@ -36,14 +36,24 @@
 
         <div class="field-group-v2">
             <label for="{{ form.password1.id_for_label }}" class="field-label-modern">{{ form.password1.label }}</label>
-            {{ form.password1 }}
+            <div class="pw-wrap">
+                {{ form.password1 }}
+                <button type="button" class="pw-toggle" onclick="togglePassword(this)" aria-label="Zobrazit heslo">
+                    <span class="pw-eye">👁</span>
+                </button>
+            </div>
             {% if form.password1.help_text %}<div class="field-help">{{ form.password1.help_text|safe }}</div>{% endif %}
             {% if form.password1.errors %}<div class="field-error">{{ form.password1.errors|join:", " }}</div>{% endif %}
         </div>
 
         <div class="field-group-v2">
             <label for="{{ form.password2.id_for_label }}" class="field-label-modern">{{ form.password2.label }}</label>
-            {{ form.password2 }}
+            <div class="pw-wrap">
+                {{ form.password2 }}
+                <button type="button" class="pw-toggle" onclick="togglePassword(this)" aria-label="Zobrazit heslo">
+                    <span class="pw-eye">👁</span>
+                </button>
+            </div>
             {% if form.password2.errors %}<div class="field-error">{{ form.password2.errors|join:", " }}</div>{% endif %}
         </div>
 
