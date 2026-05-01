@@ -13,13 +13,13 @@
     nav.top.hidden{transform:translateY(-120px)}
     .nav-left,.nav-right{display:flex;align-items:center;gap:36px;flex:1}
     .nav-right{justify-content:flex-end}
-    .nav-item{font-family:'Barlow','Helvetica Neue',Arial,sans-serif;font-size:16px;font-weight:700;letter-spacing:.03em;color:rgba(255,255,255,.88);background:none;border:0;cursor:pointer;transition:color .2s;padding:18px 0;text-decoration:none;display:inline-block}
+    .nav-item{font-family:'Helvetica',Arial,sans-serif;font-size:16px;font-weight:700;letter-spacing:.03em;color:rgba(255,255,255,.88);background:none;border:0;cursor:pointer;transition:color .2s;padding:18px 0;text-decoration:none;display:inline-block}
     .nav-item:hover,.nav-item.active{color:#e15463}
     .nav-logo{height:64px;display:flex;align-items:center;background:transparent;border:0;cursor:pointer;padding:6px 0;text-decoration:none}
     .nav-logo img{height:100%;width:auto;display:block}
     .nav-avatar{width:50px;height:50px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;border:1.5px solid rgba(255,255,255,.5);font-family:'Courier Prime','Courier New',monospace;font-style:italic;font-size:13px;font-weight:700;color:#fff;cursor:pointer;transition:border-color .2s;margin:9px 0;text-decoration:none}
     .nav-avatar:hover,.nav-avatar.active{border-color:#e15463}
-    .nav-btn-start{display:inline-flex;align-items:center;gap:8px;background:#e15463;color:#fff;border:0;cursor:pointer;font-family:'Barlow','Helvetica Neue',Arial,sans-serif;font-size:14px;font-weight:700;letter-spacing:.04em;padding:10px 24px;border-radius:9999px;box-shadow:0 4px 16px rgba(225,84,99,.38);transition:transform .18s,background .18s;text-decoration:none;margin:10px 0}
+    .nav-btn-start{display:inline-flex;align-items:center;gap:8px;background:#e15463;color:#fff;border:0;cursor:pointer;font-family:'Helvetica',Arial,sans-serif;font-size:14px;font-weight:700;letter-spacing:.04em;padding:10px 24px;border-radius:9999px;box-shadow:0 4px 16px rgba(225,84,99,.38);transition:transform .18s,background .18s;text-decoration:none;margin:10px 0}
     .nav-btn-start:hover{background:#cf4453;transform:translateY(-1px)}
     @media(max-width:820px){nav.top{left:14px;right:14px;padding:0 6px 0 20px}.nav-left,.nav-right{gap:18px}.nav-item{font-size:14px}.nav-logo{height:52px}}
     @media(max-width:560px){.nav-left .nav-item:nth-child(3){display:none}}

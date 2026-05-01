@@ -13,6 +13,82 @@
 }
 @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400;1,700&display=swap');
 
+/* ── Helvetica ── */
+@font-face {
+  font-family: 'Helvetica';
+  src: url('fonts/Helvetica.ttf') format('truetype');
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'Helvetica';
+  src: url('fonts/Helvetica-Oblique.ttf') format('truetype');
+  font-weight: 400; font-style: italic; font-display: swap;
+}
+@font-face {
+  font-family: 'Helvetica';
+  src: url('fonts/Helvetica-Bold.ttf') format('truetype');
+  font-weight: 700; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'Helvetica';
+  src: url('fonts/Helvetica-BoldOblique.ttf') format('truetype');
+  font-weight: 700; font-style: italic; font-display: swap;
+}
+@font-face {
+  font-family: 'Helvetica';
+  src: url('fonts/helvetica-light-587ebe5a59211.ttf') format('truetype');
+  font-weight: 300; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'Helvetica Compressed';
+  src: url('fonts/helvetica-compressed-5871d14b6903a.otf') format('opentype');
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'Helvetica Rounded';
+  src: url('fonts/helvetica-rounded-bold-5871d05ead8de.otf') format('opentype');
+  font-weight: 700; font-style: normal; font-display: swap;
+}
+
+/* ── IBM Plex Serif ── */
+@font-face {
+  font-family: 'IBM Plex Serif';
+  src: url('fonts/IBMPlexSerif-Light.ttf') format('truetype');
+  font-weight: 300; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'IBM Plex Serif';
+  src: url('fonts/IBMPlexSerif-LightItalic.ttf') format('truetype');
+  font-weight: 300; font-style: italic; font-display: swap;
+}
+@font-face {
+  font-family: 'IBM Plex Serif';
+  src: url('fonts/IBMPlexSerif-Regular.ttf') format('truetype');
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'IBM Plex Serif';
+  src: url('fonts/IBMPlexSerif-Italic.ttf') format('truetype');
+  font-weight: 400; font-style: italic; font-display: swap;
+}
+@font-face {
+  font-family: 'IBM Plex Serif';
+  src: url('fonts/IBMPlexSerif-SemiBold.ttf') format('truetype');
+  font-weight: 600; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'IBM Plex Serif';
+  src: url('fonts/IBMPlexSerif-SemiBoldItalic.ttf') format('truetype');
+  font-weight: 600; font-style: italic; font-display: swap;
+}
+
+/* ── Ringold Gym ── */
+@font-face {
+  font-family: 'Ringold Gym';
+  src: url('fonts/Ringold-Gym (1).ttf') format('truetype');
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+
 :root {
   --color-white:          #ffffff;
   --color-black:          #1a1a1a;
@@ -45,9 +121,14 @@
   --border-card:          2px dashed rgba(255,255,255,0.55);
   --border-card-dark:     2px dashed rgba(26,26,26,0.4);
 
-  --font-display:         'Bebas Neue', 'Arial Black', sans-serif;
-  --font-body:            'Barlow', 'Helvetica Neue', Arial, sans-serif;
-  --font-mono:            'Courier Prime', 'IBM Plex Mono', 'Courier New', monospace;
+  --font-display:         'Bebas Neue', sans-serif;
+  --font-body:            'Barlow', Arial, sans-serif;
+  --font-mono:            'Courier Prime', monospace;
+  --font-serif:           'IBM Plex Serif', Georgia, serif;
+  --font-hv:              'Helvetica', Arial, sans-serif;
+  --font-hv-comp:         'Helvetica Compressed', Arial, sans-serif;
+  --font-hv-rnd:          'Helvetica Rounded', Arial, sans-serif;
+  --font-gym:             'Ringold Gym', sans-serif;
 
   --text-xs:    0.75rem;
   --text-sm:    0.875rem;

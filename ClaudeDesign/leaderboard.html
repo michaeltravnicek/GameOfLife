@@ -25,16 +25,16 @@ a{color:inherit;text-decoration:none}
 .eyebrow{font-family:var(--font-mono);font-style:italic;font-size:13px;letter-spacing:.3em;text-transform:uppercase;color:var(--color-pink);margin-bottom:8px;display:inline-flex;align-items:center;gap:10px}
 .eyebrow::before,.eyebrow::after{content:'✦';font-size:11px;opacity:.9}
 .hero h1{font-family:var(--font-display);font-size:clamp(70px,10vw,140px);line-height:.92;color:var(--color-cream-light);text-transform:uppercase;letter-spacing:.03em;text-shadow:0 6px 34px rgba(0,0,0,.6)}
-.hero .tagline{font-family:var(--font-body);font-style:italic;font-size:14px;color:rgba(255,241,212,.72);max-width:520px;margin:10px auto 0;line-height:1.5}
+.hero .tagline{font-family:var(--font-serif);font-weight:300;font-style:italic;font-size:14px;color:rgba(255,241,212,.72);max-width:520px;margin:10px auto 0;line-height:1.5}
 .divider{width:120px;height:1px;margin:26px auto 0;background:repeating-linear-gradient(90deg,rgba(255,241,212,.45) 0 5px,transparent 5px 10px)}
 
 .controls{position:relative;z-index:2;max-width:880px;margin:32px auto 0;padding:0 24px;display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap}
 .tabs{display:inline-flex;padding:5px;gap:5px;background:rgba(26,15,10,.45);border:1.5px dashed rgba(255,241,212,.32);border-radius:9999px;backdrop-filter:blur(8px)}
-.tab{font-family:var(--font-body);font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;padding:9px 20px;border-radius:9999px;cursor:pointer;background:transparent;border:0;color:rgba(255,241,212,.75);transition:all .18s}
+.tab{font-family:var(--font-hv);font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;padding:9px 20px;border-radius:9999px;cursor:pointer;background:transparent;border:0;color:rgba(255,241,212,.75);transition:all .18s}
 .tab:hover{color:#fff}
 .tab.on{background:var(--color-pink);color:#fff;box-shadow:0 4px 14px rgba(225,84,99,.45)}
 .search{flex:1;max-width:290px;min-width:180px;position:relative}
-.search input{width:100%;padding:11px 18px 11px 40px;font-family:var(--font-body);font-size:13px;color:var(--color-cream-light);background:rgba(26,15,10,.45);border:1.5px dashed rgba(255,241,212,.32);border-radius:9999px;outline:none;transition:border-color .18s;backdrop-filter:blur(8px)}
+.search input{width:100%;padding:11px 18px 11px 40px;font-family:var(--font-hv);font-size:13px;color:var(--color-cream-light);background:rgba(26,15,10,.45);border:1.5px dashed rgba(255,241,212,.32);border-radius:9999px;outline:none;transition:border-color .18s;backdrop-filter:blur(8px)}
 .search input:focus{border-color:var(--color-pink)}
 .search input::placeholder{color:rgba(255,241,212,.5);font-style:italic}
 .search::before{content:'⌕';position:absolute;left:16px;top:50%;transform:translateY(-50%);color:rgba(255,241,212,.6);font-size:14px;pointer-events:none}
@@ -55,7 +55,7 @@ main.lb-main{position:relative;z-index:2;max-width:880px;margin:0 auto;padding:4
 .pod.p1 .ava{width:76px;height:76px;font-size:18px;border-color:#f5c842;box-shadow:0 0 0 3px rgba(245,200,66,.14),0 6px 20px rgba(0,0,0,.5)}
 .pod.p2 .ava{border-color:rgba(210,210,215,.7)}
 .pod.p3 .ava{border-color:rgba(205,127,50,.75)}
-.pod .nm{font-family:var(--font-body);font-weight:600;font-size:13px;color:#fff;margin-bottom:4px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pod .nm{font-family:var(--font-hv);font-weight:700;font-size:13px;color:#fff;margin-bottom:4px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pod .pts{font-family:var(--font-display);font-size:26px;letter-spacing:.03em;color:var(--color-cream-light);line-height:1;margin-bottom:14px}
 .pod.p1 .pts{font-size:36px;color:var(--color-pink)}
 .pod .pts-u{font-family:var(--font-mono);font-style:italic;font-size:10px;color:rgba(255,241,212,.55);letter-spacing:.16em;margin-left:4px}
@@ -79,12 +79,12 @@ main.lb-main{position:relative;z-index:2;max-width:880px;margin:0 auto;padding:4
 .row:hover{background:rgba(255,241,212,.05);transform:translateX(2px)}
 .row.hidden{display:none}
 .row .rk{font-family:var(--font-display);font-size:24px;letter-spacing:.03em;color:rgba(255,241,212,.60);line-height:1}
-.row .nm{display:flex;align-items:center;gap:12px;font-size:15px;color:#fff;font-weight:500;min-width:0}
+.row .nm{display:flex;align-items:center;gap:12px;font-family:var(--font-hv);font-size:15px;color:#fff;font-weight:400;min-width:0}
 .row .nm .av{width:32px;height:32px;border-radius:50%;flex-shrink:0;background:rgba(45,42,142,.55);border:1.5px dashed rgba(255,241,212,.45);display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-style:italic;font-size:11px;font-weight:700;color:var(--color-cream-light)}
 .row .nm .txt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .row .pt{text-align:right;font-family:var(--font-display);font-size:24px;letter-spacing:.03em;color:var(--color-cream-light)}
 .row .pt .u{font-family:var(--font-mono);font-style:italic;font-size:10px;color:rgba(255,241,212,.48);letter-spacing:.16em;margin-left:5px}
-.empty{text-align:center;padding:44px 20px;font-family:var(--font-body);font-style:italic;color:rgba(255,241,212,.55);font-size:14px}
+.empty{text-align:center;padding:44px 20px;font-family:var(--font-serif);font-style:italic;color:rgba(255,241,212,.55);font-size:14px}
 
 @media(max-width:720px){.hero{padding:120px 20px 14px}.podium{grid-template-columns:1fr;gap:36px}.row{grid-template-columns:40px 1fr 100px;padding:11px 14px;gap:10px}}
 </style>
@@ -110,7 +110,7 @@ main.lb-main{position:relative;z-index:2;max-width:880px;margin:0 auto;padding:4
     <button class="tab" data-tab="month">Tento rok</button>
   </div>
   <div class="search"><input id="q" type="text" placeholder="Vyhledat hráče…" autocomplete="off" /></div>
-  <a href="o-bodech.html" style="font-family:var(--font-body);font-style:italic;font-size:12px;color:rgba(255,241,212,.65);border-bottom:1px dashed rgba(255,241,212,.45);padding-bottom:2px;transition:color .18s,border-color .18s" onmouseover="this.style.color='var(--color-pink)';this.style.borderColor='var(--color-pink)'" onmouseout="this.style.color='rgba(255,241,212,.65)';this.style.borderColor='rgba(255,241,212,.45)'">Co jsou to body?</a>
+  <a href="o-bodech.html" style="font-family:var(--font-hv);font-weight:300;font-style:italic;font-size:12px;color:rgba(255,241,212,.65);border-bottom:1px dashed rgba(255,241,212,.45);padding-bottom:2px;transition:color .18s,border-color .18s" onmouseover="this.style.color='var(--color-pink)';this.style.borderColor='var(--color-pink)'" onmouseout="this.style.color='rgba(255,241,212,.65)';this.style.borderColor='rgba(255,241,212,.45)'">Co jsou to body?</a>
 </section>
 
 <main class="lb-main">
