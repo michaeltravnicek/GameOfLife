@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>BG Demo — Game of Life</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500&family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="colors_and_type.css" />
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+/* RGB components for palette colours — allows transparency in gradients */
+:root{
+  --rgb-purple:     45, 42, 142;   /* --color-purple   #2d2a8e */
+  --rgb-pink:       225, 84, 99;   /* --color-pink     #e15463 */
+  --rgb-dark-brown: 26, 15, 10;    /* --color-dark-brown #1a0f0a */
+  --rgb-cream:      255, 241, 212; /* --color-cream-light #fff1d4 */
+}
+body{font-family:var(--font-body);color:var(--color-cream-light);-webkit-font-smoothing:antialiased;min-height:100vh;overflow-x:hidden;background:var(--color-dark-brown)}
+img{display:block;max-width:100%}
+button{font-family:inherit;cursor:pointer}
+a{color:inherit;text-decoration:none}
+
+/* BG — rotated grain + diagonal gradients */
+.bg-base{position:fixed;inset:0;z-index:-4;background:var(--color-dark-brown)}
+.bg-texture{position:fixed;inset:-25%;z-index:-3;background:url('assets/Grain_texture_purple.png') center/cover;transform:rotate(-14deg) scale(1.3);opacity:.9}
+.bg-texture2{position:fixed;inset:0;z-index:-2;background:url('assets/Grain_texture_brown2.png') center/60%;opacity:.28;mix-blend-mode:overlay}
+.bg-gradient{position:fixed;inset:0;z-index:-1;pointer-events:none;background:
+  radial-gradient(ellipse 70% 60% at 90% 10%, rgba(var(--rgb-purple),.55) 0%, transparent 68%),
+  radial-gradient(ellipse 55% 50% at 10% 90%, rgba(var(--rgb-pink),.18) 0%, transparent 62%),
+  linear-gradient(148deg, rgba(var(--rgb-dark-brown),.05) 0%, rgba(var(--rgb-dark-brown),.55) 55%, rgba(var(--rgb-dark-brown),.88) 100%)}
+
+/* HERO */
+.hero{position:relative;z-index:2;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:120px 24px 60px}
+.eyebrow{font-family:var(--font-mono);font-style:italic;font-size:13px;letter-spacing:.3em;text-transform:uppercase;color:var(--color-pink);margin-bottom:18px;display:inline-flex;align-items:center;gap:10px}
+.eyebrow::before,.eyebrow::after{content:'✦';font-size:11px;opacity:.9}
+.hero h1{font-family:var(--font-display);font-size:clamp(64px,10vw,128px);line-height:.92;color:var(--color-cream-light);text-transform:uppercase;letter-spacing:.03em;text-shadow:0 6px 34px rgba(var(--rgb-dark-brown),.5);margin-bottom:18px}
+.hero .tagline{font-family:var(--font-body);font-style:italic;font-size:15px;line-height:1.65;color:rgba(var(--rgb-cream),.70);max-width:440px;margin:0 auto 36px}
+.hero-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:10px;background:var(--color-pink);color:#fff;border:0;cursor:pointer;font-family:var(--font-mono);font-size:13px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;padding:14px 30px;border-radius:9999px;box-shadow:0 6px 24px rgba(var(--rgb-pink),.42);transition:transform .18s,background .18s;text-decoration:none}
+.btn:hover{background:var(--btn-primary-hover);transform:translateY(-2px)}
+.btn.ghost{background:transparent;color:var(--color-cream-light);border:1.5px dashed rgba(var(--rgb-cream),.40);box-shadow:none}
+.btn.ghost:hover{border-color:var(--color-pink);color:var(--color-pink)}
+
+.divider{width:120px;height:1px;margin:0 auto 64px;background:repeating-linear-gradient(90deg,rgba(var(--rgb-cream),.38) 0 5px,transparent 5px 10px);position:relative;z-index:2}
+</style>
+</head>
+<body>
+<div class="bg-base"></div>
+<div class="bg-texture"></div>
+<div class="bg-texture2"></div>
+<div class="bg-gradient"></div>
+
+<div id="nav-root"></div>
+<script>window.GOL_PAGE=''</script>
+<script src="nav.js"></script>
+
+<div class="hero">
+  <div class="eyebrow">Game of Life · Sezóna 2025/26</div>
+  <h1>Život je hra,<br>tak ho hrej</h1>
+  <p class="tagline">Ukázka nového pozadí — textura otočená o 14°, překrytá diagonálními gradienty.</p>
+  <div class="hero-btns">
+    <a href="index.html" class="btn">Zpět na hlavní →</a>
+    <a href="events.html" class="btn ghost">Kalendář akcí</a>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<div id="footer-root"></div>
+<script src="footer.js"></script>
+</body>
+</html>

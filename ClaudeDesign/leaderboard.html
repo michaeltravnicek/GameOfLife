@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Leaderboard — Game of Life</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500&family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="colors_and_type.css" />
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--font-body);color:var(--color-cream-light);-webkit-font-smoothing:antialiased;min-height:100vh;background:#1a0f0a;overflow-x:hidden}
+img{display:block;max-width:100%}
+button{font-family:inherit;cursor:pointer}
+a{color:inherit;text-decoration:none}
+
+
+.stage{position:fixed;inset:0;z-index:-2;background:url('gallery/gal1.jpg') center 28%/cover no-repeat;filter:saturate(.7) contrast(1.02);transform:scale(1.05)}
+.stage::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 15%,rgba(45,42,142,.10) 0%,transparent 55%),linear-gradient(180deg,rgba(45,42,142,.08) 0%,rgba(26,15,10,.60) 50%,rgba(26,15,10,.82) 100%)}
+.grain{position:fixed;inset:0;z-index:-1;pointer-events:none;background:url('assets/Grain_texture_blue.png') center/cover;opacity:.08;mix-blend-mode:overlay}
+
+.hero{position:relative;z-index:2;max-width:880px;margin:0 auto;padding:148px 24px 16px;text-align:center}
+.eyebrow{font-family:var(--font-mono);font-style:italic;font-size:13px;letter-spacing:.3em;text-transform:uppercase;color:var(--color-pink);margin-bottom:8px;display:inline-flex;align-items:center;gap:10px}
+.eyebrow::before,.eyebrow::after{content:'✦';font-size:11px;opacity:.9}
+.hero h1{font-family:var(--font-display);font-size:clamp(70px,10vw,140px);line-height:.92;color:var(--color-cream-light);text-transform:uppercase;letter-spacing:.03em;text-shadow:0 6px 34px rgba(0,0,0,.6)}
+.hero .tagline{font-family:var(--font-body);font-style:italic;font-size:14px;color:rgba(255,241,212,.72);max-width:520px;margin:10px auto 0;line-height:1.5}
+.divider{width:120px;height:1px;margin:26px auto 0;background:repeating-linear-gradient(90deg,rgba(255,241,212,.45) 0 5px,transparent 5px 10px)}
+
+.controls{position:relative;z-index:2;max-width:880px;margin:32px auto 0;padding:0 24px;display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap}
+.tabs{display:inline-flex;padding:5px;gap:5px;background:rgba(26,15,10,.45);border:1.5px dashed rgba(255,241,212,.32);border-radius:9999px;backdrop-filter:blur(8px)}
+.tab{font-family:var(--font-body);font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;padding:9px 20px;border-radius:9999px;cursor:pointer;background:transparent;border:0;color:rgba(255,241,212,.75);transition:all .18s}
+.tab:hover{color:#fff}
+.tab.on{background:var(--color-pink);color:#fff;box-shadow:0 4px 14px rgba(225,84,99,.45)}
+.search{flex:1;max-width:290px;min-width:180px;position:relative}
+.search input{width:100%;padding:11px 18px 11px 40px;font-family:var(--font-body);font-size:13px;color:var(--color-cream-light);background:rgba(26,15,10,.45);border:1.5px dashed rgba(255,241,212,.32);border-radius:9999px;outline:none;transition:border-color .18s;backdrop-filter:blur(8px)}
+.search input:focus{border-color:var(--color-pink)}
+.search input::placeholder{color:rgba(255,241,212,.5);font-style:italic}
+.search::before{content:'⌕';position:absolute;left:16px;top:50%;transform:translateY(-50%);color:rgba(255,241,212,.6);font-size:14px;pointer-events:none}
+
+main.lb-main{position:relative;z-index:2;max-width:880px;margin:0 auto;padding:40px 24px 80px}
+
+/* PODIUM */
+.stage-wrap{position:relative;margin:44px 0 54px;padding:0 10px}
+.stage-wrap::before{content:'';position:absolute;left:0;right:0;top:-40px;bottom:40px;background:radial-gradient(ellipse 55% 65% at 50% 40%,rgba(245,200,66,.12) 0%,transparent 70%),radial-gradient(ellipse 35% 50% at 18% 55%,rgba(192,192,210,.08) 0%,transparent 75%),radial-gradient(ellipse 35% 50% at 82% 55%,rgba(205,127,50,.10) 0%,transparent 75%);pointer-events:none;z-index:0}
+.stage-floor{position:absolute;left:-20px;right:-20px;bottom:-2px;height:2px;background:repeating-linear-gradient(90deg,rgba(255,241,212,.38) 0 8px,transparent 8px 16px);z-index:0}
+.podium{position:relative;z-index:1;display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;align-items:end}
+.pod{position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;transition:transform .25s;cursor:pointer}
+.pod:hover{transform:translateY(-4px)}
+.pod .trophy{font-size:52px;line-height:1;margin-bottom:10px;filter:drop-shadow(0 6px 14px rgba(0,0,0,.55));transition:transform .3s}
+.pod:hover .trophy{transform:scale(1.06) rotate(-3deg)}
+.pod.p1 .trophy{font-size:68px;filter:drop-shadow(0 0 22px rgba(245,200,66,.55)) drop-shadow(0 6px 14px rgba(0,0,0,.55))}
+.pod .ava{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 30% 30%,rgba(225,84,99,.30),transparent 65%),rgba(26,15,10,.65);border:2px dashed rgba(255,241,212,.55);font-family:var(--font-mono);font-style:italic;font-size:16px;font-weight:700;color:var(--color-cream-light);margin-bottom:10px;box-shadow:0 6px 16px rgba(0,0,0,.4)}
+.pod.p1 .ava{width:76px;height:76px;font-size:18px;border-color:#f5c842;box-shadow:0 0 0 3px rgba(245,200,66,.14),0 6px 20px rgba(0,0,0,.5)}
+.pod.p2 .ava{border-color:rgba(210,210,215,.7)}
+.pod.p3 .ava{border-color:rgba(205,127,50,.75)}
+.pod .nm{font-family:var(--font-body);font-weight:600;font-size:13px;color:#fff;margin-bottom:4px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pod .pts{font-family:var(--font-display);font-size:26px;letter-spacing:.03em;color:var(--color-cream-light);line-height:1;margin-bottom:14px}
+.pod.p1 .pts{font-size:36px;color:var(--color-pink)}
+.pod .pts-u{font-family:var(--font-mono);font-style:italic;font-size:10px;color:rgba(255,241,212,.55);letter-spacing:.16em;margin-left:4px}
+.pod .base{width:100%;position:relative;background:#1a0f0a url('assets/Grain_texture_blue.png') center/cover;border:1.5px dashed rgba(255,241,212,.38);border-radius:8px;display:flex;align-items:center;justify-content:center;box-shadow:0 12px 28px rgba(0,0,0,.5),0 0 0 1px rgba(0,0,0,.4) inset}
+.pod .base::after{content:'';position:absolute;top:0;left:10%;right:10%;height:1px;background:linear-gradient(90deg,transparent,rgba(255,241,212,.35),transparent)}
+.pod .base .rk{font-family:var(--font-display);letter-spacing:.04em;line-height:1}
+.pod.p1 .base{height:120px;border-color:#f5c842}
+.pod.p2 .base{height:86px}
+.pod.p3 .base{height:64px}
+.pod.p1 .base .rk{font-size:72px;color:#f5c842}
+.pod.p2 .base .rk{font-size:54px;color:rgba(210,210,215,.85)}
+.pod.p3 .base .rk{font-size:42px;color:rgba(205,127,50,.95)}
+
+.list-label{font-family:var(--font-mono);font-style:italic;font-size:13px;letter-spacing:.26em;text-transform:uppercase;color:rgba(255,241,212,.75);margin:0 6px 18px;display:flex;align-items:center;gap:14px}
+.list-label::before,.list-label::after{content:'';flex:1;height:1px;background:repeating-linear-gradient(90deg,rgba(255,241,212,.3) 0 6px,transparent 6px 12px)}
+.list{position:relative;padding:10px;background:#1a0f0a url('assets/Grain_texture_blue.png') center/cover;border:1.5px solid rgba(255,255,255,.08);border-radius:14px;box-shadow:0 20px 44px rgba(0,0,0,.5)}
+.list::before{content:'';position:absolute;inset:6px;border:1.5px dashed rgba(255,241,212,.22);border-radius:10px;pointer-events:none}
+.list-inner{position:relative;z-index:1;padding:8px 6px}
+.row{display:grid;grid-template-columns:52px 1fr 120px;align-items:center;gap:14px;padding:13px 18px;border-bottom:1px dashed rgba(255,241,212,.10);transition:background .18s,transform .18s;cursor:pointer}
+.row:last-child{border-bottom:0}
+.row:hover{background:rgba(255,241,212,.05);transform:translateX(2px)}
+.row.hidden{display:none}
+.row .rk{font-family:var(--font-display);font-size:24px;letter-spacing:.03em;color:rgba(255,241,212,.60);line-height:1}
+.row .nm{display:flex;align-items:center;gap:12px;font-size:15px;color:#fff;font-weight:500;min-width:0}
+.row .nm .av{width:32px;height:32px;border-radius:50%;flex-shrink:0;background:rgba(45,42,142,.55);border:1.5px dashed rgba(255,241,212,.45);display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-style:italic;font-size:11px;font-weight:700;color:var(--color-cream-light)}
+.row .nm .txt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .pt{text-align:right;font-family:var(--font-display);font-size:24px;letter-spacing:.03em;color:var(--color-cream-light)}
+.row .pt .u{font-family:var(--font-mono);font-style:italic;font-size:10px;color:rgba(255,241,212,.48);letter-spacing:.16em;margin-left:5px}
+.empty{text-align:center;padding:44px 20px;font-family:var(--font-body);font-style:italic;color:rgba(255,241,212,.55);font-size:14px}
+
+@media(max-width:720px){.hero{padding:120px 20px 14px}.podium{grid-template-columns:1fr;gap:36px}.row{grid-template-columns:40px 1fr 100px;padding:11px 14px;gap:10px}}
+</style>
+</head>
+<body>
+<div class="stage"></div>
+<div class="grain"></div>
+
+<div id="nav-root"></div>
+<script>window.GOL_PAGE='leaderboard'</script>
+<script src="nav.js"></script>
+
+<header class="hero">
+  <div class="eyebrow">Ranking · Sezóna 2025/26</div>
+  <h1>Leaderboard</h1>
+  <p class="tagline">Kdo hraje nejtvrději. Body se sbírají za účast na akcích a za odvahu jít mimo komfortní zónu.</p>
+  <div class="divider"></div>
+</header>
+
+<section class="controls">
+  <div class="tabs">
+    <button class="tab on" data-tab="total">Celkem</button>
+    <button class="tab" data-tab="month">Tento rok</button>
+  </div>
+  <div class="search"><input id="q" type="text" placeholder="Vyhledat hráče…" autocomplete="off" /></div>
+  <a href="o-bodech.html" style="font-family:var(--font-body);font-style:italic;font-size:12px;color:rgba(255,241,212,.65);border-bottom:1px dashed rgba(255,241,212,.45);padding-bottom:2px;transition:color .18s,border-color .18s" onmouseover="this.style.color='var(--color-pink)';this.style.borderColor='var(--color-pink)'" onmouseout="this.style.color='rgba(255,241,212,.65)';this.style.borderColor='rgba(255,241,212,.45)'">Co jsou to body?</a>
+</section>
+
+<main class="lb-main">
+  <div class="stage-wrap">
+    <div class="podium" id="podium"></div>
+    <div class="stage-floor"></div>
+  </div>
+  <div class="list-label">Další hráči</div>
+  <div class="list"><div class="list-inner" id="list"></div></div>
+</main>
+
+<div id="footer-root"></div>
+<script src="footer.js"></script>
+
+<script>
+// nav handled by nav.js
+
+const DATA={
+  total:[
+    {n:'Lukáš Müller',p:1280},{n:'Vojta Toman',p:1165},{n:'Petr Testovací',p:1040},
+    {n:'Adam Novák',p:885},{n:'Kryštof Hochman',p:720},{n:'Anička Marie Sdlouhýmjménem',p:615},
+    {n:'Tereza Svobodová',p:560},{n:'Matěj Horák',p:510},{n:'Jakub Dvořák',p:470},
+    {n:'Eliška Malá',p:430},{n:'Valerie Nová',p:395},{n:'Vašek Novotný',p:340},
+    {n:'Karolína Lišková',p:305},{n:'Michal Pokorný',p:275},{n:'Tomáš Veselý',p:240},
+    {n:'Barbora Kučerová',p:210},{n:'David Král',p:180},{n:'Nikola Benešová',p:150},
+    {n:'Martin Krejčí',p:125},{n:'Sára Procházková',p:100},{n:'Jan Fiala',p:80},
+    {n:'Denisa Marková',p:65},{n:'Ondřej Beneš',p:50},{n:'Emil Macháček',p:35},
+    {n:'Lucie Čermáková',p:20},{n:'Honza Růžička',p:10}
+  ],
+  month:[
+    {n:'Vojta Toman',p:420},{n:'Adam Novák',p:340},{n:'Lukáš Müller',p:310},
+    {n:'Matěj Horák',p:255},{n:'Kryštof Hochman',p:220},{n:'Petr Testovací',p:195},
+    {n:'Tereza Svobodová',p:170},{n:'Jakub Dvořák',p:135},{n:'Valerie Nová',p:95},
+    {n:'Barbora Kučerová',p:70},{n:'Eliška Malá',p:50},{n:'Vašek Novotný',p:30},
+    {n:'Tomáš Veselý',p:20},{n:'Sára Procházková',p:10}
+  ]
+};
+const TROPHIES=['🏆','🥈','🥉'];
+const initials=n=>n.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+let currentTab='total',query='';
+
+function render(){
+  const list=DATA[currentTab];
+  const q=query.trim().toLowerCase();
+  const top3=list.slice(0,3);
+  const rest=list.slice(3);
+  const podium=document.getElementById('podium');
+  podium.innerHTML='';
+  const order=[1,0,2];
+  order.forEach(i=>{
+    const p=top3[i];if(!p)return;
+    const cls=i===0?'p1':(i===1?'p2':'p3');
+    const el=document.createElement('div');
+    el.className='pod '+cls;
+    el.innerHTML=`<div class="trophy">${TROPHIES[i]}</div><div class="ava">${initials(p.n)}</div><div class="nm">${p.n}</div><div class="pts">${p.p}<span class="pts-u">pts</span></div><div class="base"><span class="rk">${i+1}</span></div>`;
+    if(q&&!p.n.toLowerCase().includes(q))el.style.opacity='.22';
+    podium.appendChild(el);
+  });
+  const listRoot=document.getElementById('list');
+  listRoot.innerHTML='';
+  const visible=rest.filter(p=>!q||p.n.toLowerCase().includes(q));
+  if(!visible.length&&q){listRoot.innerHTML='<div class="empty">Nikdo nenalezen.</div>';return}
+  rest.forEach((p,idx)=>{
+    const hidden=q&&!p.n.toLowerCase().includes(q);
+    const row=document.createElement('div');
+    row.className='row'+(hidden?' hidden':'');
+    row.innerHTML=`<div class="rk">${idx+4}.</div><div class="nm"><div class="av">${initials(p.n)}</div><span class="txt">${p.n}</span></div><div class="pt">${p.p}<span class="u">pts</span></div>`;
+    listRoot.appendChild(row);
+  });
+}
+
+document.querySelectorAll('.tab').forEach(btn=>{btn.addEventListener('click',()=>{document.querySelectorAll('.tab').forEach(b=>b.classList.remove('on'));btn.classList.add('on');currentTab=btn.dataset.tab;render()})});
+document.getElementById('q').addEventListener('input',e=>{query=e.target.value;render()});
+render();
+</script>
+</body>
+</html>

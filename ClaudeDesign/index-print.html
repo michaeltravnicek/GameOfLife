@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Game of Life — Život je hra, tak ho hrej</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500&family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
+<style>
+@page { size: A4 landscape; margin: 0; }
+
+*,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 100%; -webkit-print-color-adjust: exact; print-color-adjust: exact; font-family: 'Barlow', 'Helvetica Neue', Arial, sans-serif; }
+img { display: block; max-width: 100%; }
+a { color: inherit; text-decoration: none; }
+
+:root {
+  --color-cream-light: #fff1d4;
+  --color-pink: #e15463;
+  --color-purple: #2d2a8e;
+  --color-dark-brown: #1a0f0a;
+  --font-display: 'Bebas Neue', 'Arial Black', sans-serif;
+  --font-body: 'Barlow', 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'Courier Prime', 'Courier New', monospace;
+}
+
+/* ── PAGE WRAPPER ── */
+.page {
+  width: 297mm;
+  height: 210mm;
+  position: relative;
+  overflow: hidden;
+  break-before: page;
+  break-inside: avoid;
+  display: flex;
+  flex-direction: column;
+}
+.page:first-child { break-before: avoid; }
+
+/* ── PAGE 1: HERO ── */
+.p-hero {
+  background: #1a0f0a;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.p-hero-bg {
+  position: absolute; inset: 0;
+  background: url('gallery/gal0.jpg') center 30% / cover no-repeat;
+  filter: saturate(.75) brightness(.55);
+}
+.p-hero-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(10,8,30,.3) 0%, rgba(10,8,30,.55) 60%, rgba(26,15,10,.82) 100%);
+}
+.p-hero-inner {
+  position: relative; z-index: 2;
+  display: flex; flex-direction: column; align-items: center; gap: 16px;
+}
+.p-hero-logo {
+  height: 90px; width: auto; margin-bottom: 8px;
+  filter: drop-shadow(0 4px 20px rgba(0,0,0,.5));
+}
+.p-hero-title {
+  font-family: var(--font-display);
+  font-size: 96pt; line-height: .9; letter-spacing: .03em;
+  color: var(--color-cream-light); text-transform: uppercase;
+  text-shadow: 0 4px 28px rgba(0,0,0,.6);
+}
+.p-hero-sub {
+  font-family: var(--font-body); font-style: italic;
+  font-size: 13pt; color: rgba(255,241,212,.78);
+  max-width: 420px; line-height: 1.55;
+}
+.p-hero-tag {
+  font-family: var(--font-mono); font-style: italic;
+  font-size: 9pt; letter-spacing: .28em; text-transform: uppercase;
+  color: var(--color-pink);
+  display: flex; align-items: center; gap: 10px;
+}
+.p-hero-tag::before, .p-hero-tag::after { content: '✦'; opacity: .9; }
+.p-hero-divider {
+  width: 100px; height: 1px;
+  background: repeating-linear-gradient(90deg, rgba(255,241,212,.45) 0 5px, transparent 5px 10px);
+}
+.p-hero-pill {
+  display: inline-flex; align-items: center; gap: 12px;
+  background: var(--color-pink); color: #fff;
+  font-family: var(--font-body); font-size: 11pt; font-weight: 700; letter-spacing: .04em;
+  padding: 10px 28px; border-radius: 9999px;
+  box-shadow: 0 6px 20px rgba(225,84,99,.4);
+}
+
+/* ── PAGE 2: EVENTS ── */
+.p-events {
+  background: var(--color-purple);
+  background-image: url('assets/Grain_texture_medium_purple.png');
+  background-size: cover;
+  padding: 32px 44px 36px;
+}
+.sec-title {
+  font-family: var(--font-display); font-size: 36pt;
+  letter-spacing: .06em; text-transform: uppercase;
+  color: var(--color-cream-light); text-align: center;
+  margin-bottom: 28px;
+  display: flex; align-items: center; justify-content: center; gap: 16px;
+}
+.sec-title .star { color: var(--color-pink); font-size: .7em; }
+.ev-grid {
+  display: grid; grid-template-columns: repeat(3,1fr); gap: 18px;
+  flex: 1;
+}
+.ev-card {
+  position: relative; padding: 20px 22px 18px;
+  border: 2px dashed rgba(255,255,255,.5); border-radius: 12px;
+  background: rgba(0,0,0,.12);
+}
+.ev-badge {
+  position: absolute; top: -16px; right: -8px;
+  width: 95px; height: 95px; object-fit: contain;
+  transform: rotate(6deg);
+  filter: drop-shadow(0 4px 10px rgba(0,0,0,.35));
+}
+.ev-title {
+  font-family: var(--font-display); font-size: 22pt; line-height: 1;
+  color: #fff; text-transform: uppercase; letter-spacing: .02em;
+  padding-right: 70px; margin-bottom: 14px;
+}
+.ev-meta { display: flex; flex-direction: column; gap: 5px; }
+.ev-row { font-size: 10pt; color: rgba(255,255,255,.75); display: flex; align-items: center; gap: 6px; }
+
+/* ── PAGE 3: LEADERBOARD ── */
+.p-lb {
+  position: relative;
+  padding: 32px 44px 36px;
+  align-items: center;
+}
+.p-lb-bg {
+  position: absolute; inset: 0;
+  background: url('gallery/gal2.jpg') center / cover;
+  filter: saturate(.8) brightness(.6);
+}
+.p-lb-tint {
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(45,42,142,.28) 0%, rgba(26,15,10,.72) 100%);
+}
+.p-lb-inner { position: relative; z-index: 2; max-width: 520px; margin: 0 auto; width: 100%; }
+.lb-title {
+  font-family: var(--font-display); font-size: 32pt; letter-spacing: .05em;
+  text-align: center; color: var(--color-cream-light); text-transform: uppercase;
+  margin-bottom: 18px;
+  display: flex; justify-content: center; align-items: center; gap: 12px;
+}
+.lb-card {
+  background: rgba(26,15,10,.85) url('assets/Grain_texture_blue.png') center/cover;
+  border: 1px solid rgba(255,255,255,.1); border-radius: 12px; overflow: hidden;
+}
+.lb-head, .lb-row {
+  display: grid; grid-template-columns: 52px 1fr 72px;
+  align-items: center; padding: 7px 18px; gap: 10px;
+}
+.lb-head {
+  background: url('assets/Grain_texture_light.png') center/cover;
+  color: #1a1a1a; font-family: var(--font-mono); font-style: italic;
+  font-size: 9pt; font-weight: 700; letter-spacing: .08em;
+  border-bottom: 1px dashed rgba(26,26,26,.15);
+}
+.lb-row { border-bottom: 1px dashed rgba(255,255,255,.08); }
+.lb-row:last-child { border-bottom: 0; }
+.lb-rank { font-size: 11pt; color: rgba(255,255,255,.55); font-weight: 500; }
+.lb-rank.top { color: #f5c842; font-size: 14pt; }
+.lb-name { display: flex; align-items: center; gap: 8px; color: #fff; font-size: 10pt; }
+.lb-av {
+  width: 22px; height: 22px; border-radius: 50%;
+  background: rgba(71,81,133,.9); border: 1px solid rgba(255,255,255,.2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 7pt; font-weight: 700; color: #fff; font-family: var(--font-mono);
+}
+.lb-pts { font-weight: 700; font-size: 10pt; color: #fff; text-align: right; }
+
+/* ── PAGE 4: ABOUT ── */
+.p-about {
+  background-color: #3a2418;
+  background-image: url('assets/Grain_texture_brown.png');
+  background-size: cover;
+  padding: 36px 44px;
+  flex-direction: row;
+  align-items: center;
+  gap: 48px;
+}
+.about-photo {
+  width: 165px; flex-shrink: 0;
+  aspect-ratio: 3/4; border-radius: 2px;
+  border: 2px solid rgba(255,255,255,.85); overflow: hidden;
+}
+.about-photo img { width: 100%; height: 100%; object-fit: cover; }
+.about-text { flex: 1; display: flex; flex-direction: column; gap: 0; }
+.about-eyebrow {
+  font-family: var(--font-mono); font-style: italic;
+  font-size: 8pt; letter-spacing: .22em; text-transform: uppercase;
+  color: var(--color-pink); margin-bottom: 10px;
+}
+.about-heading {
+  font-family: var(--font-display); font-size: 32pt;
+  letter-spacing: .03em; line-height: 1;
+  color: var(--color-cream-light); text-transform: uppercase;
+  margin-bottom: 14px;
+}
+.about-body {
+  font-size: 11pt; font-style: italic; line-height: 1.7;
+  color: rgba(255,241,212,.80); margin-bottom: 12px; max-width: 480px;
+}
+.stats-row {
+  display: grid; grid-template-columns: repeat(3,1fr); gap: 20px;
+  margin-top: 22px; padding-top: 18px;
+  border-top: 1px dashed rgba(255,241,212,.28);
+}
+.stat-item { text-align: center; }
+.stat-num { font-family: var(--font-display); font-size: 28pt; color: var(--color-pink); margin-bottom: 2px; }
+.stat-label { font-size: 8pt; color: rgba(255,241,212,.65); text-transform: uppercase; letter-spacing: .1em; }
+
+/* ── PAGE 5: GALLERY ── */
+.p-gallery {
+  background: #1a0f0a;
+  position: relative;
+  padding: 0;
+}
+.p-gallery-bg {
+  position: absolute; inset: 0;
+  background: url('gallery/gal2.jpg') center / cover;
+  filter: blur(3px) brightness(.4) saturate(.6);
+  transform: scale(1.05);
+}
+.p-gallery-inner {
+  position: relative; z-index: 1;
+  display: flex; flex-direction: column; height: 100%;
+}
+.p-gallery-title {
+  text-align: center; padding: 24px 0 14px;
+  font-family: var(--font-display); font-size: 32pt;
+  letter-spacing: .06em; text-transform: uppercase;
+  color: var(--color-cream-light);
+  display: flex; align-items: center; justify-content: center; gap: 16px;
+}
+.p-gallery-grid {
+  display: grid; grid-template-columns: repeat(4,1fr); gap: 6px;
+  flex: 1; padding: 0 20px 20px;
+}
+.p-gallery-img {
+  width: 100%; height: 100%; object-fit: cover;
+  border: 2px solid rgba(255,255,255,.7);
+}
+
+/* ── PAGE 6: FOOTER / CONTACT ── */
+.p-footer {
+  background: var(--color-purple);
+  background-image: url('assets/Grain_texture_medium_purple.png');
+  background-size: cover;
+  padding: 44px 56px;
+  flex-direction: row;
+  gap: 80px;
+  align-items: center;
+}
+.ft-left { display: flex; flex-direction: column; gap: 5px; min-width: 160px; }
+.ft-label {
+  font-size: 8pt; font-weight: 800; letter-spacing: .22em; text-transform: uppercase;
+  color: rgba(255,255,255,.45); margin-bottom: 10px;
+}
+.ft-link { font-style: italic; font-size: 13pt; color: rgba(255,255,255,.7); }
+.ft-right-col { flex: 1; display: flex; flex-direction: column; align-items: flex-end; text-align: right; }
+.ft-logo {
+  font-family: var(--font-display); font-size: 20pt; color: #fff;
+  letter-spacing: .06em; display: inline-flex; align-items: center; gap: 8px;
+  margin-bottom: 16px;
+}
+.ft-logo .sp { color: var(--color-pink); font-size: 12pt; }
+.ft-desc { font-size: 11pt; font-style: italic; line-height: 1.65; color: rgba(255,255,255,.65); max-width: 380px; margin-bottom: 14px; }
+.ft-contact { font-size: 11pt; color: rgba(255,255,255,.6); line-height: 1.7; }
+.ft-credit { font-size: 9pt; font-style: italic; color: rgba(255,255,255,.35); margin-top: 12px; }
+
+@media screen {
+  body { background: #888; }
+  .page {
+    width: 297mm; height: 210mm;
+    margin: 12px auto; box-shadow: 0 4px 32px rgba(0,0,0,.5);
+  }
+}
+</style>
+</head>
+<body>
+
+<!-- PAGE 1: HERO -->
+<div class="page p-hero">
+  <div class="p-hero-bg"></div>
+  <div class="p-hero-overlay"></div>
+  <div class="p-hero-inner">
+    <img class="p-hero-logo" src="logos/GOL_main_logo_pink.png" alt="Game of Life" />
+    <div class="p-hero-tag">Sezóna 2025 / 26</div>
+    <div class="p-hero-title">Game of Life</div>
+    <p class="p-hero-sub">Celoroční komunitní hra plná zábavy, výzev a nezapomenutelných zážitků. Sbírej body, hraj život.</p>
+    <div class="p-hero-divider"></div>
+    <div class="p-hero-pill">gameofyolo.com</div>
+  </div>
+</div>
+
+<!-- PAGE 2: EVENTS -->
+<div class="page p-events">
+  <h2 class="sec-title"><span class="star">✦</span> Nadcházející akce <span class="star">✦</span></h2>
+  <div class="ev-grid">
+    <div class="ev-card">
+      <img class="ev-badge" src="logos/GOL_FrogJumps_transparent.png" alt="Frog Jumps" />
+      <div class="ev-title">Game of Life<br/>Frog Jumps</div>
+      <div class="ev-meta">
+        <div class="ev-row">📅 12. května 2026</div>
+        <div class="ev-row">📍 Brno, Bystrc</div>
+        <div class="ev-row">🏆 +50 pts</div>
+      </div>
+    </div>
+    <div class="ev-card">
+      <img class="ev-badge" src="logos/GOL_Dance_transparent.png" alt="Dance Class" />
+      <div class="ev-title">Game of Life<br/>Dance Class</div>
+      <div class="ev-meta">
+        <div class="ev-row">📅 18. května 2026</div>
+        <div class="ev-row">📍 Praha, Karlín</div>
+        <div class="ev-row">🏆 +50 pts</div>
+      </div>
+    </div>
+    <div class="ev-card">
+      <img class="ev-badge" src="logos/GOL_C50_transparent.png" alt="C50" />
+      <div class="ev-title">Game of Life<br/>C50</div>
+      <div class="ev-meta">
+        <div class="ev-row">📅 2. června 2026</div>
+        <div class="ev-row">📍 Brno, Bystrc</div>
+        <div class="ev-row">🏆 +120 pts</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 3: LEADERBOARD -->
+<div class="page p-lb">
+  <div class="p-lb-bg"></div>
+  <div class="p-lb-tint"></div>
+  <div class="p-lb-inner">
+    <h2 class="lb-title">🏆 Top 10 hráčů 🏆</h2>
+    <div class="lb-card">
+      <div class="lb-head"><div>#</div><div>hráč</div><div style="text-align:right">pts</div></div>
+      <div class="lb-row"><span class="lb-rank top">🏆</span><div class="lb-name"><div class="lb-av">LM</div>Lukáš Müller</div><div class="lb-pts">1280</div></div>
+      <div class="lb-row"><span class="lb-rank top">🥈</span><div class="lb-name"><div class="lb-av">VT</div>Vojta Toman</div><div class="lb-pts">1165</div></div>
+      <div class="lb-row"><span class="lb-rank top">🥉</span><div class="lb-name"><div class="lb-av">PT</div>Petr Testovací</div><div class="lb-pts">1040</div></div>
+      <div class="lb-row"><span class="lb-rank">4.</span><div class="lb-name"><div class="lb-av">AN</div>Adam Novák</div><div class="lb-pts">885</div></div>
+      <div class="lb-row"><span class="lb-rank">5.</span><div class="lb-name"><div class="lb-av">KH</div>Kryštof Hochman</div><div class="lb-pts">720</div></div>
+      <div class="lb-row"><span class="lb-rank">6.</span><div class="lb-name"><div class="lb-av">AS</div>Anička Sdlouhýmjménem</div><div class="lb-pts">615</div></div>
+      <div class="lb-row"><span class="lb-rank">7.</span><div class="lb-name"><div class="lb-av">TS</div>Tereza Svobodová</div><div class="lb-pts">560</div></div>
+      <div class="lb-row"><span class="lb-rank">8.</span><div class="lb-name"><div class="lb-av">MH</div>Matěj Horák</div><div class="lb-pts">510</div></div>
+      <div class="lb-row"><span class="lb-rank">9.</span><div class="lb-name"><div class="lb-av">JD</div>Jakub Dvořák</div><div class="lb-pts">470</div></div>
+      <div class="lb-row"><span class="lb-rank">10.</span><div class="lb-name"><div class="lb-av">EM</div>Eliška Malá</div><div class="lb-pts">430</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 4: ABOUT -->
+<div class="page p-about">
+  <div class="about-photo">
+    <img src="gallery/gal3.jpg" alt="Game of Life komunita" />
+  </div>
+  <div class="about-text">
+    <div class="about-eyebrow">— O nás —</div>
+    <h3 class="about-heading">Komunita, která hraje život naplno</h3>
+    <p class="about-body"><strong>Game of Life</strong> je celoroční komunitní hra plná zábavy, výzev a nezapomenutelných zážitků. Vzešla z přesvědčení, že nejlepší okamžiky nevznikají samy — ale když se správní lidé potkají ve správný čas.</p>
+    <p class="about-body">Každý event je bodovaný. Každá výzva tě posune dál. Nejde jen o body — jde o přátelství, vzpomínky a odvahu vyzkoušet něco nového. Vytvořil <em>Vojta Toman</em> s láskou ke komunitě.</p>
+    <div class="stats-row">
+      <div class="stat-item"><div class="stat-num">250+</div><div class="stat-label">Hráčů</div></div>
+      <div class="stat-item"><div class="stat-num">40+</div><div class="stat-label">Events</div></div>
+      <div class="stat-item"><div class="stat-num">25K+</div><div class="stat-label">Bodů</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 5: GALLERY -->
+<div class="page p-gallery">
+  <div class="p-gallery-bg"></div>
+  <div class="p-gallery-inner">
+    <div class="p-gallery-title">📷 Galerie 📷</div>
+    <div class="p-gallery-grid">
+      <img class="p-gallery-img" src="gallery/gal0.jpg" alt="" />
+      <img class="p-gallery-img" src="gallery/gal1.jpg" alt="" />
+      <img class="p-gallery-img" src="gallery/gal2.jpg" alt="" />
+      <img class="p-gallery-img" src="gallery/gal3.jpg" alt="" />
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 6: CONTACT / FOOTER -->
+<div class="page p-footer">
+  <div class="ft-left">
+    <div class="ft-label">Menu</div>
+    <span class="ft-link">Domů</span>
+    <span class="ft-link">Kalendář</span>
+    <span class="ft-link">Galerie</span>
+    <span class="ft-link">Leaderboard</span>
+    <span class="ft-link" style="margin-top:12px">Instagram</span>
+    <span class="ft-link">Facebook</span>
+    <span class="ft-link">TikTok</span>
+  </div>
+  <div class="ft-right-col">
+    <div class="ft-logo"><span class="sp">✦</span> GAME OF LIFE</div>
+    <p class="ft-desc">Game of Life sdružuje ty, co chtějí z každodenního stereotypu vytřískat maximum a nebojí se u toho jít do extrému i do hloubky. Jsme tvůj protijed na moderní izolaci — místo, kde se nehraje na přetvářku, ale na reálný život.</p>
+    <div class="ft-contact">Vojta Toman<br/>+420 731 005 976</div>
+    <div class="ft-credit">Tyhle krásný stránky vytvořil Lukáš Müller. · Game of Life © 2026</div>
+  </div>
+</div>
+
+<script>
+document.fonts.ready.then(() => {
+  setTimeout(() => window.print(), 500);
+});
+</script>
+</body>
+</html>

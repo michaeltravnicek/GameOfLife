@@ -1,161 +1,167 @@
 {% extends "base.html" %}
 {% load event_extras %}
 
-{% block title %}{{ profile_user.first_name|default:profile_user.username }} — Profile{% endblock %}
+{% block title %}{{ profile_user.first_name|default:profile_user.username }} — Profil{% endblock %}
 
 {% block content %}
-<section class="section" style="margin-top: 1rem;" x-data="{ tab: 'upcoming' }">
+<div class="page-head">
+    <div class="section-eyebrow">Profil</div>
+    <h1>{{ profile_user.first_name|default:profile_user.username }}</h1>
+</div>
 
-    <!-- Top: name + actions (no email shown) -->
-    <div class="card anim-fade-up" style="padding: 1.5rem 2rem; background: #fff; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; border-top: 4px solid var(--gol-indigo-primary);">
-        <div>
-            <h1 style="font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 32px; margin: 0; color: var(--gol-text-dark);">
-                {{ profile_user.first_name|default:profile_user.username }}
-                {% if is_own_profile %}<span class="badge badge-indigo" style="margin-left: 0.5rem; vertical-align: middle; font-size: 12px;">Tvůj profil</span>{% endif %}
-            </h1>
-        </div>
+<section class="section sec-dark" x-data="{ tab: 'upcoming' }">
+    <div class="section-inner" style="max-width: 1040px;">
+
+        {# Profile header actions #}
         {% if is_own_profile %}
-        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-            <a href="{% url 'profile_edit' %}" class="btn btn-primary">Upravit</a>
+        <div style="display: flex; justify-content: flex-end; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.5rem;">
+            <a href="{% url 'profile_edit' %}" class="btn btn-primary">Upravit profil</a>
             <form method="post" action="{% url 'logout' %}" style="margin: 0;">
                 {% csrf_token %}
-                <button type="submit" class="btn btn-ghost">Odhlásit se</button>
+                <button type="submit" class="btn btn-ghost">Odhlásit</button>
             </form>
         </div>
         {% endif %}
-    </div>
 
-    <!-- O mně container: photo + instagram + questions -->
-    <div class="card anim-fade-up-delay-1" style="padding: 2rem; background: var(--gol-cream-card); border: 2px solid var(--gol-tan-border); margin-top: 1.5rem;">
-        <div style="display: flex; gap: 2rem; flex-wrap: wrap; align-items: flex-start;">
-            <!-- Left: photo + instagram -->
-            <div style="display: flex; flex-direction: column; align-items: center; gap: 1rem; flex-shrink: 0;">
-                {% if profile and profile.photo %}
-                    <img src="{{ profile.photo.url }}" alt="Profilová fotka" style="width: 140px; height: 140px; border-radius: 50%; object-fit: cover; border: 3px solid var(--gol-indigo-primary);">
-                {% else %}
-                    <span class="avatar-initial" style="width: 140px; height: 140px; font-size: 48px;">
-                        {% firstof profile_user.first_name profile_user.username|slice:":1" as initial_src %}
-                        {{ initial_src|slice:":1"|upper }}
-                    </span>
-                {% endif %}
-                {% if profile and profile.instagram %}
-                    <a href="https://instagram.com/{{ profile.instagram|cut:'@' }}" target="_blank" rel="noopener"
-                       style="color: var(--gol-indigo-primary); text-decoration: none; font-size: 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 0.3rem;">
-                        📷 {{ profile.instagram }}
-                    </a>
-                {% endif %}
+        {# About me card #}
+        <div class="lb-sidebar-card anim-fade-up-delay-1" style="margin-bottom: 1.5rem;">
+            <div style="display: flex; gap: 2rem; flex-wrap: wrap; align-items: flex-start;">
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 1rem; flex-shrink: 0;">
+                    {% if profile and profile.photo %}
+                        <img src="{{ profile.photo.url }}" alt="Profilová fotka"
+                             style="width: 140px; height: 140px; border-radius: 50%; object-fit: cover; border: 3px solid var(--gol-pink);">
+                    {% else %}
+                        <span class="avatar-initial" style="width: 140px; height: 140px; font-size: 56px;">
+                            {% firstof profile_user.first_name profile_user.username|slice:":1" as initial_src %}
+                            {{ initial_src|slice:":1"|upper }}
+                        </span>
+                    {% endif %}
+                    {% if profile and profile.instagram %}
+                        <a href="https://instagram.com/{{ profile.instagram|cut:'@' }}" target="_blank" rel="noopener"
+                           style="color: var(--gol-pink); text-decoration: none; font-family: var(--font-mono); font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;">
+                            📷 {{ profile.instagram }}
+                        </a>
+                    {% endif %}
+                </div>
+
+                <div style="flex: 1; min-width: 240px;">
+                    <h3 class="lb-sidebar-title">O mně</h3>
+                    {% if questions_with_answers %}
+                        {% for qa in questions_with_answers %}
+                            <div style="margin-bottom: 1.25rem;">
+                                <p class="col-label" style="margin: 0 0 6px;">{{ qa.question.text }}</p>
+                                <p style="font-family: var(--font-body); font-size: 15px; font-style: italic; color: var(--gol-text-soft); margin: 0; line-height: 1.7;">{{ qa.answer.answer }}</p>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <p style="color: var(--gol-text-muted); margin: 0; font-size: 14px;">
+                            {% if is_own_profile %}
+                                Zatím nic nevíme. <a href="{% url 'profile_edit' %}" class="slide-link">Doplň svůj profil →</a>
+                            {% else %}
+                                Tento hráč o sobě ještě nic nenapsal.
+                            {% endif %}
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        {# Stats #}
+        <div class="grid-3 anim-fade-up-delay-2" style="margin-bottom: 2.5rem;">
+            <div class="stat-card">
+                <div class="label">Celkem bodů</div>
+                <div class="value">{{ total_points }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Akcí</div>
+                <div class="value">{{ total_events }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Nadcházející</div>
+                <div class="value">{{ upcoming_rsvps|length }}</div>
+            </div>
+        </div>
+
+        {# Tabs #}
+        <div class="anim-fade-up-delay-2">
+            <div style="text-align: center; margin-bottom: 1.5rem;">
+                <div class="tab-row">
+                    <button class="tab-button" :class="tab === 'upcoming' ? 'active' : ''" @click="tab = 'upcoming'">Nadcházející</button>
+                    <button class="tab-button" :class="tab === 'past' ? 'active' : ''" @click="tab = 'past'">Absolvované</button>
+                </div>
             </div>
 
-            <!-- Right: questions/answers -->
-            <div style="flex: 1; min-width: 240px;">
-                <h3 style="font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 20px; margin: 0 0 1.5rem; color: var(--gol-indigo-primary);">O mně</h3>
-                {% if questions_with_answers %}
-                    {% for qa in questions_with_answers %}
-                        <div style="margin-bottom: 1.5rem;">
-                            <p style="font-family: 'Inter', sans-serif; font-weight: 500; font-size: 14px; margin: 0 0 0.4rem; color: var(--gol-text-muted);">{{ qa.question.text }}</p>
-                            <p style="font-family: 'Inter', sans-serif; font-weight: 400; font-size: 15px; margin: 0; color: var(--gol-text-dark); line-height: 1.6;">{{ qa.answer.answer }}</p>
-                        </div>
+            <div x-show="tab === 'upcoming'" x-transition>
+                {% if upcoming_rsvps %}
+                    <div class="grid-auto">
+                    {% for rsvp in upcoming_rsvps %}
+                        {% with cat=rsvp.event|event_category %}
+                        <article class="card event-card evt-{{ cat }}">
+                            <a href="{% url 'event_detail' rsvp.event.slug %}">
+                                <div class="card-photo"
+                                     style="background-image: url('{% if rsvp.event.image %}{{ rsvp.event.image.url }}{% else %}https://picsum.photos/seed/event{{ rsvp.event.id }}/160/160{% endif %}');">
+                                    <span class="badge-evt evt-{{ cat }}">{{ rsvp.event|event_category_label }}</span>
+                                </div>
+                                <div class="card-body">
+                                    <h3 class="card-title">{{ rsvp.event.name }}</h3>
+                                    <p class="card-meta">📅 {{ rsvp.event.date|date:"d. m. Y H:i" }}</p>
+                                    <p class="card-meta">📍 {{ rsvp.event.place }}</p>
+                                    <div style="margin-top: 10px;">
+                                        <span class="points-evt evt-{{ cat }}">+{{ rsvp.event.points }} pts</span>
+                                    </div>
+                                </div>
+                            </a>
+                        </article>
+                        {% endwith %}
                     {% endfor %}
+                    </div>
                 {% else %}
-                    <p class="text-muted" style="margin: 0; font-size: 14px;">
-                        {% if is_own_profile %}
-                            Zatím nic nevíme. <a href="{% url 'profile_edit' %}" class="slide-link" style="font-weight: 600;">Doplň svůj profil</a>
-                        {% else %}
-                            Tento hráč o sobě ještě nic nenapsal.
-                        {% endif %}
+                    <p class="text-muted text-center" style="padding: 2rem 0;">
+                        Žádné nadcházející akce.
+                        <a href="{% url 'events' %}" class="slide-link">Přidej se na nějakou! →</a>
                     </p>
                 {% endif %}
             </div>
-        </div>
-    </div>
 
-    <div class="grid-3 anim-fade-up-delay-1" style="margin-top: 1.5rem;">
-        <div class="stat-card">
-            <div class="label">Celkem bodů</div>
-            <div class="value">{{ total_points }}</div>
-        </div>
-        <div class="stat-card">
-            <div class="label">Akcí</div>
-            <div class="value">{{ total_events }}</div>
-        </div>
-        <div class="stat-card">
-            <div class="label">Nadcházející</div>
-            <div class="value">{{ upcoming_rsvps|length }}</div>
-        </div>
-    </div>
-
-    <div style="margin-top: 2.5rem;" class="anim-fade-up-delay-2">
-        <div class="tab-row">
-            <button class="tab-button" :class="tab === 'upcoming' ? 'active' : ''" @click="tab = 'upcoming'">Nadcházející events</button>
-            <button class="tab-button" :class="tab === 'past' ? 'active' : ''" @click="tab = 'past'">Absolvované events</button>
-        </div>
-
-        <div x-show="tab === 'upcoming'" x-transition>
-            {% if upcoming_rsvps %}
-                <div class="grid-auto">
-                {% for rsvp in upcoming_rsvps %}
-                    {% with cat=rsvp.event|event_category %}
-                    <a href="{% url 'event_detail' rsvp.event.slug %}" class="card event-card evt-{{ cat }}" style="text-decoration:none; color:inherit; display:block;">
-                        <div class="card-photo"
-                             style="background-image: linear-gradient(135deg, rgba(71, 81, 133, 0.35), rgba(54, 60, 99, 0.5)), url('{% if rsvp.event.image %}{{ rsvp.event.image.url }}{% else %}https://picsum.photos/seed/event{{ rsvp.event.id }}/600/400{% endif %}'); height: 140px;">
-                            <span class="badge-evt evt-{{ cat }}" style="position: relative; z-index: 1;">{{ rsvp.event|event_category_label }}</span>
-                        </div>
-                        <div class="card-body">
-                            <h3 class="card-title">{{ rsvp.event.name }}</h3>
-                            <p class="card-meta">📍 {{ rsvp.event.place }}</p>
-                            <p class="card-meta">📅 {{ rsvp.event.date|date:"d. m. Y H:i" }}</p>
-                            <div style="margin-top: 0.6rem;">
-                                <span class="points-evt evt-{{ cat }}">+{{ rsvp.event.points }} bodů</span>
-                            </div>
-                        </div>
-                    </a>
-                    {% endwith %}
-                {% endfor %}
-                </div>
-            {% else %}
-                <p class="text-muted text-center" style="padding: 2rem 0;">
-                    Žádné nadcházející events.
-                    <a href="{% url 'events' %}" class="slide-link" style="font-weight: 600;">Přidej se na nějakou!</a>
-                </p>
-            {% endif %}
-        </div>
-
-        <div x-show="tab === 'past'" x-transition style="display: none;">
-            {% if past_events %}
-                <div class="grid-auto">
-                {% for ute in past_events %}
-                    {% with cat=ute.event|event_category %}
-                    <a href="{% url 'event_detail' ute.event.slug %}" class="card event-card evt-{{ cat }}" style="text-decoration:none; color:inherit; display:block;">
-                        <div class="card-photo"
-                             style="background-image: linear-gradient(135deg, rgba(71, 81, 133, 0.35), rgba(54, 60, 99, 0.55)), url('{% if ute.event.image %}{{ ute.event.image.url }}{% else %}https://picsum.photos/seed/event{{ ute.event.id }}/600/400{% endif %}'); height: 140px;">
-                            <span class="badge-evt evt-{{ cat }}" style="position: relative; z-index: 1;">{{ ute.event|event_category_label }}</span>
-                        </div>
-                        <div class="card-body">
-                            <h3 class="card-title">{{ ute.event.name }}</h3>
-                            <p class="card-meta">📍 {{ ute.event.place }}</p>
-                            <p class="card-meta">📅 {{ ute.event.date|date:"d. m. Y" }}</p>
-                            <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 0.6rem; gap: 0.5rem; flex-wrap: wrap;">
-                                <span class="points-evt evt-{{ cat }}">+{{ ute.points }} bodů</span>
-                                {% if ute.feedback %}
-                                    <span class="stars" title="Tvůj rating: {{ ute.feedback.rating }}/5">
-                                        {% for i in "12345" %}
-                                            {% if forloop.counter <= ute.feedback.rating %}
-                                                <span class="star">★</span>
-                                            {% else %}
-                                                <span class="star off">★</span>
-                                            {% endif %}
-                                        {% endfor %}
-                                    </span>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </a>
-                    {% endwith %}
-                {% endfor %}
-                </div>
-            {% else %}
-                <p class="text-muted text-center" style="padding: 2rem 0;">Ještě žádné absolvované events.</p>
-            {% endif %}
+            <div x-show="tab === 'past'" x-transition style="display: none;">
+                {% if past_events %}
+                    <div class="grid-auto">
+                    {% for ute in past_events %}
+                        {% with cat=ute.event|event_category %}
+                        <article class="card event-card evt-{{ cat }}">
+                            <a href="{% url 'event_detail' ute.event.slug %}">
+                                <div class="card-photo"
+                                     style="background-image: url('{% if ute.event.image %}{{ ute.event.image.url }}{% else %}https://picsum.photos/seed/event{{ ute.event.id }}/160/160{% endif %}');">
+                                    <span class="badge-evt evt-{{ cat }}">{{ ute.event|event_category_label }}</span>
+                                </div>
+                                <div class="card-body">
+                                    <h3 class="card-title">{{ ute.event.name }}</h3>
+                                    <p class="card-meta">📅 {{ ute.event.date|date:"d. m. Y" }}</p>
+                                    <p class="card-meta">📍 {{ ute.event.place }}</p>
+                                    <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 10px; gap: 8px; flex-wrap: wrap;">
+                                        <span class="points-evt evt-{{ cat }}">+{{ ute.points }} pts</span>
+                                        {% if ute.feedback %}
+                                            <span class="stars" title="Tvůj rating: {{ ute.feedback.rating }}/5">
+                                                {% for i in "12345" %}
+                                                    {% if forloop.counter <= ute.feedback.rating %}
+                                                        <span class="star">★</span>
+                                                    {% else %}
+                                                        <span class="star off">★</span>
+                                                    {% endif %}
+                                                {% endfor %}
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </a>
+                        </article>
+                        {% endwith %}
+                    {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted text-center" style="padding: 2rem 0;">Ještě žádné absolvované akce.</p>
+                {% endif %}
+            </div>
         </div>
     </div>
 </section>

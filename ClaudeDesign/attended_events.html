@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Navštívené akce — Game of Life</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500&family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="colors_and_type.css" />
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:#1a0f0a;font-family:var(--font-body);color:var(--color-cream-light);-webkit-font-smoothing:antialiased;min-height:100vh;overflow-x:hidden;display:flex;flex-direction:column}
+.main-wrapper{flex:1}
+img{display:block;max-width:100%} 
+button{font-family:inherit;cursor:pointer}
+a{color:inherit;text-decoration:none}
+
+/* BG */
+.bg-texture{position:fixed;inset:0;z-index:0;background:url('assets/Grain_texture_blue.png') center/cover}
+.bg-texture::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(26,15,10,.60) 0%,rgba(26,15,10,.82) 55%,rgba(26,15,10,.97) 100%)}
+
+/* ── NAV ── */
+
+/* ── HEADER ── */
+.header{position:relative;z-index:2;max-width:1100px;margin:0 auto;padding:180px 24px 48px;text-align:center}
+.header h1{font-family:var(--font-display);font-size:clamp(44px,6.5vw,72px);line-height:1;letter-spacing:.03em;color:var(--color-cream-light);text-transform:uppercase}
+
+/* ── EVENTS GRID ── */
+.main-content{position:relative;z-index:2;max-width:1100px;margin:0 auto;padding:0 24px 80px}
+.events-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+.ev-card{position:relative;padding:22px 24px 20px;border:2px dashed rgba(26,26,26,.45);border-radius:12px;background:url('assets/Grain_texture_light.png') center/cover;min-height:160px;cursor:pointer;transition:border-color .2s,transform .2s;text-decoration:none;display:block}
+.ev-card:hover{border-color:var(--color-pink);transform:translateY(-3px)}
+.ev-badge{position:absolute;top:-18px;right:-10px;width:110px;height:110px;object-fit:contain;pointer-events:none;transform:rotate(6deg);filter:drop-shadow(0 4px 10px rgba(0,0,0,.35))}
+.ev-title{font-family:var(--font-display);font-size:26px;line-height:1.02;color:#1a1a1a;text-transform:uppercase;letter-spacing:.02em;padding-right:78px;margin-bottom:16px}
+.ev-meta{display:flex;flex-direction:column;gap:5px}
+.ev-row{font-size:12px;color:rgba(26,26,26,.7);display:flex;align-items:center;gap:8px}
+
+
+@media(max-width:1024px){.events-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:720px){.events-grid{grid-template-columns:1fr}.header{padding:100px 24px 40px}}
+</style>
+</head>
+<body>
+<div class="bg-texture"></div>
+
+<!-- NAV -->
+<div id="nav-root"></div>
+<script>window.GOL_PAGE='home'</script>
+<script src="nav.js"></script>
+
+<div class="main-wrapper">
+<!-- HEADER -->
+<section class="header">
+  <h1 id="personName">Michal Svoboda</h1>
+</section>
+
+<!-- EVENTS -->
+<section class="main-content">
+  <div class="events-grid" id="eventsGrid">
+    <a class="ev-card" href="event_detail.html">
+      <img class="ev-badge" src="logos/GOL_FrogJumps_transparent.png" alt="Frog Jumps" />
+      <div class="ev-title">Game of Life<br/>Frog Jumps</div>
+      <div class="ev-meta">
+        <div class="ev-row">📅 12. května 2026</div>
+        <div class="ev-row">📍 Brno, Bystrc</div>
+      </div>
+    </a>
+    <a class="ev-card" href="event_detail.html">
+      <img class="ev-badge" src="logos/GOL_Dance_transparent.png" alt="Dance Class" />
+      <div class="ev-title">Game of Life<br/>Dance Class</div>
+      <div class="ev-meta">
+        <div class="ev-row">📅 18. května 2026</div>
+        <div class="ev-row">📍 Praha, Karlín</div>
+      </div>
+    </a>
+    <a class="ev-card" href="event_detail.html">
+      <img class="ev-badge" src="logos/GOL_C50_transparent.png" alt="C50" />
+      <div class="ev-title">Game of Life<br/>C50</div>
+      <div class="ev-meta">
+        <div class="ev-row">📅 24. května 2026</div>
+        <div class="ev-row">📍 Ostrava, Centrum</div>
+      </div>
+    </a>
+    <a class="ev-card" href="event_detail.html">
+      <img class="ev-badge" src="logos/GOL_FrogJumps_transparent.png" alt="Frog Jumps" />
+      <div class="ev-title">Game of Life<br/>Frog Jumps II</div>
+      <div class="ev-meta">
+        <div class="ev-row">📅 2. června 2026</div>
+        <div class="ev-row">📍 Brno, Park</div>
+      </div>
+    </a>
+    <a class="ev-card" href="event_detail.html">
+      <img class="ev-badge" src="logos/GOL_Dance_transparent.png" alt="Dance Class" />
+      <div class="ev-title">Game of Life<br/>Summer Dance</div>
+      <div class="ev-meta">
+        <div class="ev-row">📅 8. června 2026</div>
+        <div class="ev-row">📍 Praha, Vinohrady</div>
+      </div>
+    </a>
+  </div>
+</section>
+</div>
+
+<div id="footer-root"></div>
+<script src="footer.js"></script>
+
+</body>
+</html>

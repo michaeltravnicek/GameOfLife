@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Akce — Game of Life</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500&family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="colors_and_type.css" />
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--font-body);color:var(--color-cream-light);-webkit-font-smoothing:antialiased;min-height:100vh;background:#1a0f0a;overflow-x:hidden}
+img{display:block;max-width:100%}
+button{font-family:inherit;cursor:pointer}
+a{color:inherit;text-decoration:none}
+
+
+/* STAGE */
+.stage{position:fixed;inset:0;z-index:-2;background:url('gallery/gal0.jpg') center 28%/cover no-repeat;filter:saturate(.7) contrast(1.02);transform:scale(1.05)}
+.stage::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 8%,rgba(45,42,142,.20) 0%,transparent 25%),linear-gradient(180deg,rgba(45,42,142,.15) 0%,rgba(26,15,10,.80) 50%,rgba(26,15,10,.96) 100%)}
+.grain{position:fixed;inset:0;z-index:-1;pointer-events:none;background:url('assets/Grain_texture_brown.png') center/cover;opacity:.08;mix-blend-mode:overlay}
+
+/* HERO */
+.hero{position:relative;z-index:2;max-width:1100px;margin:0 auto;padding:148px 24px 16px;text-align:center}
+.eyebrow{font-family:var(--font-mono);font-style:italic;font-size:13px;letter-spacing:.3em;text-transform:uppercase;color:var(--color-pink);margin-bottom:8px;display:inline-flex;align-items:center;gap:10px}
+.eyebrow::before,.eyebrow::after{content:'✦';font-size:11px;opacity:.9}
+.hero h1{font-family:var(--font-display);font-size:clamp(70px,10vw,140px);line-height:.92;color:var(--color-cream-light);text-transform:uppercase;letter-spacing:.03em;text-shadow:0 6px 34px rgba(0,0,0,.6);margin-bottom:6px}
+.hero .tagline{font-family:var(--font-body);font-style:italic;font-size:14px;color:rgba(255,241,212,.72);max-width:560px;margin:10px auto 0;line-height:1.5}
+.divider{width:120px;height:1px;margin:26px auto 0;background:repeating-linear-gradient(90deg,rgba(255,241,212,.45) 0 5px,transparent 5px 10px)}
+
+/* CONTROLS */
+.controls{position:relative;z-index:2;max-width:1100px;margin:32px auto 0;padding:0 24px;display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap}
+.tabs{display:inline-flex;padding:5px;gap:5px;background:rgba(26,15,10,.45);border:1.5px dashed rgba(255,241,212,.32);border-radius:9999px;backdrop-filter:blur(8px)}
+.tab{font-family:var(--font-body);font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;padding:9px 20px;border-radius:9999px;cursor:pointer;background:transparent;border:0;color:rgba(255,241,212,.75);transition:all .18s}
+.tab:hover{color:#fff}
+.tab.on{background:var(--color-pink);color:#fff;box-shadow:0 4px 14px rgba(225,84,99,.45)}
+.search{flex:1;max-width:290px;min-width:180px;position:relative}
+.search input{width:100%;padding:11px 18px 11px 40px;font-family:var(--font-body);font-size:13px;color:var(--color-cream-light);background:rgba(26,15,10,.45);border:1.5px dashed rgba(255,241,212,.32);border-radius:9999px;outline:none;transition:border-color .18s;backdrop-filter:blur(8px)}
+.search input:focus{border-color:var(--color-pink)}
+.search input::placeholder{color:rgba(255,241,212,.5);font-style:italic}
+.search::before{content:'⌕';position:absolute;left:16px;top:50%;transform:translateY(-50%);color:rgba(255,241,212,.6);font-size:14px;pointer-events:none}
+
+/* LOCATION CHIPS */
+.locations{position:relative;z-index:2;max-width:1100px;margin:20px auto 0;padding:0 24px;display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.loc{font-family:var(--font-body);font-style:italic;font-size:12px;letter-spacing:.04em;padding:7px 16px;border-radius:9999px;cursor:pointer;background:rgba(26,15,10,.45);border:1.5px dashed rgba(255,241,212,.28);color:rgba(255,241,212,.7);transition:all .18s;backdrop-filter:blur(8px)}
+.loc:hover{color:#fff;border-color:rgba(255,241,212,.55)}
+.loc.on{background:var(--color-pink);color:#fff;border-color:transparent;box-shadow:0 4px 14px rgba(225,84,99,.4)}
+
+/* EVENTS GRID */
+main.events-main{position:relative;z-index:2;max-width:1100px;margin:0 auto;padding:40px 24px 80px}
+.group-label{font-family:var(--font-mono);font-style:italic;font-size:13px;letter-spacing:.26em;text-transform:uppercase;color:rgba(255,241,212,.75);margin:0 6px 22px;display:flex;align-items:center;gap:14px}
+.group-label::before,.group-label::after{content:'';flex:1;height:1px;background:repeating-linear-gradient(90deg,rgba(255,241,212,.3) 0 6px,transparent 6px 12px)}
+.group-label.past{color:rgba(255,241,212,.42)}
+.group-label.past::before,.group-label.past::after{background:repeating-linear-gradient(90deg,rgba(255,241,212,.16) 0 6px,transparent 6px 12px)}
+.events-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-bottom:56px}
+
+/* EVENT CARD */
+.ev-card{position:relative;border-radius:14px;overflow:hidden;border:2px dashed rgba(26,26,26,.45);cursor:pointer;transition:transform .25s,border-color .25s;min-height:240px;display:flex;flex-direction:column;justify-content:flex-end;background:url('assets/Grain_texture_light.png') center/cover;text-decoration:none}
+.ev-card:hover{transform:translateY(-4px);border-color:var(--color-pink)}
+.ev-card.past{opacity:.72}
+.ev-card.past:hover{opacity:1}
+.ev-badge{position:absolute;top:-14px;right:-12px;z-index:2;width:110px;height:110px;object-fit:contain;pointer-events:none;transform:rotate(6deg);filter:drop-shadow(0 4px 10px rgba(0,0,0,.3))}
+.ev-status{position:absolute;top:14px;left:14px;z-index:2;font-family:var(--font-mono);font-style:italic;font-size:10px;letter-spacing:.14em;text-transform:uppercase;padding:4px 10px;border-radius:9999px;background:rgba(255,241,212,.75);color:#1a1a1a;border:1px dashed rgba(26,26,26,.35);backdrop-filter:blur(6px)}
+.ev-status.done{background:rgba(26,26,26,.55);color:rgba(255,241,212,.85);border-color:rgba(255,241,212,.25)}
+.ev-content{position:relative;z-index:1;padding:22px;display:flex;flex-direction:column;gap:8px}
+.ev-tag{font-family:var(--font-mono);font-style:italic;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:#c1394a}
+.ev-title{font-family:var(--font-display);font-size:28px;line-height:.95;letter-spacing:.02em;text-transform:uppercase;color:#1a1a1a;margin-bottom:4px;padding-right:80px}
+.ev-desc{font-family:var(--font-body);font-style:italic;font-size:13px;line-height:1.5;color:rgba(26,26,26,.65);margin-bottom:6px}
+.ev-meta{display:flex;flex-direction:column;gap:4px;font-family:var(--font-mono);font-style:italic;font-size:11.5px;color:rgba(26,26,26,.7);margin-bottom:12px}
+.ev-footer{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-top:10px;border-top:1px dashed rgba(26,26,26,.25)}
+.ev-pts{display:inline-flex;align-items:center;background:var(--color-pink);color:#fff;font-family:var(--font-mono);font-size:11px;font-weight:700;letter-spacing:.06em;padding:5px 12px;border-radius:9999px;box-shadow:0 4px 14px rgba(225,84,99,.4)}
+.ev-detail{font-family:var(--font-body);font-size:12px;font-weight:600;font-style:italic;color:#1a1a1a;border-bottom:1px dashed rgba(26,26,26,.45);padding-bottom:1px;transition:color .18s,border-color .18s}
+.ev-card:hover .ev-detail{color:var(--color-pink);border-color:var(--color-pink)}
+.empty{text-align:center;padding:60px 20px;font-family:var(--font-body);font-style:italic;color:rgba(255,241,212,.5);font-size:14px}
+
+@media(max-width:1024px){.events-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:720px){.events-grid{grid-template-columns:1fr}.hero{padding:120px 20px 14px}}
+</style>
+</head>
+<body>
+<div class="stage"></div>
+<div class="grain"></div>
+
+<div id="nav-root"></div>
+<script>window.GOL_PAGE='events'</script>
+<script src="nav.js"></script>
+
+<header class="hero">
+  <div class="eyebrow">Kalendář · Sezóna 2025/26</div>
+  <h1>Events</h1>
+  <p class="tagline">Kompletní seznam akcí. Od karaoke přes nahou míli, deskovky až po bruslení. Sbírej body, hraj život.</p>
+  <div class="divider"></div>
+</header>
+
+<section class="controls">
+  <div class="tabs">
+    <button class="tab on" data-tab="upcoming">Nadcházející</button>
+    <button class="tab" data-tab="past">Proběhlo</button>
+    <button class="tab" data-tab="all">Vše</button>
+  </div>
+  <div class="search"><input id="q" type="text" placeholder="Hledat akci…" autocomplete="off" /></div>
+</section>
+
+<section class="locations" id="locations"></section>
+
+<main class="events-main"><div id="events-root"></div></main>
+
+<div id="footer-root"></div>
+<script src="footer.js"></script>
+
+<script>
+// nav handled by nav.js
+
+const TODAY = new Date('2026-04-29');
+const BADGES = ['logos/GOL_FrogJumps_transparent.png','logos/GOL_Dance_transparent.png','logos/GOL_C50_transparent.png'];
+const EVENTS = [
+  {tag:'Běh',title:'Game of Life Frog Jumps',desc:'Skoky přes překážky a žabí výzva v parku.',date:'2026-05-12',city:'Brno',loc:'Bystrc',pts:50,badge:0},
+  {tag:'Tanec',title:'Game of Life Dance Class',desc:'Otevřená taneční hodina pro všechny styly.',date:'2026-05-18',city:'Praha',loc:'Karlín',pts:50,badge:1},
+  {tag:'Běh',title:'C50',desc:'Padesátikilometrový challenge přes celé město.',date:'2026-06-02',city:'Brno',loc:'Bystrc',pts:120,badge:2},
+  {tag:'Karaoke',title:'Karaoke TOUR 2026',desc:'Pojízdný karaoke večer napříč pěti městy.',date:'2026-06-15',city:'Praha',loc:'Žižkov',pts:70,badge:0},
+  {tag:'Běh',title:'Nahá Míle',desc:'Klasická nahá míle. Bez výmluv, bez triček.',date:'2026-07-01',city:'Olomouc',loc:'Smetanovy sady',pts:100,badge:1},
+  {tag:'Akce',title:'Silent Disco',desc:'Sluchátka, tři kanály, jedna noc.',date:'2026-07-12',city:'Praha',loc:'Náplavka',pts:60,badge:2},
+  {tag:'Bruslení',title:'Naked Ice Skating',desc:'Bruslení tak, jak nás příroda stvořila.',date:'2026-01-18',city:'Praha',loc:'Štvanice',pts:100,badge:0},
+  {tag:'Běh',title:'Christmas Run',desc:'Vánoční běh v kostýmech přes celé centrum.',date:'2025-12-22',city:'Brno',loc:'Náměstí Svobody',pts:80,badge:1},
+  {tag:'Akce',title:'Kokosy na sněhu',desc:'Bobový závod ve dvojicích na sněhu.',date:'2025-12-15',city:'Beskydy',loc:'Pustevny',pts:100,badge:2},
+  {tag:'Karaoke',title:'Karaoke TOUR 2025',desc:'Loňské karaoke turné napříč pěti městy.',date:'2025-11-20',city:'Ostrava',loc:'Stodolní',pts:70,badge:0},
+  {tag:'Akce',title:'Deskovky Night',desc:'Strategické deskovky a turnaje.',date:'2025-11-05',city:'Plzeň',loc:'Centrum',pts:30,badge:1},
+  {tag:'Běh',title:'Pardubice Loop',desc:'Krátký okruh kolem dostihového závodiště.',date:'2025-10-12',city:'Pardubice',loc:'Závodiště',pts:40,badge:2}
+];
+const CITIES=['Vše','Praha','Brno','Olomouc','Ostrava','Pardubice','Plzeň','Beskydy'];
+let currentTab='upcoming',currentCity='Vše',query='';
+
+const locRoot=document.getElementById('locations');
+CITIES.forEach((c,i)=>{
+  const el=document.createElement('button');
+  el.className='loc'+(i===0?' on':'');
+  el.textContent=c;
+  el.addEventListener('click',()=>{document.querySelectorAll('.loc').forEach(b=>b.classList.remove('on'));el.classList.add('on');currentCity=c;render()});
+  locRoot.appendChild(el);
+});
+
+const months=['ledna','února','března','dubna','května','června','července','srpna','září','října','listopadu','prosince'];
+function fmtDate(iso){const d=new Date(iso);return `${d.getDate()}. ${months[d.getMonth()]} ${d.getFullYear()}`}
+
+function eventCard(ev,isPast){
+  const statusCls=isPast?'ev-status done':'ev-status';
+  const statusTxt=isPast?'Proběhlo':ev.tag;
+  return `<a class="ev-card${isPast?' past':''}" href="event_detail.html">
+    <span class="${statusCls}">${statusTxt}</span>
+    <img class="ev-badge" src="${BADGES[ev.badge]}" alt="" />
+    <div class="ev-content">
+      <div class="ev-tag">${ev.tag}</div>
+      <h3 class="ev-title">${ev.title}</h3>
+      <p class="ev-desc">${ev.desc}</p>
+      <div class="ev-meta"><div>📅 ${fmtDate(ev.date)}</div><div>📍 ${ev.city}, ${ev.loc}</div></div>
+      <div class="ev-footer"><span class="ev-pts">+${ev.pts} pts</span><span class="ev-detail">Detail eventu →</span></div>
+    </div>
+  </a>`;
+}
+
+function render(){
+  const root=document.getElementById('events-root');
+  const q=query.trim().toLowerCase();
+  const filtered=EVENTS.filter(ev=>{
+    const isPast=new Date(ev.date)<TODAY;
+    if(currentTab==='upcoming'&&isPast)return false;
+    if(currentTab==='past'&&!isPast)return false;
+    if(currentCity!=='Vše'&&ev.city!==currentCity)return false;
+    if(q&&!(`${ev.title} ${ev.desc} ${ev.tag} ${ev.city} ${ev.loc}`.toLowerCase().includes(q)))return false;
+    return true;
+  });
+  if(!filtered.length){root.innerHTML='<div class="empty">Žádné akce nenalezeny.</div>';return}
+  const upcoming=filtered.filter(ev=>new Date(ev.date)>=TODAY).sort((a,b)=>new Date(a.date)-new Date(b.date));
+  const past=filtered.filter(ev=>new Date(ev.date)<TODAY).sort((a,b)=>new Date(b.date)-new Date(a.date));
+  let html='';
+  if(upcoming.length){html+='<div class="group-label">Nadcházející</div><div class="events-grid">'+upcoming.map(ev=>eventCard(ev,false)).join('')+'</div>'}
+  if(past.length){html+='<div class="group-label past">Proběhlo</div><div class="events-grid">'+past.map(ev=>eventCard(ev,true)).join('')+'</div>'}
+  root.innerHTML=html;
+}
+
+document.querySelectorAll('.tab').forEach(btn=>{btn.addEventListener('click',()=>{document.querySelectorAll('.tab').forEach(b=>b.classList.remove('on'));btn.classList.add('on');currentTab=btn.dataset.tab;render()})});
+document.getElementById('q').addEventListener('input',e=>{query=e.target.value;render()});
+render();
+</script>
+</body>
+</html>

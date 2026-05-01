@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Registrace — Game of Life</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500&family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="colors_and_type.css" />
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--font-body);color:var(--color-cream-light);-webkit-font-smoothing:antialiased;min-height:100vh;overflow-x:hidden;background:#1a0f0a}
+img{display:block;max-width:100%}
+button{font-family:inherit;cursor:pointer}
+a{color:inherit;text-decoration:none}
+
+
+.hero-section{position:relative;height:42vh;min-height:320px;display:flex;align-items:center;justify-content:center;overflow:hidden;text-align:center;padding:0 24px}
+.hero-bg{position:absolute;inset:0;background:url('gallery/gal0.jpg') center 50%/cover no-repeat;filter:saturate(.75) contrast(1.02)}
+.hero-overlay{position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,8,30,.35) 0%,rgba(10,8,30,.50) 60%,rgba(26,15,10,.88) 100%)}
+.hero-inner{position:relative;z-index:2;max-width:600px}
+.hero-eyebrow{font-family:var(--font-mono);font-style:italic;font-size:13px;letter-spacing:.3em;text-transform:uppercase;color:var(--color-pink);margin-bottom:14px;display:inline-flex;align-items:center;gap:10px}
+.hero-eyebrow::before,.hero-eyebrow::after{content:'✦';font-size:11px;opacity:.9}
+.hero-title{font-family:var(--font-display);font-size:clamp(56px,8.5vw,104px);line-height:.95;letter-spacing:.02em;color:var(--color-cream-light);text-transform:uppercase;text-shadow:0 4px 32px rgba(0,0,0,.55);margin-bottom:14px}
+.hero-sub{font-size:14px;line-height:1.55;color:rgba(255,255,255,.78);max-width:420px;margin:0 auto;font-style:italic}
+
+.auth-container{display:flex;align-items:center;justify-content:center;min-height:62vh;padding:80px 40px}
+.auth-card{width:100%;max-width:480px;border-radius:12px;border:2px dashed rgba(255,241,212,.52);overflow:hidden;position:relative;background:url('assets/Grain_texture_brown.png') center/cover;box-shadow:0 32px 100px rgba(0,0,0,.55)}
+.auth-card-bg{position:absolute;inset:0;z-index:0;background:url('assets/Grain_texture_brown2.png') center/50%}
+.auth-card-inner{position:relative;z-index:2;padding:40px 40px 44px}
+.auth-card-tag{font-family:var(--font-mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--color-pink);margin-bottom:8px;font-style:italic}
+.auth-card-title{font-family:var(--font-display);font-size:42px;letter-spacing:.04em;text-transform:uppercase;color:var(--color-cream-light);line-height:1;margin-bottom:6px}
+.auth-card-sub{font-family:var(--font-mono);font-size:12px;color:rgba(255,241,212,.5);margin-bottom:24px}
+.auth-divider{height:1px;background:repeating-linear-gradient(90deg,rgba(255,241,212,.28) 0 6px,transparent 6px 12px);margin-bottom:24px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.form-group{margin-bottom:16px}
+.form-group label{display:block;font-family:var(--font-mono);font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,241,212,.62);margin-bottom:7px}
+.form-group input{width:100%;background:rgba(255,255,255,.06);border:1.5px solid rgba(255,241,212,.22);border-radius:8px;padding:12px 14px;font-family:var(--font-body);font-size:14.5px;font-weight:500;color:var(--color-cream-light);outline:none;transition:border-color .2s,background .2s,box-shadow .2s}
+.form-group input::placeholder{color:rgba(255,241,212,.28);font-weight:400}
+.form-group input:focus{border-color:rgba(225,84,99,.7);background:rgba(225,84,99,.08);box-shadow:0 0 0 3px rgba(225,84,99,.14)}
+.form-group input.error{border-color:rgba(225,84,99,.95)}
+.pts-btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;width:100%;background:var(--color-pink);color:#fff;border:0;cursor:pointer;font-family:var(--font-mono);font-size:13px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;padding:14px 24px;border-radius:9999px;box-shadow:0 6px 22px rgba(225,84,99,.42);transition:transform .18s,background .18s;margin-top:6px}
+.pts-btn:hover{background:#cf4453;transform:translateY(-1px)}
+.auth-foot{margin-top:22px;text-align:center;font-family:var(--font-mono);font-size:11.5px;color:rgba(255,241,212,.55);letter-spacing:.05em}
+.auth-foot a{color:var(--color-cream-light);font-weight:600;font-style:italic;border-bottom:1px solid rgba(255,241,212,.3);transition:color .2s,border-color .2s}
+.auth-foot a:hover{color:var(--color-pink);border-color:var(--color-pink)}
+
+@media(max-width:640px){.auth-container{padding:60px 20px}.form-row{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div id="nav-root"></div>
+<script>window.GOL_PAGE=''</script>
+<script src="nav.js"></script>
+
+<section class="hero-section">
+  <div class="hero-bg"></div>
+  <div class="hero-overlay"></div>
+  <div class="hero-inner">
+    <div class="hero-eyebrow">Game of Life · Sezóna 2025/26</div>
+    <h1 class="hero-title">Začni hrát život naplno!</h1>
+    <p class="hero-sub">Vytvoř si účet, sbírej body a hraj naplno.</p>
+  </div>
+</section>
+
+<section class="auth-container">
+  <div class="auth-card">
+    <div class="auth-card-bg"></div>
+    <div class="auth-card-inner">
+      <div class="auth-card-tag">Game of Life</div>
+      <h2 class="auth-card-title">Registrace</h2>
+      <div class="auth-card-sub">Nový hráč · pár údajů a jsi ve hře</div>
+      <div class="auth-divider"></div>
+      <form id="reg-form" novalidate>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="reg-first">Jméno</label>
+            <input id="reg-first" type="text" placeholder="Jan" autocomplete="given-name" required />
+          </div>
+          <div class="form-group">
+            <label for="reg-last">Příjmení</label>
+            <input id="reg-last" type="text" placeholder="Novák" autocomplete="family-name" required />
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="reg-email">E-mail</label>
+          <input id="reg-email" type="email" placeholder="jan@example.com" autocomplete="email" required />
+        </div>
+        <div class="form-group">
+          <label for="reg-pw">Heslo</label>
+          <input id="reg-pw" type="password" placeholder="········" autocomplete="new-password" required />
+        </div>
+        <div class="form-group">
+          <label for="reg-pw2">Potvrdit heslo</label>
+          <input id="reg-pw2" type="password" placeholder="········" autocomplete="new-password" required />
+        </div>
+        <button type="submit" class="pts-btn">Registrovat se →</button>
+      </form>
+      <p class="auth-foot">Už máš účet? <a href="login.html">Přihlásit se</a></p>
+    </div>
+  </div>
+</section>
+
+<div id="footer-root"></div>
+<script src="footer.js"></script>
+
+<script>
+document.getElementById('reg-form').addEventListener('submit',e=>{
+  e.preventDefault();
+  const pw=document.getElementById('reg-pw');
+  const pw2=document.getElementById('reg-pw2');
+  pw2.classList.remove('error');
+  if(pw.value!==pw2.value){pw2.classList.add('error');pw2.focus();return}
+  const first=document.getElementById('reg-first').value||'Hráč';
+  const last=document.getElementById('reg-last').value||'';
+  localStorage.setItem('gol_user',(first+' '+last).trim());
+  window.location.href='profile.html';
+});
+</script>
+</body>
+</html>

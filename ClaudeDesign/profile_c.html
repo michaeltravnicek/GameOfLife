@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Profil C — Game of Life</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500&family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="colors_and_type.css" />
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--font-body);color:var(--color-cream-light);-webkit-font-smoothing:antialiased;background:var(--color-dark-brown);overflow-x:hidden}
+img{display:block;max-width:100%}
+button{font-family:inherit;cursor:pointer}
+a{color:inherit;text-decoration:none}
+
+/* ── HERO: full blue grain section, no photo ── */
+.hero{position:relative;padding:148px 28px 80px;background:#1a0f0a url('assets/Grain_texture_blue.png') center/cover;overflow:hidden;text-align:center}
+.hero::before{content:'';position:absolute;inset:0;background:
+  radial-gradient(ellipse 70% 55% at 50% 0%,rgba(45,42,142,.35) 0%,transparent 65%),
+  linear-gradient(180deg,rgba(26,15,10,.10) 0%,rgba(26,15,10,.55) 100%);pointer-events:none}
+.hero-inner{position:relative;z-index:1;max-width:720px;margin:0 auto}
+.eyebrow{font-family:var(--font-mono);font-style:italic;font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:var(--color-pink);margin-bottom:18px;display:inline-flex;align-items:center;gap:10px}
+.eyebrow::before,.eyebrow::after{content:'✦';font-size:10px;opacity:.9}
+.avatar{width:132px;height:132px;border-radius:50%;margin:0 auto 26px;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 30% 30%,rgba(225,84,99,.28),transparent 62%),rgba(26,15,10,.55);border:3px dashed rgba(255,241,212,.55);font-family:var(--font-mono);font-style:italic;font-size:44px;font-weight:700;color:var(--color-cream-light);box-shadow:0 12px 36px rgba(0,0,0,.60)}
+.hero-name{font-family:var(--font-display);font-size:clamp(54px,8vw,104px);line-height:.90;color:var(--color-cream-light);text-transform:uppercase;letter-spacing:.04em;text-shadow:0 6px 32px rgba(0,0,0,.65);margin-bottom:8px}
+.hero-handle{font-family:var(--font-mono);font-style:italic;font-size:13px;color:rgba(255,241,212,.52);letter-spacing:.12em;margin-bottom:16px}
+.hero-bio{font-size:14px;font-style:italic;line-height:1.78;color:rgba(255,241,212,.68);margin-bottom:32px}
+.divider{width:100px;height:1px;margin:0 auto 32px;background:repeating-linear-gradient(90deg,rgba(255,241,212,.40) 0 5px,transparent 5px 10px)}
+
+/* inline stats row inside hero */
+.hero-stats{display:flex;align-items:center;justify-content:center;gap:0;margin-bottom:34px;border:1.5px dashed rgba(255,241,212,.20);border-radius:14px;overflow:hidden}
+.hs{padding:16px 32px;text-align:center;border-right:1px dashed rgba(255,241,212,.15);flex:1}
+.hs:last-child{border-right:0}
+.hs-num{font-family:var(--font-display);font-size:40px;line-height:1;color:var(--color-pink);margin-bottom:4px}
+.hs-num.gold{color:#f5c842}
+.hs-label{font-family:var(--font-mono);font-style:italic;font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,241,212,.48)}
+
+/* action buttons row */
+.btn-row{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap}
+.btn-pill{display:inline-flex;align-items:center;gap:10px;background:var(--color-pink);color:#fff;border:0;font-family:var(--font-mono);font-size:11px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;padding:11px 24px;border-radius:9999px;box-shadow:0 4px 18px rgba(225,84,99,.42);transition:transform .18s,background .18s;cursor:pointer;text-decoration:none}
+.btn-pill:hover{background:#cf4453;transform:translateY(-2px)}
+.btn-pill.ghost{background:transparent;color:var(--color-cream-light);border:1.5px dashed rgba(255,241,212,.38);box-shadow:none}
+.btn-pill.ghost:hover{border-color:var(--color-pink);color:var(--color-pink)}
+
+/* ── UPCOMING: purple grain, index.html cards ── */
+.events-section{background:var(--color-purple);background-image:url('assets/Grain_texture_purple.png');background-size:cover;padding:64px 28px 80px}
+.sec-title{font-family:var(--font-display);font-size:clamp(28px,3.2vw,44px);letter-spacing:.06em;text-transform:uppercase;color:var(--color-cream-light);text-align:center;margin-bottom:38px;display:flex;align-items:center;justify-content:center;gap:16px}
+.sec-title .star{color:var(--color-pink);font-size:.68em}
+.events-grid{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+.ev-card{position:relative;padding:22px 22px 20px;border:2px dashed rgba(255,255,255,.44);border-radius:12px;background:rgba(0,0,0,.10);min-height:148px;cursor:pointer;transition:border-color .2s,transform .2s;display:block}
+.ev-card:hover{border-color:var(--color-pink);transform:translateY(-3px)}
+.ev-tag{display:inline-block;font-family:var(--font-mono);font-style:italic;font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;padding:4px 10px;border-radius:9999px;background:rgba(225,84,99,.18);color:var(--color-pink);border:1px dashed rgba(225,84,99,.42);margin-bottom:12px}
+.ev-name{font-family:var(--font-display);font-size:24px;line-height:1.05;color:#fff;text-transform:uppercase;letter-spacing:.02em;margin-bottom:14px}
+.ev-meta-row{font-size:12px;color:rgba(255,255,255,.68);display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.ev-pts-badge{position:absolute;top:14px;right:14px;background:rgba(245,200,66,.15);border:1px dashed rgba(245,200,66,.5);border-radius:9999px;padding:4px 10px;font-family:var(--font-display);font-size:18px;color:#f5c842;line-height:1}
+
+/* ── LIGHT GRAIN BIO CARD ── */
+.bio-section{background:url('assets/Grain_texture_light.png') center/cover;background-color:#f0e8d8;padding:68px 28px 80px}
+.bio-inner{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:start}
+.bio-left .sec-sub{font-family:var(--font-display);font-size:clamp(26px,3.2vw,44px);letter-spacing:.05em;text-transform:uppercase;color:var(--color-dark-brown);line-height:1;margin-bottom:20px}
+.bio-left .eyebrow-dark{font-family:var(--font-mono);font-style:italic;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--color-pink);margin-bottom:12px}
+.bio-left p{font-size:14.5px;font-style:italic;line-height:1.80;color:rgba(26,15,10,.72);margin-bottom:24px}
+.bio-left .btn-dark{display:inline-flex;align-items:center;gap:10px;background:var(--color-dark-brown);color:var(--color-cream-light);border:0;font-family:var(--font-mono);font-size:11px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;padding:11px 24px;border-radius:9999px;box-shadow:0 4px 16px rgba(26,15,10,.25);transition:transform .18s,background .18s;cursor:pointer;text-decoration:none}
+.bio-left .btn-dark:hover{background:#2e1a0e;transform:translateY(-2px)}
+.bio-right{display:flex;flex-direction:column;gap:14px;padding-top:42px}
+.badge-item{display:flex;align-items:center;gap:16px;padding:16px 20px;background:rgba(26,15,10,.07);border:1.5px dashed rgba(26,15,10,.18);border-radius:12px}
+.badge-icon{font-size:22px;flex-shrink:0;width:36px;text-align:center}
+.badge-text .tt{font-family:var(--font-display);font-size:22px;letter-spacing:.03em;color:var(--color-dark-brown);line-height:1;margin-bottom:2px}
+.badge-text .sub{font-family:var(--font-mono);font-style:italic;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:rgba(26,15,10,.52)}
+
+/* ── PAST EVENTS: blue grain leaderboard list ── */
+.past-section{padding:64px 28px 90px;background:var(--color-dark-brown)}
+.past-inner{max-width:1100px;margin:0 auto}
+.group-label{font-family:var(--font-mono);font-style:italic;font-size:12px;letter-spacing:.26em;text-transform:uppercase;color:rgba(255,241,212,.55);margin-bottom:20px;display:flex;align-items:center;gap:14px}
+.group-label::before,.group-label::after{content:'';flex:1;height:1px;background:repeating-linear-gradient(90deg,rgba(255,241,212,.18) 0 6px,transparent 6px 12px)}
+.list{position:relative;padding:10px;background:#1a0f0a url('assets/Grain_texture_blue.png') center/cover;border:1.5px solid rgba(255,255,255,.08);border-radius:14px;box-shadow:0 20px 44px rgba(0,0,0,.5)}
+.list::before{content:'';position:absolute;inset:6px;border:1.5px dashed rgba(255,241,212,.22);border-radius:10px;pointer-events:none}
+.list-inner{position:relative;z-index:1;padding:6px 4px}
+.row{display:grid;grid-template-columns:80px 1fr 120px 90px;align-items:center;gap:12px;padding:14px 20px;border-bottom:1px dashed rgba(255,241,212,.10);transition:background .18s,transform .18s}
+.row:last-child{border-bottom:0}
+.row:hover{background:rgba(255,241,212,.05);transform:translateX(2px)}
+.ev-cat{font-family:var(--font-mono);font-style:italic;font-size:9.5px;letter-spacing:.15em;text-transform:uppercase;padding:4px 9px;border-radius:9999px;background:rgba(225,84,99,.15);color:var(--color-pink);border:1px dashed rgba(225,84,99,.35);text-align:center}
+.ev-info .nm{font-weight:600;font-size:14.5px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ev-info .loc{font-style:italic;font-size:11.5px;color:rgba(255,241,212,.52);margin-top:2px}
+.ev-date{font-family:var(--font-mono);font-style:italic;font-size:11px;color:rgba(255,241,212,.55);text-align:right}
+.ev-pts{text-align:right;font-family:var(--font-display);font-size:22px;letter-spacing:.03em;color:#f5c842;line-height:1}
+.ev-pts .u{font-family:var(--font-mono);font-style:italic;font-size:10px;color:rgba(255,241,212,.45);letter-spacing:.14em;margin-left:3px}
+
+@media(max-width:960px){.events-grid{grid-template-columns:1fr 1fr}.bio-inner{grid-template-columns:1fr;gap:40px}.hs{padding:14px 18px}}
+@media(max-width:620px){.events-grid{grid-template-columns:1fr}.hero-stats{flex-wrap:wrap}.hs{flex:1 1 40%}.row{grid-template-columns:64px 1fr 70px;gap:10px}.row .ev-date{display:none}}
+</style>
+</head>
+<body>
+
+<div id="nav-root"></div>
+<script>window.GOL_PAGE='profile'</script>
+<script src="nav.js"></script>
+
+<!-- HERO: blue grain, centered, no photo -->
+<section class="hero">
+  <div class="hero-inner">
+    <div class="eyebrow">Profil hráče · Sezóna 2025/26</div>
+    <div class="avatar">LM</div>
+    <h1 class="hero-name">Lukáš Müller</h1>
+    <div class="hero-handle">@lukasmuller</div>
+    <p class="hero-bio">Karaoke v sobotu, deskovky ve středu, nahá míle kdykoliv.</p>
+    <div class="divider"></div>
+    <div class="hero-stats">
+      <div class="hs"><div class="hs-num gold">1.</div><div class="hs-label">Pořadí</div></div>
+      <div class="hs"><div class="hs-num">1280</div><div class="hs-label">Bodů</div></div>
+      <div class="hs"><div class="hs-num">22</div><div class="hs-label">Akcí</div></div>
+      <div class="hs"><div class="hs-num" id="up-count">—</div><div class="hs-label">Nadcházející</div></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn-pill">Upravit profil</button>
+      <button class="btn-pill ghost">Sdílet profil</button>
+      <button class="btn-pill ghost" id="logout-btn">Odhlásit se</button>
+    </div>
+  </div>
+</section>
+
+<!-- UPCOMING: purple grain, index.html cards -->
+<section class="events-section">
+  <h2 class="sec-title"><span class="star">✦</span> Nadcházející akce <span class="star">✦</span></h2>
+  <div class="events-grid" id="upcoming-grid"></div>
+</section>
+
+<!-- LIGHT GRAIN BIO + BADGES -->
+<section class="bio-section">
+  <div class="bio-inner">
+    <div class="bio-left">
+      <div class="eyebrow-dark">— O mně —</div>
+      <h3 class="sec-sub">Karaoke,<br>deskovky,<br>nahá míle.</h3>
+      <p>Hráč, dobrodruh a pravidelný účastník akcí Game of Life. Rád poznávám nové lidi, zkouším nové věci a posouvám vlastní limity — na pódiu i mimo něj.</p>
+      <a href="events.html" class="btn-dark">Přidat akci →</a>
+    </div>
+    <div class="bio-right">
+      <div class="badge-item">
+        <div class="badge-icon">🏆</div>
+        <div class="badge-text">
+          <div class="tt">1. místo</div>
+          <div class="sub">Celkové pořadí · Sezóna 2025/26</div>
+        </div>
+      </div>
+      <div class="badge-item">
+        <div class="badge-icon">⭐</div>
+        <div class="badge-text">
+          <div class="tt">1 280 bodů</div>
+          <div class="sub">Celkový bodový výsledek</div>
+        </div>
+      </div>
+      <div class="badge-item">
+        <div class="badge-icon">🎯</div>
+        <div class="badge-text">
+          <div class="tt">22 akcí</div>
+          <div class="sub">Absolvováno v sezóně</div>
+        </div>
+      </div>
+      <div class="badge-item">
+        <div class="badge-icon">🎤</div>
+        <div class="badge-text">
+          <div class="tt">Karaoke mistr</div>
+          <div class="sub">Nejvíce karaoke akcí</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PAST EVENTS: blue grain leaderboard list -->
+<section class="past-section">
+  <div class="past-inner">
+    <div class="group-label">Absolvované akce · <span id="past-count"></span> akcí</div>
+    <div class="list"><div class="list-inner" id="past-list"></div></div>
+  </div>
+</section>
+
+<div id="footer-root"></div>
+<script src="footer.js"></script>
+
+<script>
+document.getElementById('logout-btn').addEventListener('click',()=>{localStorage.removeItem('gol_user');window.location.href='index.html'});
+
+const TODAY=new Date('2026-05-01');
+const months=['ledna','února','března','dubna','května','června','července','srpna','září','října','listopadu','prosince'];
+const fmt=iso=>{const d=new Date(iso);return `${d.getDate()}. ${months[d.getMonth()]}`};
+
+const EVENTS=[
+  {cat:'Běh',nm:'C50',city:'Brno',loc:'Bystrc',date:'2026-06-02',pts:120},
+  {cat:'Tanec',nm:'Game of Life Dance Class',city:'Praha',loc:'Karlín',date:'2026-05-18',pts:50},
+  {cat:'Karaoke',nm:'Karaoke TOUR 2025',city:'Ostrava',loc:'Stodolní',date:'2025-11-20',pts:70},
+  {cat:'Akce',nm:'Kokosy na sněhu',city:'Beskydy',loc:'Pustevny',date:'2025-12-15',pts:100},
+  {cat:'Běh',nm:'Christmas Run',city:'Brno',loc:'Náměstí Svobody',date:'2025-12-22',pts:80},
+  {cat:'Bruslení',nm:'Naked Ice Skating',city:'Praha',loc:'Štvanice',date:'2026-01-18',pts:100},
+  {cat:'Akce',nm:'Deskovky Night',city:'Plzeň',loc:'Centrum',date:'2025-11-05',pts:30}
+];
+
+const upcoming=EVENTS.filter(e=>new Date(e.date)>=TODAY).sort((a,b)=>new Date(a.date)-new Date(b.date));
+const past=EVENTS.filter(e=>new Date(e.date)<TODAY).sort((a,b)=>new Date(b.date)-new Date(a.date));
+
+document.getElementById('up-count').textContent=upcoming.length;
+document.getElementById('past-count').textContent=past.length;
+
+const grid=document.getElementById('upcoming-grid');
+grid.innerHTML=upcoming.length?upcoming.map(ev=>`
+  <div class="ev-card">
+    <div class="ev-pts-badge">+${ev.pts}</div>
+    <span class="ev-tag">${ev.cat}</span>
+    <div class="ev-name">${ev.nm}</div>
+    <div class="ev-meta-row">📅 ${fmt(ev.date)}</div>
+    <div class="ev-meta-row">📍 ${ev.city}, ${ev.loc}</div>
+  </div>`).join(''):'<p style="color:rgba(255,241,212,.5);font-style:italic;text-align:center;padding:40px 0;grid-column:1/-1">Žádné nadcházející akce.</p>';
+
+document.getElementById('past-list').innerHTML=past.length?past.map(ev=>`
+  <div class="row">
+    <span class="ev-cat">${ev.cat}</span>
+    <div class="ev-info"><div class="nm">${ev.nm}</div><div class="loc">📍 ${ev.city}, ${ev.loc}</div></div>
+    <div class="ev-date">${fmt(ev.date)}</div>
+    <div class="ev-pts">+${ev.pts}<span class="u">pts</span></div>
+  </div>`).join(''):'<div style="text-align:center;padding:44px 20px;font-style:italic;color:rgba(255,241,212,.55)">Zatím žádné akce.</div>';
+</script>
+</body>
+</html>

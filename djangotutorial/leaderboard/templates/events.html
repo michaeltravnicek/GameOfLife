@@ -1,70 +1,69 @@
 {% extends "base.html" %}
 {% load event_extras %}
 
-{% block title %}Events — Game of Yolo{% endblock %}
+{% block title %}Kalendář akcí — Game of Life{% endblock %}
 
 {% block content %}
-<section class="section" style="margin-top: 1.5rem;" x-data="{ city: 'all' }">
+<div class="page-head">
     <div class="section-eyebrow">Kalendář</div>
-    <h1 class="section-title">Events</h1>
+    <h1>Nadcházející akce</h1>
+</div>
 
-    {% if cities %}
-    <div class="chip-row" role="tablist" aria-label="Filtr podle města">
-        <button type="button"
-                class="chip"
-                :class="{ 'active': city === 'all' }"
-                @click="city = 'all'">
-            Vše
-            <span class="chip-count">{{ events|length }}</span>
-        </button>
-        {% for c in cities %}
-            <button type="button"
-                    class="chip"
-                    :class="{ 'active': city === '{{ c.name|escapejs }}' }"
-                    @click="city = '{{ c.name|escapejs }}'">
-                {{ c.name }}
-                <span class="chip-count">{{ c.count }}</span>
+<section class="section sec-purple" x-data="{ city: 'all' }">
+    <div class="section-inner">
+        {% if cities %}
+        <div class="chip-row" role="tablist" aria-label="Filtr podle města">
+            <button type="button" class="chip" :class="{ 'active': city === 'all' }" @click="city = 'all'">
+                Vše <span class="chip-count">{{ events|length }}</span>
             </button>
-        {% endfor %}
-    </div>
-    {% endif %}
+            {% for c in cities %}
+                <button type="button" class="chip"
+                        :class="{ 'active': city === '{{ c.name|escapejs }}' }"
+                        @click="city = '{{ c.name|escapejs }}'">
+                    {{ c.name }} <span class="chip-count">{{ c.count }}</span>
+                </button>
+            {% endfor %}
+        </div>
+        {% endif %}
 
-    <div class="grid-auto">
-        {% for event in events %}
-            {% with cat=event|event_category %}
-            <article class="card event-card evt-{{ cat }} anim-fade-up"
-                     data-event-id="{{ event.id }}"
-                     data-city="{{ event.place }}"
-                     x-show="city === 'all' || city === '{{ event.place|escapejs }}'"
-                     x-transition>
-                <a href="{% url 'event_detail' event.slug %}" style="text-decoration:none; color:inherit; display:block;">
-                    <div class="card-photo"
-                         style="background-image: linear-gradient(135deg, rgba(71, 81, 133, 0.35), rgba(54, 60, 99, 0.5)), url('{% if event.image %}{{ event.image.url }}{% else %}https://picsum.photos/seed/event{{ event.id }}/600/400{% endif %}');">
-                        <div style="position:relative; z-index:1; display:flex; gap:0.4rem; flex-wrap:wrap;">
+        <div class="grid-auto">
+            {% for event in events %}
+                {% with cat=event|event_category %}
+                <article class="card event-card evt-{{ cat }} anim-fade-up"
+                         data-event-id="{{ event.id }}"
+                         data-city="{{ event.place }}"
+                         x-show="city === 'all' || city === '{{ event.place|escapejs }}'"
+                         x-transition>
+                    <a href="{% url 'event_detail' event.slug %}">
+                        <div class="card-photo"
+                             style="background-image: url('{% if event.image %}{{ event.image.url }}{% else %}https://picsum.photos/seed/event{{ event.id }}/160/160{% endif %}');">
                             <span class="badge-evt evt-{{ cat }}">{{ event|event_category_label }}</span>
-                            {% if event.is_past %}
-                                <span class="badge badge-muted">Proběhlo</span>
+                        </div>
+                        <div class="card-body">
+                            <h3 class="card-title">{{ event.name }}</h3>
+                            {% if event.description %}
+                                <p class="card-meta description">{{ event.description|truncatechars:90 }}</p>
                             {% endif %}
+                            <p class="card-meta">
+                                <span class="event-place" style="display:none;">{{ event.place }}</span>
+                                📅 <span class="event-date">{{ event.date|date:"d. m. Y" }}</span>
+                            </p>
+                            <p class="card-meta">📍 {{ event.place }}</p>
+                            <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 12px; gap: 8px; flex-wrap: wrap;">
+                                <span class="points-evt evt-{{ cat }}">+{{ event.points }} pts</span>
+                                {% if event.is_past %}
+                                    <span class="badge badge-muted">Proběhlo</span>
+                                {% endif %}
+                            </div>
+                            <span class="card-link slide-link" style="margin-top: 12px;">Detail akce →</span>
                         </div>
-                    </div>
-                    <div class="card-body">
-                        <h3 class="card-title">{{ event.name }}</h3>
-                        <p class="card-meta description" style="color: var(--gol-text-dark); font-size: 14px;">{{ event.description|truncatechars:120 }}</p>
-                        <p class="card-meta">
-                            <span class="event-place" style="display:none;">{{ event.place }}</span>
-                            📍 {{ event.place }} · 📅 <span class="event-date">{{ event.date|date:"d. m. Y" }}</span>
-                        </p>
-                        <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 0.85rem;">
-                            <span class="card-link slide-link">Detail eventu →</span>
-                            <span class="points-evt evt-{{ cat }}">+{{ event.points }} bodů</span>
-                        </div>
-                    </div>
-                </a>
-            </article>
-            {% endwith %}
-        {% empty %}
-            <p class="text-muted text-center">Zatím tu nejsou žádné events.</p>
-        {% endfor %}
+                    </a>
+                </article>
+                {% endwith %}
+            {% empty %}
+                <p class="text-muted text-center" style="grid-column: 1 / -1;">Zatím tu nejsou žádné akce.</p>
+            {% endfor %}
+        </div>
     </div>
 </section>
 {% endblock %}

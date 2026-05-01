@@ -1,35 +1,37 @@
 {% extends "base.html" %}
 
-{% block title %}O bodech — Game of Yolo{% endblock %}
+{% block title %}O bodech — Game of Life{% endblock %}
 
 {% block content %}
-<section class="section" style="margin-top: 1.5rem; max-width: 900px; margin-left: auto; margin-right: auto;">
+<div class="page-head">
     <div class="section-eyebrow">Info</div>
-    <h1 class="section-title">O bodech a cenách</h1>
+    <h1>O bodech a cenách</h1>
+</div>
 
-    <div style="display: grid; gap: 2rem; margin-top: 2rem;">
-        <div class="lb-sidebar-card anim-fade-up">
-            <h3 class="lb-sidebar-title">Co jsou to body?</h3>
-            <div class="lb-sidebar-content">
-                <p>Body jsou měřítkem tvého zapojení v Game of Yolo. Čím více eventů absolvuješ a čím více se do nich pouštíš naplno, tím více bodů získáš. Jsou základem leaderboardu a tvého žebříčku v komunitě.</p>
-                <p style="margin-top: 1rem;">Body získáváš za účast na akcích, plnění speciálních výzev a aktivní zapojení do komunity. Každá akce má vlastní bodové ohodnocení podle náročnosti a typu.</p>
+<section class="section sec-dark">
+    <div class="section-inner" style="max-width: 860px;">
+        <div style="display: grid; gap: 1.5rem;">
+            <div class="lb-sidebar-card anim-fade-up">
+                <h3 class="lb-sidebar-title">Co jsou to body?</h3>
+                <div class="lb-sidebar-content">
+                    <p>Body jsou měřítkem tvého zapojení v Game of Life. Čím více akcí absolvuješ a čím více se do nich pouštíš naplno, tím více bodů získáš. Jsou základem leaderboardu a tvého žebříčku v komunitě.</p>
+                    <p>Body získáváš za účast na akcích, plnění speciálních výzev a aktivní zapojení do komunity. Každá akce má vlastní bodové ohodnocení podle náročnosti a typu.</p>
+                </div>
+            </div>
+
+            <div class="lb-sidebar-card anim-fade-up-delay-1">
+                <h3 class="lb-sidebar-title">Ceny</h3>
+                <div class="lb-sidebar-content">
+                    <p>Aktuálně pracujeme na systému odměn, který bude založen na bodech z leaderboardu. Plánujeme zavést různé úrovně odměn, které budou reflektovat tvé místo v žebříčku a celkovou aktivitu.</p>
+                    <p>Naším cílem je, aby si body mohl použít k levnějšímu přístupu na akce a dalších výhod.</p>
+                    <p>Sleduj náš web a sociální sítě pro aktualizace o odměnách!</p>
+                </div>
             </div>
         </div>
 
-        <div class="lb-sidebar-card anim-fade-up-delay-1">
-            <h3 class="lb-sidebar-title">Ceny</h3>
-            <div class="lb-sidebar-content">
-                Aktuálně pracujeme na systému odměn, který bude založen na bodech z 
-                leaderboardu. Plánujeme zavést různé úrovně odměn, které budou reflektovat tvé místo v žebříčku a celkovou aktivitu. 
-                Naším cílem je, aby si body mohl použít k levnějšímu přístupu na eventy a dalších výhod. 
-                
-                Sleduj náš web a sociální sítě pro aktualizace o odměnách!
-            </div>
+        <div style="margin-top: 2.5rem; text-align: center;">
+            <a href="{% url 'leaderboard' %}" class="btn btn-ghost">← Zpět na leaderboard</a>
         </div>
-    </div>
-
-    <div style="margin-top: 2rem;">
-        <a href="{% url 'leaderboard' %}" class="btn btn-ghost">← Zpět na leaderboard</a>
     </div>
 </section>
 {% endblock %}

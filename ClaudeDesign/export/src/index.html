@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Game of Life — Život je hra, tak ho hrej</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500&family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="colors_and_type.css" />
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--color-dark-brown);font-family:var(--font-body);color:var(--color-cream-light);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+img{display:block;max-width:100%}
+button{font-family:inherit;cursor:pointer}
+a{color:inherit;text-decoration:none}
+
+/* ── NAV ── */
+nav.top{position:fixed;top:24px;left:60px;right:60px;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 8px 0 36px;border-radius:9999px;background:rgba(80,74,118,.82);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.10);box-shadow:0 8px 32px rgba(0,0,0,.3);transition:transform .3s ease}
+nav.top.hidden{transform:translateY(-120px)}
+.nav-left,.nav-right{display:flex;align-items:center;gap:36px;flex:1}
+.nav-right{justify-content:flex-end}
+.nav-item{font-family:var(--font-body);font-size:16px;font-weight:700;letter-spacing:.03em;color:rgba(255,255,255,.88);background:none;border:0;transition:color .2s;padding:18px 0}
+.nav-item:hover,.nav-item.active{color:var(--color-pink)}
+.nav-logo{height:68px;width:auto;display:flex;align-items:center;background:transparent;border:0;cursor:pointer;padding:6px 0}
+.nav-logo img{height:100%;width:auto;display:block}
+.nav-avatar{width:52px;height:52px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;border:1.5px solid rgba(255,255,255,.5);font-family:var(--font-mono);font-style:italic;font-size:13px;font-weight:700;color:#fff;cursor:pointer;transition:border-color .2s;margin:8px 0}
+.nav-avatar:hover{border-color:var(--color-pink)}
+
+/* ── HERO ── */
+.hero{position:relative;height:100vh;min-height:600px;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;text-align:center;padding:0 24px}
+.hero-slides{position:absolute;inset:0}
+.hero-slide{position:absolute;inset:0;background-size:cover;background-position:center;opacity:0;transition:opacity 1.2s ease}
+.hero-slide.active{opacity:1}
+.hero-overlay{position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,8,30,.28) 0%,rgba(10,8,30,.52) 55%,rgba(26,15,10,.80) 100%)}
+.hero-inner{position:relative;z-index:2;max-width:740px}
+.hero-title{font-family:var(--font-display);font-size:clamp(52px,8.5vw,108px);line-height:.93;letter-spacing:.02em;color:var(--color-cream-light);text-transform:uppercase;text-shadow:0 4px 32px rgba(0,0,0,.55);margin-bottom:14px;transition:opacity .5s}
+.hero-sub{font-size:14px;line-height:1.6;color:rgba(255,255,255,.80);max-width:380px;margin:0 auto 28px;font-style:italic;transition:opacity .5s}
+.btn-pill{display:inline-flex;align-items:center;gap:14px;background:var(--color-pink);color:#fff;border:0;font-family:var(--font-body);font-size:14px;font-weight:700;letter-spacing:.04em;padding:13px 30px;border-radius:9999px;box-shadow:0 6px 22px rgba(225,84,99,.4);transition:transform .18s,background .18s;cursor:pointer;text-decoration:none}
+.btn-pill:hover{background:#cf4453;transform:translateY(-2px)}
+.btn-pill .arr::before{content:'';display:inline-block;width:26px;height:1.5px;background:#fff;vertical-align:middle;margin-right:4px;border-radius:2px}
+.btn-pill .arr::after{content:'➤';font-size:11px}
+.hero-dots{position:absolute;bottom:28px;left:0;right:0;display:flex;justify-content:center;gap:9px;z-index:2}
+.hero-dot{width:9px;height:9px;border-radius:50%;background:transparent;border:1.5px solid rgba(255,255,255,.65);cursor:pointer;transition:background .3s,border-color .3s}
+.hero-dot.active{background:#fff;border-color:#fff}
+
+/* ── EVENTS SECTION ── */
+.events-section{background:var(--color-purple);background-image:url('assets/Grain_texture_medium_purple.png');background-size:cover;padding:56px 28px 72px;position:relative}
+.sec-title{font-family:var(--font-display);font-size:clamp(28px,3.2vw,44px);letter-spacing:.06em;text-transform:uppercase;color:var(--color-cream-light);text-align:center;margin-bottom:44px;display:flex;align-items:center;justify-content:center;gap:18px}
+.sec-title .star{color:var(--color-pink);font-size:.7em}
+.events-grid{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+.ev-card{position:relative;padding:22px 24px 20px;border:2px dashed rgba(255,255,255,.5);border-radius:12px;background:rgba(0,0,0,.10);min-height:160px;cursor:pointer;transition:border-color .2s,transform .2s;text-decoration:none;display:block}
+.ev-card:hover{border-color:var(--color-pink);transform:translateY(-3px)}
+.ev-badge{position:absolute;top:-18px;right:-10px;width:110px;height:110px;object-fit:contain;pointer-events:none;transform:rotate(6deg);filter:drop-shadow(0 4px 10px rgba(0,0,0,.35))}
+.ev-title{font-family:var(--font-display);font-size:26px;line-height:1.02;color:#fff;text-transform:uppercase;letter-spacing:.02em;padding-right:78px;margin-bottom:16px}
+.ev-meta{display:flex;flex-direction:column;gap:5px}
+.ev-row{font-size:12px;color:rgba(255,255,255,.72);display:flex;align-items:center;gap:8px}
+.see-all{text-align:center;margin-top:44px}
+
+/* ── LEADERBOARD ── */
+.lb-section{position:relative;padding:64px 24px 80px;overflow:hidden}
+.lb-bg{position:absolute;inset:0;background:url('gallery/gal2.jpg') center/cover;filter:saturate(.8)}
+.lb-tint{position:absolute;inset:0;background:linear-gradient(180deg,rgba(45,42,142,.22) 0%,rgba(26,15,10,.65) 100%)}
+.lb-inner{position:relative;z-index:2;max-width:620px;margin:0 auto}
+.lb-title{font-family:var(--font-display);font-size:clamp(28px,3.4vw,44px);letter-spacing:.05em;text-align:center;color:var(--color-cream-light);text-transform:uppercase;margin-bottom:24px;display:flex;justify-content:center;align-items:center;gap:14px}
+.lb-title .tr{font-size:.85em}
+.lb-card{background:#1a0f0a url('assets/Grain_texture_brown.png') center/cover;border:1px solid rgba(255,255,255,.08);border-radius:14px;overflow:hidden;box-shadow:0 16px 40px rgba(0,0,0,.5)}
+.lb-head,.lb-row{display:grid;grid-template-columns:60px 1fr 80px;align-items:center;padding:10px 22px;gap:12px}
+.lb-head{font-family:var(--font-mono);font-style:italic;font-size:13px;letter-spacing:.08em;background:url('assets/Grain_texture_light.png') center/cover;color:#1a1a1a;padding:8px 22px;font-weight:700;border-bottom:1px dashed rgba(26,26,26,.15)}
+.lb-row{border-bottom:1px dashed rgba(255,255,255,.08)}
+.lb-row:last-child{border-bottom:0}
+.lb-rank{font-family:var(--font-body);font-weight:500;font-size:14px;color:rgba(255,255,255,.55)}
+.lb-rank.top{color:#f5c842;font-size:18px}
+.lb-name{display:flex;align-items:center;gap:10px;color:#fff;font-size:13px}
+.lb-av{width:26px;height:26px;border-radius:50%;background:rgba(71,81,133,.9);border:1px solid rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;font-family:var(--font-mono)}
+.lb-pts{font-family:var(--font-body);font-weight:700;font-size:13px;color:#fff;text-align:right}
+.lb-cta{text-align:center;margin-top:28px}
+
+/* ── ABOUT ── */
+.about-section{background-color:#3a2418;background-image:url('assets/Grain_texture_brown.png');background-size:cover;padding:72px 24px}
+.about-inner{max-width:980px;margin:0 auto;display:grid;grid-template-columns:300px 1fr;gap:60px;align-items:center}
+.about-photo{aspect-ratio:3/4;border-radius:2px;border:2px solid rgba(255,255,255,.85);overflow:hidden}
+.about-photo img{width:100%;height:100%;object-fit:cover}
+.about-eyebrow{font-family:var(--font-mono);font-style:italic;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--color-pink);margin-bottom:14px}
+.about-heading{font-family:var(--font-display);font-size:clamp(28px,3.6vw,46px);letter-spacing:.03em;line-height:1;color:var(--color-cream-light);text-transform:uppercase;margin-bottom:18px}
+.about-body{font-size:14px;font-style:italic;line-height:1.78;color:rgba(255,241,212,.78);margin-bottom:16px;max-width:520px}
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:32px;padding-top:24px;border-top:1px dashed rgba(255,241,212,.28)}
+.stat-item{text-align:center}
+.stat-num{font-family:var(--font-display);font-size:36px;color:var(--color-pink);margin-bottom:4px}
+.stat-label{font-size:11px;color:rgba(255,241,212,.65);text-transform:uppercase;letter-spacing:.1em}
+
+/* ── GALLERY ── */
+.gallery-section{position:relative;overflow:hidden;background:#1a0f0a}
+.gallery-section::before{content:'';position:absolute;inset:0;background:url('gallery/gal2.jpg') center/cover;filter:blur(4px) brightness(.42) saturate(.65);transform:scale(1.05);z-index:0}
+.gallery-section > *{position:relative;z-index:1}
+.gal-header{text-align:center;padding:44px 0 0}
+.gal-container{display:flex;align-items:center;justify-content:center;gap:10px;height:72vh;width:100vw;padding:24px 0 0;overflow:hidden}
+.gal-side{width:220px;height:65vh;background-size:cover;background-position:center;border:2px solid #fff;opacity:.55;cursor:pointer;transition:opacity .3s;flex-shrink:0}
+.gal-side:hover{opacity:.8}
+.gal-main{flex:1;height:65vh;background-size:cover;background-position:center;border:2px solid #fff}
+.gal-footer{text-align:center;padding:32px 0 48px}
+
+/* ── FOOTER ── */
+footer{background:var(--color-purple);background-image:url('assets/Grain_texture_medium_purple.png');background-size:cover;padding:52px 56px 44px;border-top:1px solid rgba(255,255,255,.05)}
+.ft-inner{max-width:1040px;margin:0 auto;display:grid;grid-template-columns:180px 1fr;gap:80px}
+.ft-label{font-family:var(--font-body);font-size:10px;font-weight:800;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.45);margin-bottom:14px}
+.ft-link{display:block;font-family:var(--font-body);font-style:italic;font-size:15px;color:rgba(255,255,255,.7);margin-bottom:6px;cursor:pointer;transition:color .15s}
+.ft-link:hover{color:var(--color-pink)}
+.ft-right{display:flex;flex-direction:column;align-items:flex-end;text-align:right}
+.ft-logo{font-family:var(--font-display);font-size:22px;color:#fff;letter-spacing:.06em;display:inline-flex;align-items:center;gap:8px;margin-bottom:18px}
+.ft-logo .sp{color:var(--color-pink);font-size:14px}
+.ft-desc{font-size:13px;font-style:italic;line-height:1.7;color:rgba(255,255,255,.65);max-width:440px;margin-bottom:16px}
+.ft-contact{font-size:13px;color:rgba(255,255,255,.6);line-height:1.7}
+.ft-credit{font-size:11px;font-style:italic;color:rgba(255,255,255,.35);margin-top:14px}
+
+@media(max-width:900px){.events-grid{grid-template-columns:1fr;gap:28px}.about-inner{grid-template-columns:1fr;gap:32px}.about-photo{max-width:260px;margin:0 auto}.gal-side{width:140px}.nav-left,.nav-right{gap:18px}.nav-item{font-size:14px}}
+@media(max-width:640px){nav.top{left:14px;right:14px;padding:0 6px 0 20px}.ft-inner{grid-template-columns:1fr;gap:40px}.ft-right{align-items:flex-start;text-align:left}}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<div id="nav-root"></div>
+<script>window.GOL_PAGE='home'</script>
+<script src="nav.js"></script>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-slides" id="heroSlides">
+    <div class="hero-slide active" style="background-image:url('gallery/gal0.jpg')"></div>
+    <div class="hero-slide" style="background-image:url('gallery/gal1.jpg')"></div>
+    <div class="hero-slide" style="background-image:url('gallery/gal2.jpg')"></div>
+  </div>
+  <div class="hero-overlay"></div>
+  <div class="hero-inner">
+    <h1 class="hero-title" id="heroTitle">Táborák na náměstí</h1>
+    <p class="hero-sub" id="heroSub">Zpívání u velkého ohně na náměstí Svobody v Brně. Po akci se přespávalo přímo na náměstí!</p>
+    <a href="events.html" class="btn-pill">Zobrazit akce <span class="arr"></span></a>
+  </div>
+  <div class="hero-dots" id="heroDots">
+    <span class="hero-dot active" data-i="0"></span>
+    <span class="hero-dot" data-i="1"></span>
+    <span class="hero-dot" data-i="2"></span>
+  </div>
+</section>
+
+<!-- UPCOMING EVENTS -->
+<section class="events-section">
+  <h2 class="sec-title"><span class="star">✦</span> Nadcházející akce <span class="star">✦</span></h2>
+  <div class="events-grid">
+    <a class="ev-card" href="event_detail.html">
+      <img class="ev-badge" src="logos/GOL_FrogJumps_transparent.png" alt="Frog Jumps" />
+      <div class="ev-title">Game of Life<br/>Frog Jumps</div>
+      <div class="ev-meta">
+        <div class="ev-row">📅 12. května 2026</div>
+        <div class="ev-row">📍 Brno, Bystrc</div>
+        <div class="ev-row">🏆 +50 pts</div>
+      </div>
+    </a>
+    <a class="ev-card" href="event_detail.html">
+      <img class="ev-badge" src="logos/GOL_Dance_transparent.png" alt="Dance Class" />
+      <div class="ev-title">Game of Life<br/>Dance Class</div>
+      <div class="ev-meta">
+        <div class="ev-row">📅 18. května 2026</div>
+        <div class="ev-row">📍 Praha, Karlín</div>
+        <div class="ev-row">🏆 +50 pts</div>
+      </div>
+    </a>
+    <a class="ev-card" href="event_detail.html">
+      <img class="ev-badge" src="logos/GOL_C50_transparent.png" alt="C50" />
+      <div class="ev-title">Game of Life<br/>C50</div>
+      <div class="ev-meta">
+        <div class="ev-row">📅 2. června 2026</div>
+        <div class="ev-row">📍 Brno, Bystrc</div>
+        <div class="ev-row">🏆 +120 pts</div>
+      </div>
+    </a>
+  </div>
+  <div class="see-all">
+    <a href="events.html" class="btn-pill">Všechny akce <span class="arr"></span></a>
+  </div>
+</section>
+
+<!-- LEADERBOARD -->
+<section class="lb-section">
+  <div class="lb-bg"></div>
+  <div class="lb-tint"></div>
+  <div class="lb-inner">
+    <h2 class="lb-title"><span class="tr">🏆</span> Top 10 hráčů <span class="tr">🏆</span></h2>
+    <div class="lb-card">
+      <div class="lb-head"><div>#</div><div>hráč</div><div style="text-align:right">pts</div></div>
+      <div class="lb-row"><span class="lb-rank top">🏆</span><div class="lb-name"><div class="lb-av">LM</div>Lukáš Müller</div><div class="lb-pts">1280</div></div>
+      <div class="lb-row"><span class="lb-rank top">🥈</span><div class="lb-name"><div class="lb-av">VT</div>Vojta Toman</div><div class="lb-pts">1165</div></div>
+      <div class="lb-row"><span class="lb-rank top">🥉</span><div class="lb-name"><div class="lb-av">PT</div>Petr Testovací</div><div class="lb-pts">1040</div></div>
+      <div class="lb-row"><span class="lb-rank">4.</span><div class="lb-name"><div class="lb-av">AN</div>Adam Novák</div><div class="lb-pts">885</div></div>
+      <div class="lb-row"><span class="lb-rank">5.</span><div class="lb-name"><div class="lb-av">KH</div>Kryštof Hochman</div><div class="lb-pts">720</div></div>
+      <div class="lb-row"><span class="lb-rank">6.</span><div class="lb-name"><div class="lb-av">AS</div>Anička Sdlouhýmjménem</div><div class="lb-pts">615</div></div>
+      <div class="lb-row"><span class="lb-rank">7.</span><div class="lb-name"><div class="lb-av">TS</div>Tereza Svobodová</div><div class="lb-pts">560</div></div>
+      <div class="lb-row"><span class="lb-rank">8.</span><div class="lb-name"><div class="lb-av">MH</div>Matěj Horák</div><div class="lb-pts">510</div></div>
+      <div class="lb-row"><span class="lb-rank">9.</span><div class="lb-name"><div class="lb-av">JD</div>Jakub Dvořák</div><div class="lb-pts">470</div></div>
+      <div class="lb-row"><span class="lb-rank">10.</span><div class="lb-name"><div class="lb-av">EM</div>Eliška Malá</div><div class="lb-pts">430</div></div>
+    </div>
+    <div class="lb-cta"><a href="leaderboard.html" class="btn-pill">Celý leaderboard <span class="arr"></span></a></div>
+  </div>
+</section>
+
+<!-- ABOUT -->
+<section class="about-section">
+  <div class="about-inner">
+    <div class="about-photo">
+      <img src="gallery/gal3.jpg" alt="Game of Life komunita" />
+    </div>
+    <div>
+      <div class="about-eyebrow">— O nás —</div>
+      <h3 class="about-heading">Komunita, která hraje život naplno</h3>
+      <p class="about-body"><strong>Game of Life</strong> je celoroční komunitní hra plná zábavy, výzev a nezapomenutelných zážitků. Vzešla z přesvědčení, že nejlepší okamžiky nevznikají samy — ale když se správní lidé potkají ve správný čas.</p>
+      <p class="about-body">Každý event je bodovaný. Každá výzva tě posune dál. Nejde jen o body — jde o přátelství, vzpomínky a odvahu vyzkoušet něco nového.</p>
+      <a href="events.html" class="btn-pill">Zapoj se <span class="arr"></span></a>
+      <div class="stats-row">
+        <div class="stat-item"><div class="stat-num">250+</div><div class="stat-label">Hráčů</div></div>
+        <div class="stat-item"><div class="stat-num">40+</div><div class="stat-label">Events</div></div>
+        <div class="stat-item"><div class="stat-num">25K+</div><div class="stat-label">Bodů</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- GALLERY -->
+<section class="gallery-section">
+  <div class="gal-header">
+    <h2 class="sec-title"><span class="star">📷</span> Galerie <span class="star">📷</span></h2>
+  </div>
+  <div class="gal-container">
+    <div class="gal-side" id="galLeft" style="background-image:url('gallery/gal3.jpg')"></div>
+    <div class="gal-main" id="galMain" style="background-image:url('gallery/gal0.jpg')"></div>
+    <div class="gal-side" id="galRight" style="background-image:url('gallery/gal1.jpg')"></div>
+  </div>
+  <div class="gal-footer">
+    <a href="gallery_page.html" class="btn-pill">Celá galerie <span class="arr"></span></a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="ft-inner">
+    <div>
+      <div class="ft-label">Menu</div>
+      <a class="ft-link" href="index.html">Domů</a>
+      <a class="ft-link" href="events.html">Kalendář</a>
+      <a class="ft-link" href="gallery_page.html">Galerie</a>
+      <a class="ft-link" href="leaderboard.html">Leaderboard</a>
+      <a class="ft-link" style="margin-top:14px" href="#">Instagram</a>
+      <a class="ft-link" href="#">Facebook</a>
+      <a class="ft-link" href="#">TikTok</a>
+    </div>
+    <div class="ft-right">
+      <div class="ft-logo"><span class="sp">✦</span> GAME OF LIFE</div>
+      <p class="ft-desc">Game of Life sdružuje ty, co chtějí z každodenního stereotypu vytřískat maximum a nebojí se u toho jít do extrému i do hloubky. Jsme tvůj protijed na moderní izolaci.</p>
+      <div class="ft-contact">Vojta Toman<br/>+420 731 005 976</div>
+      <div class="ft-credit">Tyhle krásný stránky vytvořil Lukáš Müller.<br/>Game of Life © 2026</div>
+    </div>
+  </div>
+</footer>
+
+<script>
+// Nav hide on scroll
+let lastY = 0, upCount = 0;
+window.addEventListener('scroll', () => {
+  const nav = document.getElementById('nav');
+  const y = window.pageYOffset;
+  if (y > lastY) { upCount = 0; nav.classList.add('hidden'); }
+  else { upCount++; if (upCount >= 3) { nav.classList.remove('hidden'); upCount = 0; } }
+  lastY = y <= 0 ? 0 : y;
+});
+
+// Hero carousel
+const slides = [
+  { title:'Táborák na náměstí', sub:'Zpívání u velkého ohně na náměstí Svobody v Brně. Po akci se přespávalo přímo na náměstí!' },
+  { title:'Nahá Míle', sub:'Klasická nahá míle. Bez výmluv, bez triček. Každý rok silnější.' },
+  { title:'Dance Class', sub:'Otevřená taneční hodina pro všechny. Bez předchozích zkušeností, jen chuť si zatančit.' }
+];
+let cur = 0;
+const slideEls = document.querySelectorAll('.hero-slide');
+const dots = document.querySelectorAll('.hero-dot');
+const titleEl = document.getElementById('heroTitle');
+const subEl = document.getElementById('heroSub');
+
+function goSlide(i) {
+  slideEls[cur].classList.remove('active');
+  dots[cur].classList.remove('active');
+  cur = i;
+  slideEls[cur].classList.add('active');
+  dots[cur].classList.add('active');
+  titleEl.textContent = slides[cur].title;
+  subEl.textContent = slides[cur].sub;
+}
+dots.forEach(d => d.addEventListener('click', () => goSlide(+d.dataset.i)));
+setInterval(() => goSlide((cur + 1) % slides.length), 5000);
+
+// Gallery carousel
+const images = ['gallery/gal0.jpg','gallery/gal1.jpg','gallery/gal2.jpg','gallery/gal3.jpg'];
+let galCur = 0;
+const galLeft = document.getElementById('galLeft');
+const galMain = document.getElementById('galMain');
+const galRight = document.getElementById('galRight');
+function updateGal() {
+  const n = images.length;
+  galLeft.style.backgroundImage = `url('${images[(galCur-1+n)%n]}')`;
+  galMain.style.backgroundImage = `url('${images[galCur]}')`;
+  galRight.style.backgroundImage = `url('${images[(galCur+1)%n]}')`;
+}
+galLeft.addEventListener('click', () => { galCur = (galCur-1+images.length)%images.length; updateGal(); });
+galRight.addEventListener('click', () => { galCur = (galCur+1)%images.length; updateGal(); });
+</script>
+</body>
+</html>

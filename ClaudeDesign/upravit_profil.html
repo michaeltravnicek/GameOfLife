@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Upravit profil — Game of Life</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500&family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="colors_and_type.css" />
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--font-body);color:var(--color-cream-light);-webkit-font-smoothing:antialiased;min-height:100vh;background:#1a0f0a;overflow-x:hidden;display:flex;flex-direction:column}
+img{display:block;max-width:100%}
+button{font-family:inherit;cursor:pointer}
+a{color:inherit;text-decoration:none}
+
+/* ── BACKGROUND ── */
+.stage{position:fixed;inset:0;z-index:-2;background:url('gallery/gal3.jpg') center 28%/cover no-repeat;filter:saturate(.7) contrast(1.02);transform:scale(1.05)}
+.stage::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 15%,rgba(45,42,142,.10) 0%,transparent 55%),linear-gradient(180deg,rgba(45,42,142,.08) 0%,rgba(26,15,10,.60) 50%,rgba(26,15,10,.82) 100%)}
+.grain{position:fixed;inset:0;z-index:-1;pointer-events:none;background:url('assets/Grain_texture_blue.png') center/cover;opacity:.08;mix-blend-mode:overlay}
+
+/* ── MAIN WRAPPER ── */
+.main-wrapper{position:relative;z-index:2;flex:1;max-width:900px;margin:0 auto;width:100%;padding:140px 32px 80px}
+
+/* ── FORM CARD ── */
+.form-card{background:url('assets/Grain_texture_light.png') center/cover;border:2px dashed rgba(26,26,26,.45);border-radius:14px;padding:48px 44px;overflow:hidden;position:relative}
+.form-card::before{content:'';position:absolute;inset:0;background:url('assets/Grain_texture_light2.png') center/40%;opacity:.45;pointer-events:none}
+
+.form-title{position:relative;z-index:1;font-family:var(--font-display);font-size:40px;color:#1a1a1a;text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px}
+.form-subtitle{position:relative;z-index:1;font-family:var(--font-body);font-size:14px;color:rgba(26,26,26,.72);font-style:italic;margin-bottom:36px}
+
+/* ── FORM GROUP ── */
+.form-group{position:relative;z-index:1;margin-bottom:28px}
+.form-label{font-family:var(--font-mono);font-style:italic;font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--color-pink);margin-bottom:12px;display:block;font-weight:700}
+.form-group.question .form-label{font-size:11.5px;color:#1a1a1a;letter-spacing:.2em;font-weight:800}
+
+.form-input,.form-textarea{width:100%;padding:12px 14px;border:2px dashed #1a1a1a;background:url('assets/Grain_texture_light2.png') center/cover;font-family:var(--font-body);font-size:14px;color:#1a1a1a;border-radius:6px;transition:border-color .2s;position:relative}
+.form-input:focus,.form-textarea:focus{outline:0;border-color:var(--color-pink)}
+.form-input::placeholder,.form-textarea::placeholder{color:rgba(26,26,26,.55)}
+
+.form-file{display:flex;align-items:center;padding:0;cursor:pointer}
+.form-file::file-selector-button{background:url('assets/Grain_texture_light2.png') center/cover;border:2px dashed rgba(255,255,255,.6);box-shadow:inset 0 0 0 1px #1a1a1a;padding:10px 18px;border-radius:6px;cursor:pointer;font-family:var(--font-body);font-size:13px;font-weight:700;margin-right:14px;transition:border-color .2s;color:#1a1a1a}
+.form-file::file-selector-button:hover{border-color:rgba(255,255,255,.8)}
+
+.form-textarea{resize:vertical;min-height:100px}
+
+/* ── BUTTON ROW ── */
+.form-actions{display:flex;gap:14px;margin-top:44px}
+.btn-primary{flex:1;padding:14px 24px;background:var(--color-pink);color:#fff;border:0;font-family:var(--font-body);font-weight:700;font-size:13px;letter-spacing:.08em;text-transform:uppercase;border-radius:8px;cursor:pointer;transition:background .2s,transform .18s;box-shadow:0 4px 14px rgba(225,84,99,.40)}
+.btn-primary:hover{background:#cf4453;transform:translateY(-1px)}
+.btn-secondary{flex:1;padding:14px 24px;background:#fff;color:#1a1a1a;border:2px dashed rgba(26,26,26,.40);font-family:var(--font-body);font-weight:700;font-size:13px;letter-spacing:.08em;text-transform:uppercase;border-radius:8px;cursor:pointer;transition:border-color .2s,color .2s}
+.btn-secondary:hover{border-color:var(--color-pink);color:var(--color-pink)}
+
+@media(max-width:680px){
+  .main-wrapper{padding:60px 24px}
+  .form-card{padding:32px 24px}
+  .form-title{font-size:28px}
+  .form-actions{flex-direction:column}
+}
+</style>
+</head>
+<body>
+<div class="stage"></div>
+<div class="grain"></div>
+
+<div id="nav-root"></div>
+<script>window.GOL_PAGE='profile'</script>
+<script src="nav.js"></script>
+
+<div class="main-wrapper">
+  <div class="form-card">
+    <h1 class="form-title">Upravit profil</h1>
+    <p class="form-subtitle">Doplň si své informace.</p>
+
+    <form id="edit-form">
+      <div class="form-group">
+        <label class="form-label">Profilová fotka</label>
+        <input type="file" class="form-file" id="photo-input" accept="image/*" />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Instagram</label>
+        <input type="text" class="form-input" placeholder="@tvoj_instagram" id="instagram-input" />
+      </div>
+
+      <div class="form-group question">
+        <label class="form-label">Co o tobě nikdo neví?</label>
+        <textarea class="form-textarea" placeholder="Tvá odpověď..." id="question1-input"></textarea>
+      </div>
+
+      <div class="form-group question">
+        <label class="form-label">Co by o tobě měli všichni vědět?</label>
+        <textarea class="form-textarea" placeholder="Tvá odpověď..." id="question2-input"></textarea>
+      </div>
+
+      <div class="form-group question">
+        <label class="form-label">Jak bys se popsal v jedné větě?</label>
+        <textarea class="form-textarea" placeholder="Tvá odpověď..." id="question3-input"></textarea>
+      </div>
+
+      <div class="form-group question">
+        <label class="form-label">Jaká byla tvoje první akce s Game of Life?</label>
+        <textarea class="form-textarea" placeholder="Tvá odpověď..." id="question4-input"></textarea>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn-primary">Uložit změny</button>
+        <button type="reset" class="btn-secondary">Zrušit</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="footer-root"></div>
+<script src="footer.js"></script>
+
+<script>
+document.getElementById('edit-form').addEventListener('submit', e => {
+  e.preventDefault();
+  localStorage.setItem('gol_profile', JSON.stringify({
+    instagram: document.getElementById('instagram-input').value,
+    q1: document.getElementById('question1-input').value,
+    q2: document.getElementById('question2-input').value,
+    q3: document.getElementById('question3-input').value,
+    q4: document.getElementById('question4-input').value
+  }));
+  alert('Profil byl uložen!');
+  window.location.href = 'profile_a_final.html';
+});
+</script>
+</body>
+</html>

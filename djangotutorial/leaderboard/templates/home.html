@@ -2,10 +2,11 @@
 {% load static %}
 {% load event_extras %}
 
-{% block title %}Game of Yolo — Život je hra, tak ho hrej naplno{% endblock %}
+{% block title %}Game of Life — Život je hra, tak ho hrej{% endblock %}
 
 {% block content %}
 
+{# ── HERO ─────────────────────────────────────────────────────────────── #}
 <section class="hero-mosaic">
     <div class="hero-mosaic-grid" aria-hidden="true">
         {% for img_url in hero_images %}
@@ -21,32 +22,115 @@
         <h1 class="hero-scream">Život je hra</h1>
         <p class="hero-scream-line-2">Tak ho hrej</p>
         <a href="{% if request.user.is_authenticated %}{% url 'events' %}{% else %}{% url 'register' %}{% endif %}"
-           class="btn-impact">
-            {% if request.user.is_authenticated %}Nadcházející events{% else %}Začni hrát{% endif %}
+           class="btn-primary btn-long-arrow">
+            {% if request.user.is_authenticated %}Nadcházející akce{% else %}Začni hrát{% endif %}
         </a>
+    </div>
+
+    <div class="hero-dots" aria-hidden="true">
+        <span class="hero-dot active"></span>
+        <span class="hero-dot"></span>
+        <span class="hero-dot"></span>
     </div>
 </section>
 
-<section class="about-section anim-fade-up">
-    <div class="section-eyebrow">O nás</div>
-    <h2 class="section-title">Komunita, která hraje život naplno</h2>
+{# ── UPCOMING EVENTS ──────────────────────────────────────────────────── #}
+<section class="section sec-purple">
+    <div class="section-inner">
+        <h2 class="section-title">Nadcházející akce</h2>
 
+        {% if upcoming_events %}
+            <div class="grid-auto">
+                {% for event in upcoming_events|slice:":3" %}
+                    {% with cat=event|event_category %}
+                    <article class="card event-card evt-{{ cat }} anim-fade-up-delay-{{ forloop.counter0|add:1 }}">
+                        <a href="{% url 'event_detail' event.slug %}">
+                            <div class="card-photo"
+                                 style="background-image: url('{% if event.image %}{{ event.image.url }}{% else %}https://picsum.photos/seed/event{{ event.id }}/160/160{% endif %}');">
+                                <span class="badge-evt evt-{{ cat }}">{{ event|event_category_label }}</span>
+                            </div>
+                            <div class="card-body">
+                                <h3 class="card-title">{{ event.name }}</h3>
+                                <p class="card-meta">📅 {{ event.date|date:"d. m. Y" }}</p>
+                                <p class="card-meta">📍 {{ event.place }}</p>
+                                <p class="card-meta">🏆 +{{ event.points }} pts</p>
+                            </div>
+                        </a>
+                    </article>
+                    {% endwith %}
+                {% endfor %}
+            </div>
+            <div style="text-align: center; margin-top: 2.5rem;">
+                <a href="{% url 'events' %}" class="btn-outline">Všechny akce <span class="btn-arrow">→</span></a>
+            </div>
+        {% else %}
+            <p class="text-muted text-center" style="padding: 2rem 0;">
+                Zatím nejsou žádné nadcházející akce. Sleduj nás na Instagramu!
+            </p>
+        {% endif %}
+    </div>
+</section>
+
+{# ── LEADERBOARD ──────────────────────────────────────────────────────── #}
+<section class="lb-section" style="background-image: url('{% if hero_images %}{{ hero_images.0 }}{% else %}https://picsum.photos/seed/gol-lb/1600/900{% endif %}'); background-size: cover; background-position: center;">
+    <div class="section-inner">
+        <h2 class="section-title">🏆 Top 10 hráčů 🏆</h2>
+
+        {% if top_players %}
+        <div class="lb-panel anim-fade-up">
+            <div class="lb-head">
+                <div>#</div>
+                <div>Hráč</div>
+                <div>pts</div>
+            </div>
+            {% for player in top_players|slice:":10" %}
+                {% if player.profile_username %}
+                    <a href="{% url 'profile' player.profile_username %}"
+                       class="lb-row {% if forloop.first %}lb-row-first anim-glow{% elif forloop.counter <= 3 %}lb-row-podium{% endif %}">
+                        <span class="rank">{% if forloop.counter == 2 %}🥈{% elif forloop.counter == 3 %}🥉{% elif forloop.first %}#1{% else %}{{ forloop.counter }}.{% endif %}</span>
+                        <span class="name">{{ player.name }}</span>
+                        <span class="points">{{ player.total_points }}</span>
+                    </a>
+                {% else %}
+                    <div class="lb-row {% if forloop.first %}lb-row-first anim-glow{% elif forloop.counter <= 3 %}lb-row-podium{% endif %}">
+                        <span class="rank">{% if forloop.counter == 2 %}🥈{% elif forloop.counter == 3 %}🥉{% elif forloop.first %}#1{% else %}{{ forloop.counter }}.{% endif %}</span>
+                        <span class="name">{{ player.name }}</span>
+                        <span class="points">{{ player.total_points }}</span>
+                    </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+        <div style="text-align: center; margin-top: 2.5rem;">
+            <a href="{% url 'leaderboard' %}" class="btn-primary">Celý leaderboard <span class="btn-arrow">→</span></a>
+        </div>
+        {% else %}
+            <p class="text-muted text-center">Leaderboard zatím nemá žádné hráče.</p>
+        {% endif %}
+    </div>
+</section>
+
+{# ── ABOUT ────────────────────────────────────────────────────────────── #}
+<section class="about-section anim-fade-up">
     <div class="about-grid">
+        <div class="about-image"
+             style="background-image: url('{% if hero_images %}{{ hero_images.0 }}{% else %}https://picsum.photos/seed/gol-about/800/1000{% endif %}');">
+        </div>
         <div>
+            <div class="section-eyebrow">— O nás —</div>
+            <h2 style="font-family: var(--font-display); font-size: clamp(36px, 4vw, 56px); color: var(--gol-cream); letter-spacing: 0.03em; margin: 0 0 1.25rem;">
+                Komunita, která hraje život naplno
+            </h2>
             <p>
-                <strong>Game of Yolo</strong> je celoroční komunitní hra plná zábavy, výzev
-                a nezapomenutelných zážitků. Vzešla z přesvědčení, že nejlepší okamžiky
-                nevznikají samy, ale když se správní lidé potkají ve správný čas na
-                správném místě.
+                <strong>Game of Life</strong> je prostor pro lidi, kteří chtějí od
+                života a od vztahů něco víc. Všiml jsem si, jak moc nám dnes chybí
+                opravdovost — ty momenty, kdy odložíme telefony, přestaneme se bavit
+                o počasí a jdeme rovnou k věci.
             </p>
             <p>
-                Každý event je bodovaný. Každá výzva tě posune dál. A každý hráč, který
-                do toho jde naplno, si zaslouží své místo v leaderboardu. Nejde ale jen o body,
-                jde o přátelství, vzpomínky a odvahu vyzkoušet něco nového.
-            </p>
-            <p>
-                Ať už jsi fanouškem karaoke, nahé míle, deskovek nebo bruslení —
-                vítej doma. Vytvořil <em>Vojta Tomann</em> s láskou ke komunitě.
+                Každý event je bodovaný. Každá výzva tě posune dál. A každý hráč,
+                který do toho jde naplno, si zaslouží své místo v leaderboardu.
+                Nejde ale jen o body — jde o přátelství, vzpomínky a odvahu vyzkoušet
+                něco nového.
             </p>
 
             <div class="about-stats">
@@ -56,79 +140,48 @@
                 </div>
                 <div class="about-stat">
                     <p class="num">{{ about_stats.events }}</p>
-                    <p class="label">Events</p>
+                    <p class="label">Akcí</p>
                 </div>
                 <div class="about-stat">
                     <p class="num">{{ about_stats.points }}</p>
-                    <p class="label">Bodů rozdáno</p>
+                    <p class="label">Bodů</p>
                 </div>
             </div>
-        </div>
-        <div class="about-image"
-             style="background-image: linear-gradient(180deg, transparent 40%, rgba(10,10,20,0.35)), url('{% if hero_images %}{{ hero_images.0 }}{% else %}https://picsum.photos/seed/about/800/1000{% endif %}');">
+
+            <div style="margin-top: 2rem;">
+                <a href="{% url 'about_points' %}" class="btn-primary">Zajímá mě víc <span class="btn-arrow">→</span></a>
+            </div>
         </div>
     </div>
 </section>
 
-<section class="section">
-    <div class="section-eyebrow">Kalendář</div>
-    <h2 class="section-title">Nadcházející výzvy</h2>
-
-    {% if upcoming_events %}
-        <div class="grid-auto">
-            {% for event in upcoming_events %}
-                {% with cat=event|event_category %}
-                <article class="card event-card evt-{{ cat }} anim-fade-up-delay-{{ forloop.counter0|add:1 }}">
-                    <a href="{% url 'event_detail' event.slug %}" style="text-decoration:none; color:inherit;">
-                        <div class="card-photo"
-                             style="background-image: linear-gradient(135deg, rgba(71, 81, 133, 0.4), rgba(54, 60, 99, 0.55)), url('{% if event.image %}{{ event.image.url }}{% else %}https://picsum.photos/seed/event{{ event.id }}/600/400{% endif %}');">
-                            <span class="badge-evt evt-{{ cat }}" style="position:relative; z-index:1;">{{ event|event_category_label }}</span>
-                        </div>
-                        <div class="card-body">
-                            <h3 class="card-title">{{ event.name }}</h3>
-                            <p class="card-meta">📍 {{ event.place }}</p>
-                            <p class="card-meta">📅 {{ event.date|date:"d. m. Y" }} · {{ event.date|time:"H:i" }}</p>
-                            <span class="card-link slide-link">Zjistit více →</span>
-                        </div>
-                    </a>
-                </article>
-                {% endwith %}
+{# ── GALLERY ──────────────────────────────────────────────────────────── #}
+{% if hero_images and hero_images|length > 1 %}
+<section class="section sec-dark">
+    <div class="section-inner">
+        <h2 class="section-title">Galerie</h2>
+        <div class="home-gallery">
+            {% for img_url in hero_images|slice:":3" %}
+                <div style="background-image: url('{{ img_url }}');"></div>
             {% endfor %}
         </div>
-    {% else %}
-        <p class="text-muted text-center" style="padding: 2rem 0;">Zatím nejsou žádné nadcházející events. Sleduj nás na Instagramu!</p>
-    {% endif %}
+    </div>
 </section>
+{% endif %}
 
-<section class="section">
-    <div class="section-eyebrow">Ranking</div>
-    <h2 class="section-title">Leaderboard hráčů</h2>
-
-    {% if top_players %}
-        <div style="max-width: 720px;">
-            {% for player in top_players %}
-                {% if player.profile_username %}
-                    <a href="{% url 'profile' player.profile_username %}"
-                       class="lb-row {% if forloop.first %}lb-row-first anim-glow{% elif forloop.counter <= 3 %}lb-row-podium{% endif %}">
-                        <span class="rank">#{{ forloop.counter }}</span>
-                        <span class="name">{{ player.name }}</span>
-                        <span class="points">{{ player.total_points }} bodů</span>
-                    </a>
-                {% else %}
-                    <div class="lb-row {% if forloop.first %}lb-row-first anim-glow{% elif forloop.counter <= 3 %}lb-row-podium{% endif %}" style="cursor: default;">
-                        <span class="rank">#{{ forloop.counter }}</span>
-                        <span class="name">{{ player.name }}</span>
-                        <span class="points">{{ player.total_points }} bodů</span>
-                    </div>
-                {% endif %}
-            {% endfor %}
-        </div>
-        <div style="margin-top: 1.5rem;">
-            <a href="{% url 'leaderboard' %}" class="btn btn-primary anim-pulse">Zobrazit celý Leaderboard</a>
-        </div>
-    {% else %}
-        <p class="text-muted">Leaderboard zatím nemá žádné hráče.</p>
-    {% endif %}
+{# ── JOIN CTA ─────────────────────────────────────────────────────────── #}
+{% if not request.user.is_authenticated %}
+<section class="section sec-purple" style="text-align: center;">
+    <div class="section-inner" style="max-width: 720px;">
+        <h2 style="font-family: var(--font-display); font-size: clamp(40px, 6vw, 80px); color: var(--gol-cream); letter-spacing: 0.04em; margin: 0 0 1rem; line-height: 1;">
+            Přidej se k nám
+        </h2>
+        <p style="font-family: var(--font-body); font-size: 15px; color: rgba(255,241,212,0.65); margin: 0 0 2rem; line-height: 1.6;">
+            Zaregistruj se a staň se aktivním hráčem naší komunity.
+        </p>
+        <a href="{% url 'register' %}" class="btn-impact">Přidej se k nám <span class="btn-arrow">→</span></a>
+    </div>
 </section>
+{% endif %}
 
 {% endblock %}
