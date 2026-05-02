@@ -43,8 +43,8 @@ body{font-family:var(--font-body);color:var(--color-cream-light);-webkit-font-sm
 .about-text{font-size:14px;font-style:italic;line-height:1.72;color:rgba(26,26,26,.75);max-width:640px}
 
 .tab-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:32px;flex-wrap:wrap}
-.pill-group{display:inline-flex;padding:4px;gap:4px;background:rgba(26,15,10,.48);border:1.5px dashed rgba(255,241,212,.26);border-radius:9999px;backdrop-filter:blur(8px)}
-.pill{font-family:var(--font-body);font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:8px 18px;border-radius:9999px;background:transparent;border:0;color:rgba(255,241,212,.60);transition:all .18s;cursor:pointer}
+.pill-group{display:inline-flex;padding:5px;gap:5px;background:rgba(26,15,10,.45);border:1.5px dashed rgba(255,241,212,.32);border-radius:9999px;backdrop-filter:blur(8px)}
+.pill{font-family:var(--font-hv);font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;padding:9px 20px;border-radius:9999px;background:transparent;border:0;color:rgba(255,241,212,.75);transition:all .18s;cursor:pointer}
 .pill:hover{color:#fff}
 .pill.on{background:rgba(255,241,212,.12);color:#fff}
 .pill.on-pink{background:var(--color-pink);color:#fff;box-shadow:0 4px 14px rgba(225,84,99,.45)}
@@ -78,10 +78,10 @@ body{font-family:var(--font-body);color:var(--color-cream-light);-webkit-font-sm
 .ev-pts .u{font-family:var(--font-mono);font-style:italic;font-size:10px;color:rgba(255,241,212,.45);letter-spacing:.14em;margin-left:3px}
 .empty{text-align:center;padding:44px 20px;font-style:italic;color:rgba(255,241,212,.55);font-size:14px}
 
-.graph-card{background:var(--tex-light) center/cover;border:2px solid rgba(26,26,26,.32);border-radius:16px;padding:32px 32px 24px}
-.graph-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px}
+.graph-card{background:var(--tex-light) center/cover;border-radius:16px;padding:32px 32px 24px}
+.graph-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;flex-wrap:wrap;gap:12px}
 .graph-title{font-family:var(--font-body);font-weight:800;font-size:15px;color:rgba(26,26,26,.88);display:flex;align-items:center;gap:8px}
-.graph-title svg{width:17px;height:17px;flex-shrink:0}
+.graph-title svg{width:17px;height:17px;flex-shrink:0;stroke:#c1394a}
 .graph-right{text-align:right}
 .graph-total{font-family:var(--font-display);font-size:32px;color:#c1394a;letter-spacing:.04em;line-height:1}
 .graph-total-label{font-family:var(--font-mono);font-style:italic;font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:rgba(26,26,26,.45);margin-top:3px}
@@ -100,12 +100,25 @@ body{font-family:var(--font-body);color:var(--color-cream-light);-webkit-font-sm
 @media(max-width:1024px){.events-grid{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:680px){
   .events-grid{grid-template-columns:1fr}
-  .tab-row{flex-direction:column;align-items:flex-start}
+  .tab-row{flex-direction:column;align-items:flex-start;gap:8px;margin-bottom:20px}
+  .pill-group{padding:4px;gap:3px}
+  .pill{font-size:10px;padding:7px 11px;letter-spacing:.08em}
+  .pill.on-pink{box-shadow:0 2px 8px rgba(225,84,99,.4)}
   .stats-bar{flex-wrap:wrap}
-  .sb{flex:1 1 45%;padding:12px}
-  .row{grid-template-columns:64px 1fr 70px;gap:8px}
+  .sb{flex:1 1 45%;padding:10px}
+  .sb-num{font-size:28px}
+  .row{grid-template-columns:56px 1fr 64px;gap:6px;padding:10px 12px}
   .row .ev-date{display:none}
-  .main-wrapper{padding:28px 18px 48px}
+  .hero{padding:110px 16px 6px}
+  .avatar{width:110px;height:110px;font-size:36px;margin-bottom:14px}
+  .hero h1{font-size:clamp(42px,10vw,80px)}
+  .actions{margin-top:18px;gap:8px}
+  .btn-pill{padding:8px 16px;font-size:10.5px}
+  .main-wrapper{padding:20px 14px 40px}
+  .main-card{margin-bottom:16px}
+  .graph-header{flex-direction:column;align-items:flex-start}
+  .graph-right{text-align:left}
+  .graph-card{padding:18px 14px 14px;border-radius:12px;margin-left:-14px;margin-right:-14px;border-radius:0}
 }
 </style>
 {% endblock %}
@@ -264,8 +277,14 @@ body{font-family:var(--font-body);color:var(--color-cream-light);-webkit-font-sm
 
   function buildGraph(byMonth) {
     const svg = document.getElementById('chart-svg');
-    const W = 900, H = 320;
-    const pad = { top: 32, right: 28, bottom: 52, left: 52 };
+    const mobile = window.innerWidth < 680;
+    const W = mobile ? 420 : 900, H = mobile ? 200 : 320;
+    const pad = mobile
+      ? { top: 20, right: 12, bottom: 36, left: 36 }
+      : { top: 32, right: 28, bottom: 52, left: 52 };
+    const fSize = mobile ? 10 : 12;
+    const fSizeLbl = mobile ? 11 : 13;
+    svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
     const cW = W - pad.left - pad.right, cH = H - pad.top - pad.bottom;
 
     const total = byMonth.reduce(function(s,v){ return s+v; }, 0);
@@ -283,7 +302,7 @@ body{font-family:var(--font-body);color:var(--color-cream-light);-webkit-font-sm
     ySteps.forEach(function(v){
       const y = yOf(v);
       out += '<line x1="'+pad.left+'" y1="'+y.toFixed(1)+'" x2="'+(W-pad.right)+'" y2="'+y.toFixed(1)+'" stroke="rgba(26,26,26,.09)" stroke-width="1" stroke-dasharray="3 5"/>';
-      out += '<text x="'+(pad.left-10)+'" y="'+(y+4).toFixed(1)+'" text-anchor="end" font-family="Courier Prime,monospace" font-style="italic" font-size="12" fill="rgba(26,26,26,.42)">'+v+'</text>';
+      out += '<text x="'+(pad.left-6)+'" y="'+(y+4).toFixed(1)+'" text-anchor="end" font-family="Courier Prime,monospace" font-style="italic" font-size="'+fSize+'" fill="rgba(26,26,26,.42)">'+v+'</text>';
     });
 
     const areaD = 'M ' + xOf(0).toFixed(1) + ',' + yOf(0).toFixed(1) + ' '
@@ -301,12 +320,12 @@ body{font-family:var(--font-body);color:var(--color-cream-light);-webkit-font-sm
       const lblDelay = (2.0 + i * .075).toFixed(2);
       out += '<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="5.5" fill="#e15463" stroke="#f0e8d8" stroke-width="2.5" class="chart-dot" style="animation-delay:'+dotDelay+'s"/>';
       if (v > 0 && (v === peak || v >= peak * 0.5)) {
-        out += '<text x="'+x.toFixed(1)+'" y="'+(y-13).toFixed(1)+'" text-anchor="middle" font-family="Courier Prime,monospace" font-style="italic" font-size="13" fill="#c1394a" font-weight="700" class="chart-label" style="animation-delay:'+lblDelay+'s">'+v+'</text>';
+        out += '<text x="'+x.toFixed(1)+'" y="'+(y-10).toFixed(1)+'" text-anchor="middle" font-family="Courier Prime,monospace" font-style="italic" font-size="'+fSizeLbl+'" fill="#c1394a" font-weight="700" class="chart-label" style="animation-delay:'+lblDelay+'s">'+v+'</text>';
       }
     });
 
     monthsShort.forEach(function(m,i){
-      out += '<text x="'+xOf(i).toFixed(1)+'" y="'+(H-10)+'" text-anchor="middle" font-family="Barlow,sans-serif" font-size="12" fill="rgba(26,26,26,.52)">'+m+'</text>';
+      out += '<text x="'+xOf(i).toFixed(1)+'" y="'+(H-8)+'" text-anchor="middle" font-family="Barlow,sans-serif" font-size="'+fSize+'" fill="rgba(26,26,26,.52)">'+m+'</text>';
     });
 
     svg.innerHTML = out;
