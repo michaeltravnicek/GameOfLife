@@ -25,10 +25,10 @@ body{font-family:var(--font-body);color:var(--color-cream-light);-webkit-font-sm
 .list{position:relative;padding:10px;background:#1a0f0a var(--tex-blue) center/cover;border:1.5px solid rgba(255,255,255,.08);border-radius:14px;box-shadow:0 20px 44px rgba(0,0,0,.5)}
 .list::before{content:'';position:absolute;inset:6px;border:1.5px dashed rgba(255,241,212,.22);border-radius:10px;pointer-events:none}
 .list-inner{position:relative;z-index:1;padding:6px 4px}
-.row{display:grid;grid-template-columns:80px 1fr 110px 90px;align-items:center;gap:12px;padding:13px 18px;border-bottom:1px dashed rgba(255,241,212,.10);transition:background .18s,transform .18s;text-decoration:none}
+.row{display:grid;grid-template-columns:60px 1fr 110px 90px;align-items:center;gap:12px;padding:13px 18px;border-bottom:1px dashed rgba(255,241,212,.10);transition:background .18s,transform .18s;text-decoration:none}
 .row:last-child{border-bottom:0}
 .row:hover{background:rgba(255,241,212,.05);transform:translateX(2px)}
-.ev-cat{font-family:var(--font-mono);font-style:italic;font-size:9.5px;letter-spacing:.15em;text-transform:uppercase;padding:4px 9px;border-radius:9999px;background:rgba(225,84,99,.15);color:var(--color-pink);border:1px dashed rgba(225,84,99,.35);text-align:center}
+.ev-logo{width:44px;height:44px;object-fit:contain;display:block}
 .ev-info .nm{font-weight:600;font-size:14.5px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ev-info .loc{font-style:italic;font-size:11.5px;color:rgba(255,241,212,.52);margin-top:2px}
 .ev-date{font-family:var(--font-mono);font-style:italic;font-size:11px;color:rgba(255,241,212,.55);text-align:right}
@@ -37,9 +37,10 @@ body{font-family:var(--font-body);color:var(--color-cream-light);-webkit-font-sm
 .empty{text-align:center;padding:44px 20px;font-style:italic;color:rgba(255,241,212,.55);font-size:14px}
 
 @media(max-width:680px){
-  .row{grid-template-columns:64px 1fr 70px;gap:8px}
+  .row{grid-template-columns:44px 1fr 70px;gap:8px}
   .row .ev-date{display:none}
   .main-wrapper{padding:28px 18px 48px}
+  .ev-logo{width:36px;height:36px}
 }
 </style>
 {% endblock %}
@@ -61,7 +62,11 @@ body{font-family:var(--font-body);color:var(--color-cream-light);-webkit-font-sm
   <div class="list"><div class="list-inner">
     {% for ute in past_events %}
       <a class="row" href="{% url 'event_detail' ute.event.slug %}">
-        <span class="ev-cat">{{ ute.event|event_category_label }}</span>
+        {% if ute.event.logo %}
+          <img class="ev-logo" src="{{ ute.event.logo.url }}" alt="" />
+        {% else %}
+          <img class="ev-logo" src="{% static 'leaderboard/logos/GOL_main_logo_pink.png' %}" alt="" />
+        {% endif %}
         <div class="ev-info">
           <div class="nm">{{ ute.event.name }}</div>
           <div class="loc">📍 {{ ute.event.place }}</div>

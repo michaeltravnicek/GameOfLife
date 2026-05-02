@@ -1,5 +1,4 @@
 import json
-import random
 from datetime import datetime, timedelta, timezone as dt_timezone
 
 from django.conf import settings
@@ -133,41 +132,41 @@ def _attach_profile_usernames(players):
     return players
 
 
-def _pick_hero_images(count=12):
-    """Pick a list of image URLs from ImageToEvent + Event, up to `count`.
+def _pick_hero_events(count=5):
+    """Return up to `count` past events with images for the hero carousel.
 
-    Cached for 1 hour — images rarely change, and querying 400 rows on every
-    homepage load was a significant hot spot.
+    Cached for 1 hour. Each item is a dict with url, name, date, slug.
     """
     cached = cache.get(CACHE_KEY_HERO_IMAGES)
     if cached is not None:
-        urls = list(cached)
-    else:
-        # Use values_list to avoid loading full model instances into memory
-        img_paths = list(
-            ImageToEvent.objects
-            .exclude(image="")
-            .filter(image__isnull=False)
-            .values_list("image", flat=True)[:100]
-        )
-        ev_paths = list(
-            Event.objects
-            .exclude(image="")
-            .filter(image__isnull=False)
-            .values_list("image", flat=True)[:100]
-        )
-        media_url = settings.MEDIA_URL
-        urls = [f"{media_url}{p}" for p in img_paths if p]
-        urls.extend(f"{media_url}{p}" for p in ev_paths if p)
-        urls = list(dict.fromkeys(urls))  # de-dupe
-        cache.set(CACHE_KEY_HERO_IMAGES, urls, CACHE_TTL_HERO_IMAGES)
+        return cached
 
-    if not urls:
-        return []
-    random.shuffle(urls)
-    while len(urls) < count:
-        urls.extend(urls[: count - len(urls)])
-    return urls[:count]
+    now = timezone.now()
+    media_url = settings.MEDIA_URL
+    events = list(
+        Event.objects
+        .filter(date__lt=now)
+        .exclude(image="")
+        .filter(image__isnull=False)
+        .order_by("-date")[:count * 3]
+    )
+    result = []
+    seen_names = set()
+    for ev in events:
+        if ev.name in seen_names:
+            continue
+        seen_names.add(ev.name)
+        result.append({
+            "url": f"{media_url}{ev.image}",
+            "name": ev.name,
+            "date": ev.date,
+            "slug": ev.slug,
+        })
+        if len(result) >= count:
+            break
+
+    cache.set(CACHE_KEY_HERO_IMAGES, result, CACHE_TTL_HERO_IMAGES)
+    return result
 
 
 def home_view(request):
@@ -178,7 +177,7 @@ def home_view(request):
         upcoming_events = list(
             Event.objects.filter(date__gte=now).order_by("date")[:3]
         )
-        top_players = _attach_profile_usernames(_top_players(5))
+        top_players = _attach_profile_usernames(_top_players(10))
         about_stats = {
             "players": User.objects.count(),
             "events": Event.objects.count(),
@@ -191,13 +190,13 @@ def home_view(request):
         }
         cache.set(CACHE_KEY_HOME_CONTEXT, cached, CACHE_TTL_HOME_CONTEXT)
 
-    # Hero images cached separately (1 hour) — shuffled fresh each request
-    hero_images = _pick_hero_images(24)
+    # Hero events cached separately (1 hour)
+    hero_events = _pick_hero_events(5)
 
     return render(request, "home.html", {
         "upcoming_events": cached["upcoming_events"],
         "top_players": cached["top_players"],
-        "hero_images": hero_images,
+        "hero_events": hero_events,
         "about_stats": cached["about_stats"],
     })
 
@@ -346,6 +345,7 @@ def event_rsvp_view(request, slug):
 
 
 def gallery_view(request):
+    CZECH_MONTHS = ["Leden","Únor","Březen","Duben","Květen","Červen","Červenec","Srpen","Září","Říjen","Listopad","Prosinec"]
     images_qs = (
         ImageToEvent.objects
         .select_related("event_id")
@@ -353,16 +353,45 @@ def gallery_view(request):
         .filter(image__isnull=False)
         .order_by("-event_id__date")
     )
-    images = [
-        {
+    images = []
+    month_names = {}
+    for img in images_qs:
+        if not img.image:
+            continue
+        date = img.event_id.date if img.event_id else None
+        month_key = date.strftime("%Y-%m") if date else ""
+        if month_key and month_key not in month_names:
+            month_names[month_key] = f"{CZECH_MONTHS[date.month - 1]} {date.year}"
+        images.append({
             "url": img.image.url,
             "event_name": img.event_id.name if img.event_id else "",
             "event_slug": img.event_id.slug if img.event_id else "",
-            "event_date": img.event_id.date if img.event_id else None,
+            "event_date": date,
+            "month": month_key,
+        })
+    season_names = {}
+    for img in images:
+        if img["event_date"]:
+            year_key = str(img["event_date"].year)
+            if year_key not in season_names:
+                season_names[year_key] = f"Sezóna {img['event_date'].year}"
+
+    js_photos = json.dumps([
+        {
+            "src": img["url"],
+            "title": img["event_name"],
+            "event": img["event_name"],
+            "month": img["month"],
+            "season": str(img["event_date"].year) if img["event_date"] else "",
         }
-        for img in images_qs if img.image
-    ]
-    return render(request, "gallery.html", {"images": images})
+        for img in images
+    ])
+    return render(request, "gallery.html", {
+        "images": images,
+        "js_photos": js_photos,
+        "month_names_json": json.dumps(month_names),
+        "season_names_json": json.dumps(season_names),
+    })
 
 
 def public_user_view(request, user_id):

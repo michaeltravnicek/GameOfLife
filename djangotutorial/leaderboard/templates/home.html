@@ -23,7 +23,7 @@ body{background:var(--color-purple);background-image:var(--tex-purple);backgroun
 .btn-pill:hover{background:#cf4453;transform:translateY(-2px)}
 .btn-pill .arr::before{content:'';display:inline-block;width:26px;height:1.5px;background:#fff;vertical-align:middle;margin-right:4px;border-radius:2px}
 .btn-pill .arr::after{content:'➤';font-size:11px}
-.hero-dots{position:absolute;bottom:28px;left:0;right:0;display:flex;justify-content:center;gap:9px;z-index:2}
+.hero-dots{position:center;bottom:28px;left:50%;right:0;display:flex;justify-content:center;gap:9px;z-index:4;transform:translateX(-50%);pointer-events: auto;}
 .hero-dot{width:9px;height:9px;border-radius:50%;background:transparent;border:1.5px solid rgba(255,255,255,.65);cursor:pointer;transition:background .3s,border-color .3s}
 .hero-dot.active{background:#fff;border-color:#fff}
 
@@ -74,25 +74,41 @@ body{background:var(--color-purple);background-image:var(--tex-purple);backgroun
 .gallery-section::before{content:'';position:absolute;inset:0;background:url('{% static "leaderboard/gallery/gal2.jpg" %}') center/cover;filter:blur(4px) brightness(.42) saturate(.65);transform:scale(1.05);z-index:0}
 .gallery-section > *{position:relative;z-index:1}
 .gal-header{text-align:center;padding:44px 0 0}
-.gal-container{display:flex;align-items:center;justify-content:center;gap:10px;height:72vh;width:100vw;padding:24px 0 0;overflow:hidden}
-.gal-side{width:220px;height:65vh;background-size:cover;background-position:center;border:2px solid #fff;opacity:.55;cursor:pointer;transition:opacity .3s;flex-shrink:0}
+.gal-container{display:flex;align-items:center;justify-content:center;gap:10px;height:72vh;width:100vw;padding:0;overflow:hidden}
+.gal-side{width:222px;height:65vh;background-size:cover;background-position:center;border:2px solid #fff;opacity:.55;cursor:pointer;transition:opacity .3s;flex-shrink:0}
 .gal-side:hover{opacity:.8}
+#galLeft{border-left:0}
+#galRight{border-right:0}
 .gal-main{flex:1;height:65vh;background-size:cover;background-position:center;border:2px solid #fff}
 .gal-footer{text-align:center;padding:32px 0 48px}
 
 @media(max-width:900px){.events-grid{grid-template-columns:1fr;gap:28px}.about-inner{grid-template-columns:1fr;gap:32px}.about-photo{max-width:260px;margin:0 auto}.gal-side{width:140px}}
+@media(max-width:640px){
+  .gal-container{height:60vw;min-height:240px;gap:3px}
+  .gal-side{width:48px;opacity:.12;border:1px solid rgba(255,255,255,.15);cursor:pointer;transition:opacity .3s,width .3s}
+  .gal-side:active{opacity:.35;width:56px}
+  .gal-main{border:2px solid rgba(255,255,255,.8)}
+  .gal-header{padding:32px 0 24px}
+}
+
 </style>
 {% endblock %}
 
 {% block content %}
 <section class="hero">
   <div class="hero-slides" id="heroSlides">
-    {% for img in hero_images|slice:":3" %}
-      <div class="hero-slide{% if forloop.first %} active{% endif %}" style="background-image:url('{{ img }}')"></div>
+    {% for ev in hero_events %}
+      <div class="hero-slide{% if forloop.first %} active{% endif %}"
+           data-name="{{ ev.name }}"
+           data-date="{{ ev.date|date:'j. F Y' }}"
+           style="background-image:url('{{ ev.url }}')"></div>
     {% empty %}
-      <div class="hero-slide active" style="background-image:url('{% static "leaderboard/gallery/gal0.jpg" %}')"></div>
-      <div class="hero-slide" style="background-image:url('{% static "leaderboard/gallery/gal1.jpg" %}')"></div>
-      <div class="hero-slide" style="background-image:url('{% static "leaderboard/gallery/gal2.jpg" %}')"></div>
+      <div class="hero-slide active" data-name="Game of Life" data-date=""
+           style="background-image:url('{% static "leaderboard/gallery/gal0.jpg" %}')"></div>
+      <div class="hero-slide" data-name="Game of Life" data-date=""
+           style="background-image:url('{% static "leaderboard/gallery/gal1.jpg" %}')"></div>
+      <div class="hero-slide" data-name="Game of Life" data-date=""
+           style="background-image:url('{% static "leaderboard/gallery/gal2.jpg" %}')"></div>
     {% endfor %}
   </div>
   <div class="hero-overlay"></div>
@@ -103,9 +119,13 @@ body{background:var(--color-purple);background-image:var(--tex-purple);backgroun
     <a href="{% url 'events' %}" class="btn-pill">Zobrazit akce <span class="arr"></span></a>
   </div>
   <div class="hero-dots" id="heroDots">
-    <span class="hero-dot active" data-i="0"></span>
-    <span class="hero-dot" data-i="1"></span>
-    <span class="hero-dot" data-i="2"></span>
+    {% for ev in hero_events %}
+      <span class="hero-dot{% if forloop.first %} active{% endif %}" data-i="{{ forloop.counter0 }}"></span>
+    {% empty %}
+      <span class="hero-dot active" data-i="0"></span>
+      <span class="hero-dot" data-i="1"></span>
+      <span class="hero-dot" data-i="2"></span>
+    {% endfor %}
   </div>
 </section>
 
@@ -159,7 +179,7 @@ body{background:var(--color-purple);background-image:var(--tex-purple);backgroun
         <div class="lb-row"><div></div><div style="color:rgba(255,255,255,.55);font-style:italic">Zatím žádní hráči.</div><div></div></div>
       {% endfor %}
     </div>
-    <div class="lb-cta"><a href="{% url 'leaderboard' %}" class="btn-pill">Celý leaderboard <span class="arr"></span></a></div>
+    <div class="lb-cta"><a href="{% url 'leaderboard' %}" style="font-family:var(--font-hv);font-weight:300;font-style:italic;font-size:12px;color:rgba(255,255,255,.65);border-bottom:1px dashed rgba(255,255,255,.45);padding-bottom:2px">Celý leaderboard →</a></div>
   </div>
 </section>
 
@@ -173,7 +193,6 @@ body{background:var(--color-purple);background-image:var(--tex-purple);backgroun
       <h3 class="about-heading">Komunita, která hraje život naplno</h3>
       <p class="about-body"><strong>Game of Life</strong> je celoroční komunitní hra plná zábavy, výzev a nezapomenutelných zážitků. Vzešla z přesvědčení, že nejlepší okamžiky nevznikají samy — ale když se správní lidé potkají ve správný čas.</p>
       <p class="about-body">Každý event je bodovaný. Každá výzva tě posune dál. Nejde jen o body — jde o přátelství, vzpomínky a odvahu vyzkoušet něco nového.</p>
-      <a href="{% url 'events' %}" class="btn-pill">Zapoj se <span class="arr"></span></a>
       <div class="stats-row">
         <div class="stat-item"><div class="stat-num">{{ about_stats.players }}</div><div class="stat-label">Hráčů</div></div>
         <div class="stat-item"><div class="stat-num">{{ about_stats.events }}</div><div class="stat-label">Events</div></div>
@@ -203,8 +222,17 @@ body{background:var(--color-purple);background-image:var(--tex-purple);backgroun
 (function(){
   const slideEls = document.querySelectorAll('.hero-slide');
   const dots = document.querySelectorAll('.hero-dot');
+  const titleEl = document.getElementById('heroTitle');
+  const subEl = document.getElementById('heroSub');
   if (slideEls.length < 2) return;
   let cur = 0;
+  function updateText(i) {
+    const slide = slideEls[i];
+    const name = slide.dataset.name || 'Game of Life';
+    const date = slide.dataset.date || '';
+    if (titleEl) { titleEl.style.opacity='0'; setTimeout(function(){ titleEl.textContent = name; titleEl.style.opacity='1'; }, 300); }
+    if (subEl && date) { subEl.style.opacity='0'; setTimeout(function(){ subEl.textContent = date; subEl.style.opacity='1'; }, 300); }
+  }
   function goSlide(i) {
     if (i === cur) return;
     slideEls[cur].classList.remove('active');
@@ -212,9 +240,11 @@ body{background:var(--color-purple);background-image:var(--tex-purple);backgroun
     cur = i;
     slideEls[cur].classList.add('active');
     if (dots[cur]) dots[cur].classList.add('active');
+    updateText(cur);
   }
-  dots.forEach(d => d.addEventListener('click', () => goSlide(+d.dataset.i)));
-  setInterval(() => goSlide((cur + 1) % slideEls.length), 5000);
+  dots.forEach(function(d){ d.addEventListener('click', function(){ goSlide(+d.dataset.i); }); });
+  updateText(0);
+  setInterval(function(){ goSlide((cur + 1) % slideEls.length); }, 5000);
 })();
 (function(){
   const images = [
@@ -236,6 +266,18 @@ body{background:var(--color-purple);background-image:var(--tex-purple);backgroun
   }
   galLeft.addEventListener('click', function(){ galCur = (galCur-1+images.length)%images.length; updateGal(); });
   galRight.addEventListener('click', function(){ galCur = (galCur+1)%images.length; updateGal(); });
+  // swipe on main image for mobile
+  var gtx = 0, gty = 0;
+  galMain.addEventListener('touchstart', function(e){ gtx = e.touches[0].clientX; gty = e.touches[0].clientY; galMain.style.opacity='0.85'; }, {passive:true});
+  galMain.addEventListener('touchend', function(e){
+    galMain.style.opacity='1';
+    var dx = e.changedTouches[0].clientX - gtx;
+    var dy = Math.abs(e.changedTouches[0].clientY - gty);
+    if (Math.abs(dx) > 40 && dy < 60) {
+      galCur = dx < 0 ? (galCur + 1) % images.length : (galCur - 1 + images.length) % images.length;
+      updateGal();
+    }
+  }, {passive:true});
 })();
 </script>
 {% endblock %}

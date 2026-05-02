@@ -65,7 +65,7 @@ class ImageToEvent(models.Model):
         super().save(*args, **kwargs)
         if self.image:
             from .image_utils import resize_image
-            resize_image(self.image, max_width=1200, max_height=1200, quality=85)
+            resize_image(self.image, max_width=1024, max_height=1024, quality=75)
         from django.core.cache import cache
         cache.delete("home_hero_images")
 

@@ -1,64 +1,91 @@
 {% extends "base.html" %}
+{% load static %}
 {% load event_extras %}
 
-{% block title %}Upravit profil — Game of Yolo{% endblock %}
+{% block title %}Upravit profil — Game of Life{% endblock %}
+
+{% block extra_head %}
+<style>
+body{background:#1a0f0a;font-family:var(--font-body);color:var(--color-cream-light);min-height:100vh;overflow-x:hidden}
+.stage{position:fixed;inset:0;z-index:-2;background:url('{% static "leaderboard/gallery/gal3.jpg" %}') center 28%/cover no-repeat;filter:saturate(.7) contrast(1.02);transform:scale(1.05)}
+.stage::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 15%,rgba(45,42,142,.10) 0%,transparent 55%),linear-gradient(180deg,rgba(45,42,142,.08) 0%,rgba(26,15,10,.60) 50%,rgba(26,15,10,.82) 100%)}
+.grain{position:fixed;inset:0;z-index:-1;pointer-events:none;background:var(--tex-blue) center/cover;opacity:.08;mix-blend-mode:overlay}
+.edit-wrap{position:relative;z-index:2;min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:140px 20px 80px}
+.edit-card{width:100%;max-width:560px;background:var(--tex-light) center/cover;border:2px dashed rgba(26,26,26,.4);border-radius:18px;padding:36px 32px;color:#1a1a1a;box-shadow:0 24px 60px rgba(0,0,0,.45)}
+.edit-eyebrow{font-family:var(--font-mono);font-style:italic;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--color-pink);margin-bottom:10px;text-align:center}
+.edit-card h1{font-family:var(--font-display);font-size:44px;letter-spacing:.04em;text-align:center;margin-bottom:28px;color:#1a1a1a;text-transform:uppercase}
+.field-group{margin-bottom:16px;display:flex;flex-direction:column;gap:6px}
+.field-group label{font-family:var(--font-mono);font-style:italic;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:rgba(26,26,26,.6)}
+.field-group input,.field-group textarea,.field-group select{width:100%;padding:12px 14px;background:rgba(255,255,255,.55);border:1.5px dashed rgba(26,26,26,.35);border-radius:8px;font-family:var(--font-body);font-size:14px;color:#1a1a1a;outline:none;transition:border-color .18s}
+.field-group input:focus,.field-group textarea:focus{border-color:var(--color-pink)}
+.field-group textarea{resize:vertical;min-height:80px}
+.field-help{font-family:var(--font-serif);font-style:italic;font-size:11px;color:rgba(26,26,26,.55)}
+.field-error{font-family:var(--font-mono);font-style:italic;font-size:11px;color:#c1394a}
+.photo-preview{width:72px;height:72px;border-radius:50%;object-fit:cover;border:2px dashed rgba(26,26,26,.3);margin-bottom:8px;display:block}
+.btn-row{display:flex;gap:12px;margin-top:24px;flex-wrap:wrap}
+.btn-submit{flex:1;min-width:140px;background:var(--color-pink);color:#fff;border:0;padding:14px;border-radius:9999px;font-family:var(--font-hv);font-weight:700;letter-spacing:.06em;text-transform:uppercase;font-size:14px;cursor:pointer;transition:background .18s,transform .18s;box-shadow:0 6px 20px rgba(225,84,99,.4);text-align:center}
+.btn-submit:hover{background:#cf4453;transform:translateY(-1px)}
+.btn-cancel{flex:1;min-width:140px;background:rgba(26,26,26,.08);color:rgba(26,26,26,.7);border:1.5px dashed rgba(26,26,26,.3);padding:14px;border-radius:9999px;font-family:var(--font-hv);font-weight:700;letter-spacing:.06em;text-transform:uppercase;font-size:14px;cursor:pointer;transition:background .18s;text-align:center;text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
+.btn-cancel:hover{background:rgba(26,26,26,.15)}
+.section-divider{font-family:var(--font-mono);font-style:italic;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--color-pink);text-align:center;margin:22px 0 18px;display:flex;align-items:center;gap:10px}
+.section-divider::before,.section-divider::after{content:'';flex:1;height:1px;background:repeating-linear-gradient(90deg,rgba(26,26,26,.25) 0 5px,transparent 5px 10px)}
+</style>
+{% endblock %}
 
 {% block content %}
-<section class="section" style="margin-top: 1.5rem; max-width: 720px; margin-left: auto; margin-right: auto;">
-    <div class="card anim-fade-up" style="padding: 3rem 2rem; background: #fff; border-top: 4px solid var(--gol-indigo-primary);">
-        <h1 style="font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 32px; margin: 0 0 0.5rem; color: var(--gol-indigo-primary);">
-            Upravit profil
-        </h1>
-        <p class="text-muted" style="margin: 0 0 2rem;">Doplň si své informace.</p>
+<div class="stage"></div>
+<div class="grain"></div>
+<div class="edit-wrap">
+  <div class="edit-card">
+    <div class="edit-eyebrow">— Tvůj profil —</div>
+    <h1>Upravit profil</h1>
 
-        <form method="post" enctype="multipart/form-data">
-            {% csrf_token %}
+    <form method="post" enctype="multipart/form-data" novalidate>
+      {% csrf_token %}
 
-            <!-- Photo upload -->
-            <div style="margin-bottom: 1.5rem;">
-                <label style="font-family: 'Inter', sans-serif; font-weight: 500; font-size: 11px; text-transform: uppercase; color: var(--gol-text-muted); display: block; margin-bottom: 0.5rem; letter-spacing: 0.5px;">
-                    {{ form.photo.label }}
-                </label>
-                {% if form.photo %}
-                    {{ form.photo }}
-                {% endif %}
-                {% if form.photo.errors %}
-                    <p style="color: #d32f2f; font-size: 13px; margin-top: 0.5rem;">{{ form.photo.errors }}</p>
-                {% endif %}
-            </div>
+      <!-- Photo -->
+      {% if form.photo %}
+      <div class="field-group">
+        <label for="{{ form.photo.id_for_label }}">{{ form.photo.label }}</label>
+        {% if request.user.profile.photo %}
+          <img class="photo-preview" src="{{ request.user.profile.photo.url }}" alt="Aktuální foto" />
+        {% endif %}
+        {{ form.photo }}
+        {% if form.photo.errors %}<div class="field-error">{{ form.photo.errors|join:", " }}</div>{% endif %}
+      </div>
+      {% endif %}
 
-            <!-- Instagram field -->
-            <div style="margin-bottom: 1.5rem;">
-                <label style="font-family: 'Inter', sans-serif; font-weight: 500; font-size: 11px; text-transform: uppercase; color: var(--gol-text-muted); display: block; margin-bottom: 0.5rem; letter-spacing: 0.5px;">
-                    {{ form.instagram.label }}
-                </label>
-                {{ form.instagram }}
-                {% if form.instagram.errors %}
-                    <p style="color: #d32f2f; font-size: 13px; margin-top: 0.5rem;">{{ form.instagram.errors }}</p>
-                {% endif %}
-            </div>
+      <!-- Instagram -->
+      {% if form.instagram %}
+      <div class="field-group">
+        <label for="{{ form.instagram.id_for_label }}">{{ form.instagram.label }}</label>
+        {{ form.instagram }}
+        {% if form.instagram.errors %}<div class="field-error">{{ form.instagram.errors|join:", " }}</div>{% endif %}
+      </div>
+      {% endif %}
 
-            <!-- Profile questions -->
-            {% for field in form %}
-                {% if field.name|startswith:'question_' %}
-                    <div style="margin-bottom: 1.5rem;">
-                        <label style="font-family: 'Inter', sans-serif; font-weight: 500; font-size: 11px; text-transform: uppercase; color: var(--gol-text-muted); display: block; margin-bottom: 0.5rem; letter-spacing: 0.5px;">
-                            {{ field.label }}
-                        </label>
-                        {{ field }}
-                        {% if field.errors %}
-                            <p style="color: #d32f2f; font-size: 13px; margin-top: 0.5rem;">{{ field.errors }}</p>
-                        {% endif %}
-                    </div>
-                {% endif %}
-            {% endfor %}
+      <!-- Profile questions -->
+      {% with has_questions=False %}
+      {% for field in form %}
+        {% if field.name|startswith:'question_' %}
+          {% if not has_questions %}
+            <div class="section-divider">O tobě</div>
+          {% endif %}
+          <div class="field-group">
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% if field.help_text %}<div class="field-help">{{ field.help_text }}</div>{% endif %}
+            {% if field.errors %}<div class="field-error">{{ field.errors|join:", " }}</div>{% endif %}
+          </div>
+        {% endif %}
+      {% endfor %}
+      {% endwith %}
 
-            <!-- Buttons -->
-            <div style="display: flex; gap: 1rem; margin-top: 2.5rem; flex-wrap: wrap;">
-                <button type="submit" class="btn btn-primary" style="flex: 1; min-width: 160px;">Uložit změny</button>
-                <a href="{% url 'profile' request.user.username %}" class="btn btn-ghost" style="flex: 1; min-width: 160px; text-align: center; text-decoration: none;">Zrušit</a>
-            </div>
-        </form>
-    </div>
-</section>
+      <div class="btn-row">
+        <button type="submit" class="btn-submit">Uložit změny</button>
+        <a href="{% url 'profile' request.user.username %}" class="btn-cancel">Zrušit</a>
+      </div>
+    </form>
+  </div>
+</div>
 {% endblock %}

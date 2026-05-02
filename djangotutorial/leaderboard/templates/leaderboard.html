@@ -61,7 +61,7 @@ main.lb-main{position:relative;z-index:2;max-width:880px;margin:0 auto;padding:4
 
 .list-label{font-family:var(--font-mono);font-style:italic;font-size:13px;letter-spacing:.26em;text-transform:uppercase;color:rgba(255,241,212,.75);margin:0 6px 18px;display:flex;align-items:center;gap:14px}
 .list-label::before,.list-label::after{content:'';flex:1;height:1px;background:repeating-linear-gradient(90deg,rgba(255,241,212,.3) 0 6px,transparent 6px 12px)}
-.list{position:relative;padding:10px;background:#1a0f0a var(--tex-blue) center/cover;border:1.5px solid rgba(255,255,255,.08);border-radius:14px;box-shadow:0 20px 44px rgba(0,0,0,.5)}
+.list{position:relative;padding:10px;background:#1a0f0a var(--tex-blue);background-repeat:repeat;background-size:auto;border:1.5px solid rgba(255,255,255,.08);border-radius:14px;box-shadow:0 20px 44px rgba(0,0,0,.5)}
 .list::before{content:'';position:absolute;inset:6px;border:1.5px dashed rgba(255,241,212,.22);border-radius:10px;pointer-events:none}
 .list-inner{position:relative;z-index:1;padding:8px 6px}
 .row{display:grid;grid-template-columns:52px 1fr 120px;align-items:center;gap:14px;padding:13px 18px;border-bottom:1px dashed rgba(255,241,212,.10);transition:background .18s,transform .18s;cursor:pointer;text-decoration:none}
@@ -79,7 +79,30 @@ main.lb-main{position:relative;z-index:2;max-width:880px;margin:0 auto;padding:4
 .lb-pane{display:none}
 .lb-pane.on{display:block}
 
-@media(max-width:720px){.hero{padding:120px 20px 14px}.podium{grid-template-columns:1fr;gap:36px}.row{grid-template-columns:40px 1fr 100px;padding:11px 14px;gap:10px}}
+@media(max-width:720px){
+  .hero{padding:120px 20px 14px}
+  .controls{flex-direction:column;align-items:stretch;gap:12px}
+  .search{max-width:100%}
+  .row{grid-template-columns:40px 1fr 100px;padding:11px 14px;gap:10px}
+}
+@media(max-width:560px){
+  .podium{gap:6px}
+  .pod .trophy{font-size:30px}
+  .pod.p1 .trophy{font-size:42px}
+  .pod .ava{width:46px;height:46px;font-size:12px}
+  .pod.p1 .ava{width:58px;height:58px;font-size:15px}
+  .pod .nm{font-size:10px}
+  .pod .pts{font-size:18px}
+  .pod.p1 .pts{font-size:26px}
+  .pod.p1 .base{height:74px}
+  .pod.p2 .base{height:54px}
+  .pod.p3 .base{height:40px}
+  .pod.p1 .base .rk{font-size:44px}
+  .pod.p2 .base .rk{font-size:32px}
+  .pod.p3 .base .rk{font-size:26px}
+  .row{grid-template-columns:36px 1fr 80px;padding:9px 10px;gap:8px}
+  .row .pt{font-size:18px}
+}
 </style>
 {% endblock %}
 
@@ -90,7 +113,6 @@ main.lb-main{position:relative;z-index:2;max-width:880px;margin:0 auto;padding:4
 <header class="hero">
   <div class="eyebrow">Ranking · Sezóna {{ current_season.name }}</div>
   <h1>Leaderboard</h1>
-  <p class="tagline">Kdo hraje nejtvrději. Body se sbírají za účast na akcích a za odvahu jít mimo komfortní zónu.</p>
   <div class="divider"></div>
 </header>
 

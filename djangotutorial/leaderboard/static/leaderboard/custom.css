@@ -15,8 +15,23 @@
 }
 @font-face {
   font-family: 'Helvetica';
+  src: url('/static/leaderboard/fonts/Helvetica-Oblique.ttf') format('truetype');
+  font-weight: 400; font-style: italic; font-display: swap;
+}
+@font-face {
+  font-family: 'Helvetica';
+  src: url('/static/leaderboard/fonts/helvetica-light-587ebe5a59211.ttf') format('truetype');
+  font-weight: 300; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'Helvetica';
   src: url('/static/leaderboard/fonts/Helvetica-Bold.ttf') format('truetype');
   font-weight: 700; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'Helvetica';
+  src: url('/static/leaderboard/fonts/Helvetica-BoldOblique.ttf') format('truetype');
+  font-weight: 700; font-style: italic; font-display: swap;
 }
 @font-face {
   font-family: 'Helvetica Compressed';
@@ -47,6 +62,16 @@
   font-family: 'IBM Plex Serif';
   src: url('/static/leaderboard/fonts/IBMPlexSerif-SemiBold.ttf') format('truetype');
   font-weight: 600; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'IBM Plex Serif';
+  src: url('/static/leaderboard/fonts/IBMPlexSerif-SemiBoldItalic.ttf') format('truetype');
+  font-weight: 600; font-style: italic; font-display: swap;
+}
+@font-face {
+  font-family: 'IBM Plex Serif';
+  src: url('/static/leaderboard/fonts/IBMPlexSerif-LightItalic.ttf') format('truetype');
+  font-weight: 300; font-style: italic; font-display: swap;
 }
 @font-face {
   font-family: 'Ringold Gym';
@@ -417,13 +442,17 @@ em { font-style: italic; }
 
 /* Section background variants */
 .sec-purple {
-  background: var(--gol-purple) var(--tex-purple) center/600px;
+  background-color: var(--gol-purple);
+  background-image: var(--tex-purple);
+  background-repeat: repeat;      /* Toto zajistí opakování */
+  background-size: auto;          /* Toto zajistí, že se nebude měnit měřítko */
+  background-position: center;
 }
 .sec-dark {
-  background: var(--gol-dark) var(--tex-dark) center/600px;
+  background: var(--gol-dark) var(--tex-brown) center/600px;
 }
 .sec-black {
-  background: var(--gol-dark) var(--tex-black) center/600px;
+  background: var(--gol-dark) var(--tex-brown-2) center/600px;
 }
 
 h1, h2, h3, h4, h5 {
