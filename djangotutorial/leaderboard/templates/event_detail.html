@@ -75,8 +75,28 @@ main.detail-main{position:relative;z-index:2;max-width:880px;margin:0 auto;paddi
 .feedback-form .star.active{color:#f5c842}
 .feedback-form textarea{width:100%;min-height:80px;padding:12px 14px;font-family:var(--font-body);font-size:14px;color:#1a1a1a;background:rgba(255,255,255,.6);border:1.5px dashed rgba(26,26,26,.4);border-radius:8px;resize:vertical;outline:none}
 .feedback-form textarea:focus{border-color:var(--color-pink)}
+.pts-notice{display:inline-flex;align-items:center;gap:7px;font-family:var(--font-mono);font-style:italic;font-size:11px;letter-spacing:.1em;color:rgba(26,26,26,.55);background:rgba(245,200,66,.15);border:1px dashed rgba(245,200,66,.5);border-radius:9999px;padding:5px 12px;margin-bottom:4px}
 
-@media(max-width:720px){.hero{padding:110px 18px 8px}.quick-grid{grid-template-columns:1fr;gap:10px}.gal-grid{grid-template-columns:repeat(2,1fr)}.rsvp-strip{flex-direction:column;align-items:stretch;border-radius:18px}.btn-cta{justify-content:center}}
+/* Gallery tabs */
+.gal-tabs{display:flex;gap:0;margin-bottom:14px;border-bottom:1px solid rgba(26,26,26,.18)}
+.gal-tab{font-family:var(--font-hv);font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:9px 18px;background:transparent;border:0;cursor:pointer;color:rgba(26,26,26,.45);border-bottom:2px solid transparent;margin-bottom:-1px;transition:color .18s,border-color .18s}
+.gal-tab.on{color:#1a1a1a;border-bottom-color:var(--color-pink)}
+.user-photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.user-photo-item{position:relative;aspect-ratio:1/1;border-radius:8px;overflow:hidden;cursor:pointer;border:2px solid rgba(26,26,26,.25);transition:border-color .22s}
+.user-photo-item:hover{border-color:#4a8a5e}
+.user-photo-item img{width:100%;height:100%;object-fit:cover}
+.user-photo-badge{position:absolute;bottom:0;left:0;right:0;padding:18px 8px 6px;background:linear-gradient(0deg,rgba(26,15,10,.75) 0%,transparent 100%);font-family:var(--font-mono);font-style:italic;font-size:10px;letter-spacing:.12em;color:rgba(255,241,212,.85)}
+.btn-add-photo{display:inline-flex;align-items:center;gap:7px;font-family:var(--font-hv);font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:8px 16px;border-radius:9999px;background:transparent;border:1.5px dashed rgba(26,26,26,.35);color:rgba(26,26,26,.55);cursor:pointer;transition:border-color .18s,color .18s;margin-top:12px}
+.btn-add-photo:hover{border-color:#4a8a5e;color:#4a8a5e}
+.upload-inline{margin-top:14px;padding:16px;background:rgba(255,255,255,.45);border:1.5px dashed rgba(26,26,26,.28);border-radius:12px;display:none}
+.upload-inline.open{display:block}
+.upload-inline .field-group{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
+.upload-inline .field-label{font-family:var(--font-hv);font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(26,26,26,.55)}
+.upload-inline .field-input{padding:9px 12px;font-family:var(--font-body);font-size:13px;color:#1a1a1a;background:rgba(255,255,255,.7);border:1.5px dashed rgba(26,26,26,.3);border-radius:8px;outline:none;width:100%}
+.upload-inline .field-input:focus{border-color:var(--color-pink)}
+.upload-inline .btn-cta{font-size:12px;padding:9px 18px}
+
+@media(max-width:720px){.hero{padding:110px 18px 8px}.quick-grid{grid-template-columns:1fr;gap:10px}.gal-grid{grid-template-columns:repeat(2,1fr)}.user-photo-grid{grid-template-columns:repeat(2,1fr)}.rsvp-strip{flex-direction:column;align-items:stretch;border-radius:18px}.btn-cta{justify-content:center}}
 </style>
 {% endblock %}
 
@@ -151,20 +171,86 @@ main.detail-main{position:relative;z-index:2;max-width:880px;margin:0 auto;paddi
   </section>
   {% endif %}
 
-  {% if images %}
+  {% if official_images or user_photos %}
   <section class="info-card">
     <h2 class="card-title">Galerie</h2>
-    <div class="gal-grid">
-      {% for img_url in images %}
-        <div class="gal-thumb" data-i="{{ forloop.counter0 }}"><img src="{{ img_url }}" alt="Galerie {{ forloop.counter }}" /></div>
-      {% endfor %}
+    {% if official_images and user_photos %}
+    <div class="gal-tabs">
+      <button class="gal-tab on" data-tab="official">Oficialní ({{ official_images|length }})</button>
+      <button class="gal-tab" data-tab="community">Od vás ({{ user_photos|length }})</button>
+    </div>
+    {% endif %}
+    <div id="tab-official">
+      <div class="gal-grid">
+        {% for img_url in official_images %}
+          <div class="gal-thumb" data-i="{{ forloop.counter0 }}"><img src="{{ img_url }}" alt="Galerie {{ forloop.counter }}" /></div>
+        {% endfor %}
+      </div>
+    </div>
+    <div id="tab-community" style="{% if official_images %}display:none{% endif %}">
+      {% if user_photos %}
+      <div class="user-photo-grid" id="user-photo-grid">
+        {% for up in user_photos %}
+          <div class="user-photo-item" data-i="{{ forloop.counter0|add:official_images|length }}">
+            <img src="{{ up.url }}" alt="{{ up.uploaded_by }}" />
+            <div class="user-photo-badge">📷 {{ up.uploaded_by }}</div>
+          </div>
+        {% endfor %}
+      </div>
+      {% else %}
+        <p style="text-align:center;color:rgba(26,26,26,.45);font-style:italic;padding:30px 0">Zatím žádné fotky od komunity.</p>
+      {% endif %}
+    </div>
+    {% if not is_future and request.user.is_authenticated %}
+    <button class="btn-add-photo" id="toggle-upload">+ Přidat svou fotku</button>
+    <div class="upload-inline" id="upload-inline">
+      <form method="post" action="{% url 'gallery_upload' %}" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="hidden" name="event_id" value="{{ event.id }}" />
+        <input type="hidden" name="next" value="{{ request.path }}" />
+        <div class="field-group">
+          <label class="field-label">Fotografie</label>
+          <input type="file" name="image" accept="image/*" class="field-input" required />
+        </div>
+        <div class="field-group">
+          <label class="field-label">Popis (volitelně)</label>
+          <input type="text" name="caption" class="field-input" placeholder="Krátký popis…" maxlength="255" />
+        </div>
+        <button type="submit" class="btn-cta">Nahrát</button>
+      </form>
+    </div>
+    {% endif %}
+  </section>
+  {% elif not is_future and request.user.is_authenticated %}
+  <section class="info-card">
+    <h2 class="card-title">Galerie</h2>
+    <p style="text-align:center;color:rgba(26,26,26,.45);font-style:italic;padding:10px 0 6px">Zatím žádné fotky. Buď první!</p>
+    <button class="btn-add-photo" id="toggle-upload">+ Přidat svou fotku</button>
+    <div class="upload-inline" id="upload-inline">
+      <form method="post" action="{% url 'gallery_upload' %}" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="hidden" name="event_id" value="{{ event.id }}" />
+        <input type="hidden" name="next" value="{{ request.path }}" />
+        <div class="field-group">
+          <label class="field-label">Fotografie</label>
+          <input type="file" name="image" accept="image/*" class="field-input" required />
+        </div>
+        <div class="field-group">
+          <label class="field-label">Popis (volitelně)</label>
+          <input type="text" name="caption" class="field-input" placeholder="Krátký popis…" maxlength="255" />
+        </div>
+        <button type="submit" class="btn-cta">Nahrát</button>
+      </form>
     </div>
   </section>
   {% endif %}
 
-  {% if not is_future and request.user.is_authenticated and has_rsvp %}
+  {% if not is_future and request.user.is_authenticated %}
   <section class="info-card">
     <h2 class="card-title">Tvá zpětná vazba</h2>
+    {% if not existing_feedback %}
+    <div class="pts-notice">⭐ Odeslání zpětné vazby přidá {{ event.points }} bodů za účast (pokud ještě nemáš)</div>
+    {% endif %}
     <form method="post" action="{% url 'event_feedback' event.slug %}" class="feedback-form">
       {% csrf_token %}
       <div class="stars" id="feedback-stars">
@@ -174,7 +260,7 @@ main.detail-main{position:relative;z-index:2;max-width:880px;margin:0 auto;paddi
       </div>
       <input type="hidden" name="rating" id="rating-input" value="{{ existing_feedback.rating|default:0 }}" />
       <textarea name="comment" placeholder="Komentář (volitelné)…">{{ existing_feedback.comment|default:"" }}</textarea>
-      <div style="text-align:right"><button type="submit" class="btn-cta">Odeslat</button></div>
+      <div style="text-align:right"><button type="submit" class="btn-cta">{% if existing_feedback %}Aktualizovat{% else %}Odeslat{% endif %}</button></div>
     </form>
   </section>
   {% endif %}
@@ -194,29 +280,55 @@ main.detail-main{position:relative;z-index:2;max-width:880px;margin:0 auto;paddi
 {% endblock %}
 
 {% block extra_js %}
+<script type="application/json" id="event-images">{{ all_images_json|safe }}</script>
 <script>
+// Lightbox
 (function(){
-  const images = {{ images_json|safe }};
+  const images = JSON.parse(document.getElementById('event-images').textContent);
   const lb = document.getElementById('lightbox');
   const lbImg = document.getElementById('lb-img');
+  if (!lb) return;
   let lbIndex = 0;
-  function openLb(i){ lbIndex = i; lbImg.src = images[lbIndex]; lb.classList.add('open'); }
+  function openLb(i){ lbIndex = ((i % images.length) + images.length) % images.length; lbImg.src = images[lbIndex]; lb.classList.add('open'); }
   function closeLb(){ lb.classList.remove('open'); }
-  document.querySelectorAll('.gal-thumb').forEach(function(t){
+  document.querySelectorAll('.gal-thumb, .user-photo-item').forEach(function(t){
     t.addEventListener('click', function(){ openLb(parseInt(t.dataset.i, 10)); });
   });
-  const cls = document.getElementById('lb-close');
-  const prev = document.getElementById('lb-prev');
-  const next = document.getElementById('lb-next');
-  if (cls) cls.addEventListener('click', closeLb);
-  if (prev) prev.addEventListener('click', function(){ if(!images.length) return; lbIndex = (lbIndex - 1 + images.length) % images.length; lbImg.src = images[lbIndex]; });
-  if (next) next.addEventListener('click', function(){ if(!images.length) return; lbIndex = (lbIndex + 1) % images.length; lbImg.src = images[lbIndex]; });
-  if (lb) lb.addEventListener('click', function(e){ if(e.target === lb) closeLb(); });
+  document.getElementById('lb-close').addEventListener('click', closeLb);
+  document.getElementById('lb-prev').addEventListener('click', function(){ if(images.length) openLb(lbIndex - 1); });
+  document.getElementById('lb-next').addEventListener('click', function(){ if(images.length) openLb(lbIndex + 1); });
+  lb.addEventListener('click', function(e){ if(e.target === lb) closeLb(); });
   document.addEventListener('keydown', function(e){
     if (!lb.classList.contains('open')) return;
     if (e.key === 'Escape') closeLb();
-    if (e.key === 'ArrowLeft' && prev) prev.click();
-    if (e.key === 'ArrowRight' && next) next.click();
+    if (e.key === 'ArrowLeft') openLb(lbIndex - 1);
+    if (e.key === 'ArrowRight') openLb(lbIndex + 1);
+  });
+})();
+
+// Gallery tabs
+(function(){
+  const tabs = document.querySelectorAll('.gal-tab');
+  if (!tabs.length) return;
+  tabs.forEach(function(tab){
+    tab.addEventListener('click', function(){
+      tabs.forEach(function(t){ t.classList.remove('on'); });
+      this.classList.add('on');
+      const target = this.dataset.tab;
+      document.getElementById('tab-official').style.display = target === 'official' ? '' : 'none';
+      document.getElementById('tab-community').style.display = target === 'community' ? '' : 'none';
+    });
+  });
+})();
+
+// Upload toggle
+(function(){
+  const btn = document.getElementById('toggle-upload');
+  const panel = document.getElementById('upload-inline');
+  if (!btn || !panel) return;
+  btn.addEventListener('click', function(){
+    panel.classList.toggle('open');
+    btn.textContent = panel.classList.contains('open') ? '✕ Zrušit' : '+ Přidat svou fotku';
   });
 })();
 

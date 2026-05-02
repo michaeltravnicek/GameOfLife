@@ -1,8 +1,8 @@
 """URL configuration for mysite project."""
 from django.conf import settings
-from django.conf.urls.static import serve, static
+from django.conf.urls.static import static
 from django.contrib import admin
-from django.urls import include, path, re_path
+from django.urls import include, path
 
 from leaderboard import views
 
@@ -18,6 +18,7 @@ urlpatterns = [
     path("events/<slug:slug>/feedback/", views.event_feedback_view, name="event_feedback"),
     path("leaderboard/", views.leaderboard_view, name="leaderboard"),
     path("galerie/", views.gallery_view, name="gallery"),
+    path("galerie/upload/", views.upload_user_photo_view, name="gallery_upload"),
     path("hrac/<int:user_id>/", views.public_user_view, name="public_user"),
     path("o-bodech/", views.about_points_view, name="about_points"),
 
@@ -29,5 +30,4 @@ urlpatterns = [
     path("api/events/<str:event_id>/images/", views.events_image_views, name="images"),
     path("api/profile/<str:username>/monthly-points/", views.profile_monthly_points_api, name="profile-monthly-points"),
 
-    re_path(r"^media(?P<path>.*)$", serve, {"document_root": settings.MEDIA_ROOT}),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

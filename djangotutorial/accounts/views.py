@@ -3,13 +3,13 @@ from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.db.models import Count, Sum
+from django.db.models.functions import Coalesce
 from django.http import HttpResponseNotAllowed
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone as tz
 from django.views.decorators.http import require_http_methods
 
-from leaderboard.models import EventFeedback, UserToEvent, ProfileAnswer, Season
-from leaderboard.models import User as LeaderboardUser
-from django.db.models.functions import Coalesce
+from leaderboard.models import EventFeedback, ProfileAnswer, ProfileQuestion, Season, User as LeaderboardUser, UserToEvent
 
 from .forms import CustomUserCreationForm, PhoneOrUsernameLoginForm, ProfileEditForm
 from .models import Profile
@@ -101,8 +101,6 @@ def public_profile_view(request, username):
 
     profile_answers = {}
     if profile:
-        from django.utils import timezone as tz
-        from leaderboard.models import ProfileQuestion
         profile_answers = {
             pa.question_id: pa
             for pa in ProfileAnswer.objects.filter(auth_user=profile_user)
@@ -182,7 +180,6 @@ def profile_edit_view(request):
         initial = {
             "instagram": profile.instagram,
         }
-        from leaderboard.models import ProfileAnswer
         for answer in ProfileAnswer.objects.filter(auth_user=request.user):
             initial[f"question_{answer.question_id}"] = answer.answer
         form = ProfileEditForm(initial=initial, user=request.user)

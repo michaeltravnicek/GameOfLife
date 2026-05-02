@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Event, UserToEvent, ImageToEvent, User, ProfileQuestion, ProfileAnswer, Season
+from .models import Event, EventFeedback, EventRSVP, ImageToEvent, LastUpdate, ProfileAnswer, ProfileQuestion, Season, User, UserPhoto, UserToEvent
 
 
 @admin.register(Season)
@@ -16,18 +16,46 @@ class EventAdmin(admin.ModelAdmin):
 
 
 @admin.register(ImageToEvent)
-class ImageToEvent(admin.ModelAdmin):
+class ImageToEventAdmin(admin.ModelAdmin):
     list_display = ("event_id", "image")
     search_fields = ("event_id",)
 
+
 @admin.register(User)
-class UserToAdmin(admin.ModelAdmin):
+class UserAdmin(admin.ModelAdmin):
     list_display = ("number", "name")
+
 
 @admin.register(UserToEvent)
 class UserToEventAdmin(admin.ModelAdmin):
     list_display = ("user", "event")
     list_filter = ("event",)
+
+
+@admin.register(EventRSVP)
+class EventRSVPAdmin(admin.ModelAdmin):
+    list_display = ("auth_user", "event", "created_at")
+    list_filter = ("event", "created_at")
+    search_fields = ("auth_user__username",)
+
+
+@admin.register(EventFeedback)
+class EventFeedbackAdmin(admin.ModelAdmin):
+    list_display = ("auth_user", "event", "rating", "updated_at")
+    list_filter = ("event", "rating")
+    search_fields = ("auth_user__username",)
+
+
+@admin.register(LastUpdate)
+class LastUpdateAdmin(admin.ModelAdmin):
+    list_display = ("last_update",)
+
+
+@admin.register(UserPhoto)
+class UserPhotoAdmin(admin.ModelAdmin):
+    list_display = ("auth_user", "event", "caption", "created_at")
+    list_filter = ("event", "created_at")
+    search_fields = ("auth_user__username", "caption")
 
 
 @admin.register(ProfileQuestion)

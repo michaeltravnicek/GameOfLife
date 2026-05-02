@@ -18,12 +18,17 @@ body{background:#1a0f0a;font-family:var(--font-body);color:var(--color-cream-lig
 .hero .tagline{font-family:var(--font-body);font-style:italic;font-size:14px;color:rgba(255,241,212,.70);max-width:560px;margin:10px auto 0;line-height:1.5}
 .divider{width:120px;height:1px;margin:20px auto 0;background:repeating-linear-gradient(90deg,rgba(255,241,212,.45) 0 5px,transparent 5px 10px)}
 
-.main{position:relative;z-index:2;max-width:1200px;margin:0 auto;padding:36px 24px 60px}
+.main{position:relative;z-index:2;max-width:1200px;margin:0 auto;padding:36px 24px 100px}
 
-.view-toggle{display:flex;align-items:center;justify-content:center;gap:6px;margin:28px auto 0;padding:5px;background:rgba(26,15,10,.50);border:1.5px dashed rgba(255,241,212,.28);border-radius:9999px;backdrop-filter:blur(8px);width:fit-content}
+.top-controls{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin:28px auto 0;max-width:1200px;padding:0 24px;position:relative;z-index:2}
+
+.view-toggle{display:inline-flex;align-items:center;gap:6px;padding:5px;background:rgba(26,15,10,.50);border:1.5px dashed rgba(255,241,212,.28);border-radius:9999px;backdrop-filter:blur(8px)}
 .vt-btn{font-family:var(--font-body);font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;padding:9px 22px;border-radius:9999px;cursor:pointer;background:transparent;border:0;color:rgba(255,241,212,.65);transition:all .18s;display:flex;align-items:center;gap:7px}
 .vt-btn:hover{color:#fff}
 .vt-btn.on{background:var(--color-pink);color:#fff;box-shadow:0 4px 14px rgba(225,84,99,.45)}
+
+.btn-upload{display:inline-flex;align-items:center;gap:8px;background:var(--color-pink);color:#fff;border:0;cursor:pointer;font-family:var(--font-hv);font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:10px 20px;border-radius:9999px;box-shadow:0 4px 18px rgba(225,84,99,.4);transition:transform .18s,background .18s}
+.btn-upload:hover{background:#cf4453;transform:translateY(-1px)}
 
 #view-slideshow{display:block;position:relative;z-index:2}
 #view-calendar{display:none}
@@ -47,15 +52,18 @@ body{background:#1a0f0a;font-family:var(--font-body);color:var(--color-cream-lig
 .gal-caption{position:absolute;bottom:0;left:0;right:0;z-index:2;padding:32px 22px 18px;background:linear-gradient(0deg,rgba(26,15,10,.80) 0%,transparent 100%);pointer-events:none}
 .gal-caption-label{font-family:var(--font-mono);font-style:italic;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,241,212,.52);margin-bottom:3px}
 .gal-caption-title{font-family:var(--font-display);font-size:clamp(22px,3vw,38px);letter-spacing:.04em;text-transform:uppercase;color:var(--color-cream-light);line-height:1}
+.gal-user-badge{display:inline-flex;align-items:center;gap:5px;margin-top:6px;font-family:var(--font-mono);font-style:italic;font-size:10px;letter-spacing:.12em;color:rgba(255,241,212,.65);background:rgba(26,15,10,.5);padding:3px 8px;border-radius:9999px;border:1px solid rgba(255,241,212,.2)}
 
 .gal-dots{display:flex;gap:6px;justify-content:center;margin-top:20px;padding:0 24px;max-width:1200px;margin-left:auto;margin-right:auto}
 .gal-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,241,212,.25);cursor:pointer;transition:background .18s,transform .18s}
 .gal-dot.on{background:var(--color-pink);transform:scale(1.4)}
 
-.month-filters{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:40px}
+.filter-row{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:18px}
+.source-filters{margin-bottom:12px}
 .mf-chip{font-family:var(--font-mono);font-style:italic;font-size:12px;letter-spacing:.1em;text-transform:uppercase;padding:8px 18px;border-radius:9999px;cursor:pointer;background:rgba(26,15,10,.50);border:1.5px dashed rgba(255,241,212,.28);color:rgba(255,241,212,.68);transition:all .18s;backdrop-filter:blur(8px)}
 .mf-chip:hover{color:#fff;border-color:rgba(255,241,212,.55)}
 .mf-chip.on{background:var(--color-pink);color:#fff;border-color:transparent;box-shadow:0 4px 14px rgba(225,84,99,.42)}
+.mf-chip.community.on{background:#4a8a5e;box-shadow:0 4px 14px rgba(74,138,94,.42)}
 
 .calendar{display:flex;flex-direction:column;gap:52px}
 .month-section{margin-bottom:0}
@@ -65,19 +73,22 @@ body{background:#1a0f0a;font-family:var(--font-body);color:var(--color-cream-lig
 .photo-grid{columns:3;column-gap:8px}
 .photo-item{break-inside:avoid;margin-bottom:8px;position:relative;overflow:hidden;cursor:pointer;border:2px solid rgba(255,255,255,.0);transition:border-color .22s,transform .22s;display:block}
 .photo-item:hover{border-color:var(--color-pink);transform:scale(.99)}
+.photo-item.user-photo:hover{border-color:#4a8a5e}
 .photo-item img{width:100%;display:block;transition:filter .25s}
 .photo-item:hover img{filter:brightness(1.08) saturate(1.1)}
-.photo-item-caption{position:absolute;bottom:0;left:0;right:0;padding:18px 14px 10px;background:linear-gradient(0deg,rgba(26,15,10,.75) 0%,transparent 100%);opacity:0;transition:opacity .22s;pointer-events:none}
+.photo-item-caption{position:absolute;bottom:0;left:0;right:0;padding:28px 14px 10px;background:linear-gradient(0deg,rgba(26,15,10,.80) 0%,transparent 100%);opacity:0;transition:opacity .22s;pointer-events:none}
 .photo-item:hover .photo-item-caption{opacity:1}
 .photo-item-label{font-family:var(--font-mono);font-style:italic;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,241,212,.55)}
 .photo-item-title{font-family:var(--font-display);font-size:20px;letter-spacing:.04em;color:var(--color-cream-light);line-height:1;text-transform:uppercase}
+.user-tag{position:absolute;top:8px;right:8px;font-family:var(--font-mono);font-style:italic;font-size:10px;letter-spacing:.1em;color:#fff;background:rgba(74,138,94,.85);padding:3px 8px;border-radius:9999px;backdrop-filter:blur(4px)}
 
 @media(max-width:900px){.photo-grid{columns:2};.gal-side{width:clamp(70px,13vw,130px)}.gal-container{height:calc(100vh - 370px);min-height:260px}}
-@media(max-width:640px){.photo-grid{columns:1};.filter-chips{gap:6px}.chip{padding:6px 12px;font-size:12px};.view-toggle{flex-wrap:wrap};.gal-side{width:24px;opacity:.08};.gal-container{gap:3px;height:calc(100vh - 200px);min-height:400px};.gal-main{width:90%;flex:0}}
+@media(max-width:640px){.photo-grid{columns:1};.top-controls{padding:0 16px;gap:10px}.view-toggle{flex-wrap:wrap};.gal-side{width:24px;opacity:.08};.gal-container{gap:3px;height:calc(100vh - 200px);min-height:400px};.gal-main{width:90%;flex:0}}
 
 .lightbox{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.94);display:none;align-items:center;justify-content:center;padding:40px}
-.lightbox.open{display:flex}
-.lightbox img{max-width:90vw;max-height:85vh;border:2px solid rgba(255,255,255,.85);border-radius:3px;box-shadow:0 24px 80px rgba(0,0,0,.7)}
+.lightbox.open{display:flex;flex-direction:column}
+.lightbox img{max-width:90vw;max-height:82vh;border:2px solid rgba(255,255,255,.85);border-radius:3px;box-shadow:0 24px 80px rgba(0,0,0,.7)}
+.lb-uploader{font-family:var(--font-mono);font-style:italic;font-size:11px;letter-spacing:.14em;color:rgba(255,241,212,.55);margin-top:12px;text-align:center}
 .lb-close{position:absolute;top:18px;right:26px;background:transparent;border:0;color:#fff;font-size:38px;cursor:pointer;line-height:1;opacity:.7;transition:opacity .15s}
 .lb-close:hover{opacity:1}
 .lb-nav{position:absolute;top:50%;transform:translateY(-50%);width:50px;height:50px;border-radius:50%;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.3);color:#fff;font-size:24px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .18s}
@@ -86,6 +97,27 @@ body{background:#1a0f0a;font-family:var(--font-body);color:var(--color-cream-lig
 .lb-nav.next{right:28px}
 
 .empty-msg{text-align:center;color:rgba(255,241,212,.55);font-style:italic;padding:80px 20px}
+
+/* Upload modal */
+.modal-overlay{position:fixed;inset:0;z-index:400;background:rgba(0,0,0,.80);display:none;align-items:center;justify-content:center;padding:24px}
+.modal-overlay.open{display:flex}
+.modal{background:var(--tex-light) center/cover;border:1.5px dashed rgba(255,241,212,.35);border-radius:18px;padding:32px;max-width:480px;width:100%;position:relative;box-shadow:0 24px 80px rgba(0,0,0,.6)}
+.modal::before{content:'';position:absolute;inset:0;background:rgba(255,241,212,.92);border-radius:18px;z-index:0}
+.modal > *{position:relative;z-index:1}
+.modal-close{position:absolute;top:14px;right:18px;background:transparent;border:0;font-size:28px;cursor:pointer;color:rgba(26,26,26,.55);line-height:1;z-index:1}
+.modal-close:hover{color:var(--color-pink)}
+.modal h3{font-family:var(--font-display);font-size:32px;letter-spacing:.04em;color:#1a1a1a;text-transform:uppercase;margin:0 0 20px}
+.field-group{display:flex;flex-direction:column;gap:6px;margin-bottom:16px}
+.field-label{font-family:var(--font-hv);font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(26,26,26,.65)}
+.field-input{padding:10px 14px;font-family:var(--font-body);font-size:14px;color:#1a1a1a;background:rgba(255,255,255,.75);border:1.5px dashed rgba(26,26,26,.35);border-radius:8px;outline:none;width:100%}
+.field-input:focus{border-color:var(--color-pink)}
+.file-drop{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:28px 20px;border:2px dashed rgba(26,26,26,.3);border-radius:12px;cursor:pointer;background:rgba(255,255,255,.45);transition:border-color .18s,background .18s;text-align:center}
+.file-drop:hover,.file-drop.has-file{border-color:var(--color-pink);background:rgba(225,84,99,.06)}
+.file-drop-icon{font-size:32px;opacity:.5}
+.file-drop-label{font-family:var(--font-hv);font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:rgba(26,26,26,.55)}
+.file-drop-name{font-family:var(--font-mono);font-size:12px;color:var(--color-pink);margin-top:4px}
+.btn-submit{width:100%;padding:13px;background:var(--color-pink);color:#fff;border:0;cursor:pointer;font-family:var(--font-hv);font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;border-radius:9999px;box-shadow:0 4px 18px rgba(225,84,99,.4);transition:transform .18s,background .18s;margin-top:6px}
+.btn-submit:hover{background:#cf4453;transform:translateY(-1px)}
 </style>
 {% endblock %}
 
@@ -99,9 +131,14 @@ body{background:#1a0f0a;font-family:var(--font-body);color:var(--color-cream-lig
   <div class="divider"></div>
 </div>
 
-<div class="view-toggle">
-  <button class="vt-btn on" id="btn-slideshow">▶ Slideshow</button>
-  <button class="vt-btn" id="btn-calendar">⬚ Kalendář</button>
+<div class="top-controls">
+  <div class="view-toggle">
+    <button class="vt-btn on" id="btn-slideshow">▶ Slideshow</button>
+    <button class="vt-btn" id="btn-calendar">⬚ Kalendář</button>
+  </div>
+  {% if request.user.is_authenticated %}
+    <button class="btn-upload" id="open-upload-modal">+ Přidat fotku</button>
+  {% endif %}
 </div>
 
 <div id="view-slideshow">
@@ -114,6 +151,7 @@ body{background:#1a0f0a;font-family:var(--font-body);color:var(--color-cream-lig
       <div class="gal-caption">
         <div class="gal-caption-label" id="cap-label">Game of Life</div>
         <div class="gal-caption-title" id="cap-title"></div>
+        <div class="gal-user-badge" id="cap-user" style="display:none"></div>
       </div>
     </div>
     <div class="gal-side" id="gal-right"></div>
@@ -123,9 +161,10 @@ body{background:#1a0f0a;font-family:var(--font-body);color:var(--color-cream-lig
 
 <div class="main">
   <div id="view-calendar">
-    <div class="month-filters" id="season-filters"></div>
+    <div class="filter-row source-filters" id="source-filters"></div>
+    <div class="filter-row" id="season-filters"></div>
     <div class="calendar" id="calendar"></div>
-    <div id="empty-state" class="empty-msg" style="display:none">Galerie je zatím prázdná. Brzy přidáme fotky z akcí!</div>
+    <div id="empty-state" class="empty-msg" style="display:none">Galerie je zatím prázdná. Buď první, kdo přidá fotku!</div>
   </div>
 </div>
 
@@ -133,15 +172,56 @@ body{background:#1a0f0a;font-family:var(--font-body);color:var(--color-cream-lig
   <button class="lb-close" id="lb-close">×</button>
   <button class="lb-nav prev" id="lb-prev">‹</button>
   <img id="lb-img" src="" alt="" />
+  <div class="lb-uploader" id="lb-uploader"></div>
   <button class="lb-nav next" id="lb-next">›</button>
 </div>
+
+{% if request.user.is_authenticated %}
+<div class="modal-overlay" id="upload-modal">
+  <div class="modal">
+    <button class="modal-close" id="close-upload-modal">×</button>
+    <h3>Přidat fotku</h3>
+    <form method="post" action="{% url 'gallery_upload' %}" enctype="multipart/form-data">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{% url 'gallery' %}" />
+      <div class="field-group">
+        <label class="field-label">Fotografie</label>
+        <label class="file-drop" id="file-drop-zone">
+          <div class="file-drop-icon">📷</div>
+          <div class="file-drop-label">Klikni pro výběr nebo přetáhni soubor</div>
+          <div class="file-drop-name" id="file-drop-name"></div>
+          <input type="file" name="image" accept="image/*" id="file-input" style="display:none" required />
+        </label>
+      </div>
+      <div class="field-group">
+        <label class="field-label" for="event-select">Akce (volitelně)</label>
+        <select name="event_id" id="event-select" class="field-input">
+          <option value="">— Nevybráno —</option>
+          {% for ev in events_for_form %}
+            <option value="{{ ev.id }}">{{ ev.name }} ({{ ev.date|date:"j. n. Y" }})</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="field-group">
+        <label class="field-label" for="caption-input">Popis (volitelně)</label>
+        <input type="text" name="caption" id="caption-input" class="field-input" placeholder="Krátký popis fotky…" maxlength="255" />
+      </div>
+      <button type="submit" class="btn-submit">Nahrát fotku</button>
+    </form>
+  </div>
+</div>
+{% endif %}
 {% endblock %}
 
 {% block extra_js %}
+<script type="application/json" id="gallery-data">{"official": {{ js_official|safe }}, "user": {{ js_user|safe }}, "season_names": {{ season_names_json|safe }}}</script>
 <script>
 const MONTH_NAMES = ['Leden', 'Únor', 'Březen', 'Duben', 'Květen', 'Červen', 'Červenec', 'Srpen', 'Září', 'Říjen', 'Listopad', 'Prosinec'];
-const SEASON_NAMES = {{ season_names_json|safe }};
-const PHOTOS = {{ js_photos|safe }};
+const _gdata = JSON.parse(document.getElementById('gallery-data').textContent);
+const SEASON_NAMES = _gdata.season_names;
+const OFFICIAL = _gdata.official;
+const USER_PHOTOS = _gdata.user;
+const ALL_PHOTOS = OFFICIAL.concat(USER_PHOTOS);
 
 (function(){
   const viewSlideshow = document.getElementById('view-slideshow');
@@ -150,17 +230,28 @@ const PHOTOS = {{ js_photos|safe }};
   const btnCalendar = document.getElementById('btn-calendar');
   const lightboxEl = document.getElementById('lightbox');
   const lbImgEl = document.getElementById('lb-img');
+  const lbUploaderEl = document.getElementById('lb-uploader');
   const calendarEl = document.getElementById('calendar');
   const emptyEl = document.getElementById('empty-state');
 
-  let activeSeason = 'all';
+  let sourceFilter = 'all';
+  let seasonFilter = 'all';
   let filteredItems = [];
   let currentLbIdx = 0;
   let slideIdx = 0;
-  const n = PHOTOS.length;
+  const n = ALL_PHOTOS.length;
 
-  // Build season list from photos
-  const seasons = [...new Set(PHOTOS.map(p => p.season))].sort();
+  function getFiltered(){
+    return ALL_PHOTOS.filter(p => {
+      if (sourceFilter === 'official' && p.is_user_photo) return false;
+      if (sourceFilter === 'community' && !p.is_user_photo) return false;
+      if (seasonFilter !== 'all' && p.season !== seasonFilter) return false;
+      return true;
+    });
+  }
+
+  // Build season list from all photos
+  const seasons = [...new Set(ALL_PHOTOS.map(p => p.season).filter(Boolean))].sort();
 
   // SLIDESHOW
   const elMain = document.getElementById('gal-main');
@@ -171,57 +262,87 @@ const PHOTOS = {{ js_photos|safe }};
   const elTotal = document.getElementById('total');
   const elCapLabel = document.getElementById('cap-label');
   const elCapTitle = document.getElementById('cap-title');
+  const elCapUser = document.getElementById('cap-user');
   elTotal.textContent = n;
 
   function bg(url){ return `url('${url}') center/cover no-repeat` }
   function renderSlide(idx){
-    const p = PHOTOS[idx], prev = PHOTOS[(idx - 1 + n) % n], next = PHOTOS[(idx + 1) % n];
+    if (!n) return;
+    const p = ALL_PHOTOS[idx], prev = ALL_PHOTOS[(idx - 1 + n) % n], next = ALL_PHOTOS[(idx + 1) % n];
     elMain.style.background = bg(p.url);
     elLeft.style.background = bg(prev.url);
     elRight.style.background = bg(next.url);
-    elCapLabel.textContent = 'Game of Life';
+    elCapLabel.textContent = p.is_user_photo ? 'Komunita' : 'Game of Life';
     elCapTitle.textContent = p.event_name;
     elCur.textContent = idx + 1;
+    if (p.is_user_photo && p.uploaded_by) {
+      elCapUser.textContent = '📷 ' + p.uploaded_by;
+      elCapUser.style.display = 'inline-flex';
+    } else {
+      elCapUser.style.display = 'none';
+    }
     elDots.querySelectorAll('.gal-dot').forEach((d, i) => d.classList.toggle('on', i === idx));
   }
   function goSlide(idx){
+    if (!n) return;
     slideIdx = ((idx % n) + n) % n;
     renderSlide(slideIdx);
   }
 
-  PHOTOS.forEach((_, i) => {
+  ALL_PHOTOS.forEach((_, i) => {
     const d = document.createElement('div');
     d.className = 'gal-dot' + (i === 0 ? ' on' : '');
     d.addEventListener('click', () => goSlide(i));
     elDots.appendChild(d);
   });
-  document.getElementById('btn-prev').addEventListener('click', () => goSlide(slideIdx - 1));
-  document.getElementById('btn-next').addEventListener('click', () => goSlide(slideIdx + 1));
-  elLeft.addEventListener('click', () => goSlide(slideIdx - 1));
-  elRight.addEventListener('click', () => goSlide(slideIdx + 1));
-  elMain.addEventListener('click', e => {
-    if (e.target.closest('.gal-zone')) return;
-    currentLbIdx = slideIdx;
-    openLightbox(slideIdx);
-  });
+  if (n) {
+    document.getElementById('btn-prev').addEventListener('click', () => goSlide(slideIdx - 1));
+    document.getElementById('btn-next').addEventListener('click', () => goSlide(slideIdx + 1));
+    elLeft.addEventListener('click', () => goSlide(slideIdx - 1));
+    elRight.addEventListener('click', () => goSlide(slideIdx + 1));
+    elMain.addEventListener('click', e => {
+      if (e.target.closest('.gal-zone')) return;
+      filteredItems = ALL_PHOTOS;
+      currentLbIdx = slideIdx;
+      openLightbox(slideIdx);
+    });
+    let tx = 0, ty = 0;
+    elMain.addEventListener('touchstart', e => { tx = e.touches[0].clientX; ty = e.touches[0].clientY; }, {passive: true});
+    elMain.addEventListener('touchend', e => {
+      const dx = e.changedTouches[0].clientX - tx;
+      const dy = Math.abs(e.changedTouches[0].clientY - ty);
+      if (Math.abs(dx) > 40 && dy < 60) goSlide(dx < 0 ? slideIdx + 1 : slideIdx - 1);
+    }, {passive: true});
+    renderSlide(0);
+  }
 
-  // Swipe on slideshow
-  let tx = 0;
-  elMain.addEventListener('touchstart', e => { tx = e.touches[0].clientX; }, {passive: true});
-  elMain.addEventListener('touchend', e => { const dx = e.changedTouches[0].clientX - tx; if (Math.abs(dx) > 40) goSlide(dx < 0 ? slideIdx + 1 : slideIdx - 1); }, {passive: true});
+  // SOURCE FILTERS
+  function buildSourceFilters(){
+    const el = document.getElementById('source-filters');
+    [['all','Vše'], ['official','Oficialní'], ['community','Komunita']].forEach(([val, label]) => {
+      const btn = document.createElement('button');
+      btn.className = 'mf-chip' + (val === 'community' ? ' community' : '') + (val === sourceFilter ? ' on' : '');
+      btn.textContent = label;
+      btn.dataset.s = val;
+      btn.addEventListener('click', function(){
+        el.querySelectorAll('.mf-chip').forEach(b => b.classList.remove('on'));
+        this.classList.add('on');
+        sourceFilter = this.dataset.s;
+        buildCalendarContent();
+      });
+      el.appendChild(btn);
+    });
+  }
 
-  renderSlide(0);
-
-  // CALENDAR
+  // SEASON FILTERS
   function buildSeasonFilters(){
     const seasonFiltersEl = document.getElementById('season-filters');
     seasonFiltersEl.innerHTML = '';
     const allBtn = document.createElement('button');
     allBtn.className = 'mf-chip on';
-    allBtn.textContent = 'Vše';
+    allBtn.textContent = 'Všechny sezóny';
     allBtn.dataset.s = 'all';
     seasonFiltersEl.appendChild(allBtn);
-
     seasons.forEach(s => {
       const btn = document.createElement('button');
       btn.className = 'mf-chip';
@@ -229,30 +350,26 @@ const PHOTOS = {{ js_photos|safe }};
       btn.dataset.s = s;
       seasonFiltersEl.appendChild(btn);
     });
-
     seasonFiltersEl.querySelectorAll('.mf-chip').forEach(btn => {
       btn.addEventListener('click', function(){
         seasonFiltersEl.querySelectorAll('.mf-chip').forEach(b => b.classList.remove('on'));
         this.classList.add('on');
-        activeSeason = this.dataset.s;
+        seasonFilter = this.dataset.s;
         buildCalendarContent();
       });
     });
   }
 
   function buildCalendarContent(){
-    const filtered = activeSeason === 'all' ? PHOTOS : PHOTOS.filter(p => p.season === activeSeason);
-
-    if (filtered.length === 0) {
+    const filtered = getFiltered();
+    if (!filtered.length) {
       calendarEl.innerHTML = '';
       emptyEl.style.display = 'block';
       return;
     }
-
     emptyEl.style.display = 'none';
     filteredItems = filtered;
 
-    // Group by month
     const byMonth = {};
     filtered.forEach(p => {
       const month = p.month;
@@ -260,23 +377,21 @@ const PHOTOS = {{ js_photos|safe }};
       byMonth[month].push(p);
     });
 
-    // Sort months descending
-    const sortedMonths = Object.keys(byMonth).sort().reverse();
-
+    const sortedMonths = Object.keys(byMonth).sort((a,b) => b - a);
     let html = '';
     sortedMonths.forEach(m => {
       const photos = byMonth[m];
       const monthNum = parseInt(m);
       const monthName = MONTH_NAMES[monthNum - 1] || m;
-
       html += `<div class="month-section">
         <div class="month-heading">${monthName}</div>
         <div class="month-count">${photos.length} ${photos.length === 1 ? 'fotografie' : 'fotografií'}</div>
         <div class="photo-grid">`;
-
       photos.forEach(p => {
         const idx = filtered.indexOf(p);
-        html += `<a class="photo-item" data-idx="${idx}" data-url="${p.url}" data-title="${p.event_name}">
+        const userTag = p.is_user_photo ? `<div class="user-tag">📷 ${p.uploaded_by}</div>` : '';
+        html += `<a class="photo-item${p.is_user_photo ? ' user-photo' : ''}" data-idx="${idx}">
+          ${userTag}
           <img src="${p.url}" alt="${p.event_name}" loading="lazy" />
           <div class="photo-item-caption">
             <div class="photo-item-label">${p.event_date}</div>
@@ -286,7 +401,6 @@ const PHOTOS = {{ js_photos|safe }};
       });
       html += '</div></div>';
     });
-
     calendarEl.innerHTML = html;
 
     calendarEl.querySelectorAll('.photo-item').forEach(item => {
@@ -299,18 +413,16 @@ const PHOTOS = {{ js_photos|safe }};
   }
 
   function openLightbox(i){
-    const items = filteredItems.length > 0 ? filteredItems : PHOTOS;
+    const items = filteredItems.length > 0 ? filteredItems : ALL_PHOTOS;
     if (!items.length) return;
     currentLbIdx = (i + items.length) % items.length;
-    lbImgEl.src = items[currentLbIdx].url;
+    const p = items[currentLbIdx];
+    lbImgEl.src = p.url;
+    lbUploaderEl.textContent = p.is_user_photo ? ('📷 ' + p.uploaded_by) : '';
     lightboxEl.classList.add('open');
   }
+  function closeLightbox(){ lightboxEl.classList.remove('open'); }
 
-  function closeLightbox(){
-    lightboxEl.classList.remove('open');
-  }
-
-  // Lightbox controls
   document.getElementById('lb-close').addEventListener('click', closeLightbox);
   document.getElementById('lb-prev').addEventListener('click', function(){ openLightbox(currentLbIdx - 1); });
   document.getElementById('lb-next').addEventListener('click', function(){ openLightbox(currentLbIdx + 1); });
@@ -322,22 +434,44 @@ const PHOTOS = {{ js_photos|safe }};
     if (e.key === 'ArrowRight') openLightbox(currentLbIdx + 1);
   });
 
-  // View toggle
   btnSlideshow.addEventListener('click', () => {
     viewSlideshow.style.display = 'block';
     viewCalendar.style.display = 'none';
-    btnSlideshow.classList.add('on');
-    btnCalendar.classList.remove('on');
+    btnSlideshow.classList.add('on'); btnCalendar.classList.remove('on');
   });
   btnCalendar.addEventListener('click', () => {
     viewSlideshow.style.display = 'none';
     viewCalendar.style.display = 'block';
-    btnCalendar.classList.add('on');
-    btnSlideshow.classList.remove('on');
+    btnCalendar.classList.add('on'); btnSlideshow.classList.remove('on');
   });
 
+  buildSourceFilters();
   buildSeasonFilters();
   buildCalendarContent();
+})();
+
+// Upload modal
+(function(){
+  const openBtn = document.getElementById('open-upload-modal');
+  const modal = document.getElementById('upload-modal');
+  const closeBtn = document.getElementById('close-upload-modal');
+  if (!openBtn || !modal) return;
+
+  openBtn.addEventListener('click', () => modal.classList.add('open'));
+  closeBtn.addEventListener('click', () => modal.classList.remove('open'));
+  modal.addEventListener('click', e => { if (e.target === modal) modal.classList.remove('open'); });
+
+  const fileInput = document.getElementById('file-input');
+  const dropZone = document.getElementById('file-drop-zone');
+  const dropName = document.getElementById('file-drop-name');
+  if (fileInput) {
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files[0]) {
+        dropName.textContent = fileInput.files[0].name;
+        dropZone.classList.add('has-file');
+      }
+    });
+  }
 })();
 </script>
 {% endblock %}

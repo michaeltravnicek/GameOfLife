@@ -1,5 +1,5 @@
 import json
-from datetime import datetime, timedelta, timezone as dt_timezone
+from datetime import datetime, timezone as dt_timezone
 
 from django.conf import settings
 from django.contrib import messages
@@ -19,6 +19,7 @@ from .models import (
     ImageToEvent,
     LastUpdate,
     User,
+    UserPhoto,
     UserToEvent,
 )
 
@@ -36,22 +37,14 @@ CACHE_TTL_HOME_CONTEXT = 5 * 60  # 5 min — stats/upcoming
 CACHE_KEY_EVENTS_LIST = "events_list"
 CACHE_TTL_EVENTS_LIST = 5 * 60
 
-MONTH_DAYS = None
-YEAR_DAYS = None
-
-
 def get_month_start():
     now = timezone.now()
-    if MONTH_DAYS is None:
-        return now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-    return now - timedelta(days=MONTH_DAYS)
+    return now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
 
 def get_year_start():
     now = timezone.now()
-    if YEAR_DAYS is None:
-        return now.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
-    return now - timedelta(days=YEAR_DAYS)
+    return now.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
 
 
 def leaderboard_total():
@@ -305,22 +298,38 @@ def event_detail_view(request, slug):
             auth_user=request.user, event=event
         ).first()
 
-    images = [
+    official_images = [
         request.build_absolute_uri(img.image.url)
         for img in ImageToEvent.objects.filter(event_id=event)
         if img.image
     ]
 
+    user_photos = [
+        {
+            "url": request.build_absolute_uri(up.image.url),
+            "uploaded_by": up.auth_user.get_full_name() or up.auth_user.username,
+            "caption": up.caption,
+        }
+        for up in UserPhoto.objects.filter(event=event).select_related("auth_user")
+        if up.image
+    ]
+
     rsvp_count = EventRSVP.objects.filter(event=event).count()
     is_full = event.capacity is not None and rsvp_count >= event.capacity
+
+    # Combined list for lightbox (official first, then user)
+    all_images_json = json.dumps(
+        official_images + [p["url"] for p in user_photos]
+    )
 
     return render(request, "event_detail.html", {
         "event": event,
         "is_future": is_future,
         "has_rsvp": has_rsvp,
         "existing_feedback": existing_feedback,
-        "images": images,
-        "images_json": json.dumps(images),
+        "official_images": official_images,
+        "user_photos": user_photos,
+        "all_images_json": all_images_json,
         "rsvp_count": rsvp_count,
         "is_full": is_full,
     })
@@ -345,53 +354,91 @@ def event_rsvp_view(request, slug):
 
 
 def gallery_view(request):
-    CZECH_MONTHS = ["Leden","Únor","Březen","Duben","Květen","Červen","Červenec","Srpen","Září","Říjen","Listopad","Prosinec"]
-    images_qs = (
+    # Official photos (from ImageToEvent)
+    official_qs = (
         ImageToEvent.objects
         .select_related("event_id")
         .exclude(image="")
         .filter(image__isnull=False)
         .order_by("-event_id__date")
     )
-    images = []
-    month_names = {}
-    for img in images_qs:
+    season_names = {}
+    js_official = []
+    for img in official_qs:
         if not img.image:
             continue
         date = img.event_id.date if img.event_id else None
-        month_key = date.strftime("%Y-%m") if date else ""
-        if month_key and month_key not in month_names:
-            month_names[month_key] = f"{CZECH_MONTHS[date.month - 1]} {date.year}"
-        images.append({
+        year_key = str(date.year) if date else ""
+        if year_key and year_key not in season_names:
+            season_names[year_key] = f"Sezóna {date.year}"
+        js_official.append({
             "url": img.image.url,
             "event_name": img.event_id.name if img.event_id else "",
             "event_slug": img.event_id.slug if img.event_id else "",
-            "event_date": date,
-            "month": month_key,
+            "event_date": date.strftime("%d. %m. %Y") if date else "",
+            "month": int(date.month) if date else 0,
+            "season": year_key,
+            "is_user_photo": False,
+            "uploaded_by": "",
         })
-    season_names = {}
-    for img in images:
-        if img["event_date"]:
-            year_key = str(img["event_date"].year)
-            if year_key not in season_names:
-                season_names[year_key] = f"Sezóna {img['event_date'].year}"
 
-    js_photos = json.dumps([
-        {
-            "url": img["url"],
-            "event_name": img["event_name"],
-            "event_date": img["event_date"].strftime("%d. %m. %Y") if img["event_date"] else "",
-            "month": int(img["event_date"].month) if img["event_date"] else 0,
-            "season": str(img["event_date"].year) if img["event_date"] else "",
-        }
-        for img in images
-    ])
+    # User-uploaded photos
+    user_qs = (
+        UserPhoto.objects
+        .select_related("auth_user", "event")
+        .exclude(image="")
+        .filter(image__isnull=False)
+        .order_by("-created_at")
+    )
+    js_user = []
+    for up in user_qs:
+        if not up.image:
+            continue
+        date = up.event.date if up.event else None
+        year_key = str(date.year) if date else ""
+        if year_key and year_key not in season_names:
+            season_names[year_key] = f"Sezóna {date.year}"
+        js_user.append({
+            "url": up.image.url,
+            "event_name": up.event.name if up.event else "",
+            "event_slug": up.event.slug if up.event else "",
+            "event_date": date.strftime("%d. %m. %Y") if date else "",
+            "month": int(date.month) if date else 0,
+            "season": year_key,
+            "is_user_photo": True,
+            "uploaded_by": up.auth_user.get_full_name() or up.auth_user.username,
+        })
+
+    # Events for upload form selector
+    events_for_form = list(
+        Event.objects.filter(date__lt=timezone.now()).order_by("-date").values("id", "name", "date")
+    )
+
     return render(request, "gallery.html", {
-        "images": images,
-        "js_photos": js_photos,
-        "month_names_json": json.dumps(month_names),
+        "js_official": json.dumps(js_official),
+        "js_user": json.dumps(js_user),
         "season_names_json": json.dumps(season_names),
+        "events_for_form": events_for_form,
     })
+
+
+@login_required
+@require_http_methods(["POST"])
+def upload_user_photo_view(request):
+    image = request.FILES.get("image")
+    if not image:
+        messages.error(request, "Žádná fotografie nebyla nahrána.")
+        return redirect(request.POST.get("next") or "gallery")
+
+    event_id = request.POST.get("event_id")
+    event = None
+    if event_id:
+        event = Event.objects.filter(pk=event_id).first()
+
+    caption = (request.POST.get("caption") or "").strip()[:255]
+    UserPhoto.objects.create(auth_user=request.user, event=event, image=image, caption=caption)
+    messages.success(request, "Fotografie nahrána, díky!")
+    return redirect(request.POST.get("next") or "gallery")
 
 
 def public_user_view(request, user_id):
@@ -447,10 +494,31 @@ def event_feedback_view(request, slug):
     if rating < 1 or rating > 5:
         messages.error(request, "Vyber prosím rating 1–5.")
         return redirect("event_detail", slug=slug)
+
     EventFeedback.objects.update_or_create(
         auth_user=request.user,
         event=event,
         defaults={"rating": rating, "comment": comment},
     )
-    messages.success(request, "Díky za zpětnou vazbu!")
+
+    # Award attendance points if not yet received
+    from accounts.models import Profile
+    profile = Profile.objects.filter(user=request.user).select_related("leaderboard_user").first()
+    lb_user = profile.leaderboard_user if profile else None
+    if lb_user is not None:
+        _, created = UserToEvent.objects.get_or_create(
+            user=lb_user,
+            event=event,
+            defaults={"points": event.points},
+        )
+        if created:
+            cache.delete(CACHE_KEY)
+            cache.delete(CACHE_KEY_MONTH)
+            cache.delete(CACHE_KEY_HOME_CONTEXT)
+            messages.success(request, f"Zpětná vazba uložena a připsáno {event.points} bodů za účast!")
+        else:
+            messages.success(request, "Díky za zpětnou vazbu!")
+    else:
+        messages.success(request, "Díky za zpětnou vazbu!")
+
     return redirect("event_detail", slug=slug)

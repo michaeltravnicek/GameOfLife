@@ -57,8 +57,9 @@
 
       /* Notification toast — bottom-center */
       @keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(14px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
-      .gol-notification-bar{position:fixed;bottom:32px;left:50%;transform:translateX(-50%);z-index:999;background:var(--color-pink);color:#fff;border-radius:9999px;padding:12px 28px;display:flex;flex-direction:row;justify-content:center;align-items:center;box-shadow:0 6px 28px rgba(225,84,99,.55);font-family:var(--font-hv);font-size:14px;white-space:nowrap;max-width:min(560px,92vw);animation:toastIn .3s ease}
-      .gol-notification-inner{display:flex;flex-direction:row;align-items:center;gap:14px;overflow:hidden}
+      .gol-notification-bar{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);z-index:999;background:var(--color-pink);color:#fff;border-radius:9999px;padding:9px 20px;display:flex;flex-direction:row;align-items:center;box-shadow:0 4px 20px rgba(225,84,99,.5);font-family:var(--font-hv);font-size:13px;max-width:min(520px,92vw);animation:toastIn .3s ease}
+      .gol-notification-inner{display:flex;flex-direction:row;align-items:center;gap:10px;overflow:hidden;white-space:nowrap}
+      .gol-notification-inner span{overflow:hidden;text-overflow:ellipsis}
     </style>
 </head>
 <body style="display:flex;flex-direction:column;min-height:100vh">

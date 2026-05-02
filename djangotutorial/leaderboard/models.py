@@ -130,6 +130,29 @@ class EventFeedback(models.Model):
         return f"Feedback {self.rating}★ {self.auth_user} → {self.event}"
 
 
+class UserPhoto(models.Model):
+    auth_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="gallery_photos",
+    )
+    event = models.ForeignKey(
+        Event, on_delete=models.SET_NULL, null=True, blank=True, related_name="user_photos"
+    )
+    image = models.ImageField(upload_to="user_photos/")
+    caption = models.CharField(max_length=255, blank=True, default="")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if self.image:
+            from .image_utils import resize_image
+            resize_image(self.image, max_width=1600, max_height=1600, quality=80)
+
+    def __str__(self):
+        return f"{self.auth_user} → {self.event or 'bez akce'}"
+
+
 class ProfileQuestion(models.Model):
     text = models.CharField(max_length=255)
     order = models.IntegerField(default=0)

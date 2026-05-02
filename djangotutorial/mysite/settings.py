@@ -26,7 +26,6 @@ MODE = os.getenv("MODE")
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", 'django-insecure-apk-d!f9%95l%z3&*^omgieg!z8bd$0+eu3kxiyp_ayjge3k@9')
 LAST_UPDATE = None
 
-STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
 STATICFILES_DIRS = [
@@ -37,7 +36,7 @@ MEDIA_ROOT = os.getenv("MEDIA_ROOT", BASE_DIR / "media")
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True # if MODE == "PRODUCTION" else False
+DEBUG = MODE != "PRODUCTION"
 ALLOWED_HOSTS = ["*"]
 
 # Only trust the SSL proxy header in production (behind a real proxy).
@@ -71,8 +70,6 @@ INSTALLED_APPS = [
     'rest_framework',
     'leaderboard',
     'accounts',
-    #"background_task.apps.BackgroundTaskConfig",  # correct
-
 ]
 
 LOGIN_URL = '/prihlasit/'
