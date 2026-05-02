@@ -19,6 +19,49 @@ body{background:#1a0f0a;font-family:var(--font-body);color:var(--color-cream-lig
 .divider{width:120px;height:1px;margin:20px auto 0;background:repeating-linear-gradient(90deg,rgba(255,241,212,.45) 0 5px,transparent 5px 10px)}
 
 .main{position:relative;z-index:2;max-width:1200px;margin:0 auto;padding:36px 24px 60px}
+
+.view-toggle{display:flex;align-items:center;justify-content:center;gap:6px;margin:28px auto 0;padding:5px;background:rgba(26,15,10,.50);border:1.5px dashed rgba(255,241,212,.28);border-radius:9999px;backdrop-filter:blur(8px);width:fit-content}
+.vt-btn{font-family:var(--font-body);font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;padding:9px 22px;border-radius:9999px;cursor:pointer;background:transparent;border:0;color:rgba(255,241,212,.65);transition:all .18s;display:flex;align-items:center;gap:7px}
+.vt-btn:hover{color:#fff}
+.vt-btn.on{background:var(--color-pink);color:#fff;box-shadow:0 4px 14px rgba(225,84,99,.45)}
+
+#view-slideshow{display:block;position:relative;z-index:2}
+#view-calendar{display:none}
+
+.counter{text-align:center;margin-top:14px;margin-bottom:0;padding:0 24px;max-width:1200px;margin-left:auto;margin-right:auto;font-family:var(--font-mono);font-style:italic;font-size:12px;letter-spacing:.2em;color:rgba(255,241,212,.40)}
+.counter span{color:rgba(255,241,212,.75)}
+
+.gal-container{display:flex;align-items:center;justify-content:center;gap:6px;padding:24px 0 0;height:calc(100vh - 340px);min-height:340px;max-height:660px;overflow:hidden;width:100vw;margin-left:calc(-50vw + 50%)}
+.gal-side{width:clamp(110px,15vw,220px);height:100%;background-size:cover;background-position:center;border:2px solid rgba(255,255,255,.70);opacity:.40;cursor:pointer;flex-shrink:0;transition:opacity .25s,filter .25s;filter:brightness(.70) saturate(.75)}
+.gal-side:first-child{border-left:0}
+.gal-side:last-child{border-right:0}
+.gal-side:hover{opacity:.70;filter:brightness(.95) saturate(1)}
+.gal-main{flex:1;height:100%;background-size:cover;background-position:center;border:2px solid #fff;position:relative;overflow:hidden;min-width:0}
+.gal-zone{position:absolute;top:0;bottom:0;width:50%;z-index:3;display:flex;align-items:center;transition:background .18s}
+.gal-zone-left{left:0;justify-content:flex-start;padding-left:20px;cursor:w-resize}
+.gal-zone-right{right:0;justify-content:flex-end;padding-right:20px;cursor:e-resize}
+.gal-zone-left:hover{background:linear-gradient(90deg,rgba(26,15,10,.38),transparent)}
+.gal-zone-right:hover{background:linear-gradient(270deg,rgba(26,15,10,.38),transparent)}
+.gal-zone-arrow{width:46px;height:46px;border-radius:50%;background:rgba(26,15,10,.55);border:1.5px dashed rgba(255,255,255,.55);display:flex;align-items:center;justify-content:center;color:rgba(255,241,212,.9);font-size:22px;opacity:0;transition:opacity .18s;backdrop-filter:blur(6px);pointer-events:none}
+.gal-zone:hover .gal-zone-arrow{opacity:1}
+.gal-caption{position:absolute;bottom:0;left:0;right:0;z-index:2;padding:32px 22px 18px;background:linear-gradient(0deg,rgba(26,15,10,.80) 0%,transparent 100%);pointer-events:none}
+.gal-caption-label{font-family:var(--font-mono);font-style:italic;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,241,212,.52);margin-bottom:3px}
+.gal-caption-title{font-family:var(--font-display);font-size:clamp(22px,3vw,38px);letter-spacing:.04em;text-transform:uppercase;color:var(--color-cream-light);line-height:1}
+
+.gal-dots{display:flex;gap:6px;justify-content:center;margin-top:20px;padding:0 24px;max-width:1200px;margin-left:auto;margin-right:auto}
+.gal-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,241,212,.25);cursor:pointer;transition:background .18s,transform .18s}
+.gal-dot.on{background:var(--color-pink);transform:scale(1.4)}
+
+.month-filters{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:40px}
+.mf-chip{font-family:var(--font-mono);font-style:italic;font-size:12px;letter-spacing:.1em;text-transform:uppercase;padding:8px 18px;border-radius:9999px;cursor:pointer;background:rgba(26,15,10,.50);border:1.5px dashed rgba(255,241,212,.28);color:rgba(255,241,212,.68);transition:all .18s;backdrop-filter:blur(8px)}
+.mf-chip:hover{color:#fff;border-color:rgba(255,241,212,.55)}
+.mf-chip.on{background:var(--color-pink);color:#fff;border-color:transparent;box-shadow:0 4px 14px rgba(225,84,99,.42)}
+
+.calendar{display:flex;flex-direction:column;gap:52px}
+.month-section{margin-bottom:0}
+.month-heading{font-family:var(--font-display);font-size:clamp(32px,4vw,52px);letter-spacing:.06em;text-transform:uppercase;color:var(--color-cream-light);margin-bottom:6px;display:flex;align-items:center;gap:16px}
+.month-heading::after{content:'';flex:1;height:1px;background:repeating-linear-gradient(90deg,rgba(255,241,212,.32) 0 6px,transparent 6px 12px)}
+.month-count{font-family:var(--font-mono);font-style:italic;font-size:13px;color:rgba(255,241,212,.45);letter-spacing:.1em;margin-bottom:20px}
 .photo-grid{columns:3;column-gap:8px}
 .photo-item{break-inside:avoid;margin-bottom:8px;position:relative;overflow:hidden;cursor:pointer;border:2px solid rgba(255,255,255,.0);transition:border-color .22s,transform .22s;display:block}
 .photo-item:hover{border-color:var(--color-pink);transform:scale(.99)}
@@ -29,14 +72,16 @@ body{background:#1a0f0a;font-family:var(--font-body);color:var(--color-cream-lig
 .photo-item-label{font-family:var(--font-mono);font-style:italic;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,241,212,.55)}
 .photo-item-title{font-family:var(--font-display);font-size:20px;letter-spacing:.04em;color:var(--color-cream-light);line-height:1;text-transform:uppercase}
 
-@media(max-width:900px){.photo-grid{columns:2}}
-@media(max-width:560px){.photo-grid{columns:1}}
+@media(max-width:900px){.photo-grid{columns:2};.gal-side{width:clamp(70px,13vw,130px)}.gal-container{height:calc(100vh - 370px);min-height:260px}}
+@media(max-width:640px){.photo-grid{columns:1};.filter-chips{gap:6px}.chip{padding:6px 12px;font-size:12px};.view-toggle{flex-wrap:wrap};.gal-side{width:24px;opacity:.08};.gal-container{gap:3px}.gal-main{flex:1}}
 
 .lightbox{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.94);display:none;align-items:center;justify-content:center;padding:40px}
 .lightbox.open{display:flex}
 .lightbox img{max-width:90vw;max-height:85vh;border:2px solid rgba(255,255,255,.85);border-radius:3px;box-shadow:0 24px 80px rgba(0,0,0,.7)}
-.lb-close{position:absolute;top:18px;right:26px;background:transparent;border:0;color:#fff;font-size:38px;cursor:pointer;line-height:1;opacity:.7}
-.lb-nav{position:absolute;top:50%;transform:translateY(-50%);width:50px;height:50px;border-radius:50%;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.3);color:#fff;font-size:24px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.lb-close{position:absolute;top:18px;right:26px;background:transparent;border:0;color:#fff;font-size:38px;cursor:pointer;line-height:1;opacity:.7;transition:opacity .15s}
+.lb-close:hover{opacity:1}
+.lb-nav{position:absolute;top:50%;transform:translateY(-50%);width:50px;height:50px;border-radius:50%;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.3);color:#fff;font-size:24px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .18s}
+.lb-nav:hover{background:rgba(255,255,255,.22)}
 .lb-nav.prev{left:28px}
 .lb-nav.next{right:28px}
 
@@ -54,19 +99,33 @@ body{background:#1a0f0a;font-family:var(--font-body);color:var(--color-cream-lig
   <div class="divider"></div>
 </div>
 
+<div class="view-toggle">
+  <button class="vt-btn on" id="btn-slideshow">▶ Slideshow</button>
+  <button class="vt-btn" id="btn-calendar">⬚ Kalendář</button>
+</div>
+
+<div id="view-slideshow">
+  <div class="counter"><span id="cur">1</span> / <span id="total">1</span></div>
+  <div class="gal-container">
+    <div class="gal-side" id="gal-left"></div>
+    <div class="gal-main" id="gal-main">
+      <div class="gal-zone gal-zone-left" id="btn-prev"><div class="gal-zone-arrow">‹</div></div>
+      <div class="gal-zone gal-zone-right" id="btn-next"><div class="gal-zone-arrow">›</div></div>
+      <div class="gal-caption">
+        <div class="gal-caption-label" id="cap-label">Game of Life</div>
+        <div class="gal-caption-title" id="cap-title"></div>
+      </div>
+    </div>
+    <div class="gal-side" id="gal-right"></div>
+  </div>
+  <div class="gal-dots" id="gal-dots"></div>
+</div>
+
 <div class="main">
-  <div class="photo-grid" id="photo-grid">
-    {% for img in images %}
-      <a class="photo-item" data-i="{{ forloop.counter0 }}" data-url="{{ img.url }}" data-title="{{ img.event_name|default:'' }}">
-        <img src="{{ img.url }}" alt="{{ img.event_name|default:'Galerie' }}" loading="lazy" />
-        <div class="photo-item-caption">
-          <div class="photo-item-label">{{ img.event_date|date:"j. F Y" }}</div>
-          <div class="photo-item-title">{{ img.event_name|default:"Game of Life" }}</div>
-        </div>
-      </a>
-    {% empty %}
-      <div class="empty-msg">Galerie je zatím prázdná. Brzy přidáme fotky z akcí!</div>
-    {% endfor %}
+  <div id="view-calendar">
+    <div class="month-filters" id="season-filters"></div>
+    <div class="calendar" id="calendar"></div>
+    <div id="empty-state" class="empty-msg" style="display:none">Galerie je zatím prázdná. Brzy přidáme fotky z akcí!</div>
   </div>
 </div>
 
@@ -80,36 +139,205 @@ body{background:#1a0f0a;font-family:var(--font-body);color:var(--color-cream-lig
 
 {% block extra_js %}
 <script>
+const MONTH_NAMES = ['Leden', 'Únor', 'Březen', 'Duben', 'Květen', 'Červen', 'Červenec', 'Srpen', 'Září', 'Říjen', 'Listopad', 'Prosinec'];
+const SEASON_NAMES = {{ season_names_json|safe }};
+const PHOTOS = {{ js_photos|safe }};
+
 (function(){
-  const items = Array.from(document.querySelectorAll('.photo-item'));
-  const lb = document.getElementById('lightbox');
-  const lbImg = document.getElementById('lb-img');
-  let idx = 0;
+  const viewSlideshow = document.getElementById('view-slideshow');
+  const viewCalendar = document.getElementById('view-calendar');
+  const btnSlideshow = document.getElementById('btn-slideshow');
+  const btnCalendar = document.getElementById('btn-calendar');
+  const lightboxEl = document.getElementById('lightbox');
+  const lbImgEl = document.getElementById('lb-img');
+  const calendarEl = document.getElementById('calendar');
+  const emptyEl = document.getElementById('empty-state');
 
-  function open(i){
-    if (!items.length) return;
-    idx = (i + items.length) % items.length;
-    lbImg.src = items[idx].dataset.url;
-    lb.classList.add('open');
+  let activeSeason = 'all';
+  let filteredItems = [];
+  let currentLbIdx = 0;
+  let slideIdx = 0;
+  const n = PHOTOS.length;
+
+  // Build season list from photos
+  const seasons = [...new Set(PHOTOS.map(p => p.season))].sort();
+
+  // SLIDESHOW
+  const elMain = document.getElementById('gal-main');
+  const elLeft = document.getElementById('gal-left');
+  const elRight = document.getElementById('gal-right');
+  const elDots = document.getElementById('gal-dots');
+  const elCur = document.getElementById('cur');
+  const elTotal = document.getElementById('total');
+  const elCapLabel = document.getElementById('cap-label');
+  const elCapTitle = document.getElementById('cap-title');
+  elTotal.textContent = n;
+
+  function bg(url){ return `url('${url}') center/cover no-repeat` }
+  function renderSlide(idx){
+    const p = PHOTOS[idx], prev = PHOTOS[(idx - 1 + n) % n], next = PHOTOS[(idx + 1) % n];
+    elMain.style.background = bg(p.url);
+    elLeft.style.background = bg(prev.url);
+    elRight.style.background = bg(next.url);
+    elCapLabel.textContent = 'Game of Life';
+    elCapTitle.textContent = p.event_name;
+    elCur.textContent = idx + 1;
+    elDots.querySelectorAll('.gal-dot').forEach((d, i) => d.classList.toggle('on', i === idx));
   }
-  function close(){ lb.classList.remove('open'); }
+  function goSlide(idx){
+    slideIdx = ((idx % n) + n) % n;
+    renderSlide(slideIdx);
+  }
 
-  items.forEach(function(it){
-    it.addEventListener('click', function(e){
-      e.preventDefault();
-      open(parseInt(it.dataset.i, 10));
+  PHOTOS.forEach((_, i) => {
+    const d = document.createElement('div');
+    d.className = 'gal-dot' + (i === 0 ? ' on' : '');
+    d.addEventListener('click', () => goSlide(i));
+    elDots.appendChild(d);
+  });
+  document.getElementById('btn-prev').addEventListener('click', () => goSlide(slideIdx - 1));
+  document.getElementById('btn-next').addEventListener('click', () => goSlide(slideIdx + 1));
+  elLeft.addEventListener('click', () => goSlide(slideIdx - 1));
+  elRight.addEventListener('click', () => goSlide(slideIdx + 1));
+  elMain.addEventListener('click', e => {
+    if (e.target.closest('.gal-zone')) return;
+    currentLbIdx = slideIdx;
+    openLightbox(slideIdx);
+  });
+
+  // Swipe on slideshow
+  let tx = 0;
+  elMain.addEventListener('touchstart', e => { tx = e.touches[0].clientX; }, {passive: true});
+  elMain.addEventListener('touchend', e => { const dx = e.changedTouches[0].clientX - tx; if (Math.abs(dx) > 40) goSlide(dx < 0 ? slideIdx + 1 : slideIdx - 1); }, {passive: true});
+
+  renderSlide(0);
+
+  // CALENDAR
+  function buildSeasonFilters(){
+    const seasonFiltersEl = document.getElementById('season-filters');
+    seasonFiltersEl.innerHTML = '';
+    const allBtn = document.createElement('button');
+    allBtn.className = 'mf-chip on';
+    allBtn.textContent = 'Vše';
+    allBtn.dataset.s = 'all';
+    seasonFiltersEl.appendChild(allBtn);
+
+    seasons.forEach(s => {
+      const btn = document.createElement('button');
+      btn.className = 'mf-chip';
+      btn.textContent = SEASON_NAMES[s] || `Sezóna ${s}`;
+      btn.dataset.s = s;
+      seasonFiltersEl.appendChild(btn);
     });
-  });
-  document.getElementById('lb-close').addEventListener('click', close);
-  document.getElementById('lb-prev').addEventListener('click', function(){ open(idx - 1); });
-  document.getElementById('lb-next').addEventListener('click', function(){ open(idx + 1); });
-  lb.addEventListener('click', function(e){ if (e.target === lb) close(); });
+
+    seasonFiltersEl.querySelectorAll('.mf-chip').forEach(btn => {
+      btn.addEventListener('click', function(){
+        seasonFiltersEl.querySelectorAll('.mf-chip').forEach(b => b.classList.remove('on'));
+        this.classList.add('on');
+        activeSeason = this.dataset.s;
+        buildCalendarContent();
+      });
+    });
+  }
+
+  function buildCalendarContent(){
+    const filtered = activeSeason === 'all' ? PHOTOS : PHOTOS.filter(p => p.season === activeSeason);
+
+    if (filtered.length === 0) {
+      calendarEl.innerHTML = '';
+      emptyEl.style.display = 'block';
+      return;
+    }
+
+    emptyEl.style.display = 'none';
+    filteredItems = filtered;
+
+    // Group by month
+    const byMonth = {};
+    filtered.forEach(p => {
+      const month = p.month;
+      if (!byMonth[month]) byMonth[month] = [];
+      byMonth[month].push(p);
+    });
+
+    // Sort months descending
+    const sortedMonths = Object.keys(byMonth).sort().reverse();
+
+    let html = '';
+    sortedMonths.forEach(m => {
+      const photos = byMonth[m];
+      const monthNum = parseInt(m);
+      const monthName = MONTH_NAMES[monthNum - 1] || m;
+
+      html += `<div class="month-section">
+        <div class="month-heading">${monthName}</div>
+        <div class="month-count">${photos.length} ${photos.length === 1 ? 'fotografie' : 'fotografií'}</div>
+        <div class="photo-grid">`;
+
+      photos.forEach(p => {
+        const idx = filtered.indexOf(p);
+        html += `<a class="photo-item" data-idx="${idx}" data-url="${p.url}" data-title="${p.event_name}">
+          <img src="${p.url}" alt="${p.event_name}" loading="lazy" />
+          <div class="photo-item-caption">
+            <div class="photo-item-label">${p.event_date}</div>
+            <div class="photo-item-title">${p.event_name}</div>
+          </div>
+        </a>`;
+      });
+      html += '</div></div>';
+    });
+
+    calendarEl.innerHTML = html;
+
+    calendarEl.querySelectorAll('.photo-item').forEach(item => {
+      item.addEventListener('click', function(e){
+        e.preventDefault();
+        currentLbIdx = parseInt(this.dataset.idx, 10);
+        openLightbox(currentLbIdx);
+      });
+    });
+  }
+
+  function openLightbox(i){
+    const items = filteredItems.length > 0 ? filteredItems : PHOTOS;
+    if (!items.length) return;
+    currentLbIdx = (i + items.length) % items.length;
+    lbImgEl.src = items[currentLbIdx].url;
+    lightboxEl.classList.add('open');
+  }
+
+  function closeLightbox(){
+    lightboxEl.classList.remove('open');
+  }
+
+  // Lightbox controls
+  document.getElementById('lb-close').addEventListener('click', closeLightbox);
+  document.getElementById('lb-prev').addEventListener('click', function(){ openLightbox(currentLbIdx - 1); });
+  document.getElementById('lb-next').addEventListener('click', function(){ openLightbox(currentLbIdx + 1); });
+  lightboxEl.addEventListener('click', function(e){ if (e.target === lightboxEl) closeLightbox(); });
   document.addEventListener('keydown', function(e){
-    if (!lb.classList.contains('open')) return;
-    if (e.key === 'Escape') close();
-    if (e.key === 'ArrowLeft') open(idx - 1);
-    if (e.key === 'ArrowRight') open(idx + 1);
+    if (!lightboxEl.classList.contains('open')) return;
+    if (e.key === 'Escape') closeLightbox();
+    if (e.key === 'ArrowLeft') openLightbox(currentLbIdx - 1);
+    if (e.key === 'ArrowRight') openLightbox(currentLbIdx + 1);
   });
+
+  // View toggle
+  btnSlideshow.addEventListener('click', () => {
+    viewSlideshow.style.display = 'block';
+    viewCalendar.style.display = 'none';
+    btnSlideshow.classList.add('on');
+    btnCalendar.classList.remove('on');
+  });
+  btnCalendar.addEventListener('click', () => {
+    viewSlideshow.style.display = 'none';
+    viewCalendar.style.display = 'block';
+    btnCalendar.classList.add('on');
+    btnSlideshow.classList.remove('on');
+  });
+
+  buildSeasonFilters();
+  buildCalendarContent();
 })();
 </script>
 {% endblock %}

@@ -378,10 +378,10 @@ def gallery_view(request):
 
     js_photos = json.dumps([
         {
-            "src": img["url"],
-            "title": img["event_name"],
-            "event": img["event_name"],
-            "month": img["month"],
+            "url": img["url"],
+            "event_name": img["event_name"],
+            "event_date": img["event_date"].strftime("%d. %m. %Y") if img["event_date"] else "",
+            "month": int(img["event_date"].month) if img["event_date"] else 0,
             "season": str(img["event_date"].year) if img["event_date"] else "",
         }
         for img in images
