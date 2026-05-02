@@ -7,7 +7,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.cache import cache
 from django.db.models import Count, F, Q, Sum
-from django.db.models.functions import Coalesce
+from django.db.models.functions import Coalesce, TruncMonth
 from django.http import HttpResponseNotAllowed, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -343,6 +343,66 @@ def event_rsvp_view(request, slug):
             EventRSVP.objects.create(auth_user=request.user, event=event)
             messages.success(request, f"Přihlášeno na akci {event.name}.")
     return redirect("event_detail", slug=slug)
+
+
+def gallery_view(request):
+    images_qs = (
+        ImageToEvent.objects
+        .select_related("event_id")
+        .exclude(image="")
+        .filter(image__isnull=False)
+        .order_by("-event_id__date")
+    )
+    images = [
+        {
+            "url": img.image.url,
+            "event_name": img.event_id.name if img.event_id else "",
+            "event_slug": img.event_id.slug if img.event_id else "",
+            "event_date": img.event_id.date if img.event_id else None,
+        }
+        for img in images_qs if img.image
+    ]
+    return render(request, "gallery.html", {"images": images})
+
+
+def public_user_view(request, user_id):
+    leaderboard_user = get_object_or_404(User, pk=user_id)
+    past_events_qs = (
+        UserToEvent.objects
+        .filter(user=leaderboard_user)
+        .select_related("event")
+        .order_by("-event__date")
+    )
+    return render(request, "leaderboard/public_user.html", {
+        "leaderboard_user": leaderboard_user,
+        "past_events": past_events_qs,
+    })
+
+
+def profile_monthly_points_api(request, username):
+    from django.contrib.auth.models import User as AuthUser
+    auth_user = get_object_or_404(AuthUser, username=username)
+    profile = getattr(auth_user, "profile", None)
+    leaderboard_user = profile.leaderboard_user if profile else None
+
+    try:
+        year = int(request.GET.get("year", timezone.now().year))
+    except (TypeError, ValueError):
+        year = timezone.now().year
+
+    monthly = []
+    if leaderboard_user is not None:
+        rows = (
+            UserToEvent.objects
+            .filter(user=leaderboard_user, event__date__year=year)
+            .annotate(month=TruncMonth("event__date"))
+            .values("month")
+            .annotate(total=Sum("points"))
+            .order_by("month")
+        )
+        monthly = [{"month": r["month"].month, "points": r["total"] or 0} for r in rows]
+
+    return JsonResponse({"year": year, "monthly": monthly})
 
 
 @login_required

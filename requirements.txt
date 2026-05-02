@@ -10,3 +10,4 @@ dotenv
 uvicorn
 pillow
 django-redis
+djangorestframework

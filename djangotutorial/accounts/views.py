@@ -7,7 +7,9 @@ from django.http import HttpResponseNotAllowed
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_http_methods
 
-from leaderboard.models import EventFeedback, UserToEvent, ProfileAnswer
+from leaderboard.models import EventFeedback, UserToEvent, ProfileAnswer, Season
+from leaderboard.models import User as LeaderboardUser
+from django.db.models.functions import Coalesce
 
 from .forms import CustomUserCreationForm, PhoneOrUsernameLoginForm, ProfileEditForm
 from .models import Profile
@@ -114,6 +116,18 @@ def public_profile_view(request, username):
         ]
         upcoming_rsvps = [rsvp for rsvp in upcoming_rsvps if rsvp.event.date >= tz.now()]
 
+    # Rank in total leaderboard
+    rank = None
+    if lb_user is not None and total_points > 0:
+        rank = (
+            LeaderboardUser.objects
+            .annotate(tp=Coalesce(Sum("usertoevent__points"), 0))
+            .filter(tp__gt=total_points)
+            .count()
+        ) + 1
+
+    all_seasons = list(Season.objects.all().order_by("-start_date"))
+
     context = {
         "profile_user": profile_user,
         "profile": profile,
@@ -123,8 +137,27 @@ def public_profile_view(request, username):
         "upcoming_rsvps": upcoming_rsvps,
         "past_events": past_events,
         "questions_with_answers": questions_with_answers if profile else [],
+        "rank": rank,
+        "all_seasons": all_seasons,
     }
     return render(request, "accounts/profile.html", context)
+
+
+def attended_events_view(request, username):
+    profile_user = get_object_or_404(User, username=username)
+    profile = getattr(profile_user, "profile", None)
+    lb_user = profile.leaderboard_user if profile else None
+    past_events = []
+    if lb_user is not None:
+        past_events = (
+            UserToEvent.objects.filter(user=lb_user)
+            .select_related("event")
+            .order_by("-event__date")
+        )
+    return render(request, "accounts/attended_events.html", {
+        "profile_user": profile_user,
+        "past_events": past_events,
+    })
 
 
 @login_required

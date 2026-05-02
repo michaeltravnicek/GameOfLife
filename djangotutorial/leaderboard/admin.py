@@ -1,11 +1,18 @@
 from django.contrib import admin
-from .models import Event, UserToEvent, ImageToEvent, User, ProfileQuestion, ProfileAnswer
+from .models import Event, UserToEvent, ImageToEvent, User, ProfileQuestion, ProfileAnswer, Season
+
+
+@admin.register(Season)
+class SeasonAdmin(admin.ModelAdmin):
+    list_display = ("name", "start_date", "end_date", "is_active")
+    list_filter = ("is_active",)
 
 
 @admin.register(Event)
 class EventAdmin(admin.ModelAdmin):
-    list_display = ("id", "name", "description", "date", "place", "points")
+    list_display = ("id", "name", "description", "date", "place", "points", "logo")
     search_fields = ("name", "description")
+    fields = ("name", "description", "rules", "place", "date", "points", "capacity", "image", "logo", "sheet_id", "sheet_list_id", "slug")
 
 
 @admin.register(ImageToEvent)

@@ -1,92 +1,253 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}Leaderboard — Game of Life{% endblock %}
+{% block nav_leaderboard %} active{% endblock %}
+
+{% block extra_head %}
+<style>
+body{font-family:var(--font-body);color:var(--color-cream-light);-webkit-font-smoothing:antialiased;min-height:100vh;background:#1a0f0a;overflow-x:hidden}
+
+.stage{position:fixed;inset:0;z-index:-2;background:url('{% static "leaderboard/gallery/gal1.jpg" %}') center 28%/cover no-repeat;filter:saturate(.7) contrast(1.02);transform:scale(1.05)}
+.stage::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 15%,rgba(45,42,142,.10) 0%,transparent 55%),linear-gradient(180deg,rgba(45,42,142,.08) 0%,rgba(26,15,10,.60) 50%,rgba(26,15,10,.82) 100%)}
+.grain{position:fixed;inset:0;z-index:-1;pointer-events:none;background:var(--tex-blue) center/cover;opacity:.08;mix-blend-mode:overlay}
+
+.hero{position:relative;z-index:2;max-width:880px;margin:0 auto;padding:148px 24px 16px;text-align:center}
+.eyebrow{font-family:var(--font-mono);font-style:italic;font-size:13px;letter-spacing:.3em;text-transform:uppercase;color:var(--color-pink);margin-bottom:8px;display:inline-flex;align-items:center;gap:10px}
+.eyebrow::before,.eyebrow::after{content:'✦';font-size:11px;opacity:.9}
+.hero h1{font-family:var(--font-display);font-size:clamp(70px,10vw,140px);line-height:.92;color:var(--color-cream-light);text-transform:uppercase;letter-spacing:.03em;text-shadow:0 6px 34px rgba(0,0,0,.6)}
+.hero .tagline{font-family:var(--font-serif);font-weight:300;font-style:italic;font-size:14px;color:rgba(255,241,212,.72);max-width:520px;margin:10px auto 0;line-height:1.5}
+.divider{width:120px;height:1px;margin:26px auto 0;background:repeating-linear-gradient(90deg,rgba(255,241,212,.45) 0 5px,transparent 5px 10px)}
+
+.controls{position:relative;z-index:2;max-width:880px;margin:32px auto 0;padding:0 24px;display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap}
+.tabs{display:inline-flex;padding:5px;gap:5px;background:rgba(26,15,10,.45);border:1.5px dashed rgba(255,241,212,.32);border-radius:9999px;backdrop-filter:blur(8px)}
+.tab{font-family:var(--font-hv);font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;padding:9px 20px;border-radius:9999px;cursor:pointer;background:transparent;border:0;color:rgba(255,241,212,.75);transition:all .18s}
+.tab:hover{color:#fff}
+.tab.on{background:var(--color-pink);color:#fff;box-shadow:0 4px 14px rgba(225,84,99,.45)}
+.search{flex:1;max-width:290px;min-width:180px;position:relative}
+.search input{width:100%;padding:11px 18px 11px 40px;font-family:var(--font-hv);font-size:13px;color:var(--color-cream-light);background:rgba(26,15,10,.45);border:1.5px dashed rgba(255,241,212,.32);border-radius:9999px;outline:none;transition:border-color .18s;backdrop-filter:blur(8px)}
+.search input:focus{border-color:var(--color-pink)}
+.search input::placeholder{color:rgba(255,241,212,.5);font-style:italic}
+.search::before{content:'⌕';position:absolute;left:16px;top:50%;transform:translateY(-50%);color:rgba(255,241,212,.6);font-size:14px;pointer-events:none}
+
+main.lb-main{position:relative;z-index:2;max-width:880px;margin:0 auto;padding:40px 24px 80px}
+
+.stage-wrap{position:relative;margin:44px 0 54px;padding:0 10px}
+.stage-wrap::before{content:'';position:absolute;left:0;right:0;top:-40px;bottom:40px;background:radial-gradient(ellipse 55% 65% at 50% 40%,rgba(245,200,66,.12) 0%,transparent 70%),radial-gradient(ellipse 35% 50% at 18% 55%,rgba(192,192,210,.08) 0%,transparent 75%),radial-gradient(ellipse 35% 50% at 82% 55%,rgba(205,127,50,.10) 0%,transparent 75%);pointer-events:none;z-index:0}
+.stage-floor{position:absolute;left:-20px;right:-20px;bottom:-2px;height:2px;background:repeating-linear-gradient(90deg,rgba(255,241,212,.38) 0 8px,transparent 8px 16px);z-index:0}
+.podium{position:relative;z-index:1;display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;align-items:end}
+.pod{position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;transition:transform .25s;cursor:pointer;text-decoration:none}
+.pod:hover{transform:translateY(-4px)}
+.pod .trophy{font-size:52px;line-height:1;margin-bottom:10px;filter:drop-shadow(0 6px 14px rgba(0,0,0,.55));transition:transform .3s}
+.pod:hover .trophy{transform:scale(1.06) rotate(-3deg)}
+.pod.p1 .trophy{font-size:68px;filter:drop-shadow(0 0 22px rgba(245,200,66,.55)) drop-shadow(0 6px 14px rgba(0,0,0,.55))}
+.pod .ava{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 30% 30%,rgba(225,84,99,.30),transparent 65%),rgba(26,15,10,.65);border:2px dashed rgba(255,241,212,.55);font-family:var(--font-mono);font-style:italic;font-size:16px;font-weight:700;color:var(--color-cream-light);margin-bottom:10px;box-shadow:0 6px 16px rgba(0,0,0,.4)}
+.pod.p1 .ava{width:76px;height:76px;font-size:18px;border-color:#f5c842;box-shadow:0 0 0 3px rgba(245,200,66,.14),0 6px 20px rgba(0,0,0,.5)}
+.pod.p2 .ava{border-color:rgba(210,210,215,.7)}
+.pod.p3 .ava{border-color:rgba(205,127,50,.75)}
+.pod .nm{font-family:var(--font-hv);font-weight:700;font-size:13px;color:#fff;margin-bottom:4px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pod .pts{font-family:var(--font-display);font-size:26px;letter-spacing:.03em;color:var(--color-cream-light);line-height:1;margin-bottom:14px}
+.pod.p1 .pts{font-size:36px;color:var(--color-pink)}
+.pod .pts-u{font-family:var(--font-mono);font-style:italic;font-size:10px;color:rgba(255,241,212,.55);letter-spacing:.16em;margin-left:4px}
+.pod .base{width:100%;position:relative;background:#1a0f0a var(--tex-blue) center/cover;border:1.5px dashed rgba(255,241,212,.38);border-radius:8px;display:flex;align-items:center;justify-content:center;box-shadow:0 12px 28px rgba(0,0,0,.5),0 0 0 1px rgba(0,0,0,.4) inset}
+.pod .base::after{content:'';position:absolute;top:0;left:10%;right:10%;height:1px;background:linear-gradient(90deg,transparent,rgba(255,241,212,.35),transparent)}
+.pod .base .rk{font-family:var(--font-display);letter-spacing:.04em;line-height:1}
+.pod.p1 .base{height:120px;border-color:#f5c842}
+.pod.p2 .base{height:86px}
+.pod.p3 .base{height:64px}
+.pod.p1 .base .rk{font-size:72px;color:#f5c842}
+.pod.p2 .base .rk{font-size:54px;color:rgba(210,210,215,.85)}
+.pod.p3 .base .rk{font-size:42px;color:rgba(205,127,50,.95)}
+
+.list-label{font-family:var(--font-mono);font-style:italic;font-size:13px;letter-spacing:.26em;text-transform:uppercase;color:rgba(255,241,212,.75);margin:0 6px 18px;display:flex;align-items:center;gap:14px}
+.list-label::before,.list-label::after{content:'';flex:1;height:1px;background:repeating-linear-gradient(90deg,rgba(255,241,212,.3) 0 6px,transparent 6px 12px)}
+.list{position:relative;padding:10px;background:#1a0f0a var(--tex-blue) center/cover;border:1.5px solid rgba(255,255,255,.08);border-radius:14px;box-shadow:0 20px 44px rgba(0,0,0,.5)}
+.list::before{content:'';position:absolute;inset:6px;border:1.5px dashed rgba(255,241,212,.22);border-radius:10px;pointer-events:none}
+.list-inner{position:relative;z-index:1;padding:8px 6px}
+.row{display:grid;grid-template-columns:52px 1fr 120px;align-items:center;gap:14px;padding:13px 18px;border-bottom:1px dashed rgba(255,241,212,.10);transition:background .18s,transform .18s;cursor:pointer;text-decoration:none}
+.row:last-child{border-bottom:0}
+.row:hover{background:rgba(255,241,212,.05);transform:translateX(2px)}
+.row.hidden{display:none}
+.row .rk{font-family:var(--font-display);font-size:24px;letter-spacing:.03em;color:rgba(255,241,212,.60);line-height:1}
+.row .nm{display:flex;align-items:center;gap:12px;font-family:var(--font-hv);font-size:15px;color:#fff;font-weight:400;min-width:0}
+.row .nm .av{width:32px;height:32px;border-radius:50%;flex-shrink:0;background:rgba(45,42,142,.55);border:1.5px dashed rgba(255,241,212,.45);display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-style:italic;font-size:11px;font-weight:700;color:var(--color-cream-light)}
+.row .nm .txt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .pt{text-align:right;font-family:var(--font-display);font-size:24px;letter-spacing:.03em;color:var(--color-cream-light)}
+.row .pt .u{font-family:var(--font-mono);font-style:italic;font-size:10px;color:rgba(255,241,212,.48);letter-spacing:.16em;margin-left:5px}
+.empty{text-align:center;padding:44px 20px;font-family:var(--font-serif);font-style:italic;color:rgba(255,241,212,.55);font-size:14px}
+
+.lb-pane{display:none}
+.lb-pane.on{display:block}
+
+@media(max-width:720px){.hero{padding:120px 20px 14px}.podium{grid-template-columns:1fr;gap:36px}.row{grid-template-columns:40px 1fr 100px;padding:11px 14px;gap:10px}}
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="page-head">
-    <div class="section-eyebrow">Ranking</div>
-    <h1>Top 10 hráčů</h1>
-</div>
+<div class="stage"></div>
+<div class="grain"></div>
 
-<section class="section sec-dark">
-    <div class="section-inner" style="max-width: 720px;">
-        <div id="leaderboard"
-             data-last-update="{{ last_update_ts }}"
-             data-month-start="{{ month_start_ts }}">
+<header class="hero">
+  <div class="eyebrow">Ranking · Sezóna {{ current_season.name }}</div>
+  <h1>Leaderboard</h1>
+  <p class="tagline">Kdo hraje nejtvrději. Body se sbírají za účast na akcích a za odvahu jít mimo komfortní zónu.</p>
+  <div class="divider"></div>
+</header>
 
-            <div style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem;">
-                <div class="tab-row">
-                    <button class="tab-button active" onclick="openTab(event, 'total')">Celkem</button>
-                    <button class="tab-button" onclick="openTab(event, 'month')">Tento rok</button>
-                </div>
-                <a href="{% url 'about_points' %}" class="btn-ghost lb-info-tab">Co jsou to body?</a>
-            </div>
-
-            <div style="margin-bottom: 1.25rem;">
-                <input type="text" id="search-bar"
-                       class="gol-input"
-                       placeholder="Vyhledat hráče…"
-                       onkeyup="filterLeaderboard()">
-            </div>
-
-            <div id="total" class="tab-content lb-panel" style="display: block; padding: 4px 0;">
-                <div class="lb-head">
-                    <div>#</div>
-                    <div>Hráč</div>
-                    <div>pts</div>
-                </div>
-                {% for user in leaderboard_total %}
-                    {% if user.profile_username %}
-                        <a href="{% url 'profile' user.profile_username %}"
-                           class="lb-row {% if user.rank == 1 %}lb-row-first anim-glow{% elif user.rank <= 3 %}lb-row-podium{% endif %}"
-                           data-user-id="{{ user.id }}">
-                            <span class="rank user-rank">{% if user.rank == 2 %}🥈{% elif user.rank == 3 %}🥉{% elif user.rank == 1 %}#1{% else %}{{ user.rank }}.{% endif %}</span>
-                            <span class="name user-name">{{ user.name }}</span>
-                            <span class="points">{{ user.total_points|default:0 }}</span>
-                        </a>
-                    {% else %}
-                        <div class="lb-row {% if user.rank == 1 %}lb-row-first anim-glow{% elif user.rank <= 3 %}lb-row-podium{% endif %}"
-                             style="cursor: pointer;"
-                             data-user-id="{{ user.id }}"
-                             onclick="loadUser('{{ user.id|escapejs }}')">
-                            <span class="rank user-rank">{% if user.rank == 2 %}🥈{% elif user.rank == 3 %}🥉{% elif user.rank == 1 %}#1{% else %}{{ user.rank }}.{% endif %}</span>
-                            <span class="name user-name">{{ user.name }}</span>
-                            <span class="points">{{ user.total_points|default:0 }}</span>
-                        </div>
-                    {% endif %}
-                {% empty %}
-                    <p class="text-muted text-center" style="padding: 2rem;">Leaderboard je zatím prázdný.</p>
-                {% endfor %}
-            </div>
-
-            <div id="month" class="tab-content lb-panel" style="display: none; padding: 4px 0;">
-                <div class="lb-head">
-                    <div>#</div>
-                    <div>Hráč</div>
-                    <div>pts</div>
-                </div>
-                {% for user in leaderboard_month %}
-                    {% if user.profile_username %}
-                        <a href="{% url 'profile' user.profile_username %}"
-                           class="lb-row {% if user.rank == 1 %}lb-row-first anim-glow{% elif user.rank <= 3 %}lb-row-podium{% endif %}">
-                            <span class="rank user-rank">{% if user.rank == 2 %}🥈{% elif user.rank == 3 %}🥉{% elif user.rank == 1 %}#1{% else %}{{ user.rank }}.{% endif %}</span>
-                            <span class="name user-name">{{ user.name }}</span>
-                            <span class="points">{{ user.total_points|default:0 }}</span>
-                        </a>
-                    {% else %}
-                        <div class="lb-row {% if user.rank == 1 %}lb-row-first anim-glow{% elif user.rank <= 3 %}lb-row-podium{% endif %}"
-                             style="cursor: pointer;"
-                             onclick="loadUser('{{ user.id|escapejs }}', 'month')">
-                            <span class="rank user-rank">{% if user.rank == 2 %}🥈{% elif user.rank == 3 %}🥉{% elif user.rank == 1 %}#1{% else %}{{ user.rank }}.{% endif %}</span>
-                            <span class="name user-name">{{ user.name }}</span>
-                            <span class="points">{{ user.total_points|default:0 }}</span>
-                        </div>
-                    {% endif %}
-                {% empty %}
-                    <p class="text-muted text-center" style="padding: 2rem;">Leaderboard je zatím prázdný.</p>
-                {% endfor %}
-            </div>
-        </div>
-    </div>
+<section class="controls">
+  <div class="tabs">
+    <button class="tab on" data-tab="total">Celkem</button>
+    <button class="tab" data-tab="month">Tento rok</button>
+  </div>
+  <div class="search"><input id="q" type="text" placeholder="Vyhledat hráče…" autocomplete="off" /></div>
+  <a href="{% url 'about_points' %}" style="font-family:var(--font-hv);font-weight:300;font-style:italic;font-size:12px;color:rgba(255,241,212,.65);border-bottom:1px dashed rgba(255,241,212,.45);padding-bottom:2px">Co jsou to body?</a>
 </section>
+
+<main class="lb-main">
+  {% with total_players=leaderboard_total month_players=leaderboard_month %}
+    {# Total tab #}
+    <div class="lb-pane on" data-pane="total">
+      <div class="stage-wrap">
+        <div class="podium">
+          {% with t1=total_players|slice:":1" t2=total_players|slice:"1:2" t3=total_players|slice:"2:3" %}
+            {# Order: 2nd, 1st, 3rd #}
+            {% for p in t2 %}
+              <a class="pod p2" href="{% if p.profile_username %}{% url 'profile' p.profile_username %}{% else %}{% url 'public_user' p.id %}{% endif %}">
+                <div class="trophy">🥈</div>
+                <div class="ava">{{ p.name|slice:":2"|upper }}</div>
+                <div class="nm">{{ p.name }}</div>
+                <div class="pts">{{ p.total_points }}<span class="pts-u">pts</span></div>
+                <div class="base"><span class="rk">2</span></div>
+              </a>
+            {% endfor %}
+            {% for p in t1 %}
+              <a class="pod p1" href="{% if p.profile_username %}{% url 'profile' p.profile_username %}{% else %}{% url 'public_user' p.id %}{% endif %}">
+                <div class="trophy">🏆</div>
+                <div class="ava">{{ p.name|slice:":2"|upper }}</div>
+                <div class="nm">{{ p.name }}</div>
+                <div class="pts">{{ p.total_points }}<span class="pts-u">pts</span></div>
+                <div class="base"><span class="rk">1</span></div>
+              </a>
+            {% endfor %}
+            {% for p in t3 %}
+              <a class="pod p3" href="{% if p.profile_username %}{% url 'profile' p.profile_username %}{% else %}{% url 'public_user' p.id %}{% endif %}">
+                <div class="trophy">🥉</div>
+                <div class="ava">{{ p.name|slice:":2"|upper }}</div>
+                <div class="nm">{{ p.name }}</div>
+                <div class="pts">{{ p.total_points }}<span class="pts-u">pts</span></div>
+                <div class="base"><span class="rk">3</span></div>
+              </a>
+            {% endfor %}
+          {% endwith %}
+        </div>
+        <div class="stage-floor"></div>
+      </div>
+
+      <div class="list-label">Další hráči</div>
+      <div class="list"><div class="list-inner">
+        {% for p in total_players|slice:"3:" %}
+          <a class="row" data-name="{{ p.name|lower }}" href="{% if p.profile_username %}{% url 'profile' p.profile_username %}{% else %}{% url 'public_user' p.id %}{% endif %}">
+            <div class="rk">{{ p.rank }}.</div>
+            <div class="nm">
+              <div class="av">{{ p.name|slice:":2"|upper }}</div>
+              <span class="txt">{{ p.name }}</span>
+            </div>
+            <div class="pt">{{ p.total_points }}<span class="u">pts</span></div>
+          </a>
+        {% empty %}
+          <div class="empty">Zatím žádní hráči nad podiem.</div>
+        {% endfor %}
+      </div></div>
+    </div>
+
+    {# Month tab #}
+    <div class="lb-pane" data-pane="month">
+      <div class="stage-wrap">
+        <div class="podium">
+          {% with m1=month_players|slice:":1" m2=month_players|slice:"1:2" m3=month_players|slice:"2:3" %}
+            {% for p in m2 %}
+              <a class="pod p2" href="{% if p.profile_username %}{% url 'profile' p.profile_username %}{% else %}{% url 'public_user' p.id %}{% endif %}">
+                <div class="trophy">🥈</div>
+                <div class="ava">{{ p.name|slice:":2"|upper }}</div>
+                <div class="nm">{{ p.name }}</div>
+                <div class="pts">{{ p.total_points }}<span class="pts-u">pts</span></div>
+                <div class="base"><span class="rk">2</span></div>
+              </a>
+            {% endfor %}
+            {% for p in m1 %}
+              <a class="pod p1" href="{% if p.profile_username %}{% url 'profile' p.profile_username %}{% else %}{% url 'public_user' p.id %}{% endif %}">
+                <div class="trophy">🏆</div>
+                <div class="ava">{{ p.name|slice:":2"|upper }}</div>
+                <div class="nm">{{ p.name }}</div>
+                <div class="pts">{{ p.total_points }}<span class="pts-u">pts</span></div>
+                <div class="base"><span class="rk">1</span></div>
+              </a>
+            {% endfor %}
+            {% for p in m3 %}
+              <a class="pod p3" href="{% if p.profile_username %}{% url 'profile' p.profile_username %}{% else %}{% url 'public_user' p.id %}{% endif %}">
+                <div class="trophy">🥉</div>
+                <div class="ava">{{ p.name|slice:":2"|upper }}</div>
+                <div class="nm">{{ p.name }}</div>
+                <div class="pts">{{ p.total_points }}<span class="pts-u">pts</span></div>
+                <div class="base"><span class="rk">3</span></div>
+              </a>
+            {% endfor %}
+          {% endwith %}
+        </div>
+        <div class="stage-floor"></div>
+      </div>
+
+      <div class="list-label">Další hráči</div>
+      <div class="list"><div class="list-inner">
+        {% for p in month_players|slice:"3:" %}
+          <a class="row" data-name="{{ p.name|lower }}" href="{% if p.profile_username %}{% url 'profile' p.profile_username %}{% else %}{% url 'public_user' p.id %}{% endif %}">
+            <div class="rk">{{ p.rank }}.</div>
+            <div class="nm">
+              <div class="av">{{ p.name|slice:":2"|upper }}</div>
+              <span class="txt">{{ p.name }}</span>
+            </div>
+            <div class="pt">{{ p.total_points }}<span class="u">pts</span></div>
+          </a>
+        {% empty %}
+          <div class="empty">V tomto roce zatím nikdo neskóroval.</div>
+        {% endfor %}
+      </div></div>
+    </div>
+  {% endwith %}
+</main>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function(){
+  const tabs = document.querySelectorAll('.tab');
+  const panes = document.querySelectorAll('.lb-pane');
+  const qInput = document.getElementById('q');
+
+  function applySearch(){
+    const q = (qInput.value || '').trim().toLowerCase();
+    panes.forEach(function(pane){
+      pane.querySelectorAll('.row').forEach(function(row){
+        const name = row.dataset.name || '';
+        row.classList.toggle('hidden', q && name.indexOf(q) === -1);
+      });
+      pane.querySelectorAll('.pod').forEach(function(pod){
+        const nameEl = pod.querySelector('.nm');
+        const name = nameEl ? nameEl.textContent.toLowerCase() : '';
+        pod.style.opacity = (q && name.indexOf(q) === -1) ? '.22' : '1';
+      });
+    });
+  }
+
+  tabs.forEach(function(btn){
+    btn.addEventListener('click', function(){
+      tabs.forEach(function(b){ b.classList.remove('on'); });
+      btn.classList.add('on');
+      const target = btn.dataset.tab;
+      panes.forEach(function(p){ p.classList.toggle('on', p.dataset.pane === target); });
+    });
+  });
+  if (qInput) qInput.addEventListener('input', applySearch);
+})();
+</script>
 {% endblock %}

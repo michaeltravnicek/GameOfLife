@@ -9,151 +9,134 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="{% static 'leaderboard/custom.css' %}">
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
     {% block extra_head %}{% endblock %}
+
+    <style>
+      /* === Nav (from ClaudeDesign nav.js, server-side rendered) === */
+      nav.top{position:fixed;top:24px;left:60px;right:60px;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 8px 0 36px;border-radius:9999px;background:rgba(80,74,118,.82);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.10);box-shadow:0 8px 32px rgba(0,0,0,.3);transition:transform .3s ease}
+      nav.top.hidden{transform:translateY(-120px)}
+      .nav-left,.nav-right{display:flex;align-items:center;gap:36px;flex:1}
+      .nav-right{justify-content:flex-end}
+      .nav-item{font-family:var(--font-hv);font-size:16px;font-weight:700;letter-spacing:.03em;color:rgba(255,255,255,.88);background:none;border:0;cursor:pointer;transition:color .2s;padding:18px 0;text-decoration:none;display:inline-block}
+      .nav-item:hover,.nav-item.active{color:var(--color-pink)}
+      .nav-logo{height:64px;display:flex;align-items:center;background:transparent;border:0;cursor:pointer;padding:6px 0;text-decoration:none}
+      .nav-logo img{height:100%;width:auto;display:block}
+      .nav-avatar{width:50px;height:50px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;border:1.5px solid rgba(255,255,255,.5);font-family:var(--font-mono);font-style:italic;font-size:13px;font-weight:700;color:#fff;cursor:pointer;transition:border-color .2s;margin:9px 0;text-decoration:none}
+      .nav-avatar:hover,.nav-avatar.active{border-color:var(--color-pink)}
+      .nav-btn-start{display:inline-flex;align-items:center;gap:8px;background:var(--color-pink);color:#fff;border:0;cursor:pointer;font-family:var(--font-hv);font-size:14px;font-weight:700;letter-spacing:.04em;padding:10px 24px;border-radius:9999px;box-shadow:0 4px 16px rgba(225,84,99,.38);transition:transform .18s,background .18s;text-decoration:none;margin:10px 0}
+      .nav-btn-start:hover{background:#cf4453;transform:translateY(-1px)}
+      @media(max-width:820px){nav.top{left:14px;right:14px;padding:0 6px 0 20px}.nav-left,.nav-right{gap:18px}.nav-item{font-size:14px}.nav-logo{height:52px}}
+      @media(max-width:560px){.nav-left .nav-item:nth-child(3){display:none}}
+
+      /* === Footer (from ClaudeDesign footer.js, server-side rendered) === */
+      footer.gol-footer{position:relative;z-index:2;background:var(--color-purple);background-image:var(--tex-purple);background-size:cover;padding:52px 56px 44px;border-top:1px solid rgba(255,255,255,.05)}
+      .ft-inner{max-width:1040px;margin:0 auto;display:grid;grid-template-columns:180px 1fr;gap:80px}
+      .ft-label{font-family:var(--font-hv);font-size:10px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.45);margin-bottom:14px}
+      .ft-link{display:block;font-family:var(--font-serif);font-style:italic;font-size:15px;color:rgba(255,255,255,.7);margin-bottom:6px;transition:color .15s;text-decoration:none}
+      .ft-link:hover{color:var(--color-pink)}
+      .ft-right{display:flex;flex-direction:column;align-items:flex-end;text-align:right}
+      .ft-logo{font-family:var(--font-display);font-size:22px;color:#fff;letter-spacing:.06em;display:inline-flex;align-items:center;gap:8px;margin-bottom:18px}
+      .ft-logo .sp{color:var(--color-pink);font-size:14px}
+      .ft-desc{font-family:var(--font-serif);font-size:13px;font-weight:300;font-style:italic;line-height:1.7;color:rgba(255,255,255,.65);max-width:440px;margin-bottom:16px}
+      .ft-contact{font-family:var(--font-serif);font-size:13px;color:rgba(255,255,255,.6);line-height:1.7}
+      .ft-credit{font-family:var(--font-serif);font-size:11px;font-style:italic;color:rgba(255,255,255,.35);margin-top:14px}
+      @media(max-width:640px){footer.gol-footer{padding:40px 24px 36px}.ft-inner{grid-template-columns:1fr;gap:40px}.ft-right{align-items:flex-start;text-align:left}}
+
+      /* Notification bar */
+      .gol-notification-bar{position:fixed;top:104px;left:60px;right:60px;z-index:99;background:var(--color-pink);color:#fff;border-radius:9999px;padding:10px 24px;display:flex;justify-content:center;align-items:center;box-shadow:0 4px 16px rgba(225,84,99,.4);font-family:var(--font-hv);font-size:14px}
+      .gol-notification-inner{display:flex;align-items:center;gap:16px}
+    </style>
 </head>
 <body>
 
-<div class="global-sparkles" id="globalSparkles"></div>
-
-<nav class="gol-nav" x-data="{ open: false }">
-    <div class="gol-nav-inner">
-        <div class="gol-nav-links desktop nav-left-group">
-            <a href="{% url 'home' %}" class="gol-nav-link">Domů</a>
-            <a href="{% url 'events' %}" class="gol-nav-link">Kalendář</a>
-            <a href="{% url 'leaderboard' %}" class="gol-nav-link">Leaderboard</a>
-        </div>
-
-        <a href="{% url 'home' %}" class="gol-brand" aria-label="Game of Life">
-            Game of Life
-        </a>
-
-        <div class="gol-nav-links desktop nav-right-group">
-            {% if request.user.is_authenticated %}
-                <a href="{% url 'about_points' %}" class="gol-nav-link">O bodech</a>
-                <a href="{% url 'profile' request.user.username %}" class="gol-nav-avatar" title="{{ request.user.first_name|default:request.user.username }}">{{ request.user.first_name|default:request.user.username|slice:":2"|lower }}</a>
-                <form method="post" action="{% url 'logout' %}" style="margin:0;">
-                    {% csrf_token %}
-                    <button type="submit" class="gol-nav-link" style="cursor:pointer;">Odhlásit</button>
-                </form>
-            {% else %}
-                <a href="{% url 'about_points' %}" class="gol-nav-link">O bodech</a>
-                <a href="{% url 'login' %}" class="gol-nav-link">Přihlásit</a>
-                <a href="{% url 'register' %}" class="gol-nav-cta">Začni hrát</a>
-            {% endif %}
-        </div>
-
-        <button class="gol-nav-toggle" @click="open = !open" aria-label="Menu">
-            <svg x-show="!open" xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5" /></svg>
-            <svg x-show="open" xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
-        </button>
+<nav class="top" id="gol-nav">
+    <div class="nav-left">
+        <a class="nav-item{% block nav_home %}{% endblock %}" href="{% url 'home' %}">Domů</a>
+        <a class="nav-item{% block nav_events %}{% endblock %}" href="{% url 'events' %}">Akce</a>
+        <a class="nav-item{% block nav_gallery %}{% endblock %}" href="{% url 'gallery' %}">Galerie</a>
     </div>
-
-    <div class="gol-nav-mobile" x-show="open" x-transition @click.outside="open = false" style="display: none;">
-        <div>
-            <a href="{% url 'home' %}" class="gol-nav-link">Domů</a>
-            <a href="{% url 'events' %}" class="gol-nav-link">Kalendář</a>
-            <a href="{% url 'leaderboard' %}" class="gol-nav-link">Leaderboard</a>
-            <a href="{% url 'about_points' %}" class="gol-nav-link">O bodech</a>
-            {% if request.user.is_authenticated %}
-                <a href="{% url 'profile' request.user.username %}" class="gol-nav-link">Profil</a>
-                <form method="post" action="{% url 'logout' %}" style="margin:0;">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-outline-light btn-block">Odhlásit</button>
-                </form>
-            {% else %}
-                <a href="{% url 'login' %}" class="btn btn-outline-light btn-block">Přihlásit</a>
-                <a href="{% url 'register' %}" class="btn btn-primary btn-block">Začni hrát</a>
-            {% endif %}
-        </div>
+    <a class="nav-logo" href="{% url 'home' %}" aria-label="Game of Life">
+        <img src="{% static 'leaderboard/logos/GOL_main_logo_pink.png' %}" alt="Game of Life" />
+    </a>
+    <div class="nav-right">
+        <a class="nav-item{% block nav_leaderboard %}{% endblock %}" href="{% url 'leaderboard' %}">Leaderboard</a>
+        {% if request.user.is_authenticated %}
+            {% with full_name=request.user.first_name|default:request.user.username %}
+            <a class="nav-avatar{% block nav_profile %}{% endblock %}" href="{% url 'profile' request.user.username %}" title="{{ full_name }}">{{ full_name|slice:":2"|upper }}</a>
+            {% endwith %}
+        {% else %}
+            <a class="nav-btn-start" href="{% url 'register' %}">Start Playing ➤</a>
+        {% endif %}
     </div>
 </nav>
 
-<div class="gol-notification-bar"
-     x-data="notificationBar()"
-     x-show="showNotification"
-     x-transition
-     style="display: none;">
+{% if messages %}
+<div class="gol-notification-bar" id="gol-notification">
     <div class="gol-notification-inner">
-        <span x-text="currentMessage"></span>
-        <button @click="closeNotification()" aria-label="Zavřít" style="background: none; border: none; font-size: 20px; cursor: pointer; color: inherit; padding: 0; margin-left: 1rem;">×</button>
+        <span id="gol-notification-msg"></span>
+        <button onclick="document.getElementById('gol-notification').style.display='none'" aria-label="Zavřít" style="background:none;border:0;color:inherit;cursor:pointer;font-size:20px;line-height:1">×</button>
     </div>
 </div>
+{% endif %}
 
-<main class="container-gol">
+<main>
     {% block content %}{% endblock %}
 </main>
 
 <footer class="gol-footer">
-    <div class="gol-footer-inner">
+    <div class="ft-inner">
         <div>
-            <h4>Menu</h4>
-            <p><a href="{% url 'home' %}">Domů</a></p>
-            <p><a href="{% url 'events' %}">Kalendář</a></p>
-            <p><a href="{% url 'leaderboard' %}">Leaderboard</a></p>
-            <p><a href="{% url 'about_points' %}">O bodech</a></p>
-            <p style="margin-top: 14px;"><a href="https://www.instagram.com/gameofyolo/" target="_blank" rel="noopener">Instagram</a></p>
-            <p><a href="https://www.youtube.com/@gameofyolo" target="_blank" rel="noopener">YouTube</a></p>
+            <div class="ft-label">Menu</div>
+            <a class="ft-link" href="{% url 'home' %}">Domů</a>
+            <a class="ft-link" href="{% url 'events' %}">Kalendář</a>
+            <a class="ft-link" href="{% url 'gallery' %}">Galerie</a>
+            <a class="ft-link" href="{% url 'leaderboard' %}">Leaderboard</a>
+            <a class="ft-link" style="margin-top:14px" href="https://www.instagram.com/gameofyolo/" target="_blank" rel="noopener">Instagram</a>
+            <a class="ft-link" href="#">Facebook</a>
+            <a class="ft-link" href="#">TikTok</a>
         </div>
-        <div style="text-align: right;">
-            <h3>Game of Life</h3>
-            <p>
-                Game of Life sdružuje ty, co chtějí z každodenního stereotypu
-                vytřískat maximum a nebojí se u toho jít do extrému i do hloubky.
-                Jsme tvůj protijed na moderní izolaci — místo, kde se nehraje na
-                přetvářku, ale na reálný život.
-            </p>
-            <p style="margin-top: 1rem; font-style: normal; color: rgba(255,241,212,0.72);">
-                Vojta Toman<br>
-                <a href="tel:+420731005976" style="font-style: normal;">+420 731 005 976</a>
-            </p>
+        <div class="ft-right">
+            <div class="ft-logo"><span class="sp">✦</span> GAME OF LIFE</div>
+            <p class="ft-desc">Game of Life sdružuje ty, co chtějí z každodenního stereotypu vytřískat maximum a nebojí se u toho jít do extrému i do hloubky. Jsme tvůj protijed na moderní izolaci.</p>
+            <div class="ft-contact">Vojta Toman<br/>+420 731 005 976</div>
+            <div class="ft-credit">Tyhle krásný stránky vytvořil Lukáš Müller.<br/>Game of Life © {% now "Y" %}</div>
         </div>
-    </div>
-    <div class="gol-footer-bottom">
-        <span>© {% now "Y" %} Game of Life by Vojta Toman &amp; team</span>
-        <span class="brand-mark">Game of Life</span>
     </div>
 </footer>
 
 <script>
-function notificationBar() {
-    const msgs = document.querySelector('[data-messages]');
-    const messageList = msgs ? JSON.parse(msgs.dataset.messages) : [];
-    return {
-        showNotification: false,
-        currentMessage: '',
-        timeoutId: null,
-        messages: Array.from(messageList),
-        init() {
-            if (this.messages.length > 0) {
-                this.showNext();
-            }
-        },
-        showNext() {
-            if (this.messages.length === 0) return;
-            this.currentMessage = this.messages.shift();
-            this.showNotification = true;
-            if (this.timeoutId) clearTimeout(this.timeoutId);
-            this.timeoutId = setTimeout(() => {
-                this.closeNotification();
-            }, 5000);
-        },
-        closeNotification() {
-            this.showNotification = false;
-            if (this.timeoutId) clearTimeout(this.timeoutId);
-            if (this.messages.length > 0) {
-                setTimeout(() => this.showNext(), 300);
-            }
-        }
-    };
-}
+// Hide-on-scroll-down / show-on-scroll-up
+(function(){
+    let lastY = 0, up = 0;
+    window.addEventListener('scroll', () => {
+        const nav = document.getElementById('gol-nav');
+        if (!nav) return;
+        const y = window.pageYOffset;
+        if (y > lastY) { up = 0; nav.classList.add('hidden'); }
+        else { up++; if (up >= 3) { nav.classList.remove('hidden'); up = 0; } }
+        lastY = y <= 0 ? 0 : y;
+    }, { passive: true });
+})();
+{% if messages %}
+(function(){
+    const msgs = [{% for m in messages %}{{ m|as_json|safe }}{% if not forloop.last %},{% endif %}{% endfor %}];
+    const bar = document.getElementById('gol-notification');
+    const msgEl = document.getElementById('gol-notification-msg');
+    let i = 0;
+    function showNext(){
+        if (i >= msgs.length) { bar.style.display = 'none'; return; }
+        msgEl.textContent = msgs[i++];
+        bar.style.display = 'flex';
+        setTimeout(() => { bar.style.display = 'none'; setTimeout(showNext, 300); }, 5000);
+    }
+    showNext();
+})();
+{% endif %}
 </script>
-<script src="{% static 'leaderboard/script.js' %}"></script>
+
 {% block extra_js %}{% endblock %}
-<div data-messages='{% if messages %}{{ messages|as_json }}{% else %}[]{% endif %}'></div>
 </body>
 </html>

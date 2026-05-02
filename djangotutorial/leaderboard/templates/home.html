@@ -4,184 +4,238 @@
 
 {% block title %}Game of Life — Život je hra, tak ho hrej{% endblock %}
 
+{% block nav_home %} active{% endblock %}
+
+{% block extra_head %}
+<style>
+body{background:var(--color-purple);background-image:var(--tex-purple);background-size:cover;background-attachment:fixed;font-family:var(--font-body);color:var(--color-cream-light);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+
+.hero{position:relative;height:100vh;min-height:600px;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;text-align:center;padding:0 24px}
+.hero-slides{position:absolute;inset:0}
+.hero-slide{position:absolute;inset:0;background-size:cover;background-position:center;opacity:0;transition:opacity 1.2s ease}
+.hero-slide.active{opacity:1}
+.hero-overlay{position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,8,30,.15) 0%,rgba(10,8,30,.35) 55%,rgba(26,15,10,.65) 100%)}
+.hero-inner{position:relative;z-index:2;max-width:740px}
+.hero-eyebrow{font-family:var(--font-mono);font-style:italic;font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.75);margin-bottom:18px}
+.hero-title{font-family:var(--font-display);font-size:clamp(52px,8.5vw,108px);line-height:.93;letter-spacing:.02em;color:var(--color-cream-light);text-transform:uppercase;text-shadow:0 4px 32px rgba(0,0,0,.55);margin-bottom:14px;transition:opacity .5s}
+.hero-sub{font-family:var(--font-serif);font-weight:300;font-size:14px;line-height:1.6;color:rgba(255,255,255,.80);max-width:380px;margin:0 auto 28px;font-style:italic;transition:opacity .5s}
+.btn-pill{display:inline-flex;align-items:center;gap:14px;background:var(--color-pink);color:#fff;border:0;font-family:var(--font-hv);font-size:14px;font-weight:700;letter-spacing:.04em;padding:13px 30px;border-radius:9999px;box-shadow:0 6px 22px rgba(225,84,99,.4);transition:transform .18s,background .18s;cursor:pointer;text-decoration:none}
+.btn-pill:hover{background:#cf4453;transform:translateY(-2px)}
+.btn-pill .arr::before{content:'';display:inline-block;width:26px;height:1.5px;background:#fff;vertical-align:middle;margin-right:4px;border-radius:2px}
+.btn-pill .arr::after{content:'➤';font-size:11px}
+.hero-dots{position:absolute;bottom:28px;left:0;right:0;display:flex;justify-content:center;gap:9px;z-index:2}
+.hero-dot{width:9px;height:9px;border-radius:50%;background:transparent;border:1.5px solid rgba(255,255,255,.65);cursor:pointer;transition:background .3s,border-color .3s}
+.hero-dot.active{background:#fff;border-color:#fff}
+
+.events-section{background:var(--color-purple);background-image:var(--tex-purple);background-size:cover;padding:56px 28px 72px;position:relative}
+.sec-title{font-family:var(--font-display);font-size:clamp(28px,3.2vw,44px);letter-spacing:.06em;text-transform:uppercase;color:var(--color-cream-light);text-align:center;margin-bottom:44px;display:flex;align-items:center;justify-content:center;gap:18px}
+.sec-title .star{color:var(--color-pink);font-size:.7em}
+.events-grid{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+.ev-card{position:relative;padding:22px 24px 20px;border:2px dashed rgba(255,255,255,.5);border-radius:12px;background:rgba(0,0,0,.10);min-height:160px;cursor:pointer;transition:border-color .2s,transform .2s;text-decoration:none;display:block}
+.ev-card:hover{border-color:var(--color-pink);transform:translateY(-3px)}
+.ev-badge{position:absolute;top:-18px;right:-10px;width:110px;height:110px;object-fit:contain;pointer-events:none;transform:rotate(6deg);filter:drop-shadow(0 4px 10px rgba(0,0,0,.35))}
+.ev-title{font-family:var(--font-display);font-size:26px;line-height:1.02;color:#fff;text-transform:uppercase;letter-spacing:.02em;padding-right:78px;margin-bottom:16px}
+.ev-meta{display:flex;flex-direction:column;gap:5px}
+.ev-row{font-family:var(--font-hv);font-weight:300;font-size:12px;color:rgba(255,255,255,.72);display:flex;align-items:center;gap:8px}
+.see-all{text-align:center;margin-top:44px}
+.empty-msg{text-align:center;color:rgba(255,255,255,.6);font-style:italic;grid-column:1/-1;padding:32px}
+
+.lb-section{position:relative;padding:64px 24px 80px;overflow:hidden}
+.lb-bg{position:absolute;inset:0;background:url('{% static "leaderboard/gallery/gal2.jpg" %}') center/cover;filter:saturate(.8)}
+.lb-tint{position:absolute;inset:0;background:linear-gradient(180deg,rgba(45,42,142,.12) 0%,rgba(26,15,10,.48) 100%)}
+.lb-inner{position:relative;z-index:2;max-width:620px;margin:0 auto}
+.lb-title{font-family:var(--font-display);font-size:clamp(28px,3.4vw,44px);letter-spacing:.05em;text-align:center;color:var(--color-cream-light);text-transform:uppercase;margin-bottom:24px;display:flex;justify-content:center;align-items:center;gap:14px}
+.lb-title .tr{font-size:.85em}
+.lb-card{background:#1a0f0a var(--tex-blue) center/cover;border:1px solid rgba(255,255,255,.08);border-radius:14px;overflow:hidden;box-shadow:0 16px 40px rgba(0,0,0,.5)}
+.lb-head,.lb-row{display:grid;grid-template-columns:60px 1fr 80px;align-items:center;padding:10px 22px;gap:12px}
+.lb-head{font-family:var(--font-mono);font-style:italic;font-size:13px;letter-spacing:.08em;background:var(--tex-light) center/cover;color:#1a1a1a;padding:8px 22px;font-weight:700;border-bottom:1px dashed rgba(26,26,26,.15)}
+.lb-row{border-bottom:1px dashed rgba(255,255,255,.08);text-decoration:none}
+.lb-row:last-child{border-bottom:0}
+.lb-rank{font-family:var(--font-serif);font-weight:400;font-size:14px;color:rgba(255,255,255,.55)}
+.lb-rank.top{color:#f5c842;font-size:18px}
+.lb-name{display:flex;align-items:center;gap:10px;color:#fff;font-size:13px}
+.lb-av{width:26px;height:26px;border-radius:50%;background:rgba(71,81,133,.9);border:1px solid rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;font-family:var(--font-mono)}
+.lb-pts{font-family:var(--font-serif);font-weight:600;font-size:13px;color:#fff;text-align:right}
+.lb-cta{text-align:center;margin-top:28px}
+
+.about-section{background-color:#3a2418;background-image:var(--tex-brown);background-size:cover;padding:72px 24px}
+.about-inner{max-width:980px;margin:0 auto;display:grid;grid-template-columns:300px 1fr;gap:60px;align-items:center}
+.about-photo{aspect-ratio:3/4;border-radius:2px;border:2px solid rgba(255,255,255,.85);overflow:hidden}
+.about-photo img{width:100%;height:100%;object-fit:cover}
+.about-eyebrow{font-family:var(--font-mono);font-style:italic;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--color-pink);margin-bottom:14px}
+.about-heading{font-family:var(--font-display);font-size:clamp(28px,3.6vw,46px);letter-spacing:.03em;line-height:1;color:var(--color-cream-light);text-transform:uppercase;margin-bottom:18px}
+.about-body{font-family:var(--font-serif);font-weight:300;font-size:14px;font-style:italic;line-height:1.78;color:rgba(255,241,212,.78);margin-bottom:16px;max-width:520px}
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:32px;padding-top:24px;border-top:1px dashed rgba(255,241,212,.28)}
+.stat-item{text-align:center}
+.stat-num{font-family:var(--font-display);font-size:36px;color:var(--color-pink);margin-bottom:4px}
+.stat-label{font-size:11px;color:rgba(255,241,212,.65);text-transform:uppercase;letter-spacing:.1em}
+
+.gallery-section{position:relative;overflow:hidden;background:#1a0f0a}
+.gallery-section::before{content:'';position:absolute;inset:0;background:url('{% static "leaderboard/gallery/gal2.jpg" %}') center/cover;filter:blur(4px) brightness(.42) saturate(.65);transform:scale(1.05);z-index:0}
+.gallery-section > *{position:relative;z-index:1}
+.gal-header{text-align:center;padding:44px 0 0}
+.gal-container{display:flex;align-items:center;justify-content:center;gap:10px;height:72vh;width:100vw;padding:24px 0 0;overflow:hidden}
+.gal-side{width:220px;height:65vh;background-size:cover;background-position:center;border:2px solid #fff;opacity:.55;cursor:pointer;transition:opacity .3s;flex-shrink:0}
+.gal-side:hover{opacity:.8}
+.gal-main{flex:1;height:65vh;background-size:cover;background-position:center;border:2px solid #fff}
+.gal-footer{text-align:center;padding:32px 0 48px}
+
+@media(max-width:900px){.events-grid{grid-template-columns:1fr;gap:28px}.about-inner{grid-template-columns:1fr;gap:32px}.about-photo{max-width:260px;margin:0 auto}.gal-side{width:140px}}
+</style>
+{% endblock %}
+
 {% block content %}
+<section class="hero">
+  <div class="hero-slides" id="heroSlides">
+    {% for img in hero_images|slice:":3" %}
+      <div class="hero-slide{% if forloop.first %} active{% endif %}" style="background-image:url('{{ img }}')"></div>
+    {% empty %}
+      <div class="hero-slide active" style="background-image:url('{% static "leaderboard/gallery/gal0.jpg" %}')"></div>
+      <div class="hero-slide" style="background-image:url('{% static "leaderboard/gallery/gal1.jpg" %}')"></div>
+      <div class="hero-slide" style="background-image:url('{% static "leaderboard/gallery/gal2.jpg" %}')"></div>
+    {% endfor %}
+  </div>
+  <div class="hero-overlay"></div>
+  <div class="hero-inner">
+    <div class="hero-eyebrow">— Sezóna {{ current_season.name }} —</div>
+    <h1 class="hero-title" id="heroTitle">Game of Life</h1>
+    <p class="hero-sub" id="heroSub">Život je hra, tak ho hrej. Komunita, výzvy, body a nezapomenutelné zážitky.</p>
+    <a href="{% url 'events' %}" class="btn-pill">Zobrazit akce <span class="arr"></span></a>
+  </div>
+  <div class="hero-dots" id="heroDots">
+    <span class="hero-dot active" data-i="0"></span>
+    <span class="hero-dot" data-i="1"></span>
+    <span class="hero-dot" data-i="2"></span>
+  </div>
+</section>
 
-{# ── HERO ─────────────────────────────────────────────────────────────── #}
-<section class="hero-mosaic">
-    <div class="hero-mosaic-grid" aria-hidden="true">
-        {% for img_url in hero_images %}
-            <div class="hero-mosaic-tile"><div style="background-image: url('{{ img_url }}');"></div></div>
-        {% empty %}
-            {% for i in "123456789012345678901234" %}
-                <div class="hero-mosaic-tile"><div style="background-image: url('https://picsum.photos/seed/gol{{ forloop.counter }}/400/400');"></div></div>
-            {% endfor %}
-        {% endfor %}
-    </div>
+<section class="events-section">
+  <h2 class="sec-title"><span class="star">✦</span> Nadcházející akce <span class="star">✦</span></h2>
+  <div class="events-grid">
+    {% for event in upcoming_events %}
+      <a class="ev-card" href="{% url 'event_detail' event.slug %}">
+        {% if event.logo %}
+          <img class="ev-badge" src="{{ event.logo.url }}" alt="{{ event.name }}" />
+        {% else %}
+          <img class="ev-badge" src="{% static 'leaderboard/logos/GOL_main_logo_pink.png' %}" alt="{{ event.name }}" />
+        {% endif %}
+        <div class="ev-title">{{ event.name }}</div>
+        <div class="ev-meta">
+          <div class="ev-row">📅 {{ event.date|date:"j. F Y" }}</div>
+          <div class="ev-row">📍 {{ event.place }}</div>
+          <div class="ev-row">🏆 +{{ event.points }} pts</div>
+        </div>
+      </a>
+    {% empty %}
+      <div class="empty-msg">Žádné nadcházející akce. Sleduj nás na sítích!</div>
+    {% endfor %}
+  </div>
+  <div class="see-all">
+    <a href="{% url 'events' %}" class="btn-pill">Všechny akce <span class="arr"></span></a>
+  </div>
+</section>
 
-    <div class="hero-mosaic-content anim-fade-up">
-        <h1 class="hero-scream">Život je hra</h1>
-        <p class="hero-scream-line-2">Tak ho hrej</p>
-        <a href="{% if request.user.is_authenticated %}{% url 'events' %}{% else %}{% url 'register' %}{% endif %}"
-           class="btn-primary btn-long-arrow">
-            {% if request.user.is_authenticated %}Nadcházející akce{% else %}Začni hrát{% endif %}
+<section class="lb-section">
+  <div class="lb-bg"></div>
+  <div class="lb-tint"></div>
+  <div class="lb-inner">
+    <h2 class="lb-title"><span class="tr">🏆</span> Top hráči <span class="tr">🏆</span></h2>
+    <div class="lb-card">
+      <div class="lb-head"><div>#</div><div>hráč</div><div style="text-align:right">pts</div></div>
+      {% for player in top_players %}
+        {% if player.profile_username %}
+          <a class="lb-row" href="{% url 'profile' player.profile_username %}">
+        {% else %}
+          <a class="lb-row" href="{% url 'public_user' player.id %}">
+        {% endif %}
+          <span class="lb-rank{% if player.rank <= 3 %} top{% endif %}">{% if player.rank == 1 %}🏆{% elif player.rank == 2 %}🥈{% elif player.rank == 3 %}🥉{% else %}{{ player.rank }}.{% endif %}</span>
+          <div class="lb-name">
+            <div class="lb-av">{{ player.name|slice:":2"|upper }}</div>
+            {{ player.name }}
+          </div>
+          <div class="lb-pts">{{ player.total_points }}</div>
         </a>
+      {% empty %}
+        <div class="lb-row"><div></div><div style="color:rgba(255,255,255,.55);font-style:italic">Zatím žádní hráči.</div><div></div></div>
+      {% endfor %}
     </div>
-
-    <div class="hero-dots" aria-hidden="true">
-        <span class="hero-dot active"></span>
-        <span class="hero-dot"></span>
-        <span class="hero-dot"></span>
-    </div>
+    <div class="lb-cta"><a href="{% url 'leaderboard' %}" class="btn-pill">Celý leaderboard <span class="arr"></span></a></div>
+  </div>
 </section>
 
-{# ── UPCOMING EVENTS ──────────────────────────────────────────────────── #}
-<section class="section sec-purple">
-    <div class="section-inner">
-        <h2 class="section-title">Nadcházející akce</h2>
-
-        {% if upcoming_events %}
-            <div class="grid-auto">
-                {% for event in upcoming_events|slice:":3" %}
-                    {% with cat=event|event_category %}
-                    <article class="card event-card evt-{{ cat }} anim-fade-up-delay-{{ forloop.counter0|add:1 }}">
-                        <a href="{% url 'event_detail' event.slug %}">
-                            <div class="card-photo"
-                                 style="background-image: url('{% if event.image %}{{ event.image.url }}{% else %}https://picsum.photos/seed/event{{ event.id }}/160/160{% endif %}');">
-                                <span class="badge-evt evt-{{ cat }}">{{ event|event_category_label }}</span>
-                            </div>
-                            <div class="card-body">
-                                <h3 class="card-title">{{ event.name }}</h3>
-                                <p class="card-meta">📅 {{ event.date|date:"d. m. Y" }}</p>
-                                <p class="card-meta">📍 {{ event.place }}</p>
-                                <p class="card-meta">🏆 +{{ event.points }} pts</p>
-                            </div>
-                        </a>
-                    </article>
-                    {% endwith %}
-                {% endfor %}
-            </div>
-            <div style="text-align: center; margin-top: 2.5rem;">
-                <a href="{% url 'events' %}" class="btn-outline">Všechny akce <span class="btn-arrow">→</span></a>
-            </div>
-        {% else %}
-            <p class="text-muted text-center" style="padding: 2rem 0;">
-                Zatím nejsou žádné nadcházející akce. Sleduj nás na Instagramu!
-            </p>
-        {% endif %}
+<section class="about-section">
+  <div class="about-inner">
+    <div class="about-photo">
+      <img src="{% static 'leaderboard/gallery/gal3.jpg' %}" alt="Game of Life komunita" />
     </div>
+    <div>
+      <div class="about-eyebrow">— O nás —</div>
+      <h3 class="about-heading">Komunita, která hraje život naplno</h3>
+      <p class="about-body"><strong>Game of Life</strong> je celoroční komunitní hra plná zábavy, výzev a nezapomenutelných zážitků. Vzešla z přesvědčení, že nejlepší okamžiky nevznikají samy — ale když se správní lidé potkají ve správný čas.</p>
+      <p class="about-body">Každý event je bodovaný. Každá výzva tě posune dál. Nejde jen o body — jde o přátelství, vzpomínky a odvahu vyzkoušet něco nového.</p>
+      <a href="{% url 'events' %}" class="btn-pill">Zapoj se <span class="arr"></span></a>
+      <div class="stats-row">
+        <div class="stat-item"><div class="stat-num">{{ about_stats.players }}</div><div class="stat-label">Hráčů</div></div>
+        <div class="stat-item"><div class="stat-num">{{ about_stats.events }}</div><div class="stat-label">Events</div></div>
+        <div class="stat-item"><div class="stat-num">{{ about_stats.points }}</div><div class="stat-label">Bodů</div></div>
+      </div>
+    </div>
+  </div>
 </section>
 
-{# ── LEADERBOARD ──────────────────────────────────────────────────────── #}
-<section class="lb-section" style="background-image: url('{% if hero_images %}{{ hero_images.0 }}{% else %}https://picsum.photos/seed/gol-lb/1600/900{% endif %}'); background-size: cover; background-position: center;">
-    <div class="section-inner">
-        <h2 class="section-title">🏆 Top 10 hráčů 🏆</h2>
-
-        {% if top_players %}
-        <div class="lb-panel anim-fade-up">
-            <div class="lb-head">
-                <div>#</div>
-                <div>Hráč</div>
-                <div>pts</div>
-            </div>
-            {% for player in top_players|slice:":10" %}
-                {% if player.profile_username %}
-                    <a href="{% url 'profile' player.profile_username %}"
-                       class="lb-row {% if forloop.first %}lb-row-first anim-glow{% elif forloop.counter <= 3 %}lb-row-podium{% endif %}">
-                        <span class="rank">{% if forloop.counter == 2 %}🥈{% elif forloop.counter == 3 %}🥉{% elif forloop.first %}#1{% else %}{{ forloop.counter }}.{% endif %}</span>
-                        <span class="name">{{ player.name }}</span>
-                        <span class="points">{{ player.total_points }}</span>
-                    </a>
-                {% else %}
-                    <div class="lb-row {% if forloop.first %}lb-row-first anim-glow{% elif forloop.counter <= 3 %}lb-row-podium{% endif %}">
-                        <span class="rank">{% if forloop.counter == 2 %}🥈{% elif forloop.counter == 3 %}🥉{% elif forloop.first %}#1{% else %}{{ forloop.counter }}.{% endif %}</span>
-                        <span class="name">{{ player.name }}</span>
-                        <span class="points">{{ player.total_points }}</span>
-                    </div>
-                {% endif %}
-            {% endfor %}
-        </div>
-        <div style="text-align: center; margin-top: 2.5rem;">
-            <a href="{% url 'leaderboard' %}" class="btn-primary">Celý leaderboard <span class="btn-arrow">→</span></a>
-        </div>
-        {% else %}
-            <p class="text-muted text-center">Leaderboard zatím nemá žádné hráče.</p>
-        {% endif %}
-    </div>
+<section class="gallery-section">
+  <div class="gal-header">
+    <h2 class="sec-title"><span class="star">📷</span> Galerie <span class="star">📷</span></h2>
+  </div>
+  <div class="gal-container">
+    <div class="gal-side" id="galLeft" style="background-image:url('{% static "leaderboard/gallery/gal3.jpg" %}')"></div>
+    <div class="gal-main" id="galMain" style="background-image:url('{% static "leaderboard/gallery/gal0.jpg" %}')"></div>
+    <div class="gal-side" id="galRight" style="background-image:url('{% static "leaderboard/gallery/gal1.jpg" %}')"></div>
+  </div>
+  <div class="gal-footer">
+    <a href="{% url 'gallery' %}" class="btn-pill">Celá galerie <span class="arr"></span></a>
+  </div>
 </section>
+{% endblock %}
 
-{# ── ABOUT ────────────────────────────────────────────────────────────── #}
-<section class="about-section anim-fade-up">
-    <div class="about-grid">
-        <div class="about-image"
-             style="background-image: url('{% if hero_images %}{{ hero_images.0 }}{% else %}https://picsum.photos/seed/gol-about/800/1000{% endif %}');">
-        </div>
-        <div>
-            <div class="section-eyebrow">— O nás —</div>
-            <h2 style="font-family: var(--font-display); font-size: clamp(36px, 4vw, 56px); color: var(--gol-cream); letter-spacing: 0.03em; margin: 0 0 1.25rem;">
-                Komunita, která hraje život naplno
-            </h2>
-            <p>
-                <strong>Game of Life</strong> je prostor pro lidi, kteří chtějí od
-                života a od vztahů něco víc. Všiml jsem si, jak moc nám dnes chybí
-                opravdovost — ty momenty, kdy odložíme telefony, přestaneme se bavit
-                o počasí a jdeme rovnou k věci.
-            </p>
-            <p>
-                Každý event je bodovaný. Každá výzva tě posune dál. A každý hráč,
-                který do toho jde naplno, si zaslouží své místo v leaderboardu.
-                Nejde ale jen o body — jde o přátelství, vzpomínky a odvahu vyzkoušet
-                něco nového.
-            </p>
-
-            <div class="about-stats">
-                <div class="about-stat">
-                    <p class="num">{{ about_stats.players }}</p>
-                    <p class="label">Hráčů</p>
-                </div>
-                <div class="about-stat">
-                    <p class="num">{{ about_stats.events }}</p>
-                    <p class="label">Akcí</p>
-                </div>
-                <div class="about-stat">
-                    <p class="num">{{ about_stats.points }}</p>
-                    <p class="label">Bodů</p>
-                </div>
-            </div>
-
-            <div style="margin-top: 2rem;">
-                <a href="{% url 'about_points' %}" class="btn-primary">Zajímá mě víc <span class="btn-arrow">→</span></a>
-            </div>
-        </div>
-    </div>
-</section>
-
-{# ── GALLERY ──────────────────────────────────────────────────────────── #}
-{% if hero_images and hero_images|length > 1 %}
-<section class="section sec-dark">
-    <div class="section-inner">
-        <h2 class="section-title">Galerie</h2>
-        <div class="home-gallery">
-            {% for img_url in hero_images|slice:":3" %}
-                <div style="background-image: url('{{ img_url }}');"></div>
-            {% endfor %}
-        </div>
-    </div>
-</section>
-{% endif %}
-
-{# ── JOIN CTA ─────────────────────────────────────────────────────────── #}
-{% if not request.user.is_authenticated %}
-<section class="section sec-purple" style="text-align: center;">
-    <div class="section-inner" style="max-width: 720px;">
-        <h2 style="font-family: var(--font-display); font-size: clamp(40px, 6vw, 80px); color: var(--gol-cream); letter-spacing: 0.04em; margin: 0 0 1rem; line-height: 1;">
-            Přidej se k nám
-        </h2>
-        <p style="font-family: var(--font-body); font-size: 15px; color: rgba(255,241,212,0.65); margin: 0 0 2rem; line-height: 1.6;">
-            Zaregistruj se a staň se aktivním hráčem naší komunity.
-        </p>
-        <a href="{% url 'register' %}" class="btn-impact">Přidej se k nám <span class="btn-arrow">→</span></a>
-    </div>
-</section>
-{% endif %}
-
+{% block extra_js %}
+<script>
+(function(){
+  const slideEls = document.querySelectorAll('.hero-slide');
+  const dots = document.querySelectorAll('.hero-dot');
+  if (slideEls.length < 2) return;
+  let cur = 0;
+  function goSlide(i) {
+    if (i === cur) return;
+    slideEls[cur].classList.remove('active');
+    if (dots[cur]) dots[cur].classList.remove('active');
+    cur = i;
+    slideEls[cur].classList.add('active');
+    if (dots[cur]) dots[cur].classList.add('active');
+  }
+  dots.forEach(d => d.addEventListener('click', () => goSlide(+d.dataset.i)));
+  setInterval(() => goSlide((cur + 1) % slideEls.length), 5000);
+})();
+(function(){
+  const images = [
+    '{% static "leaderboard/gallery/gal0.jpg" %}',
+    '{% static "leaderboard/gallery/gal1.jpg" %}',
+    '{% static "leaderboard/gallery/gal2.jpg" %}',
+    '{% static "leaderboard/gallery/gal3.jpg" %}'
+  ];
+  let galCur = 0;
+  const galLeft = document.getElementById('galLeft');
+  const galMain = document.getElementById('galMain');
+  const galRight = document.getElementById('galRight');
+  if (!galLeft || !galMain || !galRight) return;
+  function updateGal() {
+    const n = images.length;
+    galLeft.style.backgroundImage  = "url('" + images[(galCur-1+n)%n] + "')";
+    galMain.style.backgroundImage  = "url('" + images[galCur] + "')";
+    galRight.style.backgroundImage = "url('" + images[(galCur+1)%n] + "')";
+  }
+  galLeft.addEventListener('click', function(){ galCur = (galCur-1+images.length)%images.length; updateGal(); });
+  galRight.addEventListener('click', function(){ galCur = (galCur+1)%images.length; updateGal(); });
+})();
+</script>
 {% endblock %}

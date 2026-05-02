@@ -3,6 +3,19 @@ from django.db import models
 from django.utils.text import slugify
 
 
+class Season(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    start_date = models.DateField()
+    end_date = models.DateField()
+    is_active = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ["-start_date"]
+
+    def __str__(self):
+        return self.name
+
+
 class Event(models.Model):
     sheet_id = models.CharField(max_length=255)
     sheet_list_id = models.CharField(max_length=255)
@@ -12,6 +25,8 @@ class Event(models.Model):
     date = models.DateTimeField()
     points = models.IntegerField()
     image = models.ImageField(upload_to="event_images/", blank=True, null=True)
+    logo = models.ImageField(upload_to="event_logos/", blank=True, null=True)
+    rules = models.TextField(blank=True, default="")
     capacity = models.IntegerField(null=True, blank=True)
 
     slug = models.SlugField(max_length=280, unique=True, null=True, blank=True)

@@ -10,6 +10,7 @@ urlpatterns = [
     path("profil/", views.my_profile_redirect, name="my_profile"),
     path("profil/upravit/", views.profile_edit_view, name="profile_edit"),
     path("profil/<str:username>/", views.public_profile_view, name="profile"),
+    path("profil/<str:username>/akce/", views.attended_events_view, name="attended_events"),
 
     # Password reset flow
     path("password-reset/", auth_views.PasswordResetView.as_view(

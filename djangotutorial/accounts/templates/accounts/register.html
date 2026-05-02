@@ -1,68 +1,87 @@
 {% extends "base.html" %}
+{% load static %}
 
-{% block title %}Start Playing — Game of Yolo{% endblock %}
+{% block title %}Začni hrát — Game of Life{% endblock %}
+
+{% block extra_head %}
+<style>
+body{background:var(--color-purple);background-image:var(--tex-purple);background-size:cover;background-attachment:fixed;font-family:var(--font-body);color:var(--color-cream-light);min-height:100vh}
+.auth-wrap{position:relative;z-index:2;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:140px 20px 80px}
+.auth-card{width:100%;max-width:480px;background:var(--tex-light) center/cover;border:2px dashed rgba(26,26,26,.4);border-radius:18px;padding:36px 32px;color:#1a1a1a;box-shadow:0 24px 60px rgba(0,0,0,.45)}
+.auth-eyebrow{font-family:var(--font-mono);font-style:italic;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--color-pink);margin-bottom:10px;text-align:center}
+.auth-card h1{font-family:var(--font-display);font-size:48px;letter-spacing:.04em;text-align:center;margin-bottom:24px;color:#1a1a1a;text-transform:uppercase}
+.field-group{margin-bottom:14px;display:flex;flex-direction:column;gap:6px}
+.field-group label{font-family:var(--font-mono);font-style:italic;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:rgba(26,26,26,.6)}
+.field-group input{width:100%;padding:12px 14px;background:rgba(255,255,255,.55);border:1.5px dashed rgba(26,26,26,.35);border-radius:8px;font-family:var(--font-body);font-size:14px;color:#1a1a1a;outline:none;transition:border-color .18s}
+.field-group input:focus{border-color:var(--color-pink)}
+.pw-wrap{position:relative}
+.pw-toggle{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:0;cursor:pointer;font-size:16px;opacity:.6;padding:4px}
+.field-help{font-family:var(--font-serif);font-style:italic;font-size:11px;color:rgba(26,26,26,.55)}
+.field-error{font-family:var(--font-mono);font-style:italic;font-size:11px;color:#c1394a}
+.form-errors{padding:10px 14px;background:rgba(225,84,99,.12);border:1.5px dashed rgba(225,84,99,.4);border-radius:8px;font-family:var(--font-body);font-size:13px;color:#c1394a;margin-bottom:16px}
+.btn-submit{display:block;width:100%;background:var(--color-pink);color:#fff;border:0;padding:14px;border-radius:9999px;font-family:var(--font-hv);font-weight:700;letter-spacing:.06em;text-transform:uppercase;font-size:14px;cursor:pointer;transition:background .18s,transform .18s;margin-top:14px;box-shadow:0 6px 20px rgba(225,84,99,.4)}
+.btn-submit:hover{background:#cf4453;transform:translateY(-1px)}
+.aux-links{margin-top:18px;text-align:center;font-family:var(--font-serif);font-style:italic;font-size:13px;color:rgba(26,26,26,.6)}
+.aux-links a{color:var(--color-pink);font-weight:600;text-decoration:underline;text-decoration-style:dashed;text-underline-offset:3px}
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="auth-card-v2 anim-fade-up">
+<div class="auth-wrap">
+  <div class="auth-card">
+    <div class="auth-eyebrow">— Vítej v Game of Life —</div>
     <h1>Začni hrát</h1>
 
     <form method="post" novalidate>
-        {% csrf_token %}
-
-        {% if form.non_field_errors %}
-            <div class="form-errors">
-                {% for err in form.non_field_errors %}{{ err }}{% endfor %}
-            </div>
-        {% endif %}
-
-        <div class="field-group-v2">
-            <label for="{{ form.first_name.id_for_label }}" class="field-label-modern">{{ form.first_name.label }}</label>
-            {{ form.first_name }}
-            {% if form.first_name.errors %}<div class="field-error">{{ form.first_name.errors|join:", " }}</div>{% endif %}
+      {% csrf_token %}
+      {% if form.non_field_errors %}
+        <div class="form-errors">
+          {% for err in form.non_field_errors %}{{ err }}{% endfor %}
         </div>
+      {% endif %}
 
-        <div class="field-group-v2">
-            <label for="{{ form.email.id_for_label }}" class="field-label-modern">{{ form.email.label }}</label>
-            {{ form.email }}
-            {% if form.email.errors %}<div class="field-error">{{ form.email.errors|join:", " }}</div>{% endif %}
+      <div class="field-group">
+        <label for="{{ form.first_name.id_for_label }}">{{ form.first_name.label }}</label>
+        {{ form.first_name }}
+        {% if form.first_name.errors %}<div class="field-error">{{ form.first_name.errors|join:", " }}</div>{% endif %}
+      </div>
+
+      <div class="field-group">
+        <label for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
+        {{ form.email }}
+        {% if form.email.errors %}<div class="field-error">{{ form.email.errors|join:", " }}</div>{% endif %}
+      </div>
+
+      <div class="field-group">
+        <label for="{{ form.phone.id_for_label }}">{{ form.phone.label }}</label>
+        {{ form.phone }}
+        {% if form.phone.help_text %}<div class="field-help">{{ form.phone.help_text }}</div>{% endif %}
+        {% if form.phone.errors %}<div class="field-error">{{ form.phone.errors|join:", " }}</div>{% endif %}
+      </div>
+
+      <div class="field-group">
+        <label for="{{ form.password1.id_for_label }}">{{ form.password1.label }}</label>
+        <div class="pw-wrap">
+          {{ form.password1 }}
+          <button type="button" class="pw-toggle" onclick="var i=this.parentElement.querySelector('input');i.type=i.type==='password'?'text':'password';" aria-label="Zobrazit heslo">👁</button>
         </div>
+        {% if form.password1.help_text %}<div class="field-help">{{ form.password1.help_text|safe }}</div>{% endif %}
+        {% if form.password1.errors %}<div class="field-error">{{ form.password1.errors|join:", " }}</div>{% endif %}
+      </div>
 
-        <div class="field-group-v2">
-            <label for="{{ form.phone.id_for_label }}" class="field-label-modern">{{ form.phone.label }}</label>
-            {{ form.phone }}
-            {% if form.phone.help_text %}<div class="field-help">{{ form.phone.help_text }}</div>{% endif %}
-            {% if form.phone.errors %}<div class="field-error">{{ form.phone.errors|join:", " }}</div>{% endif %}
+      <div class="field-group">
+        <label for="{{ form.password2.id_for_label }}">{{ form.password2.label }}</label>
+        <div class="pw-wrap">
+          {{ form.password2 }}
+          <button type="button" class="pw-toggle" onclick="var i=this.parentElement.querySelector('input');i.type=i.type==='password'?'text':'password';" aria-label="Zobrazit heslo">👁</button>
         </div>
+        {% if form.password2.errors %}<div class="field-error">{{ form.password2.errors|join:", " }}</div>{% endif %}
+      </div>
 
-        <div class="field-group-v2">
-            <label for="{{ form.password1.id_for_label }}" class="field-label-modern">{{ form.password1.label }}</label>
-            <div class="pw-wrap">
-                {{ form.password1 }}
-                <button type="button" class="pw-toggle" onclick="togglePassword(this)" aria-label="Zobrazit heslo">
-                    <span class="pw-eye">👁</span>
-                </button>
-            </div>
-            {% if form.password1.help_text %}<div class="field-help">{{ form.password1.help_text|safe }}</div>{% endif %}
-            {% if form.password1.errors %}<div class="field-error">{{ form.password1.errors|join:", " }}</div>{% endif %}
-        </div>
-
-        <div class="field-group-v2">
-            <label for="{{ form.password2.id_for_label }}" class="field-label-modern">{{ form.password2.label }}</label>
-            <div class="pw-wrap">
-                {{ form.password2 }}
-                <button type="button" class="pw-toggle" onclick="togglePassword(this)" aria-label="Zobrazit heslo">
-                    <span class="pw-eye">👁</span>
-                </button>
-            </div>
-            {% if form.password2.errors %}<div class="field-error">{{ form.password2.errors|join:", " }}</div>{% endif %}
-        </div>
-
-        <button type="submit" class="btn-submit-v2" style="margin-top: 0.5rem;">Vytvořit účet</button>
+      <button type="submit" class="btn-submit">Vytvořit účet ➤</button>
     </form>
 
-    <p class="text-muted text-center" style="margin-top: 1.75rem; font-size: 14px;">
-        Už máš účet?
-        <a href="{% url 'login' %}" class="slide-link" style="font-weight: 600;">Přihlas se</a>
-    </p>
+    <div class="aux-links">Už máš účet? <a href="{% url 'login' %}">Přihlas se</a></div>
+  </div>
 </div>
 {% endblock %}

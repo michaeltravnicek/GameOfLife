@@ -1,37 +1,108 @@
 {% extends "base.html" %}
+{% load static %}
 
-{% block title %}O bodech — Game of Life{% endblock %}
+{% block title %}O bodech a cenách — Game of Life{% endblock %}
+
+{% block extra_head %}
+<style>
+body{background:var(--color-purple);background-image:var(--tex-purple);background-size:cover;background-attachment:fixed;font-family:var(--font-body);color:var(--color-cream-light);-webkit-font-smoothing:antialiased;min-height:100vh;overflow-x:hidden}
+
+.hero{position:relative;z-index:2;max-width:880px;margin:0 auto;padding:148px 24px 16px;text-align:center}
+.eyebrow{font-family:var(--font-mono);font-style:italic;font-size:13px;letter-spacing:.3em;text-transform:uppercase;color:var(--color-pink);margin-bottom:8px;display:inline-flex;align-items:center;gap:10px}
+.eyebrow::before,.eyebrow::after{content:'✦';font-size:11px;opacity:.9}
+.hero h1{font-family:var(--font-display);font-size:clamp(56px,8vw,108px);line-height:.92;color:var(--color-cream-light);text-transform:uppercase;letter-spacing:.04em;text-shadow:0 6px 34px rgba(0,0,0,.6)}
+.hero .tagline{font-family:var(--font-serif);font-weight:300;font-style:italic;font-size:14px;color:rgba(255,241,212,.72);max-width:560px;margin:10px auto 0;line-height:1.5}
+.divider{width:120px;height:1px;margin:26px auto 0;background:repeating-linear-gradient(90deg,rgba(255,241,212,.45) 0 5px,transparent 5px 10px)}
+
+.main{position:relative;z-index:2;max-width:880px;margin:0 auto;padding:36px 24px 80px;display:grid;gap:24px}
+
+.info-card{position:relative;background:var(--tex-light) center/cover;border:2px dashed rgba(26,26,26,.40);border-radius:14px;padding:28px 30px;overflow:hidden}
+.card-title{font-family:var(--font-hv-rnd);font-size:30px;letter-spacing:.04em;color:#1a1a1a;text-transform:uppercase;margin-bottom:18px;display:flex;align-items:center;gap:14px}
+.card-title::before,.card-title::after{content:'';flex:1;max-width:60px;height:1px;background:repeating-linear-gradient(90deg,rgba(26,26,26,.4) 0 6px,transparent 6px 12px)}
+.body-text{font-family:var(--font-serif);font-size:15px;line-height:1.75;color:rgba(26,26,26,.82);margin-bottom:14px}
+.body-text:last-child{margin-bottom:0}
+ul.bullets{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:10px}
+ul.bullets li{font-family:var(--font-serif);font-size:14.5px;line-height:1.55;color:rgba(26,26,26,.85);display:flex;gap:10px;align-items:flex-start}
+ul.bullets li::before{content:'→';color:var(--color-pink);font-weight:700}
+
+.tier-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:14px}
+.tier{padding:18px 16px;border:1.5px dashed rgba(26,26,26,.3);border-radius:10px;background:rgba(255,255,255,.4)}
+.tier-name{font-family:var(--font-display);font-size:22px;color:var(--color-pink);letter-spacing:.04em;text-transform:uppercase;margin-bottom:4px}
+.tier-pts{font-family:var(--font-mono);font-style:italic;font-size:11px;color:rgba(26,26,26,.55);letter-spacing:.16em;text-transform:uppercase;margin-bottom:6px}
+.tier-desc{font-family:var(--font-serif);font-size:13px;line-height:1.5;color:rgba(26,26,26,.75)}
+
+.cta{position:relative;background:var(--color-pink);border-radius:14px;padding:32px;text-align:center;color:#fff}
+.cta h3{font-family:var(--font-display);font-size:32px;letter-spacing:.04em;margin-bottom:10px;text-transform:uppercase}
+.cta p{font-family:var(--font-serif);font-style:italic;font-size:14px;line-height:1.55;margin-bottom:18px;opacity:.95}
+.cta .links{display:inline-flex;gap:12px;flex-wrap:wrap;justify-content:center}
+.cta .links a{display:inline-flex;align-items:center;background:rgba(255,255,255,.18);border:1.5px dashed rgba(255,255,255,.5);color:#fff;padding:10px 22px;border-radius:9999px;font-family:var(--font-hv);font-weight:700;font-size:13px;letter-spacing:.06em;text-decoration:none;transition:background .18s}
+.cta .links a:hover{background:rgba(255,255,255,.3)}
+
+@media(max-width:680px){.tier-grid{grid-template-columns:1fr}}
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="page-head">
-    <div class="section-eyebrow">Info</div>
-    <h1>O bodech a cenách</h1>
-</div>
+<header class="hero">
+  <div class="eyebrow">Sezóna {{ current_season.name }}</div>
+  <h1>O bodech a cenách</h1>
+  <p class="tagline">Body, hodnocení, odměny. Tady se dozvíš, jak hra funguje a co můžeš získat.</p>
+  <div class="divider"></div>
+</header>
 
-<section class="section sec-dark">
-    <div class="section-inner" style="max-width: 860px;">
-        <div style="display: grid; gap: 1.5rem;">
-            <div class="lb-sidebar-card anim-fade-up">
-                <h3 class="lb-sidebar-title">Co jsou to body?</h3>
-                <div class="lb-sidebar-content">
-                    <p>Body jsou měřítkem tvého zapojení v Game of Life. Čím více akcí absolvuješ a čím více se do nich pouštíš naplno, tím více bodů získáš. Jsou základem leaderboardu a tvého žebříčku v komunitě.</p>
-                    <p>Body získáváš za účast na akcích, plnění speciálních výzev a aktivní zapojení do komunity. Každá akce má vlastní bodové ohodnocení podle náročnosti a typu.</p>
-                </div>
-            </div>
+<main class="main">
+  <section class="info-card">
+    <h2 class="card-title">Co jsou body?</h2>
+    <p class="body-text">Body jsou způsob, jakým Game of Life ohodnocuje tvoji účast a odvahu. Každá akce, na které se objevíš, ti přidá body podle náročnosti a délky.</p>
+    <p class="body-text">Body se sčítají v rámci sezóny — kdo má v sezóně nejvíc, zaslouží si oslavu. A samozřejmě cenu.</p>
+  </section>
 
-            <div class="lb-sidebar-card anim-fade-up-delay-1">
-                <h3 class="lb-sidebar-title">Ceny</h3>
-                <div class="lb-sidebar-content">
-                    <p>Aktuálně pracujeme na systému odměn, který bude založen na bodech z leaderboardu. Plánujeme zavést různé úrovně odměn, které budou reflektovat tvé místo v žebříčku a celkovou aktivitu.</p>
-                    <p>Naším cílem je, aby si body mohl použít k levnějšímu přístupu na akce a dalších výhod.</p>
-                    <p>Sleduj náš web a sociální sítě pro aktualizace o odměnách!</p>
-                </div>
-            </div>
-        </div>
+  <section class="info-card">
+    <h2 class="card-title">Jak sbírat body</h2>
+    <p class="body-text">Tady jsou všechny způsoby, jak si přihrát do leaderboardu:</p>
+    <ul class="bullets">
+      <li>Účast na akci — od 30 do 120 bodů podle typu a délky</li>
+      <li>Speciální výzvy během akcí — bonusové body za odvahu</li>
+      <li>Aktivita v komunitě — sdílení, organizace, pomoc s eventem</li>
+      <li>Příchod kámoše — když přivedeš nového hráče, dostaneš +20 bodů</li>
+    </ul>
+  </section>
 
-        <div style="margin-top: 2.5rem; text-align: center;">
-            <a href="{% url 'leaderboard' %}" class="btn btn-ghost">← Zpět na leaderboard</a>
-        </div>
+  <section class="info-card">
+    <h2 class="card-title">Odměny a výhody</h2>
+    <p class="body-text">V průběhu sezóny získáš podle počtu bodů různé výhody:</p>
+    <div class="tier-grid">
+      <div class="tier">
+        <div class="tier-name">Rookie</div>
+        <div class="tier-pts">0 — 200 pts</div>
+        <div class="tier-desc">Vítej v komunitě. Sleduj akce a sbírej první body.</div>
+      </div>
+      <div class="tier">
+        <div class="tier-name">Player</div>
+        <div class="tier-pts">200 — 600 pts</div>
+        <div class="tier-desc">Slevy v partnerských podnicích a přístup k uzavřeným akcím.</div>
+      </div>
+      <div class="tier">
+        <div class="tier-name">Veteran</div>
+        <div class="tier-pts">600 — 1200 pts</div>
+        <div class="tier-desc">Game of Life merch a pozvánky na premiérové akce.</div>
+      </div>
+      <div class="tier">
+        <div class="tier-name">Legend</div>
+        <div class="tier-pts">1200+ pts</div>
+        <div class="tier-desc">Hlavní cena na konci sezóny + věčná sláva.</div>
+      </div>
     </div>
-</section>
+  </section>
+
+  <section class="cta">
+    <h3>Chceš se zapojit?</h3>
+    <p>Sleduj nás na sociálních sítích, kde uvidíš všechny nadcházející akce.</p>
+    <div class="links">
+      <a href="https://www.instagram.com/gameofyolo/" target="_blank" rel="noopener">Instagram</a>
+      <a href="#" target="_blank" rel="noopener">Facebook</a>
+      <a href="{% url 'events' %}">Kalendář akcí</a>
+    </div>
+  </section>
+</main>
 {% endblock %}
