@@ -83,13 +83,10 @@ body{background:var(--color-purple);background-image:var(--tex-purple);backgroun
 .gal-footer{text-align:center;padding:32px 0 48px}
 
 @media(max-width:900px){.events-grid{grid-template-columns:1fr;gap:28px}.about-inner{grid-template-columns:1fr;gap:32px}.about-photo{max-width:260px;margin:0 auto}.gal-side{width:140px}}
-@media(max-width:640px){
-  .gal-container{height:60vw;min-height:240px;gap:3px}
-  .gal-side{width:48px;opacity:.12;border:1px solid rgba(255,255,255,.15);cursor:pointer;transition:opacity .3s,width .3s}
-  .gal-side:active{opacity:.35;width:56px}
-  .gal-main{border:2px solid rgba(255,255,255,.8)}
-  .gal-header{padding:32px 0 24px}
-}
+/*
+@media(max-width:640px){.gal-side{width:44px;opacity:.18;border:1px solid rgba(255,255,255,.25);filter:brightness(.55) saturate(.5)}.gal-container{height:55vw;min-height:180px;gap:3px}}
+*/
+@media(max-width:640px){.gal-side{width: 18px; gap: 3px;}}
 
 </style>
 {% endblock %}
@@ -267,17 +264,9 @@ body{background:var(--color-purple);background-image:var(--tex-purple);backgroun
   galLeft.addEventListener('click', function(){ galCur = (galCur-1+images.length)%images.length; updateGal(); });
   galRight.addEventListener('click', function(){ galCur = (galCur+1)%images.length; updateGal(); });
   // swipe on main image for mobile
-  var gtx = 0, gty = 0;
-  galMain.addEventListener('touchstart', function(e){ gtx = e.touches[0].clientX; gty = e.touches[0].clientY; galMain.style.opacity='0.85'; }, {passive:true});
-  galMain.addEventListener('touchend', function(e){
-    galMain.style.opacity='1';
-    var dx = e.changedTouches[0].clientX - gtx;
-    var dy = Math.abs(e.changedTouches[0].clientY - gty);
-    if (Math.abs(dx) > 40 && dy < 60) {
-      galCur = dx < 0 ? (galCur + 1) % images.length : (galCur - 1 + images.length) % images.length;
-      updateGal();
-    }
-  }, {passive:true});
+  var gtx = 0;
+  galMain.addEventListener('touchstart', function(e){ gtx = e.touches[0].clientX; }, {passive:true});
+  galMain.addEventListener('touchend', function(e){ var dx=e.changedTouches[0].clientX-gtx; if(Math.abs(dx)>40){ galCur=dx<0?(galCur+1)%images.length:(galCur-1+images.length)%images.length; updateGal(); } });
 })();
 </script>
 {% endblock %}
