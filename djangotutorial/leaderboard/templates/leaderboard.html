@@ -103,6 +103,45 @@ main.lb-main{position:relative;z-index:2;max-width:880px;margin:0 auto;padding:4
   .row{grid-template-columns:36px 1fr 80px;padding:9px 10px;gap:8px}
   .row .pt{font-size:18px}
 }
+
+/* Hero entrance */
+@keyframes heroFade{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
+.eyebrow {animation:heroFade .6s cubic-bezier(.22,.68,0,1.2) both .05s}
+.hero h1 {animation:heroFade .8s cubic-bezier(.22,.68,0,1.2) both .2s}
+.divider {animation:heroFade .5s ease both .42s}
+.controls{animation:heroFade .5s ease both .56s}
+
+/* Podium: pods rise from floor (p3 → p2 → p1 for reveal effect) */
+@keyframes podRise{from{opacity:0;transform:translateY(36px)}to{opacity:1;transform:none}}
+.pod{animation:podRise .6s cubic-bezier(.22,.68,0,1.2) both}
+.pod.p3{animation-delay:.1s}
+.pod.p2{animation-delay:.22s}
+.pod.p1{animation-delay:.38s}
+
+/* Trophy pops onto the podium after it appears */
+@keyframes trophyPop{
+  0%  {transform:scale(0) rotate(-18deg)}
+  60% {transform:scale(1.22) rotate(5deg)}
+  80% {transform:scale(.9) rotate(-2deg)}
+  100%{transform:none}
+}
+.pod .trophy{transform-origin:center;animation:trophyPop .5s cubic-bezier(.22,.68,0,1.2) both}
+.pod.p3 .trophy{animation-delay:.58s}
+.pod.p2 .trophy{animation-delay:.70s}
+.pod.p1 .trophy{animation-delay:.88s}
+
+/* List section: animate in when pane is active (no IntersectionObserver needed) */
+@keyframes rowSlide{from{opacity:0;transform:translateX(-16px)}to{opacity:1;transform:none}}
+.lb-pane.on .list-label{animation:heroFade .45s ease both .30s}
+.lb-pane.on .list{animation:heroFade .45s ease both .36s}
+.lb-pane.on .row{animation:rowSlide .40s cubic-bezier(.22,.68,0,1.2) both .40s}
+.lb-pane.on .row:nth-child(2){animation-delay:.46s}
+.lb-pane.on .row:nth-child(3){animation-delay:.52s}
+.lb-pane.on .row:nth-child(4){animation-delay:.58s}
+.lb-pane.on .row:nth-child(5){animation-delay:.64s}
+.lb-pane.on .row:nth-child(6){animation-delay:.70s}
+.lb-pane.on .row:nth-child(7){animation-delay:.76s}
+.lb-pane.on .row:nth-child(8){animation-delay:.82s}
 </style>
 {% endblock %}
 
@@ -168,7 +207,8 @@ main.lb-main{position:relative;z-index:2;max-width:880px;margin:0 auto;padding:4
       <div class="list-label">Další hráči</div>
       <div class="list"><div class="list-inner">
         {% for p in total_players|slice:"3:" %}
-          <a class="row" data-name="{{ p.name|lower }}" href="{% if p.profile_username %}{% url 'profile' p.profile_username %}{% else %}{% url 'public_user' p.id %}{% endif %}">
+          <a class="row" data-name="{{ p.name|lower }}"
+             href="{% if p.profile_username %}{% url 'profile' p.profile_username %}{% else %}{% url 'public_user' p.id %}{% endif %}">
             <div class="rk">{{ p.rank }}.</div>
             <div class="nm">
               <div class="av">{{ p.name|slice:":2"|upper }}</div>
@@ -222,7 +262,8 @@ main.lb-main{position:relative;z-index:2;max-width:880px;margin:0 auto;padding:4
       <div class="list-label">Další hráči</div>
       <div class="list"><div class="list-inner">
         {% for p in month_players|slice:"3:" %}
-          <a class="row" data-name="{{ p.name|lower }}" href="{% if p.profile_username %}{% url 'profile' p.profile_username %}{% else %}{% url 'public_user' p.id %}{% endif %}">
+          <a class="row" data-name="{{ p.name|lower }}"
+             href="{% if p.profile_username %}{% url 'profile' p.profile_username %}{% else %}{% url 'public_user' p.id %}{% endif %}">
             <div class="rk">{{ p.rank }}.</div>
             <div class="nm">
               <div class="av">{{ p.name|slice:":2"|upper }}</div>

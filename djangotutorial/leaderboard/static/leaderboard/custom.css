@@ -1499,3 +1499,41 @@ textarea { min-height: 120px; resize: vertical; }
   .gol-footer-inner { grid-template-columns: 1fr; }
   .gol-nav-links.desktop { gap: 14px; }
 }
+
+/* ============================================================================
+   Scroll-Triggered Animations
+   Usage: <el data-anim="up|right|left|scale|fade" data-delay="1-8">
+   JS in base.html adds .anim-in via IntersectionObserver.
+   animation-delay only activates after .anim-in is present, so
+   it does NOT bleed into hover transitions on the same element.
+============================================================================ */
+@keyframes golFadeUp    { from{opacity:0;transform:translateY(28px)} to{opacity:1;transform:none} }
+@keyframes golFadeRight { from{opacity:0;transform:translateX(-28px)} to{opacity:1;transform:none} }
+@keyframes golFadeLeft  { from{opacity:0;transform:translateX(28px)}  to{opacity:1;transform:none} }
+@keyframes golFadeScale { from{opacity:0;transform:scale(.93)}        to{opacity:1;transform:none} }
+@keyframes golFadeIn    { from{opacity:0}                             to{opacity:1} }
+
+[data-anim] { opacity: 0; }
+[data-anim].anim-in {
+  animation-fill-mode: both;
+  animation-duration: .65s;
+  animation-timing-function: cubic-bezier(.22,.68,0,1.2);
+}
+[data-anim="up"].anim-in    { animation-name: golFadeUp; }
+[data-anim="right"].anim-in { animation-name: golFadeRight; }
+[data-anim="left"].anim-in  { animation-name: golFadeLeft; }
+[data-anim="scale"].anim-in { animation-name: golFadeScale; }
+[data-anim="fade"].anim-in  { animation-name: golFadeIn; animation-timing-function: ease; animation-duration: .5s; }
+
+[data-anim].anim-in[data-delay="1"] { animation-delay: .07s; }
+[data-anim].anim-in[data-delay="2"] { animation-delay: .15s; }
+[data-anim].anim-in[data-delay="3"] { animation-delay: .23s; }
+[data-anim].anim-in[data-delay="4"] { animation-delay: .32s; }
+[data-anim].anim-in[data-delay="5"] { animation-delay: .42s; }
+[data-anim].anim-in[data-delay="6"] { animation-delay: .53s; }
+[data-anim].anim-in[data-delay="7"] { animation-delay: .65s; }
+[data-anim].anim-in[data-delay="8"] { animation-delay: .78s; }
+
+@media (prefers-reduced-motion: reduce) {
+  [data-anim], [data-anim].anim-in { animation: none !important; opacity: 1 !important; transform: none !important; }
+}

@@ -72,6 +72,30 @@ main.events-main{position:relative;z-index:2;max-width:1100px;margin:0 auto;padd
 
 @media(max-width:1024px){.events-grid{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:720px){.events-grid{grid-template-columns:1fr}.hero{padding:120px 20px 14px}.controls{flex-direction:column;align-items:stretch;gap:12px}.search{max-width:100%}}
+
+/* Hero entrance */
+@keyframes heroFade{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
+.eyebrow       {animation:heroFade .6s cubic-bezier(.22,.68,0,1.2) both .05s}
+.hero h1       {animation:heroFade .8s cubic-bezier(.22,.68,0,1.2) both .2s}
+.hero .tagline {animation:heroFade .6s ease both .36s}
+.divider       {animation:heroFade .5s ease both .5s}
+.controls      {animation:heroFade .5s ease both .62s}
+.locations     {animation:heroFade .5s ease both .72s}
+
+/* Card stagger on initial page load (nth-child within each grid) */
+@keyframes cardIn{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
+.ev-card{animation:cardIn .55s cubic-bezier(.22,.68,0,1.2) both}
+.ev-card:nth-child(1){animation-delay:.05s}
+.ev-card:nth-child(2){animation-delay:.14s}
+.ev-card:nth-child(3){animation-delay:.23s}
+.ev-card:nth-child(4){animation-delay:.32s}
+.ev-card:nth-child(5){animation-delay:.41s}
+.ev-card:nth-child(6){animation-delay:.50s}
+.ev-card:nth-child(n+7){animation-delay:.58s}
+
+/* Cards revealed by filter after page load get a quick fade-in */
+@keyframes cardReveal{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.ev-card.card-reveal{animation:cardReveal .28s ease both}
 </style>
 {% endblock %}
 
@@ -107,7 +131,7 @@ main.events-main{position:relative;z-index:2;max-width:1100px;margin:0 auto;padd
 
 <main class="events-main">
   <div id="upcoming-group">
-    <div class="group-label">Nadcházející</div>
+    <div class="group-label" data-anim="fade">Nadcházející</div>
     <div class="events-grid" id="upcoming-grid">
       {% for event in events %}
         {% if not event.is_past %}
@@ -141,7 +165,7 @@ main.events-main{position:relative;z-index:2;max-width:1100px;margin:0 auto;padd
   </div>
 
   <div id="past-group">
-    <div class="group-label past">Proběhlo</div>
+    <div class="group-label past" data-anim="fade">Proběhlo</div>
     <div class="events-grid" id="past-grid">
       {% for event in events %}
         {% if event.is_past %}
@@ -190,6 +214,7 @@ main.events-main{position:relative;z-index:2;max-width:1100px;margin:0 auto;padd
   const emptyMsg = document.getElementById('empty-msg');
   const allCards = document.querySelectorAll('.ev-card');
 
+  var _initialLoad = true;
   function applyFilters(){
     const q = query.trim().toLowerCase();
     let visibleUp = 0, visiblePast = 0;
@@ -204,7 +229,14 @@ main.events-main{position:relative;z-index:2;max-width:1100px;margin:0 auto;padd
       if (currentCity && city !== currentCity) show = false;
       if (q && search.indexOf(q) === -1) show = false;
 
+      const wasHidden = card.style.display === 'none';
       card.style.display = show ? '' : 'none';
+      // Animate cards that were hidden and are now being revealed (not on initial load)
+      if (show && wasHidden && !_initialLoad) {
+        card.classList.remove('card-reveal');
+        void card.offsetWidth;
+        card.classList.add('card-reveal');
+      }
       if (show) { if (isPast) visiblePast++; else visibleUp++; }
     });
 
@@ -244,6 +276,7 @@ main.events-main{position:relative;z-index:2;max-width:1100px;margin:0 auto;padd
   }
 
   applyFilters();
+  _initialLoad = false;
 })();
 </script>
 {% endblock %}

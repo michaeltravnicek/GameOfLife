@@ -182,6 +182,20 @@
     showNext();
 })();
 {% endif %}
+
+// Scroll-triggered animations — IntersectionObserver for [data-anim] elements
+(function(){
+    if (!window.IntersectionObserver) {
+        document.querySelectorAll('[data-anim]').forEach(function(el){ el.style.opacity = '1'; });
+        return;
+    }
+    var obs = new IntersectionObserver(function(entries){
+        entries.forEach(function(e){
+            if (e.isIntersecting) { e.target.classList.add('anim-in'); obs.unobserve(e.target); }
+        });
+    }, { threshold: 0.08, rootMargin: '0px 0px -20px 0px' });
+    document.querySelectorAll('[data-anim]').forEach(function(el){ obs.observe(el); });
+})();
 </script>
 
 {% block extra_js %}{% endblock %}

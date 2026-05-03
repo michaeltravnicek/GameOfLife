@@ -88,6 +88,14 @@ body{background:var(--color-purple);background-image:var(--tex-purple);backgroun
 */
 @media(max-width:640px){.gal-side{width: 18px; gap: 3px;}}
 
+/* Hero entrance — plays on page load, no scroll needed */
+@keyframes heroFade{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
+.hero-eyebrow{animation:heroFade .7s cubic-bezier(.22,.68,0,1.2) both .1s}
+.hero-title  {animation:heroFade .8s cubic-bezier(.22,.68,0,1.2) both .25s}
+.hero-sub    {animation:heroFade .7s cubic-bezier(.22,.68,0,1.2) both .42s}
+.hero-inner .btn-pill{animation:heroFade .7s cubic-bezier(.22,.68,0,1.2) both .58s}
+.hero-dots   {animation:heroFade .5s ease both .75s}
+
 </style>
 {% endblock %}
 
@@ -127,14 +135,14 @@ body{background:var(--color-purple);background-image:var(--tex-purple);backgroun
 </section>
 
 <section class="events-section">
-  <h2 class="sec-title"><span class="star">✦</span> Nadcházející akce <span class="star">✦</span></h2>
+  <h2 class="sec-title" data-anim="up"><span class="star">✦</span> Nadcházející akce <span class="star">✦</span></h2>
   <div class="events-grid">
     {% for event in upcoming_events %}
-      <a class="ev-card" href="{% url 'event_detail' event.slug %}">
+      <a class="ev-card" href="{% url 'event_detail' event.slug %}" data-anim="up" data-delay="{{ forloop.counter }}">
         {% if event.logo %}
-          <img class="ev-badge" src="{{ event.logo.url }}" alt="{{ event.name }}" />
+          <img class="ev-badge" src="{{ event.logo.url }}" alt="{{ event.name }}" loading="lazy" />
         {% else %}
-          <img class="ev-badge" src="{% static 'leaderboard/logos/GOL_main_logo_pink.png' %}" alt="{{ event.name }}" />
+          <img class="ev-badge" src="{% static 'leaderboard/logos/GOL_main_logo_pink.png' %}" alt="{{ event.name }}" loading="lazy" />
         {% endif %}
         <div class="ev-title">{{ event.name }}</div>
         <div class="ev-meta">
@@ -147,7 +155,7 @@ body{background:var(--color-purple);background-image:var(--tex-purple);backgroun
       <div class="empty-msg">Žádné nadcházející akce. Sleduj nás na sítích!</div>
     {% endfor %}
   </div>
-  <div class="see-all">
+  <div class="see-all" data-anim="fade" data-delay="4">
     <a href="{% url 'events' %}" class="btn-pill">Všechny akce <span class="arr"></span></a>
   </div>
 </section>
@@ -156,8 +164,8 @@ body{background:var(--color-purple);background-image:var(--tex-purple);backgroun
   <div class="lb-bg"></div>
   <div class="lb-tint"></div>
   <div class="lb-inner">
-    <h2 class="lb-title"><span class="tr">🏆</span> Top hráči <span class="tr">🏆</span></h2>
-    <div class="lb-card">
+    <h2 class="lb-title" data-anim="up"><span class="tr">🏆</span> Top hráči <span class="tr">🏆</span></h2>
+    <div class="lb-card" data-anim="scale" data-delay="2">
       <div class="lb-head"><div>#</div><div>hráč</div><div style="text-align:right">pts</div></div>
       {% for player in top_players %}
         {% if player.profile_username %}
@@ -176,24 +184,24 @@ body{background:var(--color-purple);background-image:var(--tex-purple);backgroun
         <div class="lb-row"><div></div><div style="color:rgba(255,255,255,.55);font-style:italic">Zatím žádní hráči.</div><div></div></div>
       {% endfor %}
     </div>
-    <div class="lb-cta"><a href="{% url 'leaderboard' %}" style="font-family:var(--font-hv);font-weight:300;font-style:italic;font-size:12px;color:rgba(255,255,255,.65);border-bottom:1px dashed rgba(255,255,255,.45);padding-bottom:2px">Celý leaderboard →</a></div>
+    <div class="lb-cta" data-anim="fade" data-delay="4"><a href="{% url 'leaderboard' %}" style="font-family:var(--font-hv);font-weight:300;font-style:italic;font-size:12px;color:rgba(255,255,255,.65);border-bottom:1px dashed rgba(255,255,255,.45);padding-bottom:2px">Celý leaderboard →</a></div>
   </div>
 </section>
 
 <section class="about-section">
   <div class="about-inner">
-    <div class="about-photo">
-      <img src="{% static 'leaderboard/gallery/gal3.jpg' %}" alt="Game of Life komunita" />
+    <div class="about-photo" data-anim="right">
+      <img src="{% static 'leaderboard/gallery/gal3.jpg' %}" alt="Game of Life komunita" loading="lazy" />
     </div>
-    <div>
+    <div data-anim="left" data-delay="2">
       <div class="about-eyebrow">— O nás —</div>
       <h3 class="about-heading">Komunita, která hraje život naplno</h3>
       <p class="about-body"><strong>Game of Life</strong> je celoroční komunitní hra plná zábavy, výzev a nezapomenutelných zážitků. Vzešla z přesvědčení, že nejlepší okamžiky nevznikají samy — ale když se správní lidé potkají ve správný čas.</p>
       <p class="about-body">Každý event je bodovaný. Každá výzva tě posune dál. Nejde jen o body — jde o přátelství, vzpomínky a odvahu vyzkoušet něco nového.</p>
       <div class="stats-row">
-        <div class="stat-item"><div class="stat-num">{{ about_stats.players }}</div><div class="stat-label">Hráčů</div></div>
-        <div class="stat-item"><div class="stat-num">{{ about_stats.events }}</div><div class="stat-label">Events</div></div>
-        <div class="stat-item"><div class="stat-num">{{ about_stats.points }}</div><div class="stat-label">Bodů</div></div>
+        <div class="stat-item" data-anim="up" data-delay="1"><div class="stat-num" data-countup="{{ about_stats.players }}">{{ about_stats.players }}</div><div class="stat-label">Hráčů</div></div>
+        <div class="stat-item" data-anim="up" data-delay="2"><div class="stat-num" data-countup="{{ about_stats.events }}">{{ about_stats.events }}</div><div class="stat-label">Events</div></div>
+        <div class="stat-item" data-anim="up" data-delay="3"><div class="stat-num" data-countup="{{ about_stats.points }}">{{ about_stats.points }}</div><div class="stat-label">Bodů</div></div>
       </div>
     </div>
   </div>
@@ -201,9 +209,9 @@ body{background:var(--color-purple);background-image:var(--tex-purple);backgroun
 
 <section class="gallery-section">
   <div class="gal-header">
-    <h2 class="sec-title"><span class="star">📷</span> Galerie <span class="star">📷</span></h2>
+    <h2 class="sec-title" data-anim="up"><span class="star">📷</span> Galerie <span class="star">📷</span></h2>
   </div>
-  <div class="gal-container">
+  <div class="gal-container" data-anim="scale" data-delay="2">
     <div class="gal-side" id="galLeft" style="background-image:url('{% static "leaderboard/gallery/gal3.jpg" %}')"></div>
     <div class="gal-main" id="galMain" style="background-image:url('{% static "leaderboard/gallery/gal0.jpg" %}')"></div>
     <div class="gal-side" id="galRight" style="background-image:url('{% static "leaderboard/gallery/gal1.jpg" %}')"></div>
@@ -216,6 +224,32 @@ body{background:var(--color-purple);background-image:var(--tex-purple);backgroun
 
 {% block extra_js %}
 <script>
+// Stats countup — triggers when each .stat-num scrolls into view
+(function(){
+  var nums = document.querySelectorAll('[data-countup]');
+  if (!nums.length || !window.IntersectionObserver) return;
+  var obs = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if (!e.isIntersecting) return;
+      var el = e.target;
+      var target = parseInt(el.dataset.countup, 10);
+      if (isNaN(target)) return;
+      obs.unobserve(el);
+      var dur = 1500, t0 = null;
+      function step(ts){
+        if (!t0) t0 = ts;
+        var p = Math.min((ts - t0) / dur, 1);
+        var ease = 1 - Math.pow(1 - p, 3);
+        el.textContent = Math.round(ease * target);
+        if (p < 1) requestAnimationFrame(step);
+        else el.textContent = target;
+      }
+      requestAnimationFrame(step);
+    });
+  }, {threshold: 0.6});
+  nums.forEach(function(el){ obs.observe(el); });
+})();
+
 (function(){
   const slideEls = document.querySelectorAll('.hero-slide');
   const dots = document.querySelectorAll('.hero-dot');
@@ -240,7 +274,7 @@ body{background:var(--color-purple);background-image:var(--tex-purple);backgroun
     updateText(cur);
   }
   dots.forEach(function(d){ d.addEventListener('click', function(){ goSlide(+d.dataset.i); }); });
-  updateText(0);
+  // Don't call updateText(0) — initial text is already in the HTML and the CSS animation handles the entrance
   setInterval(function(){ goSlide((cur + 1) % slideEls.length); }, 5000);
 })();
 (function(){
