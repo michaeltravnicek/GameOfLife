@@ -44,6 +44,12 @@ main.content-main{position:relative;z-index:2;max-width:880px;margin:0 auto;padd
 .back-link:hover{color:var(--color-pink);border-color:var(--color-pink)}
 
 @media(max-width:720px){.hero{padding:120px 20px 14px}main.content-main{padding:30px 20px 60px}.section-title::before,.section-title::after{display:none}.info-card{padding:22px}}
+
+@keyframes heroFade{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
+.eyebrow  {animation:heroFade .6s cubic-bezier(.22,.68,0,1.2) both .05s}
+.hero h1  {animation:heroFade .8s cubic-bezier(.22,.68,0,1.2) both .20s}
+.hero .tagline{animation:heroFade .6s ease both .36s}
+.divider  {animation:heroFade .5s ease both .52s}
 </style>
 {% endblock %}
 
@@ -60,15 +66,15 @@ main.content-main{position:relative;z-index:2;max-width:880px;margin:0 auto;padd
 
 <main class="content-main">
   <div class="info-section">
-    <div class="section-title">Co jsou body?</div>
-    <div class="info-card">
+    <div class="section-title" data-anim="up">Co jsou body?</div>
+    <div class="info-card" data-anim="up" data-delay="2">
       <p class="card-text">Body měří tvoje zapojení v Game of Life. Jsou odměnou za účast na akcích, za odvahu jít mimo komfortní zónu a za aktivní angažování se v komunitě. Tvůj celkový počet bodů určuje tvoji pozici na leaderboardu a ovlivňuje tvůj status v komunitě.</p>
     </div>
   </div>
 
   <div class="info-section">
-    <div class="section-title">Jak sbírat body</div>
-    <div class="info-card">
+    <div class="section-title" data-anim="up">Jak sbírat body</div>
+    <div class="info-card" data-anim="up" data-delay="2">
       <div class="card-heading">Zdroje bodů</div>
       <ul class="points-list">
         <li>Účast na akcích Game of Life — každá akce má svou hodnotu bodů na základě obtížnosti a typu</li>
@@ -76,7 +82,7 @@ main.content-main{position:relative;z-index:2;max-width:880px;margin:0 auto;padd
         <li>Aktivita v komunitě — zapojení a přispívání do komunity</li>
       </ul>
     </div>
-    <div class="info-card">
+    <div class="info-card" data-anim="up" data-delay="3">
       <div class="card-heading">Bodový systém</div>
       <p class="card-text">Každá akce má přiřazenou hodnotu bodů na základě:</p>
       <ul class="points-list">
@@ -88,8 +94,8 @@ main.content-main{position:relative;z-index:2;max-width:880px;margin:0 auto;padd
   </div>
 
   <div class="info-section">
-    <div class="section-title">Odměny a výhody</div>
-    <div class="info-card">
+    <div class="section-title" data-anim="up">Odměny a výhody</div>
+    <div class="info-card" data-anim="up" data-delay="2">
       <div class="card-heading">Reward systém</div>
       <p class="card-text">Game of Life vyvíjí systém odměn propojený s tvou pozicí na leaderboardu. Plánujeme zavést:</p>
       <ul class="points-list">

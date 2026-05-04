@@ -18,6 +18,7 @@ from .models import (
     EventRSVP,
     ImageToEvent,
     LastUpdate,
+    PhotoLike,
     User,
     UserPhoto,
     UserToEvent,
@@ -399,6 +400,7 @@ def gallery_view(request):
         if year_key and year_key not in season_names:
             season_names[year_key] = f"Sezóna {date.year}"
         js_user.append({
+            "id": up.id,
             "url": up.image.url,
             "event_name": up.event.name if up.event else "",
             "event_slug": up.event.slug if up.event else "",
@@ -409,6 +411,21 @@ def gallery_view(request):
             "uploaded_by": up.auth_user.get_full_name() or up.auth_user.username,
         })
 
+    # Like counts and current user's liked IDs for community photos
+    user_photo_ids = [p["id"] for p in js_user]
+    like_counts = {
+        str(row["photo_id"]): row["c"]
+        for row in PhotoLike.objects.filter(photo_id__in=user_photo_ids)
+        .values("photo_id")
+        .annotate(c=Count("id"))
+    }
+    liked_ids = []
+    if request.user.is_authenticated:
+        liked_ids = list(
+            PhotoLike.objects.filter(photo_id__in=user_photo_ids, user=request.user)
+            .values_list("photo_id", flat=True)
+        )
+
     # Events for upload form selector
     events_for_form = list(
         Event.objects.filter(date__lt=timezone.now()).order_by("-date").values("id", "name", "date")
@@ -418,6 +435,8 @@ def gallery_view(request):
         "js_official": json.dumps(js_official),
         "js_user": json.dumps(js_user),
         "season_names_json": json.dumps(season_names),
+        "like_counts_json": json.dumps(like_counts),
+        "liked_ids_json": json.dumps(liked_ids),
         "events_for_form": events_for_form,
     })
 
@@ -439,6 +458,19 @@ def upload_user_photo_view(request):
     UserPhoto.objects.create(auth_user=request.user, event=event, image=image, caption=caption)
     messages.success(request, "Fotografie nahrána, díky!")
     return redirect(request.POST.get("next") or "gallery")
+
+
+@login_required
+@require_http_methods(["POST"])
+def toggle_photo_like_view(request, photo_id):
+    photo = get_object_or_404(UserPhoto, id=photo_id)
+    like, created = PhotoLike.objects.get_or_create(photo=photo, user=request.user)
+    if not created:
+        like.delete()
+        liked = False
+    else:
+        liked = True
+    return JsonResponse({"liked": liked, "count": photo.likes.count()})
 
 
 def public_user_view(request, user_id):

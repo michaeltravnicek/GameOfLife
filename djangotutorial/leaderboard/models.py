@@ -153,6 +153,18 @@ class UserPhoto(models.Model):
         return f"{self.auth_user} → {self.event or 'bez akce'}"
 
 
+class PhotoLike(models.Model):
+    photo = models.ForeignKey(UserPhoto, on_delete=models.CASCADE, related_name="likes")
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="photo_likes")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("photo", "user")
+
+    def __str__(self):
+        return f"{self.user} ♥ photo#{self.photo_id}"
+
+
 class ProfileQuestion(models.Model):
     text = models.CharField(max_length=255)
     order = models.IntegerField(default=0)

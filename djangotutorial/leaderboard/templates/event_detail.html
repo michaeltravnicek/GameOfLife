@@ -97,6 +97,11 @@ main.detail-main{position:relative;z-index:2;max-width:880px;margin:0 auto;paddi
 .upload-inline .btn-cta{font-size:12px;padding:9px 18px}
 
 @media(max-width:720px){.hero{padding:110px 18px 8px}.quick-grid{grid-template-columns:1fr;gap:10px}.gal-grid{grid-template-columns:repeat(2,1fr)}.user-photo-grid{grid-template-columns:repeat(2,1fr)}.rsvp-strip{flex-direction:column;align-items:stretch;border-radius:18px}.btn-cta{justify-content:center}}
+
+@keyframes heroFade{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+.badges   {animation:heroFade .6s cubic-bezier(.22,.68,0,1.2) both .08s}
+.hero-logo{animation:heroFade .8s cubic-bezier(.22,.68,0,1.2) both .22s}
+.divider  {animation:heroFade .5s ease both .48s}
 </style>
 {% endblock %}
 
@@ -118,13 +123,13 @@ main.detail-main{position:relative;z-index:2;max-width:880px;margin:0 auto;paddi
 </header>
 
 <main class="detail-main">
-  <div class="quick-grid">
+  <div class="quick-grid" data-anim="up">
     <div class="qcell"><div class="q-label">Datum</div><div class="q-value">{{ event.date|date:"j. n. Y" }}</div><div class="q-sub">{{ event.date|date:"l" }}</div></div>
     <div class="qcell"><div class="q-label">Čas</div><div class="q-value">{{ event.date|date:"H:i" }}</div><div class="q-sub">{{ event.name }}</div></div>
     <div class="qcell"><div class="q-label">Místo</div><div class="q-value">{{ event.place }}</div><div class="q-sub">&nbsp;</div></div>
   </div>
 
-  <div class="rsvp-strip">
+  <div class="rsvp-strip" data-anim="up" data-delay="2">
     <div class="rsvp-info">
       <span class="pts-tag">+{{ event.points }} pts</span>
       {% if event.capacity %}
@@ -152,14 +157,14 @@ main.detail-main{position:relative;z-index:2;max-width:880px;margin:0 auto;paddi
   </div>
 
   {% if event.description %}
-  <section class="info-card">
+  <section class="info-card" data-anim="up">
     <h2 class="card-title">Popis</h2>
     <p class="desc-text">{{ event.description }}</p>
   </section>
   {% endif %}
 
   {% if event.rules %}
-  <section class="info-card">
+  <section class="info-card" data-anim="up" data-delay="2">
     <h2 class="card-title">Pravidla</h2>
     <ol class="rules">
       {% for rule in event.rules.splitlines %}
@@ -172,7 +177,7 @@ main.detail-main{position:relative;z-index:2;max-width:880px;margin:0 auto;paddi
   {% endif %}
 
   {% if official_images or user_photos %}
-  <section class="info-card">
+  <section class="info-card" data-anim="up" data-delay="3">
     <h2 class="card-title">Galerie</h2>
     {% if official_images and user_photos %}
     <div class="gal-tabs">
@@ -222,7 +227,7 @@ main.detail-main{position:relative;z-index:2;max-width:880px;margin:0 auto;paddi
     {% endif %}
   </section>
   {% elif not is_future and request.user.is_authenticated %}
-  <section class="info-card">
+  <section class="info-card" data-anim="up" data-delay="3">
     <h2 class="card-title">Galerie</h2>
     <p style="text-align:center;color:rgba(26,26,26,.45);font-style:italic;padding:10px 0 6px">Zatím žádné fotky. Buď první!</p>
     <button class="btn-add-photo" id="toggle-upload">+ Přidat svou fotku</button>
@@ -246,7 +251,7 @@ main.detail-main{position:relative;z-index:2;max-width:880px;margin:0 auto;paddi
   {% endif %}
 
   {% if not is_future and request.user.is_authenticated %}
-  <section class="info-card">
+  <section class="info-card" data-anim="up">
     <h2 class="card-title">Tvá zpětná vazba</h2>
     {% if not existing_feedback %}
     <div class="pts-notice">⭐ Odeslání zpětné vazby přidá {{ event.points }} bodů za účast (pokud ještě nemáš)</div>

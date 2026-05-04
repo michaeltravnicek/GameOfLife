@@ -26,6 +26,7 @@ urlpatterns = [
     path("", include("accounts.urls")),
 
     # API
+    path("api/photos/<int:photo_id>/like/", views.toggle_photo_like_view, name="photo_like"),
     path("api/user/<int:user_id>/", views.user_detail_view, name="user-detail"),
     path("api/events/<str:event_id>/images/", views.events_image_views, name="images"),
     path("api/profile/<str:username>/monthly-points/", views.profile_monthly_points_api, name="profile-monthly-points"),

@@ -71,7 +71,8 @@ body{background:#1a0f0a;font-family:var(--font-body);color:var(--color-cream-lig
 .month-heading::after{content:'';flex:1;height:1px;background:repeating-linear-gradient(90deg,rgba(255,241,212,.32) 0 6px,transparent 6px 12px)}
 .month-count{font-family:var(--font-mono);font-style:italic;font-size:13px;color:rgba(255,241,212,.45);letter-spacing:.1em;margin-bottom:20px}
 .photo-grid{columns:3;column-gap:8px}
-.photo-item{break-inside:avoid;margin-bottom:8px;position:relative;overflow:hidden;cursor:pointer;border:2px solid rgba(255,255,255,.0);transition:border-color .22s,transform .22s;display:block}
+.photo-item-wrap{break-inside:avoid;margin-bottom:8px;position:relative}
+.photo-item{position:relative;overflow:hidden;cursor:pointer;border:2px solid rgba(255,255,255,.0);transition:border-color .22s,transform .22s;display:block}
 .photo-item:hover{border-color:var(--color-pink);transform:scale(.99)}
 .photo-item.user-photo:hover{border-color:#4a8a5e}
 .photo-item img{width:100%;display:block;transition:filter .25s}
@@ -84,6 +85,12 @@ body{background:#1a0f0a;font-family:var(--font-body);color:var(--color-cream-lig
 
 @media(max-width:900px){.photo-grid{columns:2};.gal-side{width:clamp(70px,13vw,130px)}.gal-container{height:calc(100vh - 370px);min-height:260px}}
 @media(max-width:640px){.photo-grid{columns:1};.top-controls{padding:0 16px;gap:10px}.view-toggle{flex-wrap:wrap};.gal-side{width:24px;opacity:.08};.gal-container{gap:3px;height:calc(100vh - 200px);min-height:400px};.gal-main{width:90%;flex:0}}
+
+@keyframes heroFade{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
+.eyebrow      {animation:heroFade .6s cubic-bezier(.22,.68,0,1.2) both .05s}
+.hero h1      {animation:heroFade .8s cubic-bezier(.22,.68,0,1.2) both .20s}
+.hero .tagline{animation:heroFade .6s ease both .36s}
+.divider      {animation:heroFade .5s ease both .52s}
 
 .lightbox{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.94);display:none;align-items:center;justify-content:center;padding:40px}
 .lightbox.open{display:flex;flex-direction:column}
@@ -118,6 +125,15 @@ body{background:#1a0f0a;font-family:var(--font-body);color:var(--color-cream-lig
 .file-drop-name{font-family:var(--font-mono);font-size:12px;color:var(--color-pink);margin-top:4px}
 .btn-submit{width:100%;padding:13px;background:var(--color-pink);color:#fff;border:0;cursor:pointer;font-family:var(--font-hv);font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;border-radius:9999px;box-shadow:0 4px 18px rgba(225,84,99,.4);transition:transform .18s,background .18s;margin-top:6px}
 .btn-submit:hover{background:#cf4453;transform:translateY(-1px)}
+
+/* Heart / like button on community photos */
+.heart-btn{position:absolute;bottom:9px;left:9px;z-index:4;display:flex;align-items:center;gap:5px;background:rgba(26,15,10,.58);border:1px solid rgba(255,255,255,.18);border-radius:9999px;padding:5px 10px 5px 8px;cursor:pointer;backdrop-filter:blur(6px);transition:background .18s,transform .14s;line-height:1;color:rgba(255,241,212,.75);font-family:var(--font-mono);font-size:12px;letter-spacing:.04em}
+.heart-btn:hover{background:rgba(225,84,99,.70);color:#fff;transform:scale(1.06)}
+.heart-btn.liked{background:rgba(225,84,99,.82);border-color:rgba(225,84,99,.6);color:#fff}
+.heart-icon{font-size:15px;line-height:1;transition:transform .18s}
+.heart-btn:active .heart-icon{transform:scale(1.35)}
+@keyframes heartPop{0%{transform:scale(1)}40%{transform:scale(1.45)}70%{transform:scale(.88)}100%{transform:scale(1)}}
+.heart-btn.pop .heart-icon{animation:heartPop .32s cubic-bezier(.22,.68,0,1.2)}
 </style>
 {% endblock %}
 
@@ -131,7 +147,7 @@ body{background:#1a0f0a;font-family:var(--font-body);color:var(--color-cream-lig
   <div class="divider"></div>
 </div>
 
-<div class="top-controls">
+<div class="top-controls" data-anim="fade" data-delay="4">
   <div class="view-toggle">
     <button class="vt-btn on" id="btn-slideshow">▶ Slideshow</button>
     <button class="vt-btn" id="btn-calendar">⬚ Kalendář</button>
@@ -142,8 +158,8 @@ body{background:#1a0f0a;font-family:var(--font-body);color:var(--color-cream-lig
 </div>
 
 <div id="view-slideshow">
-  <div class="counter"><span id="cur">1</span> / <span id="total">1</span></div>
-  <div class="gal-container">
+  <div class="counter" data-anim="fade" data-delay="5"><span id="cur">1</span> / <span id="total">1</span></div>
+  <div class="gal-container" data-anim="scale" data-delay="6">
     <div class="gal-side" id="gal-left"></div>
     <div class="gal-main" id="gal-main">
       <div class="gal-zone gal-zone-left" id="btn-prev"><div class="gal-zone-arrow">‹</div></div>
@@ -214,7 +230,7 @@ body{background:#1a0f0a;font-family:var(--font-body);color:var(--color-cream-lig
 {% endblock %}
 
 {% block extra_js %}
-<script type="application/json" id="gallery-data">{"official": {{ js_official|safe }}, "user": {{ js_user|safe }}, "season_names": {{ season_names_json|safe }}}</script>
+<script type="application/json" id="gallery-data">{"official": {{ js_official|safe }}, "user": {{ js_user|safe }}, "season_names": {{ season_names_json|safe }}, "like_counts": {{ like_counts_json|safe }}, "liked_ids": {{ liked_ids_json|safe }}}</script>
 <script>
 const MONTH_NAMES = ['Leden', 'Únor', 'Březen', 'Duben', 'Květen', 'Červen', 'Červenec', 'Srpen', 'Září', 'Říjen', 'Listopad', 'Prosinec'];
 const _gdata = JSON.parse(document.getElementById('gallery-data').textContent);
@@ -222,6 +238,10 @@ const SEASON_NAMES = _gdata.season_names;
 const OFFICIAL = _gdata.official;
 const USER_PHOTOS = _gdata.user;
 const ALL_PHOTOS = OFFICIAL.concat(USER_PHOTOS);
+const IS_AUTH = {{ request.user.is_authenticated|yesno:"true,false" }};
+const LIKE_COUNTS = _gdata.like_counts;
+const LIKED_IDS = new Set(_gdata.liked_ids);
+function getCsrf(){ const m = document.cookie.match(/csrftoken=([^;]+)/); return m ? m[1] : ''; }
 
 (function(){
   const viewSlideshow = document.getElementById('view-slideshow');
@@ -390,14 +410,27 @@ const ALL_PHOTOS = OFFICIAL.concat(USER_PHOTOS);
       photos.forEach(p => {
         const idx = filtered.indexOf(p);
         const userTag = p.is_user_photo ? `<div class="user-tag">📷 ${p.uploaded_by}</div>` : '';
-        html += `<a class="photo-item${p.is_user_photo ? ' user-photo' : ''}" data-idx="${idx}">
-          ${userTag}
-          <img src="${p.url}" alt="${p.event_name}" loading="lazy" />
-          <div class="photo-item-caption">
-            <div class="photo-item-label">${p.event_date}</div>
-            <div class="photo-item-title">${p.event_name}</div>
-          </div>
-        </a>`;
+        const liked = p.is_user_photo && LIKED_IDS.has(p.id);
+        const count = p.is_user_photo ? (LIKE_COUNTS[String(p.id)] || 0) : 0;
+        const heartBtn = (p.is_user_photo && IS_AUTH)
+          ? `<span class="heart-btn${liked ? ' liked' : ''}" data-photo-id="${p.id}" role="button" aria-label="Líbí se mi">
+               <span class="heart-icon">${liked ? '♥' : '♡'}</span>
+               <span class="heart-count">${count || ''}</span>
+             </span>`
+          : (p.is_user_photo && count > 0
+              ? `<span class="heart-btn liked" style="pointer-events:none"><span class="heart-icon">♥</span><span class="heart-count">${count}</span></span>`
+              : '');
+        html += `<div class="photo-item-wrap">
+          <a class="photo-item${p.is_user_photo ? ' user-photo' : ''}" data-idx="${idx}">
+            ${userTag}
+            <img src="${p.url}" alt="${p.event_name}" loading="lazy" />
+            <div class="photo-item-caption">
+              <div class="photo-item-label">${p.event_date}</div>
+              <div class="photo-item-title">${p.event_name}</div>
+            </div>
+          </a>
+          ${heartBtn}
+        </div>`;
       });
       html += '</div></div>';
     });
@@ -408,6 +441,36 @@ const ALL_PHOTOS = OFFICIAL.concat(USER_PHOTOS);
         e.preventDefault();
         currentLbIdx = parseInt(this.dataset.idx, 10);
         openLightbox(currentLbIdx);
+      });
+    });
+  }
+
+  if (IS_AUTH) {
+    document.getElementById('calendar').addEventListener('click', function(e){
+      const btn = e.target.closest('.heart-btn');
+      if (!btn) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const photoId = btn.dataset.photoId;
+      fetch('/api/photos/' + photoId + '/like/', {
+        method: 'POST',
+        headers: {'X-CSRFToken': getCsrf()},
+        credentials: 'same-origin',
+      })
+      .then(r => r.json())
+      .then(data => {
+        btn.classList.toggle('liked', data.liked);
+        btn.querySelector('.heart-icon').textContent = data.liked ? '♥' : '♡';
+        btn.querySelector('.heart-count').textContent = data.count || '';
+        if (data.liked) {
+          btn.classList.remove('pop');
+          void btn.offsetWidth;
+          btn.classList.add('pop');
+        }
+        if (data.liked) LIKED_IDS.add(parseInt(photoId));
+        else LIKED_IDS.delete(parseInt(photoId));
+        if (data.count) LIKE_COUNTS[photoId] = data.count;
+        else delete LIKE_COUNTS[photoId];
       });
     });
   }
