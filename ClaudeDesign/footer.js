@@ -35,7 +35,9 @@
       <div class="ft-logo"><span class="sp">✦</span> GAME OF LIFE</div>
       <p class="ft-desc">Game of Life sdružuje ty, co chtějí z každodenního stereotypu vytřískat maximum a nebojí se u toho jít do extrému i do hloubky. Jsme tvůj protijed na moderní izolaci.</p>
       <div class="ft-contact">Vojta Toman<br/>+420 731 005 976</div>
-      <div class="ft-credit">Tyhle krásný stránky vytvořil Lukáš Müller.<br/>Game of Life © 2026</div>
+      <div class="ft-credit">Tyhle krásný stránky vytvořil Michael Trávníček.
+      <div class="ft-credit">Podílel se Lukáš Müller.
+      <br/>Game of Life © 2026</div>
     </div>
   </div>
 </footer>`;

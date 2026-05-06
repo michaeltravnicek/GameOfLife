@@ -256,6 +256,10 @@ def about_points_view(request):
     return render(request, "about_points.html")
 
 
+def historie_view(request):
+    return render(request, "historie.html")
+
+
 def events_view(request):
     cached = cache.get(CACHE_KEY_EVENTS_LIST)
     if cached is None:

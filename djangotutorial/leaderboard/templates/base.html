@@ -41,6 +41,14 @@
       @media(max-width:820px){nav.top{left:14px;right:14px;padding:0 20px 0 20px}.nav-left,.nav-right{gap:18px}.nav-item{font-size:14px}.nav-logo{height:52px}}
       @media(max-width:640px){nav.top{left:12px;right:12px;top:12px;padding:0 16px 0 16px}.nav-left{display:none}.nav-right .nav-item,.nav-right .nav-btn-start{display:none}.nav-hamburger{display:block}.nav-logo{height:46px}.nav-avatar{width:42px;height:42px;font-size:11px}}
 
+      /* "O nás" dropdown */
+      .nav-dropdown{position:relative;display:inline-block}
+      .nav-dropdown-menu{position:absolute;top:calc(100% + 6px);left:50%;transform:translateX(-50%) translateY(-4px);min-width:150px;background:rgba(48,45,88,.97);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:6px;box-shadow:0 8px 28px rgba(0,0,0,.45);opacity:0;pointer-events:none;transition:opacity .18s,transform .18s;z-index:200}
+      .nav-dropdown:hover .nav-dropdown-menu{opacity:1;pointer-events:auto;transform:translateX(-50%) translateY(0)}
+      .nav-dropdown-item{display:block;font-family:var(--font-hv);font-size:14px;font-weight:700;letter-spacing:.04em;color:rgba(255,255,255,.85);padding:9px 14px;border-radius:8px;text-decoration:none;transition:background .15s,color .15s;white-space:nowrap}
+      .nav-dropdown-item:hover{background:rgba(225,84,99,.18);color:var(--color-pink)}
+      .nav-dropdown-item.active{color:var(--color-pink)}
+
       /* === Footer (from ClaudeDesign footer.js, server-side rendered) === */
       footer.gol-footer{position:relative;z-index:2;background:var(--color-purple);background-image:var(--tex-purple);background-size:cover;padding:52px 56px 44px;border-top:1px solid rgba(255,255,255,.05)}
       .ft-inner{max-width:1040px;margin:0 auto;display:grid;grid-template-columns:180px 1fr;gap:80px}
@@ -69,6 +77,12 @@
         <a class="nav-item{% block nav_home %}{% endblock %}" href="{% url 'home' %}">Domů</a>
         <a class="nav-item{% block nav_events %}{% endblock %}" href="{% url 'events' %}">Akce</a>
         <a class="nav-item{% block nav_gallery %}{% endblock %}" href="{% url 'gallery' %}">Galerie</a>
+        <div class="nav-dropdown">
+            <span class="nav-item{% block nav_historie %}{% endblock %}" style="cursor:default">O nás ▾</span>
+            <div class="nav-dropdown-menu">
+                <a class="nav-dropdown-item{% block nav_historie_item %}{% endblock %}" href="{% url 'historie' %}">Historie</a>
+            </div>
+        </div>
     </div>
     <a class="nav-logo" href="{% url 'home' %}" aria-label="Game of Life">
         <img src="{% static 'leaderboard/logos/GOL_main_logo_pink.png' %}" alt="Game of Life" />
@@ -92,6 +106,7 @@
     <a class="nav-mob-item" href="{% url 'events' %}">Akce</a>
     <a class="nav-mob-item" href="{% url 'gallery' %}">Galerie</a>
     <a class="nav-mob-item" href="{% url 'leaderboard' %}">Leaderboard</a>
+    <a class="nav-mob-item" href="{% url 'historie' %}">Historie</a>
     {% if request.user.is_authenticated %}
         {% with full_name=request.user.first_name|default:request.user.username %}
         <a class="nav-mob-item" href="{% url 'profile' request.user.username %}">Profil ({{ full_name }})</a>
@@ -127,6 +142,7 @@
             <a class="ft-link" href="{% url 'events' %}">Kalendář</a>
             <a class="ft-link" href="{% url 'gallery' %}">Galerie</a>
             <a class="ft-link" href="{% url 'leaderboard' %}">Leaderboard</a>
+            <a class="ft-link" href="{% url 'historie' %}">Historie</a>
             <a class="ft-link" style="margin-top:14px" href="https://www.instagram.com/gameofyolo/" target="_blank" rel="noopener">Instagram</a>
             <a class="ft-link" href="#">Facebook</a>
             <a class="ft-link" href="#">TikTok</a>
@@ -135,7 +151,7 @@
             <div class="ft-logo"><span class="sp">✦</span> GAME OF LIFE</div>
             <p class="ft-desc">Game of Life sdružuje ty, co chtějí z každodenního stereotypu vytřískat maximum a nebojí se u toho jít do extrému i do hloubky. Jsme tvůj protijed na moderní izolaci.</p>
             <div class="ft-contact">Vojta Toman<br/>+420 731 005 976</div>
-            <div class="ft-credit">Tyhle krásný stránky vytvořil Lukáš Müller.<br/>Game of Life © {% now "Y" %}</div>
+            <div class="ft-credit">Tyhle krásný stránky vytvořil Michael Trávníček, podílel se Lukáš Müller.<br/>Game of Life © {% now "Y" %}</div>
         </div>
     </div>
 </footer>
