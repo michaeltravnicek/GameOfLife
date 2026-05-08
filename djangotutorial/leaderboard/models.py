@@ -28,6 +28,22 @@ class Event(models.Model):
     logo = models.ImageField(upload_to="event_logos/", blank=True, null=True)
     rules = models.TextField(blank=True, default="")
     capacity = models.IntegerField(null=True, blank=True)
+    end_date = models.DateTimeField(
+        null=True, blank=True,
+        help_text="Konec check-in okna. Pokud nevyplněno, použije se začátek + 4 hodiny."
+    )
+    latitude = models.FloatField(
+        null=True, blank=True,
+        help_text="Zeměpisná šířka (např. 49.1951). Povinné pro mapu a check-in."
+    )
+    longitude = models.FloatField(
+        null=True, blank=True,
+        help_text="Zeměpisná délka (např. 16.6068). Povinné pro mapu a check-in."
+    )
+    checkin_radius = models.IntegerField(
+        default=500,
+        help_text="Poloměr check-in zóny v metrech. Výchozí: 500 m."
+    )
 
     slug = models.SlugField(max_length=280, unique=True, null=True, blank=True)
 
@@ -52,6 +68,11 @@ class Event(models.Model):
 
     def __str__(self):
         return f"{self.name} - {self.date} - {self.place} - {self.sheet_id}"
+
+    @property
+    def checkin_window_end(self):
+        from datetime import timedelta
+        return self.end_date if self.end_date else self.date + timedelta(hours=4)
 
     class Meta:
         unique_together = ("sheet_id", "sheet_list_id")

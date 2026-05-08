@@ -138,7 +138,9 @@ def public_profile_view(request, username):
         "rank": rank,
         "all_seasons": all_seasons,
     }
-    return render(request, "accounts/profile.html", context)
+    variant = request.GET.get("t", "")
+    template = {"a": "accounts/profile_a.html", "b": "accounts/profile_b.html"}.get(variant, "accounts/profile.html")
+    return render(request, template, context)
 
 
 def attended_events_view(request, username):

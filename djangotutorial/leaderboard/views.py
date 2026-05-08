@@ -1,5 +1,6 @@
 import json
-from datetime import datetime, timezone as dt_timezone
+import math
+from datetime import datetime, timedelta, timezone as dt_timezone
 
 from django.conf import settings
 from django.contrib import messages
@@ -187,11 +188,33 @@ def home_view(request):
     # Hero events cached separately (1 hour)
     hero_events = _pick_hero_events(5)
 
+    # Active events for check-in banner — user-specific, not cached
+    active_checkin_events = []
+    if request.user.is_authenticated:
+        now_home = timezone.now()
+        candidates = Event.objects.filter(
+            latitude__isnull=False,
+            longitude__isnull=False,
+            date__lte=now_home + timedelta(minutes=30),
+        ).order_by("date")
+
+        from accounts.models import Profile
+        profile = Profile.objects.filter(user=request.user).select_related("leaderboard_user").first()
+        lb_user = profile.leaderboard_user if profile else None
+
+        for ev in candidates:
+            if now_home > ev.checkin_window_end:
+                continue
+            if lb_user and UserToEvent.objects.filter(user=lb_user, event=ev).exists():
+                continue
+            active_checkin_events.append(ev)
+
     return render(request, "home.html", {
         "upcoming_events": cached["upcoming_events"],
         "top_players": cached["top_players"],
         "hero_events": hero_events,
         "about_stats": cached["about_stats"],
+        "active_checkin_events": active_checkin_events,
     })
 
 
@@ -327,6 +350,12 @@ def event_detail_view(request, slug):
         official_images + [p["url"] for p in user_photos]
     )
 
+    checkin_window_open = (
+        event.latitude is not None
+        and event.longitude is not None
+        and (event.date - timedelta(minutes=30)) <= now <= event.checkin_window_end
+    )
+
     return render(request, "event_detail.html", {
         "event": event,
         "is_future": is_future,
@@ -337,6 +366,9 @@ def event_detail_view(request, slug):
         "all_images_json": all_images_json,
         "rsvp_count": rsvp_count,
         "is_full": is_full,
+        "checkin_window_open": checkin_window_open,
+        "is_photographer": _is_photographer(request.user),
+        "is_admin_role": _is_admin_role(request.user),
     })
 
 
@@ -558,3 +590,115 @@ def event_feedback_view(request, slug):
         messages.success(request, "Díky za zpětnou vazbu!")
 
     return redirect("event_detail", slug=slug)
+
+
+def _user_role(user):
+    if not user.is_authenticated:
+        return ""
+    profile = getattr(user, "profile", None)
+    return profile.role if profile else ""
+
+
+def _is_photographer(user):
+    return _user_role(user) == "photographer"
+
+
+def _is_admin_role(user):
+    return _user_role(user) == "admin"
+
+
+@login_required
+@require_http_methods(["POST"])
+def event_official_photo_upload_view(request, slug):
+    if not _is_photographer(request.user):
+        messages.error(request, "Pouze fotografové mohou nahrávat oficiální fotky k akcím.")
+        return redirect("event_detail", slug=slug)
+
+    event = get_object_or_404(Event, slug=slug)
+    images = request.FILES.getlist("images") or ([request.FILES["image"]] if request.FILES.get("image") else [])
+    if not images:
+        messages.error(request, "Žádná fotografie nebyla nahrána.")
+        return redirect("event_detail", slug=slug)
+
+    for img in images:
+        ImageToEvent.objects.create(event_id=event, image=img)
+
+    messages.success(request, f"Nahráno fotek: {len(images)}.")
+    return redirect("event_detail", slug=slug)
+
+
+@login_required
+def admin_panel_view(request):
+    if not _is_admin_role(request.user):
+        messages.error(request, "Tato stránka je dostupná pouze administrátorům.")
+        return redirect("home")
+
+    feedbacks = (
+        EventFeedback.objects
+        .select_related("event", "auth_user")
+        .order_by("-updated_at")
+    )
+
+    return render(request, "leaderboard/admin_panel.html", {
+        "feedbacks": feedbacks,
+    })
+
+
+def _haversine_distance(lat1, lon1, lat2, lon2):
+    R = 6_371_000
+    phi1, phi2 = math.radians(lat1), math.radians(lat2)
+    dphi = math.radians(lat2 - lat1)
+    dlambda = math.radians(lon2 - lon1)
+    a = math.sin(dphi / 2) ** 2 + math.cos(phi1) * math.cos(phi2) * math.sin(dlambda / 2) ** 2
+    return R * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+
+
+@login_required
+@require_http_methods(["POST"])
+def event_checkin_view(request, slug):
+    event = get_object_or_404(Event, slug=slug)
+
+    if event.latitude is None or event.longitude is None:
+        return JsonResponse({"ok": False, "error": "Tato akce nemá aktivní check-in."}, status=400)
+
+    now = timezone.now()
+    window_open = event.date - timedelta(minutes=30)
+    window_close = event.checkin_window_end
+    if not (window_open <= now <= window_close):
+        return JsonResponse(
+            {"ok": False, "error": "Check-in je mimo časové okno akce."},
+            status=400,
+        )
+
+    try:
+        body = json.loads(request.body)
+        user_lat = float(body["latitude"])
+        user_lon = float(body["longitude"])
+    except (KeyError, ValueError, TypeError):
+        return JsonResponse({"ok": False, "error": "Neplatné souřadnice."}, status=400)
+
+    distance = _haversine_distance(user_lat, user_lon, event.latitude, event.longitude)
+    if distance > event.checkin_radius:
+        return JsonResponse(
+            {
+                "ok": False,
+                "error": f"Jsi příliš daleko ({distance / 1000:.1f} km). Check-in vyžaduje být do {event.checkin_radius} m.",
+                "distance_m": round(distance),
+            },
+            status=400,
+        )
+
+    from accounts.models import Profile
+    profile = Profile.objects.filter(user=request.user).select_related("leaderboard_user").first()
+    lb_user = profile.leaderboard_user if profile else None
+    if lb_user is None:
+        return JsonResponse({"ok": False, "error": "Tvůj účet není propojen s leaderboardem."}, status=400)
+
+    _, created = UserToEvent.objects.get_or_create(
+        user=lb_user, event=event, defaults={"points": event.points}
+    )
+    if created:
+        cache.delete(CACHE_KEY)
+        cache.delete(CACHE_KEY_MONTH)
+        cache.delete(CACHE_KEY_HOME_CONTEXT)
+    return JsonResponse({"ok": True, "points": event.points if created else 0, "already_had": not created})

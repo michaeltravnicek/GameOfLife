@@ -16,3 +16,17 @@ def current_season(request):
             },
         )
     return {"current_season": season}
+
+
+def user_role(request):
+    role = ""
+    user = getattr(request, "user", None)
+    if user is not None and user.is_authenticated:
+        profile = getattr(user, "profile", None)
+        if profile is not None:
+            role = profile.role or ""
+    return {
+        "user_role": role,
+        "is_role_admin": role == "admin",
+        "is_role_photographer": role == "photographer",
+    }

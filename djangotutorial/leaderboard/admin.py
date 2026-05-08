@@ -12,7 +12,19 @@ class SeasonAdmin(admin.ModelAdmin):
 class EventAdmin(admin.ModelAdmin):
     list_display = ("id", "name", "description", "date", "place", "points", "logo")
     search_fields = ("name", "description")
-    fields = ("name", "description", "rules", "place", "date", "points", "capacity", "image", "logo", "sheet_id", "sheet_list_id", "slug")
+    fieldsets = (
+        (None, {
+            "fields": ("name", "description", "rules", "date", "end_date", "points", "capacity", "image", "logo")
+        }),
+        ("Místo a check-in", {
+            "description": "Vyplňte souřadnice pro aktivaci mapy a check-in tlačítka. Souřadnice najdete na maps.google.com (pravý klik → 'Co je tady?').",
+            "fields": ("place", "latitude", "longitude", "checkin_radius"),
+        }),
+        ("Technické", {
+            "classes": ("collapse",),
+            "fields": ("sheet_id", "sheet_list_id", "slug"),
+        }),
+    )
 
 
 @admin.register(ImageToEvent)

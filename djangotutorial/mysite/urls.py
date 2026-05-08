@@ -16,11 +16,15 @@ urlpatterns = [
     path("events/<slug:slug>/", views.event_detail_view, name="event_detail"),
     path("events/<slug:slug>/rsvp/", views.event_rsvp_view, name="event_rsvp"),
     path("events/<slug:slug>/feedback/", views.event_feedback_view, name="event_feedback"),
+    path("events/<slug:slug>/checkin/", views.event_checkin_view, name="event_checkin"),
+    path("events/<slug:slug>/upload-official/", views.event_official_photo_upload_view, name="event_official_photo_upload"),
+    path("sprava/", views.admin_panel_view, name="admin_panel"),
     path("leaderboard/", views.leaderboard_view, name="leaderboard"),
     path("galerie/", views.gallery_view, name="gallery"),
     path("galerie/upload/", views.upload_user_photo_view, name="gallery_upload"),
     path("hrac/<int:user_id>/", views.public_user_view, name="public_user"),
     path("o-bodech/", views.about_points_view, name="about_points"),
+    path("o-nas/", views.historie_view, name="historie"),
 
     # Auth (mounted at root so /prihlasit/, /registrace/, /profil/<username>/ work)
     path("", include("accounts.urls")),

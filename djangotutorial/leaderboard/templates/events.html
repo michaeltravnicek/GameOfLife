@@ -182,7 +182,6 @@ main.events-main{position:relative;z-index:2;max-width:1100px;margin:0 auto;padd
             <div class="ev-content">
               <div class="ev-tag">{{ event|event_category_label }}</div>
               <h3 class="ev-title">{{ event.name }}</h3>
-              {% if event.description %}<p class="ev-desc">{{ event.description }}</p>{% endif %}
               <div class="ev-meta">
                 <div>📅 {{ event.date|date:"j. F Y" }}</div>
                 <div>📍 {{ event.place }}</div>

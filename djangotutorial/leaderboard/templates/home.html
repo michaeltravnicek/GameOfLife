@@ -96,10 +96,40 @@ body{background:var(--color-purple);background-image:var(--tex-purple);backgroun
 .hero-inner .btn-pill{animation:heroFade .7s cubic-bezier(.22,.68,0,1.2) both .58s}
 .hero-dots   {animation:heroFade .5s ease both .75s}
 
+.checkin-banners{position:relative;z-index:20;display:flex;flex-direction:column;gap:10px;padding:16px 16px 0}
+.checkin-banner{background:linear-gradient(135deg,var(--color-pink),#a0243a);color:#fff;padding:14px 20px;display:flex;align-items:center;gap:14px;border-radius:12px;box-shadow:0 4px 20px rgba(193,57,74,.35);animation:heroFade .5s ease both}
+.checkin-banner-icon{font-size:26px;flex-shrink:0}
+.checkin-banner-text{flex:1;font-family:var(--font-body);font-size:14px;line-height:1.4}
+.checkin-banner-text strong{font-size:15px;display:block;margin-bottom:2px}
+.checkin-banner-btn{background:#fff;color:var(--color-pink);border:none;border-radius:8px;padding:9px 18px;font-family:var(--font-display);font-size:13px;letter-spacing:.04em;cursor:pointer;white-space:nowrap;transition:opacity .2s;flex-shrink:0}
+.checkin-banner-btn:disabled{opacity:.55;cursor:not-allowed}
+.checkin-banner-status{font-family:var(--font-mono);font-style:italic;font-size:11px;margin-top:5px;display:none}
+.checkin-banner-status.ok{display:block;color:#c8f5c8}
+.checkin-banner-status.err{display:block;color:#ffd4d4}
+@media(max-width:640px){.checkin-banner{flex-wrap:wrap}.checkin-banner-btn{width:100%}}
+
 </style>
 {% endblock %}
 
 {% block content %}
+{% if active_checkin_events %}
+<div class="checkin-banners">
+  {% for ev in active_checkin_events %}
+  <div class="checkin-banner"
+       data-checkin-url="{% url 'event_checkin' ev.slug %}"
+       data-slug="{{ ev.slug }}">
+    <div class="checkin-banner-icon">📍</div>
+    <div class="checkin-banner-text">
+      <strong>{{ ev.name }}</strong>
+      Právě probíhá! Check-in ti přinese <strong>{{ ev.points }}&nbsp;bodů</strong>.
+      <div class="checkin-banner-status" id="banner-status-{{ ev.slug }}"></div>
+    </div>
+    <button class="checkin-banner-btn" id="banner-btn-{{ ev.slug }}">Potvrdit přítomnost</button>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
 <section class="hero">
   <div class="hero-slides" id="heroSlides">
     {% for ev in hero_events %}
@@ -303,4 +333,56 @@ body{background:var(--color-purple);background-image:var(--tex-purple);backgroun
   galMain.addEventListener('touchend', function(e){ var dx=e.changedTouches[0].clientX-gtx; if(Math.abs(dx)>40){ galCur=dx<0?(galCur+1)%images.length:(galCur-1+images.length)%images.length; updateGal(); } });
 })();
 </script>
+
+{% if active_checkin_events %}
+<script>
+(function(){
+  function getCsrf(){var m=document.cookie.match(/csrftoken=([^;]+)/);return m?m[1]:'';}
+  document.querySelectorAll('.checkin-banner').forEach(function(banner){
+    var slug = banner.dataset.slug;
+    var url = banner.dataset.checkinUrl;
+    var btn = document.getElementById('banner-btn-'+slug);
+    var status = document.getElementById('banner-status-'+slug);
+    if (!btn) return;
+    btn.addEventListener('click', function(){
+      btn.disabled = true; btn.textContent = 'Zjišťuji polohu…';
+      if (!navigator.geolocation) {
+        status.className = 'checkin-banner-status err';
+        status.textContent = 'Prohlížeč nepodporuje geolokaci.';
+        btn.disabled = false; btn.textContent = 'Potvrdit přítomnost'; return;
+      }
+      navigator.geolocation.getCurrentPosition(function(pos){
+        btn.textContent = 'Odesílám…';
+        fetch(url, {method:'POST', credentials:'same-origin',
+          headers:{'Content-Type':'application/json','X-CSRFToken':getCsrf()},
+          body:JSON.stringify({latitude:pos.coords.latitude, longitude:pos.coords.longitude})
+        }).then(function(r){return r.json();}).then(function(data){
+          if (data.ok) {
+            status.className = 'checkin-banner-status ok';
+            status.textContent = data.already_had ? 'Body už máš! ✓' : '+'+data.points+' bodů připsáno! ✓';
+            btn.textContent = '✓ Hotovo';
+          } else {
+            status.className = 'checkin-banner-status err';
+            status.textContent = data.error || 'Chyba při check-in.';
+            btn.disabled = false; btn.textContent = 'Zkusit znovu';
+          }
+        }).catch(function(){
+          status.className = 'checkin-banner-status err';
+          status.textContent = 'Síťová chyba, zkus to znovu.';
+          btn.disabled = false; btn.textContent = 'Zkusit znovu';
+        });
+      }, function(err){
+        status.className = 'checkin-banner-status err';
+        var msg = 'Nelze zjistit polohu.';
+        if (err.code === 1) msg = 'Přístup k poloze zamítnut — povol jej v prohlížeči.';
+        if (err.code === 2) msg = 'Poloha není dostupná.';
+        if (err.code === 3) msg = 'Časový limit vypršel.';
+        status.textContent = msg;
+        btn.disabled = false; btn.textContent = 'Potvrdit přítomnost';
+      }, {enableHighAccuracy:true, timeout:10000, maximumAge:0});
+    });
+  });
+})();
+</script>
+{% endif %}
 {% endblock %}
