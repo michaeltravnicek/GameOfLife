@@ -1,38 +1,33 @@
-"""URL configuration for mysite project."""
+"""URL configuration for mysite project.
+
+The frontend is a React SPA. Django serves:
+  - /admin/   Django admin (staff/superuser only)
+  - /api/     DRF JSON endpoints consumed by React
+  - /media/   user-uploaded files (via WhiteNoise/dev static)
+  - /static/  built static assets
+  - everything else → React index.html (client routing)
+"""
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
-from django.urls import include, path
+from django.urls import include, path, re_path
 
-from leaderboard import views
+from leaderboard import views as legacy_views
+from . import views as react_views
 
 urlpatterns = [
     path("admin/", admin.site.urls),
 
-    path("", views.home_view, name="home"),
+    # JSON API for the React frontend
+    path("api/", include("leaderboard.api_urls")),
+    path("api/auth/", include("accounts.api_urls")),
 
-    # Czech routes (primary)
-    path("events/", views.events_view, name="events"),
-    path("events/<slug:slug>/", views.event_detail_view, name="event_detail"),
-    path("events/<slug:slug>/rsvp/", views.event_rsvp_view, name="event_rsvp"),
-    path("events/<slug:slug>/feedback/", views.event_feedback_view, name="event_feedback"),
-    path("events/<slug:slug>/checkin/", views.event_checkin_view, name="event_checkin"),
-    path("events/<slug:slug>/upload-official/", views.event_official_photo_upload_view, name="event_official_photo_upload"),
-    path("sprava/", views.admin_panel_view, name="admin_panel"),
-    path("leaderboard/", views.leaderboard_view, name="leaderboard"),
-    path("galerie/", views.gallery_view, name="gallery"),
-    path("galerie/upload/", views.upload_user_photo_view, name="gallery_upload"),
-    path("hrac/<int:user_id>/", views.public_user_view, name="public_user"),
-    path("o-bodech/", views.about_points_view, name="about_points"),
-    path("o-nas/", views.historie_view, name="historie"),
-
-    # Auth (mounted at root so /prihlasit/, /registrace/, /profil/<username>/ work)
-    path("", include("accounts.urls")),
-
-    # API
-    path("api/photos/<int:photo_id>/like/", views.toggle_photo_like_view, name="photo_like"),
-    path("api/user/<int:user_id>/", views.user_detail_view, name="user-detail"),
-    path("api/events/<str:event_id>/images/", views.events_image_views, name="images"),
-    path("api/profile/<str:username>/monthly-points/", views.profile_monthly_points_api, name="profile-monthly-points"),
-
+    # Legacy JSON helpers retained until React wires them
+    path("api/photos/<int:photo_id>/like/", legacy_views.toggle_photo_like_view, name="photo_like"),
+    path("api/profile/<str:username>/monthly-points/", legacy_views.profile_monthly_points_api, name="profile-monthly-points"),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+# React catch-all: must come last so /api/* and /admin/* are matched first.
+urlpatterns += [
+    re_path(r"^(?!api/|admin/|media/|static/).*$", react_views.react_index, name="react-index"),
+]
