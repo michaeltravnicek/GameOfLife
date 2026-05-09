@@ -5,7 +5,7 @@
    Palette: dark brown + grain textures, deep purple sections, pink/coral accent
    ============================================================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400;1,700&display=swap');
 
 @font-face {
@@ -78,6 +78,11 @@
   src: url('/static/leaderboard/fonts/Ringold-Gym (1).ttf') format('truetype');
   font-weight: 400; font-style: normal; font-display: swap;
 }
+@font-face {
+  font-family: 'Ringold Sans';
+  src: url('/static/leaderboard/fonts/Ringold-Sans.ttf') format('truetype');
+  font-weight: 400; font-style: normal; font-display: swap;
+}
 
 :root {
   /* === ClaudeDesign tokens (canonical) === */
@@ -109,19 +114,24 @@
   --btn-outline-border:   var(--color-cream-light);
   --btn-outline-text:     var(--color-cream-light);
 
-  --border-card:          2px dashed rgba(255,255,255,0.55);
-  --border-card-dark:     2px dashed rgba(26,26,26,0.4);
+  --border-card:          3px solid #ffffff;
+  --border-card-dark:     3px solid rgba(26,26,26,.9);
 
   /* === Fonts (ClaudeDesign canonical) === */
-  --font-display:         'Bebas Neue', sans-serif;
+  --font-display:         'Ringold Gym', sans-serif;          /* velké nadpisy */
+  --font-event-name:      'Ringold Sans', sans-serif;         /* Název akce */
+  --font-leaderboard:     'Ringold Gym', sans-serif;          /* Top 10 */
+  --font-events:          'Ringold Gym', sans-serif;          /* akce titles — temp until Ringold Clarendon */
+  --font-nav:             'IBM Plex Serif', Georgia, serif;   /* navigation bar */
+  --font-number:          'IBM Plex Serif', Georgia, serif;   /* číslování, čísla */
   --font-body:            'Barlow', Arial, sans-serif;
   --font-mono:            'Courier Prime', monospace;
   --font-serif:           'IBM Plex Serif', Georgia, serif;
-  --font-hv:              'Helvetica', Arial, sans-serif;
+  --font-hv:              'Helvetica', Arial, sans-serif;     /* čitelná, podnadpis, tlačítka */
   --font-hv-comp:         'Helvetica Compressed', Arial, sans-serif;
   --font-hv-rnd:          'Helvetica Rounded', Arial, sans-serif;
   --font-gym:             'Ringold Gym', sans-serif;
-  --font-arcade:          'Bebas Neue', 'Impact', sans-serif;
+  --font-arcade:          'Ringold Gym', 'Impact', sans-serif;
 
   /* === Type scale === */
   --text-xs:    0.75rem;
