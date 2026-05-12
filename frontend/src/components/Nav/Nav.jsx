@@ -59,13 +59,12 @@ export default function Nav() {
         {navItem('/galerie', 'Galerie', 'gallery')}
       </div>
       <Link to="/" className="nav-logo" aria-label="Game of Life">
-        <img src="/logos/GOL_main_logo_pink.png" alt="Game of Life" />
+        <img src="/assets/gameoflive-onrender-com-english-us-by-html-to-design-free-version-0905-gol-logo-bw-1.svg" alt="Game of Life" />
       </Link>
       <div className="nav-right">
         {navItem('/leaderboard', 'Leaderboard', 'leaderboard')}
         {user ? (
           <>
-            <NavLink to="/eshop" className="nav-item">Eshop</NavLink>
             <Link
               to={profileHref}
               className={`nav-avatar${page === 'profile' ? ' active' : ''}`}

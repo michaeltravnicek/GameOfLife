@@ -28,9 +28,9 @@ export default function LoginPage() {
 
   return (
     <div className="auth-page">
+      <div className="stage" />
+      <div className="grain" />
       <section className="hero-section">
-        <div className="hero-bg login-bg" />
-        <div className="hero-overlay" />
         <div className="hero-inner">
           <div className="hero-eyebrow">Game of Life · Sezóna 2025/26</div>
           <h1 className="hero-title">Dobrodružství čeká!</h1>

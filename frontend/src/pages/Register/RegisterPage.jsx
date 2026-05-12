@@ -46,9 +46,9 @@ export default function RegisterPage() {
 
   return (
     <div className="auth-page">
+      <div className="stage register-bg" />
+      <div className="grain" />
       <section className="hero-section">
-        <div className="hero-bg register-bg" />
-        <div className="hero-overlay" />
         <div className="hero-inner">
           <div className="hero-eyebrow">Game of Life · Sezóna 2025/26</div>
           <h1 className="hero-title">Začni hrát život naplno!</h1>

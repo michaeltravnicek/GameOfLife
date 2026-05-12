@@ -220,4 +220,10 @@
 
   --shadow-card:  0 4px 24px rgba(0, 0, 0, 0.18);
   --shadow-btn:   0 2px 12px rgba(225, 84, 99, 0.35);
+
+  --tex-purple:   url('/assets/Grain_texture_purple.png');
+  --tex-brown:    url('/assets/Grain_texture_brown.png');
+  --tex-brown-2:  url('/assets/Grain_texture_brown2.png');
+  --tex-blue:     url('/assets/Grain_texture_blue.png');
+  --tex-light:    url('/assets/Grain_texture_light.png');
 }

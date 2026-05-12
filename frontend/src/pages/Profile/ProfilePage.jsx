@@ -4,14 +4,12 @@ import { fetchProfile } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import './ProfilePage.css';
 
-const MONTHS = ['ledna', 'února', 'března', 'dubna', 'května', 'června', 'července', 'srpna', 'září', 'října', 'listopadu', 'prosince'];
+const MONTHS_SHORT = ['Led','Úno','Bře','Dub','Kvě','Čvn','Čvc','Srp','Zář','Říj','Lis','Pro'];
 const fmt = (iso) => {
   if (!iso) return '';
   const d = new Date(iso);
-  return `${d.getDate()}. ${MONTHS[d.getMonth()]}`;
+  return `${d.getDate()}. ${MONTHS_SHORT[d.getMonth()]}`;
 };
-const initials = (n) =>
-  (n || '').split(' ').map((w) => w[0]).filter(Boolean).join('').slice(0, 2).toUpperCase();
 
 export default function ProfilePage() {
   const { username } = useParams();
@@ -19,6 +17,7 @@ export default function ProfilePage() {
   const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
   const [error, setError] = useState('');
+  const [activeTab, setActiveTab] = useState('upcoming');
 
   useEffect(() => {
     if (!username) return;
@@ -31,7 +30,6 @@ export default function ProfilePage() {
       });
   }, [username]);
 
-  // /profil with no username → redirect to own profile or login
   if (!username) {
     if (authLoading) return null;
     if (!user) return <Navigate to="/prihlasit" replace />;
@@ -41,6 +39,11 @@ export default function ProfilePage() {
   const handleLogout = async () => {
     await logout();
     navigate('/');
+  };
+
+  const handleShare = () => {
+    if (navigator.share) navigator.share({ title: document.title, url: location.href });
+    else navigator.clipboard.writeText(location.href);
   };
 
   if (error) {
@@ -63,93 +66,97 @@ export default function ProfilePage() {
 
   return (
     <div className="profile-page">
-      <section className="hero">
-        <div className="hero-bg" />
-        <div className="hero-overlay" />
-        {profile.rank && (
-          <div className="rank-badge">
-            <span className="rn">🏆</span>
-            <span className="rl">{profile.rank}. místo</span>
+      <div className="stage" />
+      <div className="grain" />
+
+      <header className="hero">
+        <div className="eyebrow">Profil hráče · Sezóna 2025/26</div>
+
+        <div className="podium-stack">
+          <div className="trophy">🏆</div>
+          <div className="podium-bars">
+            <div className="bar gold"><div className="bar-num">1.</div></div>
+            <div className="bar silver"><div className="bar-num">2.</div></div>
+            <div className="bar bronze"><div className="bar-num">3.</div></div>
           </div>
+        </div>
+
+        <h1>{displayName}</h1>
+        <div className="handle">@{profile.username}</div>
+        <p className="tagline">Hráč Game of Life. Prohlédni si jeho absolvované akce.</p>
+
+        <div className="stats-inline">
+          <span><span className="val">{profile.rank ? `${profile.rank}.` : '—'}</span> v pořadí</span>
+          <span>/</span>
+          <span><span className="val">{profile.total_points}</span> bodů</span>
+          <span>/</span>
+          <span><span className="val">{profile.total_events}</span> akcí</span>
+        </div>
+
+        <div className="divider" />
+      </header>
+
+      <div className="actions">
+        {profile.is_own_profile ? (
+          <>
+            <button className="btn-pill ghost" type="button" onClick={handleShare}>Sdílet profil</button>
+            <button className="btn-pill ghost" type="button" onClick={handleLogout}>Odhlásit se</button>
+          </>
+        ) : (
+          <button className="btn-pill ghost" type="button" onClick={handleShare}>Sdílet profil</button>
         )}
-        <div className="hero-inner">
-          <div className="avatar">
-            {profile.photo ? <img src={profile.photo} alt={displayName} /> : initials(displayName)}
-          </div>
-          <div className="hero-text">
-            <div className="eyebrow">Profil hráče · 2025/26</div>
-            <div className="hero-name">{displayName}</div>
-            <div className="hero-handle">@{profile.username} · Sezóna 2025/26</div>
-          </div>
-        </div>
-      </section>
+      </div>
 
-      <section className="stats-section">
-        <div className="stats-grid">
-          <div className="stat-card">
-            <div className="stat-num gold">{profile.rank ? `${profile.rank}.` : '—'}</div>
-            <div className="stat-label">Pořadí</div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-num">{profile.total_points}</div>
-            <div className="stat-label">Bodů celkem</div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-num">{profile.total_events}</div>
-            <div className="stat-label">Akcí v sezóně</div>
-          </div>
-        </div>
-      </section>
-
-      <section className="events-section">
-        <h2 className="sec-title"><span className="star">✦</span> Nadcházející akce <span className="star">✦</span></h2>
-        <div className="events-grid">
-          {profile.upcoming_rsvps.length ? profile.upcoming_rsvps.map((ev) => (
-            <Link key={ev.slug} className="ev-card" to={`/akce/${ev.slug}`}>
-              <div className="ev-name">{ev.name}</div>
-              <div className="ev-meta">
-                <div className="ev-row">📅 {fmt(ev.date)}</div>
-                <div className="ev-row">📍 {ev.place}</div>
-                <div className="ev-row">🏆 +{ev.points} pts</div>
-              </div>
-            </Link>
-          )) : (
-            <p style={{ color: 'rgba(255,241,212,.5)', fontStyle: 'italic', textAlign: 'center', padding: '40px 0', gridColumn: '1/-1' }}>
-              Žádné nadcházející akce.
-            </p>
-          )}
-        </div>
-        <div className="see-all">
-          <Link to="/akce" className="btn-pill">Všechny akce <span className="arr"></span></Link>
-        </div>
-      </section>
-
-      {profile.is_own_profile && (
-        <section className="about-section">
-          <div className="about-inner">
-            <div>
-              <div className="about-eyebrow">— O mně —</div>
-              <h3 className="about-heading">Tvoje cesta začíná tady.</h3>
-              <p className="about-body">Sleduj nadcházející akce, sbírej body a stoupej v žebříčku.</p>
-              <div className="btn-row">
-                <Link to="/akce" className="btn-pill">Najít akci <span className="arr"></span></Link>
-                <Link to="/leaderboard" className="btn-pill ghost">Leaderboard</Link>
-              </div>
-            </div>
-            <div className="actions-col">
-              <button className="btn-action ghost" onClick={handleLogout}>Odhlásit se</button>
-            </div>
+      <main className="profile-main">
+        <section className="section">
+          <div className="sec-rule" />
+          <div className="sec-eyebrow">— 01 · O hráči —</div>
+          <h2 className="sec-heading">{displayName}, vlastními slovy.</h2>
+          <div className="about-card">
+            <p className="about-empty">Tento hráč zatím o sobě nic nenapsal.</p>
           </div>
         </section>
-      )}
 
-      <section className="past-section">
-        <div className="past-inner">
-          <div className="group-label">Absolvované akce · <span>{profile.past_events.length}</span> akcí</div>
-          <div className="list">
-            <div className="list-inner">
-              {profile.past_events.length ? profile.past_events.map((ev) => (
+        <section className="section">
+          <div className="sec-rule" />
+          <div className="sec-eyebrow">— 02 · Činnost —</div>
+          <h2 className="sec-heading">Co hraje a co odehrál.</h2>
+
+          <div className="tab-row">
+            <div className="pill-group">
+              <button
+                className={`pill${activeTab === 'upcoming' ? ' on-pink' : ''}`}
+                onClick={() => setActiveTab('upcoming')}
+              >Nadcházející</button>
+              <button
+                className={`pill${activeTab === 'past' ? ' on-pink' : ''}`}
+                onClick={() => setActiveTab('past')}
+              >Absolvované</button>
+            </div>
+          </div>
+
+          {activeTab === 'upcoming' && (
+            <div className="events-grid">
+              {profile.upcoming_rsvps?.length ? profile.upcoming_rsvps.map((ev) => (
+                <Link key={ev.slug} className="ev-card" to={`/akce/${ev.slug}`}>
+                  <img className="ev-badge" src={ev.logo || '/logos/GOL_main_logo_pink.png'} alt={ev.name} />
+                  <span className="ev-tag">Event</span>
+                  <div className="ev-name">{ev.name}</div>
+                  <div className="ev-meta">
+                    <div className="ev-row">📅 {fmt(ev.date)}</div>
+                    <div className="ev-row">📍 {ev.place}</div>
+                    <div className="ev-row">🏆 +{ev.points} pts</div>
+                  </div>
+                </Link>
+              )) : <div className="empty-msg">Žádné nadcházející akce.</div>}
+            </div>
+          )}
+
+          {activeTab === 'past' && (
+            <div className="list">
+              {profile.past_events?.length ? profile.past_events.map((ev) => (
                 <Link key={ev.slug} to={`/akce/${ev.slug}`} className="row" style={{ textDecoration: 'none', color: 'inherit' }}>
+                  <span className="ev-cat">Event</span>
                   <div className="ev-info">
                     <div className="nm">{ev.name}</div>
                     <div className="loc">📍 {ev.place}</div>
@@ -157,11 +164,11 @@ export default function ProfilePage() {
                   <div className="ev-date">{fmt(ev.date)}</div>
                   <div className="ev-pts">+{ev.points}<span className="u">pts</span></div>
                 </Link>
-              )) : <div className="empty">Zatím žádné absolvované akce.</div>}
+              )) : <div className="empty">Žádné absolvované akce.</div>}
             </div>
-          </div>
-        </div>
-      </section>
+          )}
+        </section>
+      </main>
     </div>
   );
 }

@@ -11,10 +11,20 @@ function formatDate(iso) {
   const d = new Date(iso);
   return `${d.getDate()}. ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
 }
+function formatDateShort(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getFullYear()).slice(2)}`;
+}
 function formatTime(iso) {
   if (!iso) return '';
   const d = new Date(iso);
   return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
+}
+function dayName(iso) {
+  if (!iso) return '';
+  const days = ['Neděle','Pondělí','Úterý','Středa','Čtvrtek','Pátek','Sobota'];
+  return days[new Date(iso).getDay()];
 }
 
 export default function EventDetailPage() {
@@ -45,6 +55,13 @@ export default function EventDetailPage() {
     return list;
   }, [event]);
 
+  const posterSrc = useMemo(() => {
+    if (!event) return '/gallery/gal0.jpg';
+    if (event.image) return event.image;
+    if (event.official_images?.length) return event.official_images[0];
+    return '/gallery/gal0.jpg';
+  }, [event]);
+
   useEffect(() => {
     if (!lbOpen) return;
     const onKey = (e) => {
@@ -59,7 +76,6 @@ export default function EventDetailPage() {
   if (error) {
     return (
       <div className="event-detail-page">
-        <div className="stage" /><div className="grain" />
         <main className="detail-main">
           <p style={{ textAlign: 'center', padding: '60px 20px' }}>{error}</p>
           <div style={{ textAlign: 'center' }}>
@@ -73,7 +89,6 @@ export default function EventDetailPage() {
   if (!event) {
     return (
       <div className="event-detail-page">
-        <div className="stage" /><div className="grain" />
         <p style={{ textAlign: 'center', padding: '120px 20px', color: '#fff' }}>Načítám…</p>
       </div>
     );
@@ -97,84 +112,134 @@ export default function EventDetailPage() {
 
   const openLb = (i) => { setLbIndex(i); setLbOpen(true); };
   const rules = event.rules ? event.rules.split(/\n+/).filter(Boolean) : [];
+  const displayImages = images.slice(0, 4);
+  const imgCount = Math.min(displayImages.length, 4);
 
   return (
     <div className="event-detail-page">
-      <div className="stage" />
-      <div className="grain" />
 
-      <header className="hero">
-        <div className="badges">
-          <span className={`ev-pill${event.is_past ? '' : ' live'}`}>
-            {event.is_past ? 'Proběhlo' : 'Nadcházející'}
-          </span>
-        </div>
-        {event.logo
-          ? <img className="hero-logo" src={event.logo} alt={event.name} />
-          : <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(48px,8vw,96px)', textTransform: 'uppercase', textAlign: 'center', margin: '20px 0' }}>{event.name}</h1>}
-        <div className="divider" />
-      </header>
-
-      <main className="detail-main">
-        <div className="quick-grid">
-          <div className="qcell"><div className="q-label">Datum</div><div className="q-value">{formatDate(event.date)}</div></div>
-          <div className="qcell"><div className="q-label">Čas</div><div className="q-value">{formatTime(event.date)}</div></div>
-          <div className="qcell"><div className="q-label">Místo</div><div className="q-value">{event.place}</div></div>
-        </div>
-
-        <div className="rsvp-strip">
-          <div className="rsvp-info">
-            <span className="pts-tag">+{event.points} pts</span>
-            {event.capacity != null && (
-              <span className="cap-tag">{event.rsvp_count} / {event.capacity} přihlášených</span>
-            )}
+      {/* POSTER */}
+      <section className="poster">
+        <img className="poster-img" src={posterSrc} alt={event.name} fetchpriority="high" />
+        <div className="poster-grain" />
+        <div className="poster-vignette" />
+        <div className="poster-top">
+          <div className="badges">
+            <span className={`ev-pill${!event.is_past ? ' live' : ''}`}>
+              {event.is_past ? 'Proběhlo' : 'Nadcházející'}
+            </span>
           </div>
+          {event.logo
+            ? <img className="poster-logo" src={event.logo} alt={event.name} />
+            : <img className="poster-logo" src="/logos/GOL_main_logo_pink.png" alt={event.name} />}
+        </div>
+        <div className="credits">
+          <span className="credits-rule" />
+          <div className="credit">
+            <div className="credit-label">— Datum —</div>
+            <div className="credit-value">{formatDateShort(event.date)}</div>
+            <div className="credit-sub">{dayName(event.date)}</div>
+          </div>
+          <div className="credit">
+            <div className="credit-label">— Čas —</div>
+            <div className="credit-value">{formatTime(event.date)}</div>
+            <div className="credit-sub">{event.name}</div>
+          </div>
+          <div className="credit">
+            <div className="credit-label">— Místo —</div>
+            <div className="credit-value">{event.place}</div>
+            <div className="credit-sub">&nbsp;</div>
+          </div>
+        </div>
+      </section>
+
+      {/* RSVP BAR */}
+      <div className="rsvp-bar">
+        <div className="rsvp-inner">
+          {!event.is_past ? (
+            <>
+              <div className="rsvp-info">
+                <span className="pts-tag">+{event.points} pts</span>
+                {event.capacity != null && (
+                  <span className="cap-tag">{event.rsvp_count} / {event.capacity} přihlášených</span>
+                )}
+              </div>
+              <button
+                className={`btn-cta${event.has_rsvp ? ' joined' : ''}`}
+                onClick={handleRsvp}
+                disabled={busy || (event.is_full && !event.has_rsvp)}
+              >
+                {event.has_rsvp ? '✓ Jsi přihlášen/a' : event.is_full ? 'Plně obsazeno' : 'Přihlásit se ➤'}
+              </button>
+            </>
+          ) : (
+            <div className="rsvp-recap">
+              <span className="recap-eyebrow">— Proběhlo —</span>
+              <span className="recap-text">{event.rsvp_count ?? 0} účastníků · +{event.points} pts</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* BODY */}
+      <div className="body-wrap">
+        <main className="detail-main">
+          {event.description && (
+            <section className="section">
+              <div className="sec-rule" />
+              <div className="sec-eyebrow">— 01 · Popis —</div>
+              <h2 className="sec-heading">{event.name}</h2>
+              <p className="desc-text">{event.description}</p>
+            </section>
+          )}
+
+          {rules.length > 0 && (
+            <section className="section">
+              <div className="sec-rule" />
+              <div className="sec-eyebrow">— 02 · Pravidla —</div>
+              <h2 className="sec-heading">Hraje se férově.</h2>
+              <ol className="rules">
+                {rules.map((r, i) => (
+                  <li key={i}><span>{r}</span></li>
+                ))}
+              </ol>
+            </section>
+          )}
+
+          {displayImages.length > 0 && (
+            <section className="section">
+              <div className="sec-rule" />
+              <div className="sec-eyebrow">— Galerie —</div>
+              <h2 className="sec-heading">Z této akce.</h2>
+              <div className="collage" data-count={imgCount}>
+                {displayImages.map((src, i) => (
+                  <figure key={i} onClick={() => openLb(i)}>
+                    <img src={src} alt={`Galerie ${i + 1}`} loading="lazy" />
+                  </figure>
+                ))}
+              </div>
+            </section>
+          )}
+        </main>
+      </div>
+
+      {/* BACK STRIP */}
+      <div className="back-strip">
+        <div className="back-strip-inner">
+          <Link className="back-link" to="/akce">← Zpět na všechny akce</Link>
           <button
-            className="btn-cta"
-            style={event.has_rsvp ? { background: '#4a8a5e' } : undefined}
-            onClick={handleRsvp}
-            disabled={busy || (event.is_full && !event.has_rsvp)}
+            className="btn-cta ghost"
+            onClick={() => {
+              if (navigator.share) navigator.share({ title: event.name, url: location.href });
+              else navigator.clipboard.writeText(location.href);
+            }}
           >
-            {event.has_rsvp ? '✓ Jsi přihlášen/a' : event.is_full ? 'Plná kapacita' : 'Přihlásit se ➤'}
+            Sdílet kámošům
           </button>
         </div>
+      </div>
 
-        {event.description && (
-          <section className="info-card">
-            <h2 className="card-title">Popis</h2>
-            <p className="desc-text">{event.description}</p>
-          </section>
-        )}
-
-        {rules.length > 0 && (
-          <section className="info-card">
-            <h2 className="card-title">Pravidla</h2>
-            <ol className="rules">
-              {rules.map((r, i) => (
-                <li key={i}><span className="num">{i + 1}</span><span>{r}</span></li>
-              ))}
-            </ol>
-          </section>
-        )}
-
-        {images.length > 0 && (
-          <section className="info-card">
-            <h2 className="card-title">Galerie</h2>
-            <div className="gal-grid">
-              {images.map((src, i) => (
-                <div key={i} className="gal-thumb" onClick={() => openLb(i)}>
-                  <img src={src} alt={`Galerie ${i + 1}`} />
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
-        <div className="back-strip">
-          <Link className="back-link" to="/akce">← Zpět na všechny akce</Link>
-        </div>
-      </main>
-
+      {/* LIGHTBOX */}
       {lbOpen && images.length > 0 && (
         <div className="lightbox open" onClick={(e) => { if (e.target.classList.contains('lightbox')) setLbOpen(false); }}>
           <button className="lightbox-close" onClick={() => setLbOpen(false)}>×</button>

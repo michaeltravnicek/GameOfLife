@@ -44,6 +44,8 @@ export default function HomePage() {
 
   return (
     <div className="home-page">
+
+      {/* HERO */}
       <section className="hero">
         <div className="hero-slides">
           {slides.map((s, i) => (
@@ -56,8 +58,9 @@ export default function HomePage() {
         </div>
         <div className="hero-overlay" />
         <div className="hero-inner">
-          <h1 className="hero-title">{slides[slide]?.name || 'Game of Life'}</h1>
-          <p className="hero-sub">{slides[slide]?.date ? fmtDate(slides[slide].date) : 'Komunita, která hraje život naplno.'}</p>
+          <div className="hero-eyebrow">— Sezóna 2026 —</div>
+          <h1 className="hero-title">Game of Life</h1>
+          <p className="hero-sub">Život je hra, tak ho hrej. Komunita, výzvy, body a nezapomenutelné zážitky.</p>
           <Link to="/akce" className="btn-pill">Zobrazit akce <span className="arr"></span></Link>
         </div>
         <div className="hero-dots">
@@ -71,17 +74,18 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* UPCOMING EVENTS */}
       <section className="events-section">
         <h2 className="sec-title"><span className="star">✦</span> Nadcházející akce <span className="star">✦</span></h2>
         <div className="events-grid">
           {data.upcoming_events.length === 0 && (
-            <p style={{ gridColumn: '1/-1', textAlign: 'center', opacity: 0.6 }}>
-              Žádné nadcházející akce.
+            <p style={{ gridColumn: '1/-1', textAlign: 'center', color: 'rgba(255,255,255,.6)', fontStyle: 'italic' }}>
+              Žádné nadcházející akce. Sleduj nás na sítích!
             </p>
           )}
           {data.upcoming_events.map((e) => (
             <Link key={e.id} className="ev-card" to={`/akce/${e.slug}`}>
-              {e.image && <img className="ev-badge" src={e.image} alt="" />}
+              <img className="ev-badge" src={e.logo || '/logos/GOL_main_logo_pink.png'} alt={e.name} loading="lazy" />
               <div className="ev-title">{e.name}</div>
               <div className="ev-meta">
                 <div className="ev-row">📅 {fmtDate(e.date)}</div>
@@ -96,11 +100,12 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* LEADERBOARD */}
       <section className="lb-section">
         <div className="lb-bg" />
         <div className="lb-tint" />
         <div className="lb-inner">
-          <h2 className="lb-title"><span className="tr">🏆</span> Top 10 hráčů <span className="tr">🏆</span></h2>
+          <h2 className="lb-title"><span className="tr">🏆</span> Top hráči <span className="tr">🏆</span></h2>
           <div className="lb-card">
             <div className="lb-head"><div>#</div><div>hráč</div><div style={{ textAlign: 'right' }}>pts</div></div>
             {data.top_players.map((p) => {
@@ -125,22 +130,29 @@ export default function HomePage() {
             })}
           </div>
           <div className="lb-cta">
-            <Link to="/leaderboard" className="btn-pill">Celý leaderboard <span className="arr"></span></Link>
+            <Link to="/leaderboard" className="lb-link">Celý leaderboard →</Link>
           </div>
         </div>
       </section>
 
+      {/* ABOUT */}
       <section className="about-section">
         <div className="about-inner">
           <div className="about-photo">
-            <img src="/gallery/gal3.jpg" alt="Game of Life komunita" />
+            <img src="/gallery/gal3.jpg" alt="Game of Life komunita" loading="lazy" />
           </div>
-          <div>
+          <div className="about-content">
             <div className="about-eyebrow">— O nás —</div>
             <h3 className="about-heading">Komunita, která hraje život naplno</h3>
-            <p className="about-body"><strong>Game of Life</strong> je celoroční komunitní hra plná zábavy, výzev a nezapomenutelných zážitků.</p>
-            <p className="about-body">Každý event je bodovaný. Každá výzva tě posune dál.</p>
-            <Link to="/akce" className="btn-pill">Zapoj se <span className="arr"></span></Link>
+            <p className="about-body">
+              <strong>Game of Life</strong> je celoroční komunitní hra plná zábavy, výzev a nezapomenutelných
+              zážitků. Vzešla z přesvědčení, že nejlepší okamžiky nevznikají samy — ale když se správní
+              lidé potkají ve správný čas.
+            </p>
+            <p className="about-body">
+              Každý event je bodovaný. Každá výzva tě posune dál. Nejde jen o body — jde o přátelství,
+              vzpomínky a odvahu vyzkoušet něco nového.
+            </p>
             <div className="stats-row">
               <div className="stat-item"><div className="stat-num">{stats.players ?? '—'}</div><div className="stat-label">Hráčů</div></div>
               <div className="stat-item"><div className="stat-num">{stats.events ?? '—'}</div><div className="stat-label">Events</div></div>
@@ -150,9 +162,10 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* GALLERY */}
       <section className="gallery-section">
         <div className="gal-header">
-          <h2 className="sec-title"><span className="star">📷</span> Galerie <span className="star">📷</span></h2>
+          <h2 className="gal-title"><span className="gal-star">📷</span> Galerie <span className="gal-star">📷</span></h2>
         </div>
         <div className="gal-container">
           <div
@@ -171,6 +184,7 @@ export default function HomePage() {
           <Link to="/galerie" className="btn-pill">Celá galerie <span className="arr"></span></Link>
         </div>
       </section>
+
     </div>
   );
 }

@@ -14,7 +14,7 @@ function EventCard({ ev }) {
   return (
     <Link className={`ev-card${ev.is_past ? ' past' : ''}`} to={`/akce/${ev.slug}`}>
       <span className={`ev-status${ev.is_past ? ' done' : ''}`}>{ev.is_past ? 'Proběhlo' : 'Akce'}</span>
-      {ev.image && <img className="ev-badge" src={ev.image} alt="" />}
+      <img className="ev-badge" src={ev.logo || '/logos/GOL_main_logo_pink.png'} alt="" />
       <div className="ev-content">
         <h3 className="ev-title">{ev.name}</h3>
         {ev.description && <p className="ev-desc">{ev.description}</p>}
@@ -76,7 +76,7 @@ export default function EventsPage() {
       <header className="hero">
         <div className="eyebrow">Kalendář · Sezóna 2025/26</div>
         <h1>Events</h1>
-        <p className="tagline">Kompletní seznam akcí. Sbírej body, hraj život.</p>
+        <p className="tagline">Kompletní seznam akcí. Od karaoke přes nahou míli, deskovky až po bruslení. Sbírej body, hraj život.</p>
         <div className="divider" />
       </header>
 

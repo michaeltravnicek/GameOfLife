@@ -38,7 +38,6 @@ export default function LeaderboardPage() {
       <header className="hero">
         <div className="eyebrow">Ranking · Sezóna 2025/26</div>
         <h1>Leaderboard</h1>
-        <p className="tagline">Kdo hraje nejtvrději. Body za účast a odvahu jít mimo komfortní zónu.</p>
         <div className="divider" />
       </header>
 

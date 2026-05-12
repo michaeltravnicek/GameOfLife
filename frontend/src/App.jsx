@@ -43,8 +43,8 @@ export default function App() {
         <Route path="/profil" element={<Layout><ProfilePage /></Layout>} />
         <Route path="/profil/:username" element={<Layout><ProfilePage /></Layout>} />
         <Route path="/o-bodech" element={<Layout><OBodechPage /></Layout>} />
-        <Route path="/prihlasit" element={<Layout withChrome={false}><LoginPage /></Layout>} />
-        <Route path="/registrace" element={<Layout withChrome={false}><RegisterPage /></Layout>} />
+        <Route path="/prihlasit" element={<Layout><LoginPage /></Layout>} />
+        <Route path="/registrace" element={<Layout><RegisterPage /></Layout>} />
       </Routes>
     </>
   );
