@@ -1,20 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { fetchGallery } from '../../services/api';
+import Lightbox from '../../components/Lightbox/Lightbox';
+import { monthKey, monthLabel } from '../../utils/date';
 import './GalleryPage.css';
 
-const CZ_MONTHS = ['Leden', 'Únor', 'Březen', 'Duben', 'Květen', 'Červen', 'Červenec', 'Srpen', 'Září', 'Říjen', 'Listopad', 'Prosinec'];
-
-function monthKey(iso) {
-  if (!iso) return 'unknown';
-  const d = new Date(iso);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-}
-function monthLabel(key) {
-  if (key === 'unknown') return 'Neurčeno';
-  const [y, m] = key.split('-');
-  return `${CZ_MONTHS[Number(m) - 1]} ${y}`;
-}
 
 export default function GalleryPage() {
   const [view, setView] = useState('slideshow');
@@ -46,16 +36,6 @@ export default function GalleryPage() {
   };
   const lbStep = (d) => setLbIndex((i) => (i + d + lbPhotos.length) % lbPhotos.length);
 
-  useEffect(() => {
-    if (!lbOpen) return;
-    const onKey = (e) => {
-      if (e.key === 'Escape') setLbOpen(false);
-      if (e.key === 'ArrowLeft') lbStep(-1);
-      if (e.key === 'ArrowRight') lbStep(1);
-    };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [lbOpen, lbPhotos.length]);
 
   const visibleMonths = activeMonth === 'all' ? months : [activeMonth];
 
@@ -183,17 +163,15 @@ export default function GalleryPage() {
         <Link to="/akce" className="btn-pill">Zobrazit nadcházející akce ➤</Link>
       </div>
 
-      {lbOpen && lbPhotos.length > 0 && (
-        <div className="lightbox open" onClick={(e) => { if (e.target.classList.contains('lightbox')) setLbOpen(false); }}>
-          <button className="lb-close" onClick={() => setLbOpen(false)}>×</button>
-          <button className="lb-nav prev" onClick={() => lbStep(-1)}>‹</button>
-          <img src={lbPhotos[lbIndex].url} alt="" />
-          <button className="lb-nav next" onClick={() => lbStep(1)}>›</button>
-          <div className="lb-info">
-            {lbPhotos[lbIndex].event_name}{lbPhotos[lbIndex].is_user_photo && ` · foto: ${lbPhotos[lbIndex].uploaded_by}`}
-          </div>
-        </div>
-      )}
+      <Lightbox
+        open={lbOpen}
+        photos={lbPhotos}
+        index={lbIndex}
+        showInfo
+        onClose={() => setLbOpen(false)}
+        onPrev={() => lbStep(-1)}
+        onNext={() => lbStep(1)}
+      />
     </div>
   );
 }

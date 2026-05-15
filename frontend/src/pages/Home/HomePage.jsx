@@ -1,16 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { fetchHome } from '../../services/api';
+import EventCard from '../../components/EventCard/EventCard';
+import Avatar from '../../components/Avatar/Avatar';
+import { fmtDate } from '../../utils/date';
 import './HomePage.css';
-
-const MONTHS = ['ledna', 'února', 'března', 'dubna', 'května', 'června', 'července', 'srpna', 'září', 'října', 'listopadu', 'prosince'];
-const fmtDate = (iso) => {
-  if (!iso) return '';
-  const d = new Date(iso);
-  return `${d.getDate()}. ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
-};
-const initials = (s) =>
-  (s || '').split(' ').map((w) => w[0]).filter(Boolean).join('').slice(0, 2).toUpperCase();
 
 const FALLBACK_GAL = ['/gallery/gal0.jpg', '/gallery/gal1.jpg', '/gallery/gal2.jpg', '/gallery/gal3.jpg'];
 
@@ -59,8 +53,8 @@ export default function HomePage() {
         <div className="hero-overlay" />
         <div className="hero-inner">
           <div className="hero-eyebrow">— Sezóna 2026 —</div>
-          <h1 className="hero-title">Game of Life</h1>
-          <p className="hero-sub">Život je hra, tak ho hrej. Komunita, výzvy, body a nezapomenutelné zážitky.</p>
+          <h1 className="hero-title">{slides[slide]?.name || 'Game of Life'}</h1>
+          {slides[slide]?.date && <p className="hero-date">{fmtDate(slides[slide].date)}</p>}
           <Link to="/akce" className="btn-pill">Zobrazit akce <span className="arr"></span></Link>
         </div>
         <div className="hero-dots">
@@ -84,15 +78,7 @@ export default function HomePage() {
             </p>
           )}
           {data.upcoming_events.map((e) => (
-            <Link key={e.id} className="ev-card" to={`/akce/${e.slug}`}>
-              <img className="ev-badge" src={e.logo || '/logos/GOL_main_logo_pink.png'} alt={e.name} loading="lazy" />
-              <div className="ev-title">{e.name}</div>
-              <div className="ev-meta">
-                <div className="ev-row">📅 {fmtDate(e.date)}</div>
-                <div className="ev-row">📍 {e.place}</div>
-                <div className="ev-row">🏆 +{e.points} pts</div>
-              </div>
-            </Link>
+            <EventCard key={e.id} event={e} />
           ))}
         </div>
         <div className="see-all">
@@ -123,7 +109,7 @@ export default function HomePage() {
                   <span className={`lb-rank${isTop ? ' top' : ''}`}>
                     {trophyMap[p.rank] || `${p.rank}.`}
                   </span>
-                  <div className="lb-name"><div className="lb-av">{initials(p.name)}</div>{p.name}</div>
+                  <div className="lb-name"><Avatar name={p.name} size="xs" className="lb-av" />{p.name}</div>
                   <div className="lb-pts">{p.total_points}</div>
                 </Row>
               );

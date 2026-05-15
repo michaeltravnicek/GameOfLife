@@ -1,0 +1,37 @@
+/* ── Base ── */
+.evcard{position:relative;display:block;border-radius:14px;overflow:visible;text-decoration:none;transition:transform .2s ease}
+.evcard-svg{position:absolute;top:0;left:0;pointer-events:none;overflow:visible}
+
+/* ── Dark theme (Home — fixed size, dark bg) ── */
+.evcard-dark{width:347px;height:166px;padding:4px;box-sizing:border-box}
+.evcard-dark:hover{transform:translateY(-6px)}
+.evcard-dark-inner{width:100%;height:100%;padding:16px 16px 12px;background:rgba(0,0,0,.20);border-radius:12px;box-sizing:border-box;display:flex;flex-direction:column;gap:10px}
+.evcard-dark .evcard-title{color:#fff;font-size:30px;font-family:var(--font-display);font-weight:400;text-transform:uppercase;line-height:1;letter-spacing:.015em;margin:0}
+.evcard-dark .evcard-meta{display:flex;flex-direction:column;gap:3px;font-family:var(--font-hv);font-size:11px;font-weight:300;color:rgba(255,255,255,.85);line-height:1.55}
+.evcard-dark .evcard-title-wrap{padding-right:72px;display:flex;flex-direction:column;gap:2px}
+.evcard-dark .evcard-brand{color:#fff;font-size:30px;font-family:var(--font-display);font-weight:400;text-transform:uppercase;line-height:1;letter-spacing:.015em}
+
+/* ── Light theme (Events list — flexible height, grain bg) ── */
+.evcard-light{height:240px;opacity:1}
+.evcard-light.is-past{opacity:.78}
+.evcard-light:hover{transform:translateY(-4px)}
+.evcard-light-bg{position:absolute;inset:0;border-radius:14px;overflow:hidden;background-image:url('/assets/Grain_texture_light.png');background-size:cover;background-position:center}
+.evcard-light-bg-overlay{position:absolute;inset:0;background:rgba(255,253,253,.52)}
+.evcard-light .evcard-status{position:absolute;top:16px;left:22px;z-index:3;font-family:var(--font-mono);font-style:italic;font-size:10px;letter-spacing:1.4px;text-transform:uppercase;padding:4px 10px;border-radius:9999px;background:rgba(255,241,212,.75);color:#1a1a1a;border:1px dashed rgba(26,26,26,.35);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);line-height:1.6}
+.evcard-light .evcard-content{position:relative;z-index:1;height:100%;padding:35px 22px 18px;display:flex;flex-direction:column;box-sizing:border-box}
+.evcard-light .evcard-title-wrap{padding-right:90px;padding-top:12px}
+.evcard-light .evcard-title{color:#1a1a1a;font-size:44px;font-family:var(--font-display);font-weight:400;text-transform:uppercase;line-height:.95;letter-spacing:.013em;margin:0}
+.evcard-light .evcard-meta{display:flex;flex-direction:column;gap:2px;margin-top:8px;font-family:var(--font-hv);font-size:11.5px;font-style:italic;color:rgba(26,26,26,.70);line-height:1.6}
+.evcard-light .evcard-footer{margin-top:auto;padding-top:10px;border-top:1px dashed rgba(26,26,26,.25);display:flex;align-items:center;justify-content:space-between;gap:10px}
+.evcard-light .evcard-pts{display:inline-flex;align-items:center;background:var(--color-pink);color:#fff;font-family:var(--font-hv);font-size:12px;font-weight:500;letter-spacing:.06em;padding:4px 12px;border-radius:9999px;box-shadow:0 4px 7px rgba(225,84,99,.4);line-height:1.6}
+.evcard-light .evcard-detail{font-family:var(--font-hv);font-size:12px;font-weight:700;font-style:italic;padding-bottom:1px;transition:color .2s,border-color .2s;line-height:1.6}
+
+/* ── Badge (shared) ── */
+.evcard-badge{position:absolute;object-fit:contain;pointer-events:none;filter:drop-shadow(0px 4px 10px rgba(0,0,0,.35))}
+.evcard-dark .evcard-badge{width:110px;height:110px;top:-28px;right:-24px;transform:rotate(14deg)}
+.evcard-light .evcard-badge{width:120px;height:120px;top:-28px;right:-18px;transform:rotate(17deg);filter:drop-shadow(0px 4px 10px rgba(0,0,0,.3));z-index:2}
+
+@media(max-width:480px){
+  .evcard-dark{width:100%;height:auto;min-height:140px}
+  .evcard-dark-inner{height:auto;min-height:132px}
+}

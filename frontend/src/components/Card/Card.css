@@ -1,0 +1,25 @@
+.card{border-radius:var(--radius-lg);position:relative;overflow:hidden}
+
+/* Variants */
+.card-dark{background-color:#1a0f0a;border:1.5px dashed rgba(255,241,212,.38);box-shadow:0 12px 28px rgba(0,0,0,.5)}
+.card-dark::before{content:'';position:absolute;top:0;left:10%;right:10%;height:1px;background:linear-gradient(90deg,transparent,rgba(255,241,212,.35),transparent);pointer-events:none}
+.card-frosted{background:rgba(26,15,10,.45);border:1.5px dashed rgba(255,241,212,.32);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.card-light{background:rgba(255,241,212,.06);border:1px solid rgba(255,241,212,.18)}
+.card-info{background:rgba(26,15,10,.55);border:2px dashed rgba(255,241,212,.30);box-shadow:0 8px 24px rgba(0,0,0,.4)}
+
+/* Texture overlays */
+.card-tex-blue{background-image:url('/assets/Grain_texture_blue.png');background-size:auto;background-repeat:repeat}
+.card-tex-brown{background-image:url('/assets/Grain_texture_brown2.png');background-size:cover}
+.card-tex-light{background-image:url('/assets/Grain_texture_light.png');background-size:cover}
+
+/* Extra inner dashed border (leaderboard list style) */
+.card-bordered::after{content:'';position:absolute;inset:6px;border:1.5px dashed rgba(255,241,212,.22);border-radius:10px;pointer-events:none}
+
+/* Padding scale */
+.card-pad-sm{padding:var(--space-4)}
+.card-pad-md{padding:var(--space-6) var(--space-6)}
+.card-pad-lg{padding:var(--space-8) var(--space-8)}
+
+/* Hover lift (opt-in) */
+.card-hoverable{transition:transform .2s,border-color .2s;cursor:pointer}
+.card-hoverable:hover{transform:translateY(-2px);border-color:var(--color-pink)}

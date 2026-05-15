@@ -1,0 +1,7 @@
+.form-field{margin-bottom:22px;position:relative}
+.form-field-label{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.form-field-label-text{display:block;font-family:var(--font-mono);font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,241,212,.80);font-weight:500}
+.form-field-input{width:100%;background:rgba(255,255,255,.06);border:1.5px solid rgba(255,241,212,.22);border-radius:10px;padding:15px 18px;font-family:var(--font-body);font-size:16px;font-weight:500;color:var(--color-cream-light);outline:none;transition:border-color .2s,background .2s,box-shadow .2s;box-sizing:border-box}
+.form-field-input::placeholder{color:rgba(255,241,212,.28);font-weight:400}
+.form-field-input:focus{border-color:rgba(225,84,99,.7);background:rgba(225,84,99,.08);box-shadow:0 0 0 3px rgba(225,84,99,.14)}
+.form-field-input.has-error{border-color:rgba(225,84,99,.95)}

@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { fetchLeaderboard } from '../../services/api';
+import TabBar from '../../components/TabBar/TabBar';
+import SearchInput from '../../components/SearchInput/SearchInput';
+import Avatar from '../../components/Avatar/Avatar';
 import './LeaderboardPage.css';
 
 const TROPHIES = ['🏆', '🥈', '🥉'];
-const initials = (n) =>
-  (n || '').split(' ').map((w) => w[0]).filter(Boolean).join('').slice(0, 2).toUpperCase();
 
 export default function LeaderboardPage() {
   const [tab, setTab] = useState('total');
@@ -23,10 +24,11 @@ export default function LeaderboardPage() {
   const q = query.trim().toLowerCase();
   const top3 = entries.slice(0, 3);
   const rest = entries.slice(3);
+  // podium display order: 2nd (left), 1st (center), 3rd (right)
   const podiumOrder = [1, 0, 2];
 
   const visibleRest = useMemo(
-    () => rest.filter((p) => !q || p.name.toLowerCase().includes(q)),
+    () => (q ? rest.filter((p) => p.name.toLowerCase().includes(q)) : rest),
     [rest, q],
   );
 
@@ -42,19 +44,17 @@ export default function LeaderboardPage() {
       </header>
 
       <section className="controls">
-        <div className="tabs">
-          <button className={`tab${tab === 'total' ? ' on' : ''}`} onClick={() => setTab('total')}>Celkem</button>
-          <button className={`tab${tab === 'month' ? ' on' : ''}`} onClick={() => setTab('month')}>Tento rok</button>
-        </div>
-        <div className="search">
-          <input
-            type="text"
-            placeholder="Vyhledat hráče…"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            autoComplete="off"
-          />
-        </div>
+        <TabBar
+          tabs={[{ key: 'total', label: 'Celkem' }, { key: 'month', label: 'Tento rok' }]}
+          active={tab}
+          onChange={setTab}
+        />
+        <SearchInput
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Vyhledat hráče…"
+          className="lb-search"
+        />
         <Link to="/o-bodech" className="lb-help-link">Co jsou to body?</Link>
       </section>
 
@@ -68,29 +68,37 @@ export default function LeaderboardPage() {
         {!loading && top3.length > 0 && (
           <div className="stage-wrap">
             <div className="podium">
-              {podiumOrder.map((i) => {
-                const p = top3[i];
+              {podiumOrder.map((idx) => {
+                const p = top3[idx];
                 if (!p) return null;
-                const cls = i === 0 ? 'p1' : i === 1 ? 'p2' : 'p3';
+                const cls = idx === 0 ? 'p1' : idx === 1 ? 'p2' : 'p3';
                 const dim = q && !p.name.toLowerCase().includes(q);
-                const link = p.profile_username ? `/profil/${p.profile_username}` : null;
-                const Wrap = link ? Link : 'div';
-                return (
-                  <Wrap
+                const profileLink = p.profile_username ? `/profil/${p.profile_username}` : null;
+                return profileLink ? (
+                  <Link
                     key={p.id}
-                    to={link || undefined}
-                    className={`pod ${cls}`}
-                    style={{
-                      ...(dim ? { opacity: 0.22 } : {}),
-                      ...(link ? { textDecoration: 'none', color: 'inherit' } : {}),
-                    }}
+                    to={profileLink}
+                    className={`pod ${cls} clickable`}
+                    style={dim ? { opacity: 0.22 } : undefined}
                   >
-                    <div className="trophy">{TROPHIES[i]}</div>
-                    <div className="ava">{initials(p.name)}</div>
+                    <div className="trophy">{TROPHIES[idx]}</div>
+                    <Avatar name={p.name} size={idx === 0 ? 'xl' : 'lg'} rank={idx === 0 ? 'gold' : idx === 1 ? 'silver' : 'bronze'} className="ava" />
                     <div className="nm">{p.name}</div>
                     <div className="pts">{p.total_points}<span className="pts-u">pts</span></div>
-                    <div className="base"><span className="rk">{i + 1}</span></div>
-                  </Wrap>
+                    <div className="base"><span className="rk">{idx + 1}</span></div>
+                  </Link>
+                ) : (
+                  <div
+                    key={p.id}
+                    className={`pod ${cls}`}
+                    style={dim ? { opacity: 0.22 } : undefined}
+                  >
+                    <div className="trophy">{TROPHIES[idx]}</div>
+                    <Avatar name={p.name} size={idx === 0 ? 'xl' : 'lg'} rank={idx === 0 ? 'gold' : idx === 1 ? 'silver' : 'bronze'} className="ava" />
+                    <div className="nm">{p.name}</div>
+                    <div className="pts">{p.total_points}<span className="pts-u">pts</span></div>
+                    <div className="base"><span className="rk">{idx + 1}</span></div>
+                  </div>
                 );
               })}
             </div>
@@ -98,7 +106,7 @@ export default function LeaderboardPage() {
           </div>
         )}
 
-        {rest.length > 0 && (
+        {!loading && rest.length > 0 && (
           <>
             <div className="list-label">Další hráči</div>
             <div className="list">
@@ -106,25 +114,30 @@ export default function LeaderboardPage() {
                 {visibleRest.length === 0 && q ? (
                   <div className="empty">Nikdo nenalezen.</div>
                 ) : (
-                  rest.map((p) => {
-                    const hidden = q && !p.name.toLowerCase().includes(q);
-                    if (hidden) return null;
-                    const link = p.profile_username ? `/profil/${p.profile_username}` : null;
-                    const Wrap = link ? Link : 'div';
-                    return (
-                      <Wrap
+                  visibleRest.map((p) => {
+                    const profileLink = p.profile_username ? `/profil/${p.profile_username}` : null;
+                    return profileLink ? (
+                      <Link
                         key={p.id}
-                        to={link || undefined}
-                        className="row"
-                        style={link ? { textDecoration: 'none', color: 'inherit' } : undefined}
+                        to={profileLink}
+                        className="row clickable"
                       >
                         <div className="rk">{p.rank}.</div>
                         <div className="nm">
-                          <div className="av">{initials(p.name)}</div>
+                          <Avatar name={p.name} size="sm" />
                           <span className="txt">{p.name}</span>
                         </div>
                         <div className="pt">{p.total_points}<span className="u">pts</span></div>
-                      </Wrap>
+                      </Link>
+                    ) : (
+                      <div key={p.id} className="row">
+                        <div className="rk">{p.rank}.</div>
+                        <div className="nm">
+                          <Avatar name={p.name} size="sm" />
+                          <span className="txt">{p.name}</span>
+                        </div>
+                        <div className="pt">{p.total_points}<span className="u">pts</span></div>
+                      </div>
                     );
                   })
                 )}

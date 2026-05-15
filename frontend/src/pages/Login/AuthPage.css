@@ -46,6 +46,9 @@
 .auth-foot a{color:var(--color-cream-light);font-weight:600;font-style:italic;border-bottom:1px solid rgba(255,241,212,.3);transition:color .2s,border-color .2s;text-decoration:none}
 .auth-foot a:hover{color:var(--color-pink);border-color:var(--color-pink)}
 
+/* Button component override — full width submit button */
+.pts-btn-wrap{width:100%;justify-content:center;font-family:var(--font-mono);letter-spacing:.14em;padding:17px 28px;margin-top:8px}
+
 @media(max-width:640px){
   .auth-page .hero-section{padding:120px 20px 28px;min-height:auto}
   .auth-container{padding:0 16px 60px}

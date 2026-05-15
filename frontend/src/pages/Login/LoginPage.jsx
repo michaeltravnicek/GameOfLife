@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import FormInput from '../../components/FormInput/FormInput';
+import Button from '../../components/Button/Button';
 import './AuthPage.css';
 
 export default function LoginPage() {
@@ -47,31 +49,27 @@ export default function LoginPage() {
             <div className="auth-card-sub">Hráč · zadej svoje údaje</div>
             <div className="auth-divider" />
             <form onSubmit={handleSubmit} noValidate>
-              <div className="form-group">
-                <label htmlFor="login-id">Telefon nebo e-mail</label>
-                <input
-                  id="login-id"
-                  type="text"
-                  placeholder="731 005 976 nebo jan@example.com"
-                  autoComplete="username"
-                  value={identifier}
-                  onChange={(e) => setIdentifier(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label htmlFor="login-pw">Heslo</label>
-                <a href="#" className="forgot">Zapomenuté heslo?</a>
-                <input
-                  id="login-pw"
-                  type="password"
-                  placeholder="········"
-                  autoComplete="current-password"
-                  value={pw}
-                  onChange={(e) => setPw(e.target.value)}
-                  required
-                />
-              </div>
+              <FormInput
+                id="login-id"
+                label="Telefon nebo e-mail"
+                type="text"
+                placeholder="731 005 976 nebo jan@example.com"
+                autoComplete="username"
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
+                required
+              />
+              <FormInput
+                id="login-pw"
+                label="Heslo"
+                type="password"
+                placeholder="········"
+                autoComplete="current-password"
+                value={pw}
+                onChange={(e) => setPw(e.target.value)}
+                required
+                rightSlot={<a href="#" className="forgot">Zapomenuté heslo?</a>}
+              />
               {error && <div className="auth-error">{error}</div>}
               <label className="remember-row">
                 <input
@@ -81,9 +79,9 @@ export default function LoginPage() {
                 />
                 <span>Zůstat přihlášen</span>
               </label>
-              <button type="submit" className="pts-btn" disabled={busy}>
+              <Button type="submit" size="lg" busy={busy} className="pts-btn-wrap">
                 {busy ? 'Přihlašuji…' : 'Přihlásit se →'}
-              </button>
+              </Button>
             </form>
             <p className="auth-foot">Nemáš účet? <Link to="/registrace">Zaregistrovat se</Link></p>
           </div>

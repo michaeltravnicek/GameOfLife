@@ -1,0 +1,4 @@
+.tabs-bar{display:inline-flex;padding:5px;gap:5px;background:rgba(26,15,10,.45);border:1.5px dashed rgba(255,241,212,.32);border-radius:9999px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.tabs-bar-btn{font-family:var(--font-hv);font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;padding:9px 20px;border-radius:9999px;cursor:pointer;background:transparent;border:0;color:rgba(255,241,212,.75);transition:all .18s;white-space:nowrap}
+.tabs-bar-btn:hover{color:#fff}
+.tabs-bar-btn.active{background:var(--color-pink);color:#fff;box-shadow:0 4px 14px rgba(225,84,99,.45)}

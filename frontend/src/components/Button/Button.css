@@ -1,0 +1,21 @@
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;cursor:pointer;border-radius:var(--radius-pill);transition:transform .18s,background .18s,border-color .18s,color .18s;text-decoration:none;font-family:var(--font-hv);font-weight:700;letter-spacing:.08em;text-transform:uppercase;line-height:1;white-space:nowrap}
+.btn:disabled,.btn[aria-disabled="true"]{opacity:.55;cursor:not-allowed;transform:none !important;pointer-events:none}
+
+/* Variants */
+.btn-primary{background:var(--color-pink);color:#fff;box-shadow:var(--shadow-btn)}
+.btn-primary:hover:not(:disabled){background:var(--btn-primary-hover);transform:translateY(-2px)}
+.btn-ghost{background:transparent;color:var(--color-cream-light);border:1.5px dashed rgba(255,241,212,.36)}
+.btn-ghost:hover:not(:disabled){border-color:var(--color-pink);color:var(--color-pink)}
+.btn-cta{background:var(--color-pink);color:#fff;box-shadow:0 6px 22px rgba(225,84,99,.4)}
+.btn-cta:hover:not(:disabled){background:var(--btn-primary-hover);transform:translateY(-1px)}
+.btn-cta.joined{background:#4a8a5e;box-shadow:0 6px 22px rgba(74,138,94,.35)}
+.btn-cta.joined:hover:not(:disabled){background:#3d7a52}
+
+/* Sizes */
+.btn-sm{font-size:11px;padding:7px 16px}
+.btn-md{font-size:13px;padding:11px 24px}
+.btn-lg{font-size:14px;padding:13px 30px}
+
+/* Busy spinner */
+.btn-spinner{width:14px;height:14px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:btn-spin .6s linear infinite;flex-shrink:0}
+@keyframes btn-spin{to{transform:rotate(360deg)}}

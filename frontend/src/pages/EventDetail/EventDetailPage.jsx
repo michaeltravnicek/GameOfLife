@@ -2,30 +2,11 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { fetchEventDetail, toggleRsvp } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
+import Lightbox from '../../components/Lightbox/Lightbox';
+import Button from '../../components/Button/Button';
+import SectionHeader from '../../components/SectionHeader/SectionHeader';
+import { fmtDateShort, fmtTime, dayName } from '../../utils/date';
 import './EventDetailPage.css';
-
-const MONTHS = ['ledna', 'února', 'března', 'dubna', 'května', 'června', 'července', 'srpna', 'září', 'října', 'listopadu', 'prosince'];
-
-function formatDate(iso) {
-  if (!iso) return '';
-  const d = new Date(iso);
-  return `${d.getDate()}. ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
-}
-function formatDateShort(iso) {
-  if (!iso) return '';
-  const d = new Date(iso);
-  return `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getFullYear()).slice(2)}`;
-}
-function formatTime(iso) {
-  if (!iso) return '';
-  const d = new Date(iso);
-  return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
-}
-function dayName(iso) {
-  if (!iso) return '';
-  const days = ['Neděle','Pondělí','Úterý','Středa','Čtvrtek','Pátek','Sobota'];
-  return days[new Date(iso).getDay()];
-}
 
 export default function EventDetailPage() {
   const { slug } = useParams();
@@ -62,16 +43,6 @@ export default function EventDetailPage() {
     return '/gallery/gal0.jpg';
   }, [event]);
 
-  useEffect(() => {
-    if (!lbOpen) return;
-    const onKey = (e) => {
-      if (e.key === 'Escape') setLbOpen(false);
-      if (e.key === 'ArrowLeft') setLbIndex((i) => (i - 1 + images.length) % images.length);
-      if (e.key === 'ArrowRight') setLbIndex((i) => (i + 1) % images.length);
-    };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [lbOpen, images.length]);
 
   if (error) {
     return (
@@ -137,12 +108,12 @@ export default function EventDetailPage() {
           <span className="credits-rule" />
           <div className="credit">
             <div className="credit-label">— Datum —</div>
-            <div className="credit-value">{formatDateShort(event.date)}</div>
+            <div className="credit-value">{fmtDateShort(event.date)}</div>
             <div className="credit-sub">{dayName(event.date)}</div>
           </div>
           <div className="credit">
             <div className="credit-label">— Čas —</div>
-            <div className="credit-value">{formatTime(event.date)}</div>
+            <div className="credit-value">{fmtTime(event.date)}</div>
             <div className="credit-sub">{event.name}</div>
           </div>
           <div className="credit">
@@ -164,13 +135,15 @@ export default function EventDetailPage() {
                   <span className="cap-tag">{event.rsvp_count} / {event.capacity} přihlášených</span>
                 )}
               </div>
-              <button
-                className={`btn-cta${event.has_rsvp ? ' joined' : ''}`}
+              <Button
+                variant="cta"
+                className={event.has_rsvp ? 'joined' : ''}
                 onClick={handleRsvp}
-                disabled={busy || (event.is_full && !event.has_rsvp)}
+                disabled={event.is_full && !event.has_rsvp}
+                busy={busy}
               >
                 {event.has_rsvp ? '✓ Jsi přihlášen/a' : event.is_full ? 'Plně obsazeno' : 'Přihlásit se ➤'}
-              </button>
+              </Button>
             </>
           ) : (
             <div className="rsvp-recap">
@@ -186,18 +159,14 @@ export default function EventDetailPage() {
         <main className="detail-main">
           {event.description && (
             <section className="section">
-              <div className="sec-rule" />
-              <div className="sec-eyebrow">— 01 · Popis —</div>
-              <h2 className="sec-heading">{event.name}</h2>
+              <SectionHeader eyebrow="— 01 · Popis —" heading={event.name} />
               <p className="desc-text">{event.description}</p>
             </section>
           )}
 
           {rules.length > 0 && (
             <section className="section">
-              <div className="sec-rule" />
-              <div className="sec-eyebrow">— 02 · Pravidla —</div>
-              <h2 className="sec-heading">Hraje se férově.</h2>
+              <SectionHeader eyebrow="— 02 · Pravidla —" heading="Hraje se férově." />
               <ol className="rules">
                 {rules.map((r, i) => (
                   <li key={i}><span>{r}</span></li>
@@ -208,9 +177,7 @@ export default function EventDetailPage() {
 
           {displayImages.length > 0 && (
             <section className="section">
-              <div className="sec-rule" />
-              <div className="sec-eyebrow">— Galerie —</div>
-              <h2 className="sec-heading">Z této akce.</h2>
+              <SectionHeader eyebrow="— Galerie —" heading="Z této akce." />
               <div className="collage" data-count={imgCount}>
                 {displayImages.map((src, i) => (
                   <figure key={i} onClick={() => openLb(i)}>
@@ -227,27 +194,26 @@ export default function EventDetailPage() {
       <div className="back-strip">
         <div className="back-strip-inner">
           <Link className="back-link" to="/akce">← Zpět na všechny akce</Link>
-          <button
-            className="btn-cta ghost"
+          <Button
+            variant="ghost"
             onClick={() => {
               if (navigator.share) navigator.share({ title: event.name, url: location.href });
               else navigator.clipboard.writeText(location.href);
             }}
           >
             Sdílet kámošům
-          </button>
+          </Button>
         </div>
       </div>
 
-      {/* LIGHTBOX */}
-      {lbOpen && images.length > 0 && (
-        <div className="lightbox open" onClick={(e) => { if (e.target.classList.contains('lightbox')) setLbOpen(false); }}>
-          <button className="lightbox-close" onClick={() => setLbOpen(false)}>×</button>
-          <button className="lightbox-nav prev" onClick={() => setLbIndex((i) => (i - 1 + images.length) % images.length)}>‹</button>
-          <img src={images[lbIndex]} alt="" />
-          <button className="lightbox-nav next" onClick={() => setLbIndex((i) => (i + 1) % images.length)}>›</button>
-        </div>
-      )}
+      <Lightbox
+        open={lbOpen}
+        images={images}
+        index={lbIndex}
+        onClose={() => setLbOpen(false)}
+        onPrev={() => setLbIndex((i) => (i - 1 + images.length) % images.length)}
+        onNext={() => setLbIndex((i) => (i + 1) % images.length)}
+      />
     </div>
   );
 }

@@ -2,6 +2,9 @@ import { useEffect, useState } from 'react';
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import { fetchProfile } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
+import Button from '../../components/Button/Button';
+import TabBar from '../../components/TabBar/TabBar';
+import SectionHeader from '../../components/SectionHeader/SectionHeader';
 import './ProfilePage.css';
 
 const MONTHS_SHORT = ['Led','Úno','Bře','Dub','Kvě','Čvn','Čvc','Srp','Zář','Říj','Lis','Pro'];
@@ -99,40 +102,31 @@ export default function ProfilePage() {
       <div className="actions">
         {profile.is_own_profile ? (
           <>
-            <button className="btn-pill ghost" type="button" onClick={handleShare}>Sdílet profil</button>
-            <button className="btn-pill ghost" type="button" onClick={handleLogout}>Odhlásit se</button>
+            <Button variant="ghost" size="sm" onClick={handleShare}>Sdílet profil</Button>
+            <Button variant="ghost" size="sm" onClick={handleLogout}>Odhlásit se</Button>
           </>
         ) : (
-          <button className="btn-pill ghost" type="button" onClick={handleShare}>Sdílet profil</button>
+          <Button variant="ghost" size="sm" onClick={handleShare}>Sdílet profil</Button>
         )}
       </div>
 
       <main className="profile-main">
         <section className="section">
-          <div className="sec-rule" />
-          <div className="sec-eyebrow">— 01 · O hráči —</div>
-          <h2 className="sec-heading">{displayName}, vlastními slovy.</h2>
+          <SectionHeader eyebrow="— 01 · O hráči —" heading={`${displayName}, vlastními slovy.`} />
           <div className="about-card">
             <p className="about-empty">Tento hráč zatím o sobě nic nenapsal.</p>
           </div>
         </section>
 
         <section className="section">
-          <div className="sec-rule" />
-          <div className="sec-eyebrow">— 02 · Činnost —</div>
-          <h2 className="sec-heading">Co hraje a co odehrál.</h2>
+          <SectionHeader eyebrow="— 02 · Činnost —" heading="Co hraje a co odehrál." />
 
           <div className="tab-row">
-            <div className="pill-group">
-              <button
-                className={`pill${activeTab === 'upcoming' ? ' on-pink' : ''}`}
-                onClick={() => setActiveTab('upcoming')}
-              >Nadcházející</button>
-              <button
-                className={`pill${activeTab === 'past' ? ' on-pink' : ''}`}
-                onClick={() => setActiveTab('past')}
-              >Absolvované</button>
-            </div>
+            <TabBar
+              tabs={[{key:'upcoming',label:'Nadcházející'},{key:'past',label:'Absolvované'}]}
+              active={activeTab}
+              onChange={setActiveTab}
+            />
           </div>
 
           {activeTab === 'upcoming' && (
