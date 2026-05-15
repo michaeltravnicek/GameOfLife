@@ -2,8 +2,8 @@
 .btn:disabled,.btn[aria-disabled="true"]{opacity:.55;cursor:not-allowed;transform:none !important;pointer-events:none}
 
 /* Variants */
-.btn-primary{background:var(--color-pink);color:#fff;box-shadow:var(--shadow-btn)}
-.btn-primary:hover:not(:disabled){background:var(--btn-primary-hover);transform:translateY(-2px)}
+.btn-primary{background:var(--color-pink);color:#fff;border:2px solid #504d4d;border-bottom:5px solid #504d4d;border-radius:16px;box-shadow:0 6px 22px rgba(225,84,99,.4)}
+.btn-primary:hover:not(:disabled){background:#cf4453;transform:translateY(-2px)}
 .btn-ghost{background:transparent;color:var(--color-cream-light);border:1.5px dashed rgba(255,241,212,.36)}
 .btn-ghost:hover:not(:disabled){border-color:var(--color-pink);color:var(--color-pink)}
 .btn-cta{background:var(--color-pink);color:#fff;box-shadow:0 6px 22px rgba(225,84,99,.4)}

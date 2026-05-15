@@ -1,0 +1,538 @@
+/* ============================================================
+   HISTORIE — Editorial archive / declassified field journal
+   ============================================================ */
+
+.hist-page{
+  --hist-ink:        #fff1d4;
+  --hist-ink-soft:   rgba(255,241,212,.74);
+  --hist-ink-mute:   rgba(255,241,212,.46);
+  --hist-ink-faint:  rgba(255,241,212,.18);
+  --hist-rule:       rgba(255,241,212,.22);
+  --hist-pink:       #e15463;
+  --hist-pink-soft:  rgba(225,84,99,.18);
+  --hist-gold:       #f5c842;
+  --hist-bg-deep:    #0c0a1f;
+  --hist-bg-violet:  #1a1450;
+
+  position:relative;
+  min-height:100vh;
+  color:var(--hist-ink);
+  overflow-x:hidden;
+  font-feature-settings:"ss01","ss02","liga","kern";
+}
+
+/* ── Atmosphere stack ──────────────────────────────────── */
+.hist-stage{
+  position:fixed; inset:0; z-index:-3;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(45,42,142,.55) 0%, transparent 60%),
+    radial-gradient(ellipse 90% 70% at 50% 100%, rgba(225,84,99,.10) 0%, transparent 55%),
+    linear-gradient(180deg, var(--hist-bg-violet) 0%, var(--hist-bg-deep) 70%, #050410 100%);
+}
+.hist-grain{
+  position:fixed; inset:0; z-index:-2; pointer-events:none;
+  background:var(--tex-blue) 0 0/620px 620px repeat;
+  opacity:.16; mix-blend-mode:overlay;
+}
+.hist-vignette{
+  position:fixed; inset:0; z-index:-1; pointer-events:none;
+  background:
+    radial-gradient(ellipse 70% 60% at 50% 50%, transparent 40%, rgba(0,0,0,.55) 100%),
+    repeating-linear-gradient(0deg, rgba(255,241,212,.018) 0 1px, transparent 1px 4px);
+}
+
+/* ============================================================
+   HERO — off-axis, oversized split title with TOC aside
+   ============================================================ */
+.hist-hero{
+  position:relative; z-index:2;
+  max-width:1280px; margin:0 auto;
+  padding:160px clamp(24px,5vw,72px) 80px;
+  display:grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 280px);
+  grid-template-rows: auto auto auto auto;
+  column-gap: clamp(24px, 4vw, 64px);
+  row-gap: 18px;
+  align-items:end;
+}
+
+.hist-hero-meta{
+  grid-column:1 / -1;
+  display:flex; align-items:center; gap:14px;
+  font-family:var(--font-mono); font-style:italic;
+  font-size:12px; letter-spacing:.28em; text-transform:uppercase;
+  color:var(--hist-pink);
+  animation:histRise .6s cubic-bezier(.22,.68,0,1) both .05s;
+}
+.hist-hero-vol{ background:rgba(225,84,99,.12); border:1px dashed rgba(225,84,99,.55); padding:5px 10px; border-radius:3px; }
+.hist-hero-rule{ flex:0 0 56px; height:1px; background:repeating-linear-gradient(90deg, var(--hist-pink) 0 4px, transparent 4px 8px); }
+.hist-hero-range{ color:var(--hist-ink-soft); }
+
+.hist-hero-title{
+  grid-column:1 / 2; grid-row:2;
+  margin:6px 0 0; padding:0;
+  font-family:var(--font-display);
+  font-weight:400;
+  font-size: clamp(96px, 18vw, 260px);
+  line-height:.82;
+  letter-spacing:-.01em;
+  text-transform:uppercase;
+  color:var(--hist-ink);
+  text-shadow: 0 8px 60px rgba(0,0,0,.55);
+}
+.hist-hero-line{ display:block; position:relative; }
+.hist-hero-line-1{
+  transform:translateX(-2px);
+  animation:histRise .9s cubic-bezier(.22,.68,0,1.05) both .18s;
+}
+.hist-hero-line-2{
+  padding-left: clamp(40px, 9vw, 130px);
+  color: var(--hist-pink);
+  animation:histRise .9s cubic-bezier(.22,.68,0,1.05) both .32s;
+}
+.hist-hero-mark{
+  font-family:var(--font-serif); font-style:italic; font-weight:400;
+  font-size:.42em; vertical-align:super; margin-left:.04em;
+  color:var(--hist-gold);
+}
+
+.hist-hero-tagline{
+  grid-column:1 / 2; grid-row:3;
+  max-width: 56ch;
+  margin: 28px 0 0;
+  font-family: var(--font-serif);
+  font-weight:300; font-size: clamp(16px, 1.5vw, 19px);
+  line-height:1.55; color: var(--hist-ink-soft);
+  animation:histRise .7s ease both .5s;
+}
+.hist-hero-tagline em{
+  font-style:italic; color:var(--hist-ink);
+  background: linear-gradient(transparent 62%, rgba(225,84,99,.28) 62% 86%, transparent 86%);
+  padding:0 .12em;
+}
+
+/* TOC card — sits to the right of the title, looks like a paperboard catalog tab */
+.hist-hero-toc{
+  grid-column:2 / 3; grid-row:2 / 4;
+  align-self:end;
+  position:relative;
+  background: rgba(12,10,31,.55);
+  backdrop-filter: blur(6px) saturate(1.05);
+  -webkit-backdrop-filter: blur(6px) saturate(1.05);
+  border:1.5px dashed var(--hist-rule);
+  border-radius:4px;
+  padding:22px 22px 18px;
+  animation:histRise .8s cubic-bezier(.22,.68,0,1.05) both .55s;
+}
+.hist-hero-toc::before{
+  content:'INDEX'; position:absolute; top:-11px; left:18px;
+  background: var(--hist-bg-deep);
+  font-family: var(--font-mono); font-style:italic;
+  font-size:10px; letter-spacing:.32em;
+  color:var(--hist-pink);
+  padding: 2px 8px;
+}
+.hist-toc-label{
+  display:none; /* replaced by ::before stamp */
+}
+.hist-toc-list{
+  list-style:none; padding:0; margin:4px 0 0;
+  display:flex; flex-direction:column; gap:8px;
+  counter-reset: toc;
+}
+.hist-toc-list li{ position:relative; }
+.hist-toc-list a{
+  display:grid;
+  grid-template-columns: 28px 52px 1fr;
+  align-items:baseline; gap:10px;
+  padding:6px 4px;
+  text-decoration:none;
+  color:var(--hist-ink-soft);
+  border-bottom: 1px dotted var(--hist-ink-faint);
+  transition: color .2s, transform .2s;
+}
+.hist-toc-list a:hover{ color:var(--hist-ink); transform:translateX(2px); }
+.hist-toc-list li:last-child a{ border-bottom:none; }
+.hist-toc-roman{
+  font-family:var(--font-serif); font-style:italic; font-weight:400;
+  font-size:13px; color:var(--hist-pink);
+}
+.hist-toc-year{
+  font-family:var(--font-display); font-size:18px;
+  letter-spacing:.02em; color:var(--hist-ink);
+}
+.hist-toc-sub{
+  font-family:var(--font-mono); font-style:italic;
+  font-size:11px; letter-spacing:.06em;
+  color:var(--hist-ink-mute);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+
+.hist-hero-foot{
+  grid-column:1 / -1; grid-row:4;
+  display:flex; align-items:center; gap:14px;
+  margin-top:36px;
+  font-family:var(--font-mono); font-style:italic;
+  font-size:11px; letter-spacing:.22em; text-transform:uppercase;
+  color:var(--hist-ink-mute);
+  border-top: 1px dashed var(--hist-rule);
+  padding-top:18px;
+  animation:histRise .6s ease both .68s;
+}
+.hist-hero-foot-dot{ color:var(--hist-pink); font-size:8px; }
+
+/* ============================================================
+   MAIN — chapter sections
+   ============================================================ */
+.hist-main{
+  position:relative; z-index:2;
+  max-width:1280px;
+  margin:0 auto;
+  padding: 0 clamp(24px,5vw,72px) 120px;
+}
+
+.hist-chapter{
+  position:relative;
+  display:grid;
+  grid-template-columns: minmax(220px, 320px) minmax(0, 1fr);
+  column-gap: clamp(32px, 5vw, 80px);
+  padding: 88px 0;
+  border-top: 1px dashed var(--hist-rule);
+}
+.hist-chapter:first-of-type{ border-top:none; padding-top:48px; }
+
+/* Vertical archival rail running through entry column */
+.hist-chapter-feed::before{
+  content:''; position:absolute;
+  top:24px; bottom:24px; left:-24px; width:1px;
+  background: repeating-linear-gradient(180deg, var(--hist-pink) 0 6px, transparent 6px 14px);
+  opacity:.55;
+}
+
+/* ── Sticky chapter marker ── */
+.hist-chapter-marker{ position:relative; }
+.hist-chapter-sticky{
+  position:sticky; top:120px;
+  display:flex; flex-direction:column; align-items:flex-start;
+  padding-right:8px;
+}
+.hist-chapter-tag{
+  font-family:var(--font-mono); font-style:italic;
+  font-size:11px; letter-spacing:.32em; text-transform:uppercase;
+  color:var(--hist-pink);
+  margin-bottom:10px;
+  display:inline-flex; align-items:center; gap:8px;
+}
+.hist-chapter-tag::after{
+  content:''; width:32px; height:1px;
+  background: var(--hist-pink); opacity:.6;
+}
+.hist-chapter-roman{
+  font-family: var(--font-serif); font-style:italic; font-weight:400;
+  font-size: clamp(120px, 14vw, 200px);
+  line-height:.78;
+  color: var(--hist-ink);
+  margin-left:-6px;
+  text-shadow: 0 6px 24px rgba(0,0,0,.6);
+}
+.hist-chapter-year{
+  font-family:var(--font-display);
+  font-size: clamp(34px, 3.4vw, 48px);
+  letter-spacing:.04em;
+  color: var(--hist-pink);
+  margin-top:14px;
+  line-height:1;
+}
+.hist-chapter-words{
+  font-family:var(--font-mono); font-style:italic;
+  font-size:11px; letter-spacing:.18em; text-transform:uppercase;
+  color: var(--hist-ink-mute);
+  margin-top:6px;
+}
+.hist-chapter-rule{
+  width:80px; height:1px; margin:18px 0 14px;
+  background: repeating-linear-gradient(90deg, var(--hist-ink-faint) 0 4px, transparent 4px 8px);
+}
+.hist-chapter-sub{
+  font-family:var(--font-serif); font-style:italic; font-weight:400;
+  font-size:15px; line-height:1.4;
+  color: var(--hist-ink-soft);
+  max-width: 240px;
+}
+
+/* ── Entry feed ── */
+.hist-chapter-feed{
+  position:relative;
+  display:flex; flex-direction:column; gap:42px;
+}
+
+.hist-entry{
+  position:relative;
+  background:
+    linear-gradient(180deg, rgba(255,241,212,.04) 0%, rgba(255,241,212,.015) 100%),
+    rgba(12,10,31,.55);
+  border: 1.5px dashed var(--hist-rule);
+  border-radius:3px;
+  padding: 26px 30px 24px;
+  max-width: 640px;
+
+  /* Scroll-driven reveal where supported, graceful fallback elsewhere */
+  opacity:1;
+}
+.hist-entry-left{ align-self:flex-start; transform:translateX(0); }
+.hist-entry-right{ align-self:flex-end; transform:translateX(min(40px, 4vw)); }
+
+@supports (animation-timeline: view()){
+  .hist-entry{
+    opacity:0; transform: translateY(28px) translateX(0);
+    animation: histReveal both;
+    animation-timeline: view();
+    animation-range: entry 0% cover 30%;
+  }
+  .hist-entry-right{
+    animation-name: histRevealRight;
+  }
+}
+
+/* Decorative top edge — looks like a torn paper / archival tape */
+.hist-entry::before{
+  content:''; position:absolute;
+  top:-1px; left:14px; right:14px; height:1px;
+  background: linear-gradient(90deg, transparent, var(--hist-pink), transparent);
+  opacity:.55;
+}
+/* Folded-corner stamp on top-right */
+.hist-entry::after{
+  content:''; position:absolute;
+  top:0; right:0; width:18px; height:18px;
+  background: linear-gradient(135deg, transparent 50%, rgba(225,84,99,.45) 50%);
+  border-radius: 0 3px 0 0;
+}
+
+.hist-entry-head{
+  display:flex; align-items:center; justify-content:space-between;
+  gap:14px;
+  font-family:var(--font-mono); font-style:italic;
+  font-size:10.5px; letter-spacing:.22em; text-transform:uppercase;
+  color: var(--hist-ink-mute);
+  padding-bottom:14px;
+  border-bottom: 1px dotted var(--hist-ink-faint);
+}
+.hist-entry-arch{
+  color: var(--hist-pink);
+  background: var(--hist-pink-soft);
+  border: 1px dashed rgba(225,84,99,.4);
+  padding: 3px 8px;
+  border-radius: 2px;
+  letter-spacing:.18em;
+}
+.hist-entry-season{ color:var(--hist-ink-soft); }
+
+.hist-entry-tag{
+  display:inline-flex; align-items:center; gap:8px;
+  margin: 18px 0 8px;
+  font-family: var(--font-mono); font-style:italic;
+  font-size:11px; letter-spacing:.22em; text-transform:uppercase;
+  color: var(--hist-pink);
+}
+.hist-entry-tag-mark{ color:var(--hist-gold); font-style:normal; }
+
+.hist-entry-title{
+  font-family: var(--font-display);
+  font-weight:400;
+  font-size: clamp(26px, 2.8vw, 38px);
+  line-height: 1.04;
+  letter-spacing:.015em;
+  text-transform:uppercase;
+  color: var(--hist-ink);
+  margin: 4px 0 16px;
+}
+
+.hist-entry-body{
+  font-family: var(--font-serif);
+  font-weight:300;
+  font-size:15.5px;
+  line-height: 1.72;
+  color: var(--hist-ink-soft);
+  /* Faint underline rule beneath each line of text — like ruled archival paper */
+  background-image: linear-gradient(transparent calc(1.72em - 1px), rgba(255,241,212,.05) calc(1.72em - 1px));
+  background-size: 100% 1.72em;
+}
+
+.hist-entry-foot{
+  display:flex; align-items:center; justify-content:space-between;
+  gap:14px;
+  margin-top:22px;
+  padding-top:14px;
+  border-top: 1px dashed var(--hist-ink-faint);
+}
+.hist-entry-stat{
+  display:flex; flex-direction:column; gap:2px;
+}
+.hist-entry-stat-label{
+  font-family:var(--font-mono); font-style:italic;
+  font-size:10px; letter-spacing:.24em; text-transform:uppercase;
+  color: var(--hist-ink-mute);
+}
+.hist-entry-stat-value{
+  font-family: var(--font-hv-comp), var(--font-display);
+  font-size: clamp(22px, 2.4vw, 30px);
+  letter-spacing:.02em;
+  color: var(--hist-pink);
+  line-height:1;
+}
+
+/* ── LIVE / closing entry ── */
+.hist-chapter-closing .hist-chapter-roman{ color: var(--hist-gold); text-shadow:0 6px 24px rgba(245,200,66,.18); }
+.hist-chapter-closing .hist-chapter-year{ color: var(--hist-gold); }
+.hist-chapter-closing .hist-chapter-tag{ color: var(--hist-gold); }
+.hist-chapter-closing .hist-chapter-tag::after{ background: var(--hist-gold); }
+
+.hist-entry-live{
+  border-color: rgba(245,200,66,.45);
+  background:
+    linear-gradient(180deg, rgba(245,200,66,.07) 0%, rgba(245,200,66,.02) 100%),
+    rgba(12,10,31,.6);
+}
+.hist-entry-live::before{ background: linear-gradient(90deg, transparent, var(--hist-gold), transparent); }
+.hist-entry-live::after{ background: linear-gradient(135deg, transparent 50%, rgba(245,200,66,.55) 50%); }
+.hist-entry-live .hist-entry-arch{
+  color: var(--hist-gold);
+  background: rgba(245,200,66,.10);
+  border-color: rgba(245,200,66,.45);
+}
+.hist-entry-live .hist-entry-tag{ color: var(--hist-gold); }
+.hist-entry-live .hist-entry-stat-value{ color: var(--hist-gold); }
+
+.hist-entry-pulse{
+  position:relative;
+  display:inline-block; width:10px; height:10px; border-radius:50%;
+  background: var(--hist-gold);
+  box-shadow: 0 0 0 4px rgba(245,200,66,.18), 0 0 14px rgba(245,200,66,.6);
+}
+.hist-entry-pulse::after{
+  content:''; position:absolute; inset:-6px; border-radius:50%;
+  border: 1px solid var(--hist-gold);
+  animation: histPulse 1.8s cubic-bezier(.22,.68,0,1) infinite;
+}
+
+/* ============================================================
+   CODA — closing stamp
+   ============================================================ */
+.hist-coda{
+  margin-top:80px;
+  padding: 60px 24px 40px;
+  text-align:center;
+  border-top: 1px dashed var(--hist-rule);
+  position:relative;
+}
+.hist-coda::before{
+  content:''; position:absolute; left:50%; top:-1px;
+  width:120px; height:3px; background:var(--hist-bg-deep);
+  transform:translateX(-50%);
+}
+.hist-coda-stamp{
+  display:inline-flex; align-items:center; gap:14px;
+  padding: 14px 26px;
+  border: 2.5px solid var(--hist-pink);
+  border-radius: 4px;
+  font-family: var(--font-display);
+  font-size: 28px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--hist-pink);
+  transform: rotate(-3.5deg);
+  background: rgba(225,84,99,.05);
+  margin-bottom: 28px;
+  box-shadow: inset 0 0 0 1px rgba(225,84,99,.25);
+}
+.hist-coda-stamp-arrow{ font-family: var(--font-serif); font-style:italic; }
+.hist-coda-text{
+  font-family: var(--font-serif); font-style:italic; font-weight:300;
+  font-size: 17px; line-height:1.5;
+  color: var(--hist-ink-soft);
+  max-width: 38ch; margin: 0 auto 30px;
+}
+.hist-coda-meta{
+  display:inline-flex; align-items:center; gap:14px;
+  font-family: var(--font-mono); font-style:italic;
+  font-size: 11px; letter-spacing:.22em; text-transform:uppercase;
+  color: var(--hist-ink-mute);
+}
+.hist-coda-rule{ width:48px; height:1px; background:var(--hist-pink); opacity:.6; }
+
+/* ============================================================
+   ANIMATIONS
+   ============================================================ */
+@keyframes histRise{
+  from{ opacity:0; transform: translateY(28px); }
+  to  { opacity:1; transform: none; }
+}
+@keyframes histReveal{
+  from{ opacity:0; transform: translateY(36px); }
+  to  { opacity:1; transform: translateY(0); }
+}
+@keyframes histRevealRight{
+  from{ opacity:0; transform: translateY(36px) translateX(min(40px,4vw)); }
+  to  { opacity:1; transform: translateY(0) translateX(min(40px,4vw)); }
+}
+@keyframes histPulse{
+  0%  { transform: scale(.7); opacity:1; }
+  100%{ transform: scale(1.8); opacity:0; }
+}
+
+@media (prefers-reduced-motion: reduce){
+  .hist-page *,
+  .hist-page *::before,
+  .hist-page *::after{
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
+  }
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 1024px){
+  .hist-hero{
+    grid-template-columns: 1fr;
+    padding-top: 130px;
+  }
+  .hist-hero-title{ grid-column:1 / -1; grid-row:auto; }
+  .hist-hero-line-2{ padding-left: clamp(28px, 6vw, 70px); }
+  .hist-hero-tagline{ grid-column:1 / -1; grid-row:auto; }
+  .hist-hero-toc{ grid-column:1 / -1; grid-row:auto; align-self:auto; margin-top:24px; }
+  .hist-toc-list a{ grid-template-columns: 28px 60px 1fr; }
+  .hist-toc-sub{ white-space:normal; }
+
+  .hist-chapter{
+    grid-template-columns: 1fr;
+    row-gap: 32px;
+    padding: 64px 0;
+  }
+  .hist-chapter-sticky{ position:static; }
+  .hist-chapter-roman{ font-size: clamp(96px, 22vw, 160px); }
+  .hist-chapter-feed::before{
+    left:-12px; top:0; bottom:0;
+  }
+  .hist-entry-right{ align-self:flex-start; transform:none; }
+  @supports (animation-timeline: view()){
+    .hist-entry-right{ animation-name: histReveal; }
+  }
+}
+
+@media (max-width: 640px){
+  .hist-hero{ padding: 120px 20px 56px; }
+  .hist-hero-title{ font-size: clamp(80px, 24vw, 120px); }
+  .hist-hero-line-2{ padding-left: 0; }
+
+  .hist-main{ padding: 0 20px 80px; }
+  .hist-entry{ padding: 22px 20px 20px; max-width:none; }
+  .hist-entry-head{ flex-direction:column; align-items:flex-start; gap:8px; }
+  .hist-entry-foot{ flex-direction:column; align-items:flex-start; gap:14px; }
+  .hist-chapter-feed::before{ display:none; }
+
+  .hist-coda-stamp{ font-size:22px; padding:12px 20px; }
+  .hist-coda-meta{ flex-wrap:wrap; justify-content:center; }
+}

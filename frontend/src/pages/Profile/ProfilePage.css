@@ -2,7 +2,7 @@
 
 .profile-page .stage{position:fixed;inset:0;z-index:-2;background:url('/gallery/gal3.jpg') center 28%/cover no-repeat;filter:saturate(.7) contrast(1.02);transform:scale(1.05)}
 .profile-page .stage::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 15%,rgba(45,42,142,.10) 0%,transparent 55%),linear-gradient(180deg,rgba(45,42,142,.08) 0%,rgba(26,15,10,.60) 50%,rgba(26,15,10,.82) 100%)}
-.profile-page .grain{position:fixed;inset:0;z-index:-1;pointer-events:none;background:var(--tex-blue) center/cover;opacity:.08;mix-blend-mode:overlay}
+.profile-page .grain{position:fixed;inset:0;z-index:-1;pointer-events:none;background:var(--tex-blue) 0 0/var(--tex-size) var(--tex-size) repeat;opacity:.08;mix-blend-mode:overlay}
 
 /* ── HERO ── */
 .profile-page .hero{position:relative;z-index:2;max-width:880px;margin:0 auto;padding:100px 24px 0;text-align:center}
@@ -61,7 +61,7 @@ main.profile-main{position:relative;z-index:2;max-width:880px;margin:0 auto;widt
 
 /* ── EVENTS GRID ── */
 .profile-page .events-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
-.profile-page .ev-card{position:relative;padding:20px 22px 18px;border:1.5px dashed rgba(255,241,212,.20);background:#1a0f0a var(--tex-blue) center/cover;min-height:150px;cursor:pointer;transition:border-color .2s,transform .2s;text-decoration:none;display:block}
+.profile-page .ev-card{position:relative;padding:20px 22px 18px;border:1.5px dashed rgba(255,241,212,.20);background:#1a0f0a var(--tex-blue) 0 0/120px 120px repeat;min-height:150px;cursor:pointer;transition:border-color .2s,transform .2s;text-decoration:none;display:block}
 .profile-page .ev-card:hover{border-color:var(--color-pink);transform:translateY(-3px)}
 .profile-page .ev-badge{position:absolute;top:-16px;right:-8px;width:100px;height:100px;object-fit:contain;pointer-events:none;transform:rotate(6deg);filter:drop-shadow(0 4px 10px rgba(0,0,0,.4))}
 .profile-page .ev-tag{display:inline-block;font-family:var(--font-mono);font-style:italic;font-size:9px;letter-spacing:.16em;text-transform:uppercase;padding:3px 9px;border-radius:9999px;background:rgba(225,84,99,.16);color:var(--color-pink);border:1px dashed rgba(225,84,99,.40);margin-bottom:10px}
@@ -104,4 +104,44 @@ main.profile-main{position:relative;z-index:2;max-width:880px;margin:0 auto;widt
   .profile-page .ev-name{font-size:20px;padding-right:56px}
   .profile-page .row{grid-template-columns:50px 1fr 55px;gap:8px;padding:10px 6px}
   .profile-page .ev-date{display:none}
+}
+
+@media(max-width:480px){
+  .profile-page .hero{padding:72px 12px 0}
+  .podium-stack{margin-bottom:32px}
+  .podium-bars{height:96px;gap:8px}
+  .bar-num{font-size:24px}
+  .trophy{width:64px;height:64px;font-size:32px;margin-bottom:14px}
+  .profile-page .hero h1{font-size:clamp(28px,9.5vw,48px);letter-spacing:.02em}
+  .handle{font-size:11px}
+  .profile-page .tagline{font-size:13px;max-width:100%}
+  .stats-inline{gap:8px;font-size:9px;letter-spacing:.06em}
+  .sec-heading{font-size:clamp(24px,7vw,32px);margin-bottom:18px}
+  .profile-page .section{margin-bottom:40px}
+  main.profile-main{padding:32px 10px 40px}
+  .profile-page .ev-card{padding:16px 16px;min-height:auto}
+  .profile-page .ev-name{font-size:18px;padding-right:48px}
+  .profile-page .ev-badge{width:64px;height:64px;top:-8px;right:-4px}
+  .profile-page .row{grid-template-columns:44px 1fr 48px;padding:9px 4px;gap:6px}
+  .ev-info .nm{font-size:13px}
+  .ev-info .loc{font-size:10px}
+  .profile-page .ev-pts{font-size:18px}
+  .ev-cat{font-size:8px;padding:2px 6px}
+  .about-card{padding:16px 14px}
+}
+
+@media(max-width:375px){
+  .profile-page .hero{padding:64px 10px 0}
+  .profile-page .hero h1{font-size:clamp(24px,10vw,36px)}
+  .podium-bars{height:80px;gap:6px}
+  .bar-num{font-size:20px}
+  .trophy{width:56px;height:56px;font-size:26px}
+  .stats-inline{flex-wrap:wrap;gap:6px}
+  .actions .btn,.actions .btn-pill{font-size:9px;padding:6px 10px}
+}
+
+@media(max-width:320px){
+  .profile-page .hero h1{font-size:24px}
+  .profile-page .row{grid-template-columns:36px 1fr 40px;font-size:11px}
+  .ev-info .nm{font-size:12px}
 }

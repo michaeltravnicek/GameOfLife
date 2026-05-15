@@ -8,7 +8,7 @@
 .card-info{background:rgba(26,15,10,.55);border:2px dashed rgba(255,241,212,.30);box-shadow:0 8px 24px rgba(0,0,0,.4)}
 
 /* Texture overlays */
-.card-tex-blue{background-image:url('/assets/Grain_texture_blue.png');background-size:auto;background-repeat:repeat}
+.card-tex-blue{background-image:url('/assets/Grain_texture_blue.png');background-size:cover;background-repeat:repeat}
 .card-tex-brown{background-image:url('/assets/Grain_texture_brown2.png');background-size:cover}
 .card-tex-light{background-image:url('/assets/Grain_texture_light.png');background-size:cover}
 

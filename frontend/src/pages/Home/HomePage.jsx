@@ -44,7 +44,7 @@ export default function HomePage() {
         <div className="hero-slides">
           {slides.map((s, i) => (
             <div
-              key={i}
+              key={s.slug || String(s._i ?? i)}
               className={`hero-slide${i === slide ? ' active' : ''}`}
               style={{ backgroundImage: `url('${s.url}')` }}
             />
@@ -58,11 +58,16 @@ export default function HomePage() {
           <Link to="/akce" className="btn-pill">Zobrazit akce <span className="arr"></span></Link>
         </div>
         <div className="hero-dots">
-          {slides.map((_, i) => (
+          {slides.map((s, i) => (
             <span
-              key={i}
+              key={s.slug || String(s._i ?? i)}
+              role="button"
+              aria-label={`Slide ${i + 1}`}
+              aria-pressed={i === slide}
+              tabIndex={0}
               className={`hero-dot${i === slide ? ' active' : ''}`}
               onClick={() => setSlide(i)}
+              onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setSlide(i)}
             />
           ))}
         </div>
@@ -143,6 +148,9 @@ export default function HomePage() {
               <div className="stat-item"><div className="stat-num">{stats.players ?? '—'}</div><div className="stat-label">Hráčů</div></div>
               <div className="stat-item"><div className="stat-num">{stats.events ?? '—'}</div><div className="stat-label">Events</div></div>
               <div className="stat-item"><div className="stat-num">{stats.points ?? '—'}</div><div className="stat-label">Bodů</div></div>
+            </div>
+            <div style={{ textAlign: 'center', marginTop: '8px' }}>
+              <Link to="/historie" className="btn-pill">Číst historii <span className="arr"></span></Link>
             </div>
           </div>
         </div>

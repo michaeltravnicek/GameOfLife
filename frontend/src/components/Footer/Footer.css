@@ -9,4 +9,19 @@ footer{position:relative;z-index:2;background:var(--color-purple);background-ima
 .ft-desc{font-family:'IBM Plex Serif',Georgia,serif;font-size:13px;font-weight:300;font-style:italic;line-height:1.7;color:rgba(255,255,255,.65);max-width:440px;margin-bottom:16px}
 .ft-contact{font-family:'IBM Plex Serif',Georgia,serif;font-size:13px;color:rgba(255,255,255,.6);line-height:1.7}
 .ft-credit{font-family:'IBM Plex Serif',Georgia,serif;font-size:11px;font-style:italic;color:rgba(255,255,255,.35);margin-top:14px}
-@media(max-width:640px){footer{padding:40px 24px 36px}.ft-inner{grid-template-columns:1fr;gap:40px}.ft-right{align-items:flex-start;text-align:left}}
+@media(max-width:640px){
+  footer{padding:40px 24px 36px}
+  .ft-inner{grid-template-columns:1fr;gap:40px}
+  .ft-right{align-items:flex-start;text-align:left}
+  .ft-menu{display:none}
+}
+@media(max-width:480px){
+  footer{padding:32px 16px 28px}
+  .ft-inner{gap:28px}
+  .ft-link{font-size:14px}
+  .ft-desc{font-size:12px;max-width:100%}
+}
+@media(max-width:375px){
+  footer{padding:28px 12px 24px}
+  .ft-logo{font-size:18px}
+}

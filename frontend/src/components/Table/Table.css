@@ -1,4 +1,4 @@
-.data-table-wrap{background-color:#1a0f0a;background-image:url('/assets/Grain_texture_blue.png');background-repeat:repeat;background-size:auto;border:1.5px solid rgba(255,255,255,.08);border-radius:14px;overflow:hidden;box-shadow:0 20px 44px rgba(0,0,0,.5);position:relative}
+.data-table-wrap{background-color:#1a0f0a;background-image:url('/assets/Grain_texture_blue.png');background-repeat:repeat;background-size:cover;border:1.5px solid rgba(255,255,255,.08);border-radius:14px;overflow:hidden;box-shadow:0 20px 44px rgba(0,0,0,.5);position:relative}
 .data-table-wrap::before{content:'';position:absolute;inset:0;border:1.5px dashed rgba(255,241,212,.14);border-radius:14px;pointer-events:none;z-index:0}
 .data-table{width:100%;border-collapse:collapse;position:relative;z-index:1}
 .data-table th{font-family:var(--font-mono);font-style:italic;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,241,212,.6);padding:13px 18px;border-bottom:1px dashed rgba(255,241,212,.15);text-align:left;background:rgba(0,0,0,.18);cursor:default;white-space:nowrap;user-select:none}

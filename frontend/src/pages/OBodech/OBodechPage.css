@@ -6,7 +6,7 @@
 .obodech-page .hero{position:relative;z-index:2;max-width:880px;margin:0 auto;padding:148px 24px 16px;text-align:center}
 .obodech-page .eyebrow{font-family:var(--font-mono);font-style:italic;font-size:13px;letter-spacing:.3em;text-transform:uppercase;color:var(--color-pink);margin-bottom:8px;display:inline-flex;align-items:center;gap:10px}
 .obodech-page .eyebrow::before,.obodech-page .eyebrow::after{content:'✦';font-size:11px;opacity:.9}
-.obodech-page .hero h1{font-family:var(--font-display);font-size:clamp(70px,10vw,120px);line-height:.92;color:var(--color-cream-light);text-transform:uppercase;letter-spacing:.03em;text-shadow:0 6px 34px rgba(0,0,0,.6)}
+.obodech-page .hero h1{font-family:var(--font-display);font-weight:400;font-size:clamp(70px,10vw,120px);line-height:.92;color:var(--color-cream-light);text-transform:uppercase;letter-spacing:.03em;text-shadow:0 6px 34px rgba(0,0,0,.6)}
 .obodech-page .hero .tagline{font-family:var(--font-serif);font-weight:300;font-style:italic;font-size:14px;color:rgba(255,241,212,.72);max-width:520px;margin:10px auto 0;line-height:1.5}
 .obodech-page .divider{width:120px;height:1px;margin:26px auto 0;background:repeating-linear-gradient(90deg,rgba(255,241,212,.45) 0 5px,transparent 5px 10px)}
 
@@ -38,4 +38,42 @@
 .cta-link{display:inline-flex;align-items:center;gap:8px;background:var(--color-pink);color:#fff;padding:10px 18px;border-radius:9999px;font-family:var(--font-hv);font-weight:700;font-size:12px;letter-spacing:.08em;text-transform:uppercase;box-shadow:0 4px 14px rgba(225,84,99,.4);transition:transform .18s,background .18s;text-decoration:none}
 .cta-link:hover{background:#cf4453;transform:translateY(-1px)}
 
-@media(max-width:720px){.obodech-page .hero{padding:120px 20px 14px}.content-main{padding:30px 20px 60px}.section-title::before,.section-title::after{display:none}.obodech-page .info-card{padding:22px}.reward-tiers{grid-template-columns:1fr}}
+@media(max-width:720px){
+  .obodech-page .hero{padding:120px 20px 14px}
+  .content-main{padding:30px 20px 60px}
+  .section-title::before,.section-title::after{display:none}
+  .obodech-page .info-card{padding:22px}
+  .reward-tiers{grid-template-columns:1fr}
+}
+
+@media(max-width:480px){
+  .obodech-page .hero{padding:104px 14px 12px}
+  .obodech-page .hero h1{font-size:clamp(48px,13vw,80px)}
+  .obodech-page .hero .tagline{font-size:13px}
+  .content-main{padding:24px 14px 48px}
+  .section-title{font-size:22px;margin-bottom:14px}
+  .info-section{margin-bottom:32px}
+  .obodech-page .info-card{padding:18px 16px;border-radius:10px}
+  .card-heading{font-size:17px}
+  .card-text{font-size:14px;line-height:1.65}
+  .points-list li{font-size:13.5px}
+  .cta-section{padding:22px 18px;margin-top:28px}
+  .cta-text{font-size:14px}
+  .cta-link{font-size:11px;padding:9px 14px}
+}
+
+@media(max-width:375px){
+  .obodech-page .hero{padding:96px 12px 10px}
+  .obodech-page .hero h1{font-size:42px;letter-spacing:.02em}
+  .content-main{padding:20px 10px 40px}
+  .section-title{font-size:19px}
+  .obodech-page .info-card{padding:16px 14px}
+  .cta-links{flex-direction:column;align-items:stretch;gap:8px}
+  .cta-link{justify-content:center}
+}
+
+@media(max-width:320px){
+  .obodech-page .hero h1{font-size:34px}
+  .section-title{font-size:17px}
+  .card-heading{font-size:15px}
+}

@@ -228,4 +228,10 @@
   --tex-brown-2:  url('/assets/Grain_texture_brown2.png');
   --tex-blue:     url('/assets/Grain_texture_blue.png');
   --tex-light:    url('/assets/Grain_texture_light.png');
+
+  /* Grain tile size — matches footer's cover behavior for any element ≈ viewport width.
+     For fixed overlays, avoids height-driven blowup on portrait phones. */
+  --tex-size: 100vw;
 }
+
+h1,h2,h3,h4{font-weight:400}

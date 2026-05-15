@@ -5,7 +5,7 @@ export default function Footer() {
   return (
     <footer>
       <div className="ft-inner">
-        <div>
+        <div className="ft-menu">
           <div className="ft-label">Menu</div>
           <Link className="ft-link" to="/">Domů</Link>
           <Link className="ft-link" to="/akce">Kalendář</Link>

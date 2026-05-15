@@ -121,7 +121,7 @@ export default function GalleryPage() {
       )}
 
       {view === 'calendar' && n > 0 && (
-        <div id="view-calendar" style={{ display: 'block' }}>
+        <div id="view-calendar">
           <div className="month-filters">
             <button className={`mf-chip${activeMonth === 'all' ? ' on' : ''}`} onClick={() => setActiveMonth('all')}>Vše</button>
             {months.map((m) => (

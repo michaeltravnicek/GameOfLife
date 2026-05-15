@@ -45,8 +45,12 @@ export default function ProfilePage() {
   };
 
   const handleShare = () => {
-    if (navigator.share) navigator.share({ title: document.title, url: location.href });
-    else navigator.clipboard.writeText(location.href);
+    const url = window.location.href;
+    if (navigator.share) {
+      navigator.share({ title: document.title, url }).catch(() => {});
+    } else {
+      navigator.clipboard?.writeText(url);
+    }
   };
 
   if (error) {

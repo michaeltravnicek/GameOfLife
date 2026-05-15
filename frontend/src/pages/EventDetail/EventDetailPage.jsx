@@ -197,8 +197,12 @@ export default function EventDetailPage() {
           <Button
             variant="ghost"
             onClick={() => {
-              if (navigator.share) navigator.share({ title: event.name, url: location.href });
-              else navigator.clipboard.writeText(location.href);
+              const url = window.location.href;
+              if (navigator.share) {
+                navigator.share({ title: event.name, url }).catch(() => {});
+              } else {
+                navigator.clipboard?.writeText(url);
+              }
             }}
           >
             Sdílet kámošům
