@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { NavLink, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import StartPlayingButton from '../StartPlayingButton/StartPlayingButton';
 import './Nav.css';
 
 const initials = (s) =>
@@ -95,7 +96,7 @@ export default function Nav() {
               {user.photo ? <img src={user.photo} alt={displayName} /> : initials(displayName)}
             </Link>
           ) : (
-            <Link to="/registrace" className="nav-btn-start">Start Playing ➤</Link>
+            <StartPlayingButton />
           )}
           <button
             className="nav-hamburger"

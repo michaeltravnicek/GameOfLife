@@ -1,0 +1,2 @@
+.start-playing-btn{display:inline-flex;align-items:center;gap:8px;background:var(--color-pink);color:#fff;border:0;cursor:pointer;font-family:var(--font-hv);font-size:14px;font-weight:700;letter-spacing:.04em;padding:10px 24px;border-radius:9999px;box-shadow:0 4px 16px rgba(225,84,99,.38);transition:transform .18s,background .18s;text-decoration:none;margin:10px 0}
+.start-playing-btn:hover{background:#cf4453;transform:translateY(-1px)}

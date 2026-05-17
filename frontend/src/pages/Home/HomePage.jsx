@@ -55,8 +55,8 @@ export default function HomePage() {
           <div className="hero-eyebrow">— Sezóna 2026 —</div>
           <h1 className="hero-title">{slides[slide]?.name || 'Game of Life'}</h1>
           {slides[slide]?.date && <p className="hero-date">{fmtDate(slides[slide].date)}</p>}
-          <Link to="/akce" className="btn-pill">Zobrazit akce <span className="arr"></span></Link>
         </div>
+        <Link to="/akce" className="btn-pill hero-cta">Zobrazit akce <span className="arr"></span></Link>
         <div className="hero-dots">
           {slides.map((s, i) => (
             <span
@@ -85,9 +85,6 @@ export default function HomePage() {
           {data.upcoming_events.map((e) => (
             <EventCard key={e.id} event={e} />
           ))}
-        </div>
-        <div className="see-all">
-          <Link to="/akce" className="btn-pill">Všechny akce <span className="arr"></span></Link>
         </div>
       </section>
 
@@ -119,9 +116,6 @@ export default function HomePage() {
                 </Row>
               );
             })}
-          </div>
-          <div className="lb-cta">
-            <Link to="/leaderboard" className="lb-link">Celý leaderboard →</Link>
           </div>
         </div>
       </section>

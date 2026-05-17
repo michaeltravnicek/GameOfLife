@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { fmtDate } from '../../utils/date';
+import DashedBorder from '../DashedBorder/DashedBorder';
 import './EventCard.css';
 
 function DarkCard({ event }) {
@@ -32,27 +33,14 @@ function DarkCard({ event }) {
 function LightCard({ event }) {
   return (
     <>
-      <div className="evcard-light-bg">
-        <div className="evcard-light-bg-overlay" />
-      </div>
+      <DashedBorder />
 
-      <span className="evcard-status">
+      <span className={`evcard-status${event.is_past ? ' done' : ''}`}>
         {event.is_past ? 'Proběhlo' : 'Akce'}
       </span>
 
-      <img
-        className="evcard-badge"
-        src="/logos/GOL_main_logo_pink.png"
-        alt=""
-        loading="lazy"
-        width="120"
-        height="120"
-      />
-
       <div className="evcard-content">
-        <div className="evcard-title-wrap">
-          <h3 className="evcard-title">{event.name}</h3>
-        </div>
+        <h3 className="evcard-title">{event.name}</h3>
         <div className="evcard-meta">
           <div>📅 {fmtDate(event.date)}</div>
           <div>📍 {event.place}</div>

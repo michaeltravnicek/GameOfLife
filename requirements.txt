@@ -11,3 +11,4 @@ uvicorn
 pillow
 django-redis
 djangorestframework
+django-cors-headers
