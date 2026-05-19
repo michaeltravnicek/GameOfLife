@@ -1,0 +1,35 @@
+/* All selectors prefixed with `.gol-hero` to prevent any cross-page leak. */
+.gol-hero{position:relative;width:100%;height:100vh;min-height:600px;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;text-align:center;padding:0;background:var(--color-dark-brown);margin:0}
+.gol-hero__slides{position:absolute;inset:0;z-index:0}
+.gol-hero__slide{position:absolute;inset:0;background-size:cover;background-position:center;opacity:0;transition:opacity 1.2s ease}
+.gol-hero__slide.is-active{opacity:1}
+.gol-hero__overlay{position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,8,30,.15) 0%,rgba(10,8,30,.35) 55%,rgba(26,15,10,.65) 100%);z-index:1}
+.gol-hero__inner{position:relative;z-index:2;max-width:740px;padding:0 24px}
+.gol-hero__eyebrow{font-family:var(--font-mono);font-style:italic;font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.75);margin-bottom:18px;display:block}
+.gol-hero__title{font-family:var(--font-display);font-size:clamp(52px,8.5vw,108px);line-height:.93;letter-spacing:.02em;color:var(--color-cream-light);text-transform:uppercase;text-shadow:0 4px 32px rgba(0,0,0,.55);margin-bottom:14px;font-weight:400}
+.gol-hero__date{font-family:'IBM Plex Serif',serif;font-style:italic;font-weight:300;font-size:14px;line-height:1.6;color:rgba(255,255,255,.80);max-width:380px;margin:0 auto 28px;text-align:center}
+
+/* CTA — fully self-styled so no `.btn-pill` collision possible */
+.gol-hero__cta{position:absolute;left:50%;bottom:22%;transform:translateX(-50%);z-index:3;margin:0;display:inline-flex;align-items:center;gap:14px;background:var(--color-pink);color:#fff;font-family:var(--font-hv);font-size:14px;font-weight:700;letter-spacing:.04em;padding:13px 30px;border-radius:16px;border:2px solid #504d4d;border-bottom:5px solid #504d4d;box-shadow:0 6px 22px rgba(225,84,99,.4);transition:transform .18s,background .18s;cursor:pointer;text-decoration:none}
+.gol-hero__cta:hover{background:#cf4453;transform:translate(-50%,-2px)}
+.gol-hero__cta-arrow{display:inline-flex;align-items:center}
+.gol-hero__cta-arrow::before{content:'';display:inline-block;width:26px;height:1.5px;background:#fff;vertical-align:middle;margin-right:4px;border-radius:2px}
+.gol-hero__cta-arrow::after{content:'➤';font-size:11px}
+
+@media(max-width:768px){
+  .gol-hero{min-height:520px;padding:0 16px}
+  .gol-hero__title{font-size:clamp(40px,11vw,80px)}
+}
+@media(max-width:480px){
+  .gol-hero{padding:0 12px}
+  .gol-hero__title{font-size:clamp(36px,13vw,64px)}
+  .gol-hero__eyebrow{font-size:11px;letter-spacing:.16em}
+  .gol-hero__cta{font-size:13px;padding:11px 22px;gap:10px}
+}
+@media(max-width:375px){
+  .gol-hero__title{font-size:clamp(32px,14vw,56px)}
+  .gol-hero__cta{font-size:12px;padding:10px 18px}
+}
+@media(max-width:320px){
+  .gol-hero__title{font-size:32px}
+}

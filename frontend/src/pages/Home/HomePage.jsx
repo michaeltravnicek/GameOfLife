@@ -1,86 +1,65 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { fetchHome } from '../../services/api';
+import { useCachedQuery } from '../../services/queryCache';
 import EventCard from '../../components/EventCard/EventCard';
 import Avatar from '../../components/Avatar/Avatar';
-import { fmtDate } from '../../utils/date';
+import Hero from '../../components/Hero/Hero';
+import CheckinBanner from '../../components/CheckinBanner/CheckinBanner';
 import './HomePage.css';
 
 const FALLBACK_GAL = ['/gallery/gal0.jpg', '/gallery/gal1.jpg', '/gallery/gal2.jpg', '/gallery/gal3.jpg'];
+const FALLBACK_HERO_SLIDES = FALLBACK_GAL.map((url, i) => ({ url, name: '', slug: '', date: null, _i: i }));
+
+// Hoisted: this used to live inside a `.map(...)` callback and was rebuilt
+// for every leaderboard row on every render.
+const TROPHIES = { 1: '🏆', 2: '🥈', 3: '🥉' };
+
+// Static row style — extracted so React skips diffing on every render.
+const LB_ROW_LINK_STYLE = { textDecoration: 'none', color: 'inherit' };
+
+const INITIAL_DATA = { hero_events: [], upcoming_events: [], top_players: [], about_stats: {} };
 
 export default function HomePage() {
-  const [data, setData] = useState({ hero_events: [], upcoming_events: [], top_players: [], about_stats: {} });
-  const [slide, setSlide] = useState(0);
+  const { data: payload } = useCachedQuery('home', fetchHome, { ttl: 5 * 60 * 1000 });
+  const data = payload || INITIAL_DATA;
   const [galCur, setGalCur] = useState(0);
 
-  useEffect(() => {
-    fetchHome().then(setData).catch(() => {});
-  }, []);
+  // Stable references across renders — only recomputed when API data changes.
+  const heroSlides = useMemo(
+    () => (data.hero_events.length ? data.hero_events : FALLBACK_HERO_SLIDES),
+    [data.hero_events],
+  );
+  const galImages = useMemo(
+    () => (data.hero_events.length ? data.hero_events.map((h) => h.url) : FALLBACK_GAL),
+    [data.hero_events],
+  );
 
-  const slides = data.hero_events.length
-    ? data.hero_events
-    : FALLBACK_GAL.map((url, i) => ({ url, name: '', slug: '', date: null, _i: i }));
-
-  useEffect(() => {
-    if (slides.length < 2) return;
-    const t = setInterval(() => setSlide((c) => (c + 1) % slides.length), 5000);
-    return () => clearInterval(t);
-  }, [slides.length]);
-
-  const galImages = data.hero_events.length
-    ? data.hero_events.map((h) => h.url)
-    : FALLBACK_GAL;
   const galN = galImages.length;
-  const galPrev = () => setGalCur((c) => (c - 1 + galN) % galN);
-  const galNext = () => setGalCur((c) => (c + 1) % galN);
+  const galPrev = useCallback(
+    () => setGalCur((c) => (c - 1 + galN) % galN),
+    [galN],
+  );
+  const galNext = useCallback(
+    () => setGalCur((c) => (c + 1) % galN),
+    [galN],
+  );
 
   const stats = data.about_stats || {};
 
   return (
     <div className="home-page">
 
-      {/* HERO */}
-      <section className="hero">
-        <div className="hero-slides">
-          {slides.map((s, i) => (
-            <div
-              key={s.slug || String(s._i ?? i)}
-              className={`hero-slide${i === slide ? ' active' : ''}`}
-              style={{ backgroundImage: `url('${s.url}')` }}
-            />
-          ))}
-        </div>
-        <div className="hero-overlay" />
-        <div className="hero-inner">
-          <div className="hero-eyebrow">— Sezóna 2026 —</div>
-          <h1 className="hero-title">{slides[slide]?.name || 'Game of Life'}</h1>
-          {slides[slide]?.date && <p className="hero-date">{fmtDate(slides[slide].date)}</p>}
-        </div>
-        <Link to="/akce" className="btn-pill hero-cta">Zobrazit akce <span className="arr"></span></Link>
-        <div className="hero-dots">
-          {slides.map((s, i) => (
-            <span
-              key={s.slug || String(s._i ?? i)}
-              role="button"
-              aria-label={`Slide ${i + 1}`}
-              aria-pressed={i === slide}
-              tabIndex={0}
-              className={`hero-dot${i === slide ? ' active' : ''}`}
-              onClick={() => setSlide(i)}
-              onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setSlide(i)}
-            />
-          ))}
-        </div>
-      </section>
+      <CheckinBanner events={data.active_checkin_events || []} />
+
+      <Hero slides={heroSlides} ctaTo="/akce" ctaLabel="Zobrazit akce" />
 
       {/* UPCOMING EVENTS */}
       <section className="events-section">
         <h2 className="sec-title"><span className="star">✦</span> Nadcházející akce <span className="star">✦</span></h2>
         <div className="events-grid">
           {data.upcoming_events.length === 0 && (
-            <p style={{ gridColumn: '1/-1', textAlign: 'center', color: 'rgba(255,255,255,.6)', fontStyle: 'italic' }}>
-              Žádné nadcházející akce. Sleduj nás na sítích!
-            </p>
+            <p className="events-empty">Žádné nadcházející akce. Sleduj nás na sítích!</p>
           )}
           {data.upcoming_events.map((e) => (
             <EventCard key={e.id} event={e} />
@@ -95,9 +74,8 @@ export default function HomePage() {
         <div className="lb-inner">
           <h2 className="lb-title"><span className="tr">🏆</span> Top hráči <span className="tr">🏆</span></h2>
           <div className="lb-card">
-            <div className="lb-head"><div>#</div><div>hráč</div><div style={{ textAlign: 'right' }}>pts</div></div>
+            <div className="lb-head"><div>#</div><div>hráč</div><div className="lb-head-pts">pts</div></div>
             {data.top_players.map((p) => {
-              const trophyMap = { 1: '🏆', 2: '🥈', 3: '🥉' };
               const isTop = p.rank <= 3;
               const link = p.profile_username ? `/profil/${p.profile_username}` : null;
               const Row = link ? Link : 'div';
@@ -106,10 +84,10 @@ export default function HomePage() {
                   key={p.id}
                   to={link || undefined}
                   className="lb-row"
-                  style={link ? { textDecoration: 'none', color: 'inherit' } : undefined}
+                  style={link ? LB_ROW_LINK_STYLE : undefined}
                 >
                   <span className={`lb-rank${isTop ? ' top' : ''}`}>
-                    {trophyMap[p.rank] || `${p.rank}.`}
+                    {TROPHIES[p.rank] || `${p.rank}.`}
                   </span>
                   <div className="lb-name"><Avatar name={p.name} size="xs" className="lb-av" />{p.name}</div>
                   <div className="lb-pts">{p.total_points}</div>
@@ -143,7 +121,7 @@ export default function HomePage() {
               <div className="stat-item"><div className="stat-num">{stats.events ?? '—'}</div><div className="stat-label">Events</div></div>
               <div className="stat-item"><div className="stat-num">{stats.points ?? '—'}</div><div className="stat-label">Bodů</div></div>
             </div>
-            <div style={{ textAlign: 'center', marginTop: '8px' }}>
+            <div className="about-cta">
               <Link to="/historie" className="btn-pill">Číst historii <span className="arr"></span></Link>
             </div>
           </div>

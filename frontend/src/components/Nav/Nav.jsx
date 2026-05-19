@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { NavLink, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { preloadRoute } from '../../services/routePreload';
 import StartPlayingButton from '../StartPlayingButton/StartPlayingButton';
 import './Nav.css';
 
@@ -64,8 +65,18 @@ export default function Nav() {
   const openMenu = () => { setMenuOpen(true); document.body.style.overflow = 'hidden'; };
   const closeMenu = () => { setMenuOpen(false); document.body.style.overflow = ''; };
 
+  // Preload chunk + data when the user signals intent (hover / keyboard focus).
+  // By the time they click, the route's JS + first API response are usually
+  // already cached, so navigation feels instant.
+  const handlePreload = (to) => () => preloadRoute(to);
+
   const navItem = (to, label, key) => (
-    <NavLink to={to} className={`nav-item${page === key ? ' active' : ''}`}>
+    <NavLink
+      to={to}
+      className={`nav-item${page === key ? ' active' : ''}`}
+      onMouseEnter={handlePreload(to)}
+      onFocus={handlePreload(to)}
+    >
       {label}
     </NavLink>
   );

@@ -1,18 +1,23 @@
+import { lazy, Suspense, useEffect } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
-import { useEffect } from 'react';
 import Nav from './components/Nav/Nav';
 import Footer from './components/Footer/Footer';
+
+// Eager: only the home page. Everything else is split into its own chunk
+// and downloaded on-demand the first time the route is visited.
 import HomePage from './pages/Home/HomePage';
-import EventsPage from './pages/Events/EventsPage';
-import EventDetailPage from './pages/EventDetail/EventDetailPage';
-import GalleryPage from './pages/Gallery/GalleryPage';
-import LeaderboardPage from './pages/Leaderboard/LeaderboardPage';
-import ProfilePage from './pages/Profile/ProfilePage';
-import ProfilePageV3 from './pages/Profile/ProfilePageV3';
-import LoginPage from './pages/Login/LoginPage';
-import RegisterPage from './pages/Register/RegisterPage';
-import OBodechPage from './pages/OBodech/OBodechPage';
-import HistoriePage from './pages/Historie/HistoriePage';
+
+const EventsPage = lazy(() => import('./pages/Events/EventsPage'));
+const EventDetailPage = lazy(() => import('./pages/EventDetail/EventDetailPage'));
+const GalleryPage = lazy(() => import('./pages/Gallery/GalleryPage'));
+const LeaderboardPage = lazy(() => import('./pages/Leaderboard/LeaderboardPage'));
+const ProfilePage = lazy(() => import('./pages/Profile/ProfilePage'));
+const ProfilePageV3 = lazy(() => import('./pages/Profile/ProfilePageV3'));
+const LoginPage = lazy(() => import('./pages/Login/LoginPage'));
+const RegisterPage = lazy(() => import('./pages/Register/RegisterPage'));
+const ForgotPasswordPage = lazy(() => import('./pages/ForgotPassword/ForgotPasswordPage'));
+const OBodechPage = lazy(() => import('./pages/OBodech/OBodechPage'));
+const HistoriePage = lazy(() => import('./pages/Historie/HistoriePage'));
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -32,25 +37,36 @@ function Layout({ children, withChrome = true }) {
   );
 }
 
+function RouteFallback() {
+  return (
+    <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,241,212,.55)', fontFamily: 'var(--font-mono)', fontStyle: 'italic', fontSize: 14, letterSpacing: '.14em' }}>
+      Načítám…
+    </div>
+  );
+}
+
 export default function App() {
   return (
     <>
       <ScrollToTop />
-      <Routes>
-        <Route path="/" element={<Layout><HomePage /></Layout>} />
-        <Route path="/akce" element={<Layout><EventsPage /></Layout>} />
-        <Route path="/akce/:slug" element={<Layout><EventDetailPage /></Layout>} />
-        <Route path="/galerie" element={<Layout><GalleryPage /></Layout>} />
-        <Route path="/leaderboard" element={<Layout><LeaderboardPage /></Layout>} />
-        <Route path="/profil" element={<Layout><ProfilePage /></Layout>} />
-        <Route path="/profil/:username" element={<Layout><ProfilePage /></Layout>} />
-        <Route path="/profil-v3" element={<Layout><ProfilePageV3 /></Layout>} />
-        <Route path="/profil-v3/:username" element={<Layout><ProfilePageV3 /></Layout>} />
-        <Route path="/o-bodech" element={<Layout><OBodechPage /></Layout>} />
-        <Route path="/historie" element={<Layout><HistoriePage /></Layout>} />
-        <Route path="/prihlasit" element={<Layout><LoginPage /></Layout>} />
-        <Route path="/registrace" element={<Layout><RegisterPage /></Layout>} />
-      </Routes>
+      <Suspense fallback={<RouteFallback />}>
+        <Routes>
+          <Route path="/" element={<Layout><HomePage /></Layout>} />
+          <Route path="/akce" element={<Layout><EventsPage /></Layout>} />
+          <Route path="/akce/:slug" element={<Layout><EventDetailPage /></Layout>} />
+          <Route path="/galerie" element={<Layout><GalleryPage /></Layout>} />
+          <Route path="/leaderboard" element={<Layout><LeaderboardPage /></Layout>} />
+          <Route path="/profil" element={<Layout><ProfilePage /></Layout>} />
+          <Route path="/profil/:username" element={<Layout><ProfilePage /></Layout>} />
+          <Route path="/profil-v3" element={<Layout><ProfilePageV3 /></Layout>} />
+          <Route path="/profil-v3/:username" element={<Layout><ProfilePageV3 /></Layout>} />
+          <Route path="/o-bodech" element={<Layout><OBodechPage /></Layout>} />
+          <Route path="/historie" element={<Layout><HistoriePage /></Layout>} />
+          <Route path="/prihlasit" element={<Layout><LoginPage /></Layout>} />
+          <Route path="/registrace" element={<Layout><RegisterPage /></Layout>} />
+          <Route path="/zapomenute-heslo" element={<Layout><ForgotPasswordPage /></Layout>} />
+        </Routes>
+      </Suspense>
     </>
   );
 }

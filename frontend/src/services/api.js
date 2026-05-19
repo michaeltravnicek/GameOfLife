@@ -32,6 +32,8 @@ export const apiLogin = (identifier, password) =>
 export const apiLogout = () => api.post('/auth/logout/').then((r) => r.data);
 export const apiRegister = (payload) =>
   api.post('/auth/register/', payload).then((r) => r.data);
+export const apiPasswordReset = (email) =>
+  api.post('/auth/password-reset/', { email }).then((r) => r.data);
 export const fetchProfile = (username) =>
   api.get(`/auth/profile/${username}/`).then((r) => r.data);
 
@@ -44,9 +46,12 @@ export const toggleRsvp = (slug) =>
   api.post(`/events/${slug}/rsvp/`).then((r) => r.data);
 export const submitFeedback = (slug, rating, comment) =>
   api.post(`/events/${slug}/feedback/`, { rating, comment }).then((r) => r.data);
+export const apiCheckin = (slug, latitude, longitude) =>
+  api.post(`/events/${slug}/checkin/`, { latitude, longitude }).then((r) => r.data);
 
 // --- Leaderboard / Home / Gallery ---
 export const fetchLeaderboard = (period = 'total') =>
   api.get('/leaderboard/', { params: { period } }).then((r) => r.data);
 export const fetchHome = () => api.get('/home/').then((r) => r.data);
-export const fetchGallery = () => api.get('/gallery/').then((r) => r.data);
+export const fetchGallery = (params = {}) =>
+  api.get('/gallery/', { params }).then((r) => r.data);

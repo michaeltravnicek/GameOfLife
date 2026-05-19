@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { fetchLeaderboard } from '../../services/api';
+import { useCachedQuery } from '../../services/queryCache';
 import TabBar from '../../components/TabBar/TabBar';
 import SearchInput from '../../components/SearchInput/SearchInput';
 import Avatar from '../../components/Avatar/Avatar';
@@ -8,18 +9,24 @@ import './LeaderboardPage.css';
 
 const TROPHIES = ['🏆', '🥈', '🥉'];
 
+const LB_TABS = [
+  { key: 'total', label: 'Celkem' },
+  { key: 'month', label: 'Tento rok' },
+];
+
 export default function LeaderboardPage() {
   const [tab, setTab] = useState('total');
   const [query, setQuery] = useState('');
-  const [entries, setEntries] = useState([]);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    setLoading(true);
-    fetchLeaderboard(tab === 'month' ? 'month' : 'total')
-      .then((d) => setEntries(d.entries || []))
-      .finally(() => setLoading(false));
-  }, [tab]);
+  // Cached per period — server itself caches for 5 min, so we mirror that.
+  const period = tab === 'month' ? 'month' : 'total';
+  const { data, loading: queryLoading } = useCachedQuery(
+    `leaderboard:${period}`,
+    () => fetchLeaderboard(period),
+    { ttl: 5 * 60 * 1000 },
+  );
+  const entries = data?.entries || [];
+  const loading = queryLoading && entries.length === 0;
 
   const q = query.trim().toLowerCase();
   const top3 = entries.slice(0, 3);
@@ -45,7 +52,7 @@ export default function LeaderboardPage() {
 
       <section className="controls">
         <TabBar
-          tabs={[{ key: 'total', label: 'Celkem' }, { key: 'month', label: 'Tento rok' }]}
+          tabs={LB_TABS}
           active={tab}
           onChange={setTab}
         />

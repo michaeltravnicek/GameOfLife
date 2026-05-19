@@ -1,4 +1,5 @@
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.forms import PasswordResetForm
 from django.contrib.auth.models import User as AuthUser
 from django.db.models import Count, Sum
 from django.db.models.functions import Coalesce
@@ -93,6 +94,33 @@ def login_api(request):
 def logout_api(request):
     logout(request)
     return Response({"ok": True})
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def password_reset_api(request):
+    """Trigger Django's standard password reset email flow.
+
+    Always returns 200 OK with a generic message — we never disclose whether
+    an email address is registered (avoids account enumeration).
+    """
+    email = (request.data.get("email") or "").strip()
+    if not email:
+        return Response({"error": "Zadej e-mail."}, status=400)
+
+    form = PasswordResetForm({"email": email})
+    if form.is_valid():
+        form.save(
+            request=request,
+            use_https=request.is_secure(),
+            email_template_name="accounts/password_reset_email.html",
+            subject_template_name="accounts/password_reset_subject.txt",
+        )
+    # Generic response regardless of whether email is in the DB.
+    return Response({
+        "ok": True,
+        "message": "Pokud k tomuto e-mailu existuje účet, odeslali jsme odkaz pro reset hesla.",
+    })
 
 
 @api_view(["POST"])

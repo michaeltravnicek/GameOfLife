@@ -1,4 +1,7 @@
 .home-page{background:var(--color-purple);background-image:var(--tex-purple);background-size:var(--tex-size) var(--tex-size);background-repeat:repeat;color:var(--color-cream-light)}
+.home-page .events-empty{grid-column:1/-1;text-align:center;color:rgba(255,255,255,.6);font-style:italic}
+.home-page .lb-head-pts{text-align:right}
+.home-page .about-cta{text-align:center;margin-top:8px}
 
 /* ── BUTTON ── */
 .home-page .btn-pill{display:inline-flex;align-items:center;gap:14px;background:var(--color-pink);color:#fff;font-family:var(--font-hv);font-size:14px;font-weight:700;letter-spacing:.04em;padding:13px 30px;border-radius:16px;border:2px solid #504d4d;border-bottom:5px solid #504d4d;box-shadow:0 6px 22px rgba(225,84,99,.4);transition:transform .18s,background .18s;cursor:pointer;text-decoration:none}
@@ -6,24 +9,7 @@
 .home-page .btn-pill .arr::before{content:'';display:inline-block;width:26px;height:1.5px;background:#fff;vertical-align:middle;margin-right:4px;border-radius:2px}
 .home-page .btn-pill .arr::after{content:'➤';font-size:11px}
 
-/* ── HERO ── */
-.home-page .hero{position:relative;width:100%;height:100vh;min-height:600px;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;text-align:center;padding:0;background:var(--color-dark-brown);margin:0}
-.home-page .hero-slides{position:absolute;inset:0;z-index:0}
-.home-page .hero-slide{position:absolute;inset:0;background-size:cover;background-position:center;opacity:0;transition:opacity 1.2s ease}
-.home-page .hero-slide.active{opacity:1}
-.home-page .hero-overlay{position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,8,30,.15) 0%,rgba(10,8,30,.35) 55%,rgba(26,15,10,.65) 100%)}
-.home-page .hero-inner{position:relative;z-index:2;max-width:740px;padding:0 24px}
-.home-page .hero-eyebrow{font-family:var(--font-mono);font-style:italic;font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.75);margin-bottom:18px}
-.home-page .hero-title{font-family:var(--font-display);font-size:clamp(52px,8.5vw,108px);line-height:.93;letter-spacing:.02em;color:var(--color-cream-light);text-transform:uppercase;text-shadow:0 4px 32px rgba(0,0,0,.55);margin-bottom:14px}
-.home-page .hero-date{font-family:'IBM Plex Serif',serif;font-style:italic;font-weight:300;font-size:14px;line-height:1.6;color:rgba(255,255,255,.80);max-width:380px;margin:0 auto 28px;text-align:center}
-.home-page .hero-cta{position:absolute;left:50%;bottom:22%;transform:translateX(-50%);z-index:3;margin:0}
-.home-page .hero-cta:hover{transform:translate(-50%,-2px)}
-.home-page .hero-dots{position:absolute;bottom:12px;left:0;right:0;display:flex;justify-content:center;gap:1px;z-index:2}
-/* 9px visible dot + 7.5px padding each side = 24px touch target (WCAG 2.5.8) */
-.home-page .hero-dot{padding:7px;border-radius:50%;background:transparent;border:0;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;outline-offset:2px}
-.home-page .hero-dot::before{content:'';display:block;width:9px;height:9px;border-radius:50%;border:1.5px solid rgba(255,255,255,.65);transition:background .3s,border-color .3s}
-.home-page .hero-dot.active::before{background:#fff;border-color:#fff}
-.home-page .hero-dot:focus-visible{outline:2px solid #fff;outline-offset:2px}
+/* Hero now lives in <Hero /> component (components/Hero) — all styles scoped to .gol-hero / .gol-hero-dots. */
 
 /* ── EVENTS ── */
 .home-page .events-section{background:var(--color-purple);background-image:var(--tex-purple);background-size:var(--tex-size) var(--tex-size);background-repeat:repeat;padding:56px 28px 72px;position:relative}
@@ -101,8 +87,6 @@
 
 /* 768px */
 @media(max-width:768px){
-  .home-page .hero{padding:0 16px;min-height:520px}
-  .home-page .hero-title{font-size:clamp(40px,11vw,80px)}
   .home-page .events-section{padding:44px 16px 56px}
   .home-page .lb-section{padding:48px 16px 60px}
   .home-page .about-section{padding:52px 16px}
@@ -122,9 +106,6 @@
 
 /* 480px — single column, touch-friendly */
 @media(max-width:480px){
-  .home-page .hero{padding:0 12px}
-  .home-page .hero-title{font-size:clamp(36px,13vw,64px)}
-  .home-page .hero-eyebrow{font-size:11px;letter-spacing:.16em}
   .home-page .btn-pill{font-size:13px;padding:11px 22px;gap:10px}
   .home-page .events-section{padding:36px 12px 48px}
   .home-page .events-grid{max-width:100%;row-gap:44px}
@@ -141,7 +122,6 @@
 
 /* 375px — small phones */
 @media(max-width:375px){
-  .home-page .hero-title{font-size:clamp(32px,14vw,56px)}
   .home-page .btn-pill{font-size:12px;padding:10px 18px}
   .home-page .sec-title{font-size:24px}
   .home-page .lb-head,.home-page .lb-row{padding:7px 10px;grid-template-columns:36px 1fr 52px;gap:6px}
@@ -151,7 +131,6 @@
 
 /* 320px — smallest supported width */
 @media(max-width:320px){
-  .home-page .hero-title{font-size:32px}
   .home-page .events-section{padding:28px 10px 40px}
   .home-page .about-section{padding:32px 10px}
   .home-page .lb-section{padding:32px 10px 44px}

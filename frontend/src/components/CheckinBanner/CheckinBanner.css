@@ -1,0 +1,26 @@
+.checkin-banners{position:relative;z-index:20;display:flex;flex-direction:column;gap:10px;padding:16px 16px 0;max-width:1100px;margin:0 auto}
+
+.checkin-banner{background:linear-gradient(135deg,var(--color-pink),#a0243a);color:#fff;padding:14px 20px;display:flex;align-items:center;gap:14px;border-radius:12px;box-shadow:0 4px 20px rgba(193,57,74,.35);animation:checkin-banner-in .5s cubic-bezier(.22,.68,0,1.2) both}
+
+.checkin-banner-icon{font-size:26px;flex-shrink:0;line-height:1}
+.checkin-banner-text{flex:1;font-family:var(--font-body);font-size:14px;line-height:1.4;display:flex;flex-direction:column;gap:2px;min-width:0}
+.checkin-banner-text strong{font-family:var(--font-display);font-size:15px;letter-spacing:.04em;text-transform:uppercase}
+.checkin-banner-text span{color:rgba(255,255,255,.92)}
+
+.checkin-banner-btn{background:#fff;color:var(--color-pink);border:0;border-radius:8px;padding:10px 18px;font-family:var(--font-display);font-size:13px;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:opacity .18s,transform .18s}
+.checkin-banner-btn:hover:not([disabled]){transform:translateY(-1px)}
+.checkin-banner-btn:disabled{opacity:.6;cursor:not-allowed}
+
+@keyframes checkin-banner-in{
+  from{opacity:0;transform:translateY(-10px)}
+  to{opacity:1;transform:none}
+}
+
+@media(max-width:640px){
+  .checkin-banner{flex-wrap:wrap;padding:12px 14px}
+  .checkin-banner-btn{width:100%;padding:10px 14px}
+}
+
+@media(prefers-reduced-motion: reduce){
+  .checkin-banner{animation:none}
+}

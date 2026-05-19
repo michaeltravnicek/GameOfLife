@@ -140,6 +140,7 @@ def _pick_hero_events(count=5):
     media_url = settings.MEDIA_URL
     events = list(
         Event.objects
+        .only("name", "date", "slug", "image")
         .filter(date__lt=now)
         .exclude(image="")
         .filter(image__isnull=False)

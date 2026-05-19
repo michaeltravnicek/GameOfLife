@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import { fetchProfile } from '../../services/api';
+import { useCachedQuery } from '../../services/queryCache';
 import { useAuth } from '../../context/AuthContext';
 import Button from '../../components/Button/Button';
 import TabBar from '../../components/TabBar/TabBar';
@@ -18,20 +19,16 @@ export default function ProfilePage() {
   const { username } = useParams();
   const { user, logout, loading: authLoading } = useAuth();
   const navigate = useNavigate();
-  const [profile, setProfile] = useState(null);
-  const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState('upcoming');
 
-  useEffect(() => {
-    if (!username) return;
-    setError('');
-    setProfile(null);
-    fetchProfile(username)
-      .then(setProfile)
-      .catch((e) => {
-        setError(e.response?.status === 404 ? 'Profil nenalezen.' : 'Chyba při načítání profilu.');
-      });
-  }, [username]);
+  const { data: profile, error: queryError } = useCachedQuery(
+    `profile:${username}`,
+    () => fetchProfile(username),
+    { enabled: !!username, ttl: 60 * 1000 },
+  );
+  const error = queryError
+    ? (queryError.response?.status === 404 ? 'Profil nenalezen.' : 'Chyba při načítání profilu.')
+    : '';
 
   if (!username) {
     if (authLoading) return null;

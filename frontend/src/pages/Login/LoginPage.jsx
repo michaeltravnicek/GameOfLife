@@ -68,7 +68,7 @@ export default function LoginPage() {
                 value={pw}
                 onChange={(e) => setPw(e.target.value)}
                 required
-                rightSlot={<a href="#" className="forgot">Zapomenuté heslo?</a>}
+                rightSlot={<Link to="/zapomenute-heslo" className="forgot">Zapomenuté heslo?</Link>}
               />
               {error && <div className="auth-error">{error}</div>}
               <label className="remember-row">

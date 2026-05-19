@@ -1,14 +1,24 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { fetchGallery } from '../../services/api';
-import Lightbox from '../../components/Lightbox/Lightbox';
+import { useCachedQuery } from '../../services/queryCache';
 import { monthKey, monthLabel } from '../../utils/date';
 import './GalleryPage.css';
 
+// Lightbox loaded only when user opens a fullscreen photo.
+const Lightbox = lazy(() => import('../../components/Lightbox/Lightbox'));
+
+const PAGE_SIZE = 60;
+// Prefetch next page when slideshow cursor is within this many photos of the end.
+const PREFETCH_TAIL = 5;
 
 export default function GalleryPage() {
   const [view, setView] = useState('slideshow');
-  const [photos, setPhotos] = useState([]);
+  // Extra pages appended via auto-prefetch or "Load more" — kept outside cache.
+  const [extraPhotos, setExtraPhotos] = useState([]);
+  const [extraHasMore, setExtraHasMore] = useState(null);
+  const [loadingMore, setLoadingMore] = useState(false);
+
   const [cur, setCur] = useState(0);
   const [activeMonth, setActiveMonth] = useState('all');
   const [lbOpen, setLbOpen] = useState(false);
@@ -17,9 +27,43 @@ export default function GalleryPage() {
 
   const tx = useRef(0);
 
+  // First page lives in the shared cache so returning to /galerie is instant.
+  const { data: firstPage, loading: firstLoading } = useCachedQuery(
+    'gallery:first',
+    () => fetchGallery({ limit: PAGE_SIZE, offset: 0 }),
+    { ttl: 5 * 60 * 1000 },
+  );
+
+  const firstPhotos = firstPage?.photos || [];
+  const totalCount = firstPage?.count ?? firstPhotos.length + extraPhotos.length;
+  const photos = useMemo(
+    () => (extraPhotos.length ? [...firstPhotos, ...extraPhotos] : firstPhotos),
+    [firstPhotos, extraPhotos],
+  );
+  const hasMore = extraHasMore !== null ? extraHasMore : !!firstPage?.has_more;
+  const loading = firstLoading && photos.length === 0;
+
+  const loadMore = useCallback(() => {
+    if (loadingMore || !hasMore) return Promise.resolve();
+    setLoadingMore(true);
+    return fetchGallery({ limit: PAGE_SIZE, offset: photos.length })
+      .then((d) => {
+        setExtraPhotos((prev) => [...prev, ...(d.photos || [])]);
+        setExtraHasMore(!!d.has_more);
+      })
+      .catch(() => {})
+      .finally(() => setLoadingMore(false));
+  }, [photos.length, hasMore, loadingMore]);
+
+  // Auto-prefetch next page when the slideshow cursor approaches the loaded tail.
   useEffect(() => {
-    fetchGallery().then((d) => setPhotos(d.photos || [])).catch(() => {});
-  }, []);
+    if (view !== 'slideshow') return;
+    if (!hasMore || loadingMore) return;
+    if (photos.length === 0) return;
+    if (cur >= photos.length - PREFETCH_TAIL) {
+      loadMore();
+    }
+  }, [cur, photos.length, view, hasMore, loadingMore, loadMore]);
 
   const months = useMemo(() => {
     const set = new Set(photos.map((p) => monthKey(p.event_date)));
@@ -36,7 +80,6 @@ export default function GalleryPage() {
   };
   const lbStep = (d) => setLbIndex((i) => (i + d + lbPhotos.length) % lbPhotos.length);
 
-
   const visibleMonths = activeMonth === 'all' ? months : [activeMonth];
 
   const slidePhoto = photos[cur] || {};
@@ -48,6 +91,10 @@ export default function GalleryPage() {
     const dx = e.changedTouches[0].clientX - tx.current;
     if (Math.abs(dx) > 40) goSlide(dx < 0 ? cur + 1 : cur - 1);
   };
+
+  const loadedCounter = hasMore
+    ? `${n} / ${totalCount}`
+    : `${n}`;
 
   return (
     <div className="gallery-page">
@@ -69,7 +116,13 @@ export default function GalleryPage() {
         </button>
       </div>
 
-      {n === 0 && (
+      {loading && (
+        <p style={{ textAlign: 'center', padding: '60px 20px', color: 'rgba(255,241,212,.6)' }}>
+          Načítám galerii…
+        </p>
+      )}
+
+      {!loading && n === 0 && (
         <p style={{ textAlign: 'center', padding: '60px 20px', color: 'rgba(255,241,212,.6)' }}>
           V galerii zatím nejsou žádné fotografie.
         </p>
@@ -77,7 +130,7 @@ export default function GalleryPage() {
 
       {view === 'slideshow' && n > 0 && (
         <div id="view-slideshow">
-          <div className="counter"><span>{cur + 1}</span> / <span>{n}</span></div>
+          <div className="counter"><span>{cur + 1}</span> / <span>{loadedCounter}</span></div>
           <div className="gal-container">
             <div
               className="gal-side"
@@ -156,6 +209,19 @@ export default function GalleryPage() {
               </div>
             );
           })}
+
+          {hasMore && (
+            <div className="load-more-row">
+              <button
+                type="button"
+                className="mf-chip"
+                onClick={loadMore}
+                disabled={loadingMore}
+              >
+                {loadingMore ? 'Načítám…' : `Načíst další (${totalCount - n})`}
+              </button>
+            </div>
+          )}
         </div>
       )}
 
@@ -163,15 +229,19 @@ export default function GalleryPage() {
         <Link to="/akce" className="btn-pill">Zobrazit nadcházející akce ➤</Link>
       </div>
 
-      <Lightbox
-        open={lbOpen}
-        photos={lbPhotos}
-        index={lbIndex}
-        showInfo
-        onClose={() => setLbOpen(false)}
-        onPrev={() => lbStep(-1)}
-        onNext={() => lbStep(1)}
-      />
+      {lbOpen && (
+        <Suspense fallback={null}>
+          <Lightbox
+            open={lbOpen}
+            photos={lbPhotos}
+            index={lbIndex}
+            showInfo
+            onClose={() => setLbOpen(false)}
+            onPrev={() => lbStep(-1)}
+            onNext={() => lbStep(1)}
+          />
+        </Suspense>
+      )}
     </div>
   );
 }

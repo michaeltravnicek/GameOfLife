@@ -1,32 +1,33 @@
-import { useEffect, useMemo, useState } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { fetchEventDetail, toggleRsvp } from '../../services/api';
+import { useCachedQuery, invalidateQuery } from '../../services/queryCache';
 import { useAuth } from '../../context/AuthContext';
-import Lightbox from '../../components/Lightbox/Lightbox';
 import Button from '../../components/Button/Button';
 import SectionHeader from '../../components/SectionHeader/SectionHeader';
 import { fmtDateShort, fmtTime, dayName } from '../../utils/date';
 import './EventDetailPage.css';
 
+// Lightbox is only needed once the user clicks on an image — pull it off the
+// critical bundle and load it on demand.
+const Lightbox = lazy(() => import('../../components/Lightbox/Lightbox'));
+
 export default function EventDetailPage() {
   const { slug } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [event, setEvent] = useState(null);
-  const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [lbOpen, setLbOpen] = useState(false);
   const [lbIndex, setLbIndex] = useState(0);
 
-  useEffect(() => {
-    setError('');
-    fetchEventDetail(slug)
-      .then(setEvent)
-      .catch((e) => {
-        if (e.response?.status === 404) setError('Akce nenalezena.');
-        else setError('Nepodařilo se načíst akci.');
-      });
-  }, [slug]);
+  const { data: event, error: queryError, refetch: refetchEvent } = useCachedQuery(
+    `event:${slug}`,
+    () => fetchEventDetail(slug),
+    { enabled: !!slug, ttl: 60 * 1000 }, // 1 min — short, RSVP changes matter
+  );
+  const error = queryError
+    ? (queryError.response?.status === 404 ? 'Akce nenalezena.' : 'Nepodařilo se načíst akci.')
+    : '';
 
   const images = useMemo(() => {
     if (!event) return [];
@@ -72,8 +73,11 @@ export default function EventDetailPage() {
     }
     setBusy(true);
     try {
-      const res = await toggleRsvp(slug);
-      setEvent((ev) => ({ ...ev, has_rsvp: res.rsvp, rsvp_count: res.rsvp_count }));
+      await toggleRsvp(slug);
+      // RSVP changed: refresh this event's cache + drop any events list pages
+      // (rsvp_count on cards there may now be stale).
+      invalidateQuery((k) => k.startsWith('events:'));
+      await refetchEvent();
     } catch (err) {
       alert(err.response?.data?.error || 'Akce selhala.');
     } finally {
@@ -210,14 +214,18 @@ export default function EventDetailPage() {
         </div>
       </div>
 
-      <Lightbox
-        open={lbOpen}
-        images={images}
-        index={lbIndex}
-        onClose={() => setLbOpen(false)}
-        onPrev={() => setLbIndex((i) => (i - 1 + images.length) % images.length)}
-        onNext={() => setLbIndex((i) => (i + 1) % images.length)}
-      />
+      {lbOpen && (
+        <Suspense fallback={null}>
+          <Lightbox
+            open={lbOpen}
+            images={images}
+            index={lbIndex}
+            onClose={() => setLbOpen(false)}
+            onPrev={() => setLbIndex((i) => (i - 1 + images.length) % images.length)}
+            onNext={() => setLbIndex((i) => (i + 1) % images.length)}
+          />
+        </Suspense>
+      )}
     </div>
   );
 }

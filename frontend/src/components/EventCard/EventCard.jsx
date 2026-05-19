@@ -1,5 +1,7 @@
+import { memo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { fmtDate } from '../../utils/date';
+import { preloadEventDetail } from '../../services/routePreload';
 import DashedBorder from '../DashedBorder/DashedBorder';
 import './EventCard.css';
 
@@ -39,6 +41,15 @@ function LightCard({ event }) {
         {event.is_past ? 'Proběhlo' : 'Akce'}
       </span>
 
+      <img
+        className="evcard-badge"
+        src={event.logo || '/logos/GOL_main_logo_pink.png'}
+        alt=""
+        loading="lazy"
+        width="110"
+        height="110"
+      />
+
       <div className="evcard-content">
         <h3 className="evcard-title">{event.name}</h3>
         <div className="evcard-meta">
@@ -60,11 +71,15 @@ function LightCard({ event }) {
  * event : { id, slug, name, date, place, points, logo, is_past }
  * theme : 'dark' | 'light'   (default: 'dark')
  */
-export default function EventCard({ event, theme = 'dark' }) {
+function EventCard({ event, theme = 'dark' }) {
+  // Warm up the detail chunk + this event's data on the first sign of intent.
+  const handlePreload = useCallback(() => preloadEventDetail(event.slug), [event.slug]);
   return (
     <Link
       to={`/akce/${event.slug}`}
       className={`evcard evcard-${theme}${theme === 'light' && event.is_past ? ' is-past' : ''}`}
+      onMouseEnter={handlePreload}
+      onFocus={handlePreload}
     >
       {theme === 'dark'
         ? <DarkCard event={event} />
@@ -73,3 +88,8 @@ export default function EventCard({ event, theme = 'dark' }) {
     </Link>
   );
 }
+
+// memo: cards re-render only when their `event` reference or `theme` actually
+// changes. Critical for EventsPage where unrelated state (search input,
+// filter chips, "Load more" appends) used to repaint every card.
+export default memo(EventCard);

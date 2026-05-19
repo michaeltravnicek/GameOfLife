@@ -1,5 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { apiLogin, apiLogout, apiRegister, fetchMe } from '../services/api';
+import { clearCache } from '../services/queryCache';
+import { toast } from '../components/Toast/ToastProvider';
 
 const AuthContext = createContext(null);
 
@@ -24,13 +26,24 @@ export function AuthProvider({ children }) {
 
   const login = useCallback(async (identifier, password) => {
     const data = await apiLogin(identifier, password);
+    // New user identity: drop all cached responses that may have been
+    // computed against the anonymous user (RSVPs, profile-specific data).
+    clearCache();
     setUser(data.user);
+    const name = data.user?.first_name || data.user?.full_name || data.user?.username || 'hráči';
+    toast.success(`Ahoj, ${name}! Můžeš pokračovat ve hře.`, { title: 'Přihlášení proběhlo' });
     return data.user;
   }, []);
 
   const register = useCallback(async (payload) => {
     const data = await apiRegister(payload);
+    clearCache();
     setUser(data.user);
+    const name = data.user?.first_name || data.user?.full_name || data.user?.username || 'nováčku';
+    toast.success(`Vítej v Game of Life, ${name}! Hra začíná.`, {
+      title: 'Účet vytvořen',
+      duration: 6000,
+    });
     return data.user;
   }, []);
 
@@ -40,7 +53,9 @@ export function AuthProvider({ children }) {
     } catch {
       // ignore
     }
+    clearCache();
     setUser(null);
+    toast.info('Byl jsi odhlášen. Brzy nashle!', { title: 'Odhlášení' });
   }, []);
 
   return (
