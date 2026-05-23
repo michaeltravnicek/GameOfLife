@@ -72,6 +72,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'background_task',
     'rest_framework',
+    'drf_spectacular',
     'corsheaders',
     'leaderboard',
     'accounts',
@@ -130,6 +131,14 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.AllowAny',
     ],
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Game of Life API',
+    'DESCRIPTION': 'REST API for the Game of Life leaderboard platform.',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
 }
 
 WSGI_APPLICATION = 'mysite.wsgi.application'

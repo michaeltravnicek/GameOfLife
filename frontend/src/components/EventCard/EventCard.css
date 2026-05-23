@@ -12,7 +12,7 @@
 .evcard-dark .evcard-badge{position:absolute;width:110px;height:110px;top:-14px;right:8px;transform:rotate(14deg);object-fit:contain;pointer-events:none;filter:drop-shadow(0px 4px 10px rgba(0,0,0,.35))}
 
 /* ── Light theme (Events list — cream bg + grain, matches Figma) ── */
-.evcard-light{height:240px;border-radius:14px;background-color:#fff1d4;background-image:url('/assets/Grain_texture_light.png');background-size:500px 500px;background-repeat:repeat}
+.evcard-light{height:240px;border-radius:14px;background-color:#fff1d4;background-image:url('/assets/Grain_texture_light.png');background-size:var(--tex-size) var(--tex-size);background-repeat:repeat}
 .evcard-light::after{content:'';position:absolute;inset:0;background:rgba(255,253,253,.20);pointer-events:none;border-radius:14px;z-index:0}
 .evcard-light:hover{transform:translateY(-4px)}
 .evcard-light:hover .dashed-border rect:last-child{stroke:#e15463}

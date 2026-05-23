@@ -11,4 +11,5 @@ urlpatterns = [
     path("events/<slug:slug>/checkin/", api_views.event_checkin, name="api-event-checkin"),
     path("leaderboard/", api_views.leaderboard_view, name="api-leaderboard"),
     path("gallery/", api_views.gallery_view, name="api-gallery"),
+    path("categories/", api_views.categories_list, name="api-categories"),
 ]

@@ -16,6 +16,17 @@ class Season(models.Model):
         return self.name
 
 
+class Category(models.Model):
+    name = models.CharField(max_length=50, unique=True)
+
+    class Meta:
+        verbose_name_plural = "categories"
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+
 class Event(models.Model):
     sheet_id = models.CharField(max_length=255)
     sheet_list_id = models.CharField(max_length=255)
@@ -45,6 +56,10 @@ class Event(models.Model):
         help_text="Poloměr check-in zóny v metrech. Výchozí: 500 m."
     )
 
+    category = models.ForeignKey(
+        'Category', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='events',
+    )
     slug = models.SlugField(max_length=280, unique=True, null=True, blank=True)
 
     def save(self, *args, **kwargs):

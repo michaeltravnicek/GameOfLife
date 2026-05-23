@@ -5,6 +5,8 @@ The frontend is a React SPA. Django serves:
   - /api/     DRF JSON endpoints consumed by React
   - /media/   user-uploaded files (via WhiteNoise/dev static)
   - /static/  built static assets
+  - /api/schema/swagger/  Swagger UI  (DEBUG only)
+  - /api/schema/redoc/    ReDoc        (DEBUG only)
   - everything else → React index.html (client routing)
 """
 from django.conf import settings
@@ -32,6 +34,14 @@ urlpatterns = [
     # link then lands users on these Django pages to set a new password.
     path("accounts/", include("accounts.urls")),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+if settings.DEBUG:
+    from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
+    urlpatterns += [
+        path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
+        path("api/schema/swagger/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui"),
+        path("api/schema/redoc/", SpectacularRedocView.as_view(url_name="schema"), name="redoc"),
+    ]
 
 # React catch-all: must come last so /api/*, /admin/*, /accounts/* match first.
 urlpatterns += [

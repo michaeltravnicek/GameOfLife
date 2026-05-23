@@ -30,6 +30,10 @@ CACHE_TTL_EVENTS_LIST = 5 * 60
 CACHE_KEY_EVENTS_CITIES = "api_events_cities"
 CACHE_TTL_EVENTS_CITIES = 30 * 60
 
+# Categories list for /api/categories/. Changes only when a Category is added/renamed.
+CACHE_KEY_CATEGORIES = "api_categories"
+CACHE_TTL_CATEGORIES = 60 * 60  # 1 hour
+
 # ── Backward-compat aliases (legacy names used across the codebase) ───
 # Keeping these stops a giant rename churn while old code is around.
 CACHE_KEY = CACHE_KEY_LEADERBOARD_TOTAL
@@ -45,6 +49,7 @@ EVENT_DEPENDENT_CACHE_KEYS = (
     CACHE_KEY_HOME_STATS,
     CACHE_KEY_EVENTS_LIST,
     CACHE_KEY_EVENTS_CITIES,
+    CACHE_KEY_CATEGORIES,
 )
 
 # Keys that must be dropped whenever a UserToEvent (= scored attendance) changes.

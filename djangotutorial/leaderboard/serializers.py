@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from .models import (
+    Category,
     Event,
     EventFeedback,
     EventRSVP,
@@ -11,15 +12,22 @@ from .models import (
 )
 
 
+class CategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Category
+        fields = ["id", "name"]
+
+
 class EventListSerializer(serializers.ModelSerializer):
     image = serializers.SerializerMethodField()
     is_past = serializers.SerializerMethodField()
+    category = CategorySerializer(read_only=True)
 
     class Meta:
         model = Event
         fields = [
             "id", "slug", "name", "description", "place",
-            "date", "points", "image", "capacity", "is_past",
+            "date", "points", "image", "capacity", "is_past", "category",
         ]
 
     def get_image(self, obj):
@@ -77,13 +85,14 @@ class EventDetailSerializer(serializers.ModelSerializer):
     has_rsvp = serializers.SerializerMethodField()
     official_images = serializers.SerializerMethodField()
     user_photos = serializers.SerializerMethodField()
+    category = CategorySerializer(read_only=True)
 
     class Meta:
         model = Event
         fields = [
             "id", "slug", "name", "description", "place", "date", "end_date",
             "points", "image", "logo", "rules", "capacity",
-            "latitude", "longitude",
+            "latitude", "longitude", "category",
             "is_past", "rsvp_count", "is_full", "has_rsvp",
             "official_images", "user_photos",
         ]

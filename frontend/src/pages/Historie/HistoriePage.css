@@ -5,7 +5,7 @@
 .historie-page .stage::after{content:'';position:absolute;inset:0;background:
   radial-gradient(ellipse at 50% 0%, rgba(45,42,142,.25) 0%, transparent 38%),
   linear-gradient(180deg, rgba(26,15,10,.55) 0%, rgba(26,15,10,.78) 38%, rgba(26,15,10,.94) 100%)}
-.historie-page .grain{position:fixed;inset:0;z-index:0;pointer-events:none;background:url('/assets/Grain_texture_brown.png') center/cover;opacity:.10;mix-blend-mode:overlay}
+.historie-page .grain{position:fixed;inset:0;z-index:0;pointer-events:none;background:url('/assets/Grain_texture_brown.png') 0 0/var(--tex-size) var(--tex-size) repeat;opacity:var(--grain-opacity);mix-blend-mode:overlay}
 
 .historie-page .hero{position:relative;z-index:2;max-width:1100px;margin:0 auto;padding:148px 24px 24px;text-align:center}
 .historie-page .eyebrow{font-family:var(--font-mono);font-style:italic;font-size:13px;letter-spacing:.3em;text-transform:uppercase;color:var(--color-pink);margin-bottom:10px;display:inline-flex;align-items:center;gap:10px}
@@ -35,7 +35,7 @@
 .historie-page .row .node{grid-column:2;display:flex;justify-content:center;align-items:center}
 .historie-page .node-dot{width:18px;height:18px;border-radius:50%;background:var(--color-pink);border:3px solid #1a0f0a;box-shadow:0 0 0 2px rgba(225,84,99,.4),0 6px 18px rgba(225,84,99,.45);z-index:1}
 
-.historie-page .card{grid-column:1;background:url('/assets/Grain_texture_light.png') center/cover, #fff1d4;color:#1a0f0a;border-radius:14px;border:2px dashed rgba(26,26,26,.35);overflow:hidden;box-shadow:0 14px 36px rgba(0,0,0,.45);transition:transform .25s,border-color .25s}
+.historie-page .card{grid-column:1;background:url('/assets/Grain_texture_light.png') 0 0/var(--tex-size) var(--tex-size) repeat, #fff1d4;color:#1a0f0a;border-radius:14px;border:2px dashed rgba(26,26,26,.35);overflow:hidden;box-shadow:0 14px 36px rgba(0,0,0,.45);transition:transform .25s,border-color .25s}
 .historie-page .card:hover{transform:translateY(-3px);border-color:var(--color-pink)}
 .historie-page .row:nth-child(even) .card{grid-column:3}
 .historie-page .row.right .card{grid-column:3}

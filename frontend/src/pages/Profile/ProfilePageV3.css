@@ -45,8 +45,8 @@
 
 .pv3-grain{
   position:fixed; inset:0; z-index:-2; pointer-events:none;
-  background:var(--tex-blue) 0 0/620px 620px repeat;
-  opacity:.10; mix-blend-mode:overlay;
+  background:var(--tex-blue) 0 0/var(--tex-size) var(--tex-size) repeat;
+  opacity:var(--grain-opacity); mix-blend-mode:overlay;
 }
 .pv3-scan{
   position:fixed; inset:0; z-index:-1; pointer-events:none;
@@ -626,7 +626,7 @@
 
 /* ── Past events log ──────────────────────────────────────── */
 .pv3-log{
-  background: #1a0f0a url('/assets/Grain_texture_blue.png') center/cover;
+  background: #1a0f0a url('/assets/Grain_texture_blue.png') 0 0/var(--tex-size) var(--tex-size) repeat;
   border: 1.5px solid rgba(255,241,212,.08);
   border-radius: 12px;
   padding: 8px;

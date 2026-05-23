@@ -27,7 +27,18 @@ class Profile(models.Model):
         blank=True,
     )
     photo = models.ImageField(upload_to="profile_photos/", blank=True, null=True)
+    bio = models.TextField(blank=True, default="")
+    city = models.CharField(max_length=100, blank=True, default="")
     instagram = models.CharField(max_length=255, blank=True, default="")
+    strava = models.CharField(max_length=255, blank=True, default="")
+    spotify = models.CharField(max_length=255, blank=True, default="")
+    tiktok = models.CharField(max_length=255, blank=True, default="")
+    favourite_categories = models.ManyToManyField(
+        'leaderboard.Category', blank=True, related_name='fans',
+    )
+    hide_pts = models.BooleanField(default=False)
+    hide_events = models.BooleanField(default=False)
+    members_only = models.BooleanField(default=False)
     role = models.CharField(
         max_length=20, choices=ROLE_CHOICES, blank=True, default=ROLE_NONE,
         help_text="Administrátor má přístup do Django adminu a vidí feedbacky. Fotograf může nahrávat oficiální fotky k akcím.",

@@ -13,6 +13,7 @@ from rest_framework.response import Response
 
 from leaderboard.models import (
     EventFeedback,
+    Season,
     User as LeaderboardUser,
     UserToEvent,
 )
@@ -144,6 +145,53 @@ def register_api(request):
     return Response({"user": _serialize_user(user)})
 
 
+def _build_seasons(lb_user):
+    seasons = Season.objects.all()
+    result = []
+    for s in seasons:
+        utes = (
+            UserToEvent.objects
+            .filter(user=lb_user,
+                    event__date__date__gte=s.start_date,
+                    event__date__date__lte=s.end_date)
+            .select_related("event", "event__category")
+            .order_by("event__date")
+        )
+        season_pts = sum(u.points for u in utes)
+        rank = None
+        if season_pts > 0:
+            rank = (
+                UserToEvent.objects
+                .filter(event__date__date__gte=s.start_date,
+                        event__date__date__lte=s.end_date)
+                .values("user")
+                .annotate(pts=Sum("points"))
+                .filter(pts__gt=season_pts)
+                .count()
+            ) + 1
+        result.append({
+            "label":      s.name,
+            "start":      s.start_date,
+            "end":        s.end_date,
+            "is_active":  s.is_active,
+            "season_pts": season_pts,
+            "rank":       rank,
+            "events": [
+                {
+                    "slug":     u.event.slug,
+                    "name":     u.event.name,
+                    "place":    u.event.place,
+                    "date":     u.event.date,
+                    "pts":      u.points,
+                    "category": {"id": u.event.category.id, "name": u.event.category.name}
+                                if u.event.category else None,
+                }
+                for u in utes
+            ],
+        })
+    return result
+
+
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def profile_view(request, username):
@@ -153,7 +201,6 @@ def profile_view(request, username):
 
     total_points = 0
     total_events = 0
-    past_events = []
     upcoming_rsvps = []
     rank = None
 
@@ -164,20 +211,6 @@ def profile_view(request, username):
         )
         total_points = agg["total_points"] or 0
         total_events = agg["total_events"] or 0
-
-        past_qs = (
-            UserToEvent.objects.filter(user=lb_user)
-            .select_related("event").order_by("-event__date")[:50]
-        )
-        for ute in past_qs:
-            ev = ute.event
-            past_events.append({
-                "slug": ev.slug,
-                "name": ev.name,
-                "date": ev.date,
-                "place": ev.place,
-                "points": ute.points,
-            })
 
         if total_points > 0:
             rank = (
@@ -206,16 +239,85 @@ def profile_view(request, username):
     if profile and profile.photo:
         photo_url = request.build_absolute_uri(profile.photo.url)
 
+    fav_cats = []
+    if profile:
+        fav_cats = [
+            {"id": c.id, "name": c.name}
+            for c in profile.favourite_categories.all()
+        ]
+
     return Response({
-        "username": profile_user.username,
+        "username":   profile_user.username,
         "first_name": profile_user.first_name,
-        "full_name": profile_user.get_full_name() or profile_user.username,
-        "photo": photo_url,
-        "instagram": profile.instagram if profile else "",
-        "total_points": total_points,
-        "total_events": total_events,
-        "rank": rank,
-        "past_events": past_events,
+        "full_name":  profile_user.get_full_name() or profile_user.username,
+        "photo":      photo_url,
+        "bio":        profile.bio if profile else "",
+        "city":       profile.city if profile else "",
+        "since":      profile_user.date_joined.strftime("%Y-%m"),
+        "instagram":  profile.instagram if profile else "",
+        "strava":     profile.strava if profile else "",
+        "spotify":    profile.spotify if profile else "",
+        "tiktok":     profile.tiktok if profile else "",
+        "favourite_categories": fav_cats,
+        "privacy": {
+            "hide_pts":    profile.hide_pts if profile else False,
+            "hide_events": profile.hide_events if profile else False,
+            "members_only":profile.members_only if profile else False,
+        },
+        "total_points":  total_points,
+        "total_events":  total_events,
+        "rank":          rank,
         "upcoming_rsvps": upcoming_rsvps,
+        "seasons":       _build_seasons(lb_user) if lb_user else [],
         "is_own_profile": request.user.is_authenticated and request.user == profile_user,
     })
+
+
+@api_view(["PATCH", "POST"])
+@permission_classes([IsAuthenticated])
+def profile_update(request):
+    user = request.user
+    profile, _ = Profile.objects.get_or_create(user=user)
+    data = request.data
+
+    if "first_name" in data:
+        user.first_name = data["first_name"]
+    if "last_name" in data:
+        user.last_name = data["last_name"]
+    if "email" in data:
+        user.email = data["email"]
+    new_handle = (data.get("username") or "").strip()
+    if new_handle and new_handle != user.username:
+        if AuthUser.objects.filter(username=new_handle).exclude(pk=user.pk).exists():
+            return Response({"error": "Přezdívka je obsazena."}, status=400)
+        user.username = new_handle
+    user.save()
+
+    for field in ("bio", "city", "instagram", "strava", "spotify", "tiktok"):
+        if field in data:
+            setattr(profile, field, data[field])
+
+    if "favourite_categories" in data:
+        raw = data.getlist("favourite_categories") if hasattr(data, "getlist") else data["favourite_categories"]
+        if not isinstance(raw, list):
+            raw = [raw]
+        from leaderboard.models import Category
+        cats = list(Category.objects.filter(id__in=[int(x) for x in raw if str(x).isdigit()])[:3])
+        profile.save()
+        profile.favourite_categories.set(cats)
+    else:
+        profile.save()
+
+    for flag in ("hide_pts", "hide_events", "members_only"):
+        if flag in data:
+            setattr(profile, flag, str(data[flag]).lower() in ("1", "true"))
+    profile.save(update_fields=["hide_pts", "hide_events", "members_only"])
+
+    if "photo" in request.FILES:
+        profile.photo = request.FILES["photo"]
+        profile.save(update_fields=["photo"])
+    elif data.get("remove_photo"):
+        profile.photo = None
+        profile.save(update_fields=["photo"])
+
+    return Response({"ok": True, "user": _serialize_user(user)})

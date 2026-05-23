@@ -12,6 +12,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
 from .models import (
+    Category,
     Event,
     EventFeedback,
     EventRSVP,
@@ -21,6 +22,7 @@ from .models import (
     UserToEvent,
 )
 from .serializers import (
+    CategorySerializer,
     EventDetailSerializer,
     EventListSerializer,
     GalleryPhotoSerializer,
@@ -47,13 +49,24 @@ from .cache_config import (
     CACHE_TTL_HOME_STATS,
     CACHE_KEY_EVENTS_CITIES,
     CACHE_TTL_EVENTS_CITIES,
+    CACHE_KEY_CATEGORIES,
+    CACHE_TTL_CATEGORIES,
 )
 from .utils import parse_int_param
 
 _EVENTS_LIST_FIELDS = (
     "id", "slug", "name", "description", "place",
-    "date", "points", "image", "capacity",
+    "date", "points", "image", "capacity", "category_id",
 )
+
+
+def _categories_cached():
+    cached = cache.get(CACHE_KEY_CATEGORIES)
+    if cached is not None:
+        return cached
+    result = list(CategorySerializer(Category.objects.all(), many=True).data)
+    cache.set(CACHE_KEY_CATEGORIES, result, CACHE_TTL_CATEGORIES)
+    return result
 
 
 def _cities_cached():
@@ -81,24 +94,29 @@ def events_list(request):
     Query params:
       ?period=upcoming|past|all
       ?city=<name>
+      ?category=<id>
       ?q=<search>
       ?limit=<1..100>  default 30
       ?offset=<int>    default 0
 
     Response:
-      { events, count, has_more, cities }
-    `cities` is included only on the first page (offset=0) to save bandwidth.
+      { events, count, has_more, cities, categories }
+    `cities` and `categories` are included only on the first page (offset=0).
     """
     period = request.GET.get("period", "all")
     city = request.GET.get("city", "")
+    category = request.GET.get("category", "")
     q = request.GET.get("q", "").strip()
     limit = parse_int_param(request.GET.get("limit"), 30, min_val=1, max_val=100)
     offset = parse_int_param(request.GET.get("offset"), 0, min_val=0)
 
-    # .only() — fetch ONLY the columns the list serializer needs.
-    # Skips heavy fields like rules (TextField), latitude/longitude,
-    # checkin_radius, end_date, logo, sheet_id/sheet_list_id.
-    qs = Event.objects.only(*_EVENTS_LIST_FIELDS).order_by("-date")
+    # .only() + .select_related() — minimal columns; category JOIN is cheap.
+    qs = (
+        Event.objects
+        .select_related("category")
+        .only(*_EVENTS_LIST_FIELDS)
+        .order_by("-date")
+    )
 
     now = timezone.now()
     if period == "upcoming":
@@ -108,6 +126,11 @@ def events_list(request):
 
     if city:
         qs = qs.filter(place__iexact=city)
+    if category:
+        try:
+            qs = qs.filter(category_id=int(category))
+        except ValueError:
+            qs = qs.filter(category__name__iexact=category)
     if q:
         qs = qs.filter(Q(name__icontains=q) | Q(description__icontains=q))
 
@@ -120,6 +143,7 @@ def events_list(request):
         "count": total,
         "has_more": (offset + limit) < total,
         "cities": _cities_cached() if offset == 0 else [],
+        "categories": _categories_cached() if offset == 0 else [],
     })
 
 
@@ -439,3 +463,10 @@ def event_checkin(request, slug):
         payload["points"] = result.points
         payload["already_had"] = not result.created
     return Response(payload, status=result.status)
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def categories_list(request):
+    """All event categories. Response: { categories: [{id, name}] }"""
+    return Response({"categories": _categories_cached()})

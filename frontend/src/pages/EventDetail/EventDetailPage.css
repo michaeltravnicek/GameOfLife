@@ -4,7 +4,7 @@
 /* ── POSTER ── */
 .event-detail-page .poster{position:relative;height:100vh;display:flex;flex-direction:column;justify-content:flex-end;overflow:hidden;background:#1a0f0a;z-index:2}
 .event-detail-page .poster-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 30%;filter:saturate(.85) contrast(1.06);transform:scale(1.04)}
-.event-detail-page .poster-grain{position:absolute;inset:0;background:url('/assets/Grain_texture_brown2.png') center/cover;opacity:.10;mix-blend-mode:overlay;pointer-events:none}
+.event-detail-page .poster-grain{position:absolute;inset:0;background:url('/assets/Grain_texture_brown2.png') 0 0/var(--tex-size) var(--tex-size) repeat;opacity:var(--grain-opacity);mix-blend-mode:overlay;pointer-events:none}
 .event-detail-page .poster-vignette{position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,8,30,.35) 0%,rgba(26,15,10,.18) 30%,rgba(26,15,10,.55) 70%,rgba(26,15,10,.92) 100%);pointer-events:none}
 .event-detail-page .poster-top{position:relative;z-index:2;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:138px 24px 40px;text-align:center}
 .event-detail-page .badges{display:inline-flex;gap:8px;justify-content:center;margin-bottom:24px;flex-wrap:wrap}
@@ -38,7 +38,7 @@
 .event-detail-page .btn-cta:disabled{opacity:.55;cursor:not-allowed;transform:none}
 
 /* ── BODY ── */
-.event-detail-page .body-wrap{background:#1a0f0a;background-image:url('/assets/Grain_texture_brown2.png');background-size:cover;background-position:center}
+.event-detail-page .body-wrap{background:#1a0f0a;background-image:url('/assets/Grain_texture_brown2.png');background-size:var(--tex-size) var(--tex-size);background-repeat:repeat;background-position:0 0}
 .event-detail-page main.detail-main{max-width:780px;margin:0 auto;padding:64px 24px 48px}
 .event-detail-page .section{margin-bottom:56px}
 .event-detail-page .sec-rule{height:1px;background:repeating-linear-gradient(90deg,rgba(255,241,212,.5) 0 6px,transparent 6px 12px);margin-bottom:14px}
@@ -70,7 +70,7 @@
 .event-detail-page .collage[data-count="4"] figure:nth-child(4){grid-column:3;grid-row:2}
 
 /* ── BACK STRIP ── */
-.event-detail-page .back-strip{background:#1a0f0a;background-image:url('/assets/Grain_texture_brown2.png');background-size:cover;padding:32px 24px 64px}
+.event-detail-page .back-strip{background:#1a0f0a;background-image:url('/assets/Grain_texture_brown2.png');background-size:var(--tex-size) var(--tex-size);background-repeat:repeat;background-position:0 0;padding:32px 24px 64px}
 .event-detail-page .back-strip-inner{max-width:780px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
 .event-detail-page .back-link{font-family:var(--font-body);font-style:italic;font-size:14px;color:rgba(255,241,212,.75);display:inline-flex;align-items:center;gap:8px;border-bottom:1px dashed rgba(255,241,212,.35);padding-bottom:2px;transition:color .18s,border-color .18s;text-decoration:none}
 .event-detail-page .back-link:hover{color:var(--color-pink);border-color:var(--color-pink)}

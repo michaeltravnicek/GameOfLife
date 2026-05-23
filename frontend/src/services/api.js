@@ -36,6 +36,10 @@ export const apiPasswordReset = (email) =>
   api.post('/auth/password-reset/', { email }).then((r) => r.data);
 export const fetchProfile = (username) =>
   api.get(`/auth/profile/${username}/`).then((r) => r.data);
+export const updateProfile = (formData) =>
+  api.patch('/auth/profile/update/', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  }).then((r) => r.data);
 
 // --- Events ---
 export const fetchEvents = (params = {}) =>
@@ -55,3 +59,5 @@ export const fetchLeaderboard = (period = 'total') =>
 export const fetchHome = () => api.get('/home/').then((r) => r.data);
 export const fetchGallery = (params = {}) =>
   api.get('/gallery/', { params }).then((r) => r.data);
+export const fetchCategories = () =>
+  api.get('/categories/').then((r) => r.data);

@@ -2,7 +2,7 @@
 .events-page{min-height:100vh;color:var(--color-cream-light);overflow-x:hidden}
 .events-page .stage{position:fixed;inset:0;z-index:-2;background:url('/gallery/gal0.jpg') center 28%/cover no-repeat;filter:saturate(.7) contrast(1.02);transform:scale(1.05)}
 .events-page .stage::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 8%,rgba(45,42,142,.20) 0%,transparent 25%),linear-gradient(180deg,rgba(45,42,142,.15) 0%,rgba(26,15,10,.80) 50%,rgba(26,15,10,.96) 100%)}
-.events-page .grain{position:fixed;inset:0;z-index:-1;pointer-events:none;background:var(--tex-brown) 0 0/var(--tex-size) var(--tex-size) repeat;opacity:.08;mix-blend-mode:overlay}
+.events-page .grain{position:fixed;inset:0;z-index:-1;pointer-events:none;background:var(--tex-brown) 0 0/var(--tex-size) var(--tex-size) repeat;opacity:var(--grain-opacity);mix-blend-mode:overlay}
 
 .events-page .hero{position:relative;z-index:2;max-width:1100px;margin:0 auto;padding:148px 24px 16px;text-align:center}
 .events-page .eyebrow{font-family:var(--font-mono);font-style:italic;font-size:13px;letter-spacing:.3em;text-transform:uppercase;color:var(--color-pink);margin-bottom:8px;display:inline-flex;align-items:center;gap:10px}

@@ -1,5 +1,11 @@
 from django.contrib import admin
-from .models import Event, EventFeedback, EventRSVP, ImageToEvent, LastUpdate, ProfileAnswer, ProfileQuestion, Season, User, UserPhoto, UserToEvent
+from .models import Category, Event, EventFeedback, EventRSVP, ImageToEvent, LastUpdate, ProfileAnswer, ProfileQuestion, Season, User, UserPhoto, UserToEvent
+
+
+@admin.register(Category)
+class CategoryAdmin(admin.ModelAdmin):
+    list_display = ("id", "name")
+    search_fields = ("name",)
 
 
 @admin.register(Season)
@@ -10,11 +16,12 @@ class SeasonAdmin(admin.ModelAdmin):
 
 @admin.register(Event)
 class EventAdmin(admin.ModelAdmin):
-    list_display = ("id", "name", "description", "date", "place", "points", "logo")
+    list_display = ("id", "name", "category", "date", "place", "points")
+    list_filter = ("category",)
     search_fields = ("name", "description")
     fieldsets = (
         (None, {
-            "fields": ("name", "description", "rules", "date", "end_date", "points", "capacity", "image", "logo")
+            "fields": ("name", "category", "description", "rules", "date", "end_date", "points", "capacity", "image", "logo")
         }),
         ("Místo a check-in", {
             "description": "Vyplňte souřadnice pro aktivaci mapy a check-in tlačítka. Souřadnice najdete na maps.google.com (pravý klik → 'Co je tady?').",
