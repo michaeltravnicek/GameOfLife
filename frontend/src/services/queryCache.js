@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { CACHE_MAX_AGE_MS, CACHE_TTL } from '../constants/config';
 
 /**
  * Tiny in-memory query cache with TTL, in-flight deduplication, and
@@ -19,8 +20,8 @@ import { useEffect, useRef, useState } from 'react';
  *   clearCache()                            -> void  (e.g. on logout)
  */
 
-const DEFAULT_TTL_MS = 5 * 60 * 1000;     // 5 min fresh
-const DEFAULT_MAX_AGE_MS = 30 * 60 * 1000; // discard after 30 min
+const DEFAULT_TTL_MS = CACHE_TTL.DEFAULT;
+const DEFAULT_MAX_AGE_MS = CACHE_MAX_AGE_MS;
 
 const cache = new Map();        // key -> { value, fetchedAt }
 const inflight = new Map();      // key -> Promise

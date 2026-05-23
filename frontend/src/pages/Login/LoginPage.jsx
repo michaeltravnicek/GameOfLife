@@ -19,7 +19,7 @@ export default function LoginPage() {
     setError('');
     setBusy(true);
     try {
-      const u = await login(identifier, pw);
+      const u = await login(identifier, pw, remember);
       navigate(`/profil/${u.username}`);
     } catch (err) {
       setError(err.response?.data?.error || 'Přihlášení selhalo.');

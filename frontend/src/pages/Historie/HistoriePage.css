@@ -22,23 +22,32 @@
 }
 
 /* ── Atmosphere stack ──────────────────────────────────── */
+/* Base photo plate — matches Events / Leaderboard / Profile / O-bodech */
 .hist-stage{
   position:fixed; inset:0; z-index:-3;
+  background:url('/gallery/gal3.jpg') center 28%/cover no-repeat;
+  filter:saturate(.55) contrast(1.04) brightness(.78);
+  transform:scale(1.05);
+}
+/* Violet wash + vertical fade keeps the editorial mood while letting the photo bleed through */
+.hist-stage::after{
+  content:''; position:absolute; inset:0;
   background:
     radial-gradient(ellipse 80% 60% at 50% 0%, rgba(45,42,142,.55) 0%, transparent 60%),
-    radial-gradient(ellipse 90% 70% at 50% 100%, rgba(225,84,99,.10) 0%, transparent 55%),
-    linear-gradient(180deg, var(--hist-bg-violet) 0%, var(--hist-bg-deep) 70%, #050410 100%);
+    radial-gradient(ellipse 90% 70% at 50% 100%, rgba(225,84,99,.16) 0%, transparent 55%),
+    linear-gradient(180deg, rgba(26,20,80,.62) 0%, rgba(12,10,31,.82) 55%, rgba(5,4,16,.92) 100%);
 }
 .hist-grain{
   position:fixed; inset:0; z-index:-2; pointer-events:none;
   background:var(--tex-blue) 0 0/620px 620px repeat;
-  opacity:.16; mix-blend-mode:overlay;
+  opacity:.18; mix-blend-mode:overlay;
 }
+/* Scan-line + corner vignette holds the "archive" feel over the photo */
 .hist-vignette{
   position:fixed; inset:0; z-index:-1; pointer-events:none;
   background:
     radial-gradient(ellipse 70% 60% at 50% 50%, transparent 40%, rgba(0,0,0,.55) 100%),
-    repeating-linear-gradient(0deg, rgba(255,241,212,.018) 0 1px, transparent 1px 4px);
+    repeating-linear-gradient(0deg, rgba(255,241,212,.022) 0 1px, transparent 1px 4px);
 }
 
 /* ============================================================
@@ -116,12 +125,13 @@
   grid-column:2 / 3; grid-row:2 / 4;
   align-self:end;
   position:relative;
-  background: rgba(12,10,31,.55);
-  backdrop-filter: blur(6px) saturate(1.05);
-  -webkit-backdrop-filter: blur(6px) saturate(1.05);
+  background: rgba(12,10,31,.72);
+  backdrop-filter: blur(10px) saturate(1.1);
+  -webkit-backdrop-filter: blur(10px) saturate(1.1);
   border:1.5px dashed var(--hist-rule);
   border-radius:4px;
   padding:22px 22px 18px;
+  box-shadow: 0 18px 40px rgba(0,0,0,.45), 0 0 0 1px rgba(0,0,0,.35) inset;
   animation:histRise .8s cubic-bezier(.22,.68,0,1.05) both .55s;
 }
 .hist-hero-toc::before{
@@ -269,12 +279,15 @@
 .hist-entry{
   position:relative;
   background:
-    linear-gradient(180deg, rgba(255,241,212,.04) 0%, rgba(255,241,212,.015) 100%),
-    rgba(12,10,31,.55);
+    linear-gradient(180deg, rgba(255,241,212,.05) 0%, rgba(255,241,212,.02) 100%),
+    rgba(12,10,31,.78);
+  backdrop-filter: blur(8px) saturate(1.05);
+  -webkit-backdrop-filter: blur(8px) saturate(1.05);
   border: 1.5px dashed var(--hist-rule);
   border-radius:3px;
   padding: 26px 30px 24px;
   max-width: 640px;
+  box-shadow: 0 16px 36px rgba(0,0,0,.45), 0 0 0 1px rgba(0,0,0,.3) inset;
 
   /* Scroll-driven reveal where supported, graceful fallback elsewhere */
   opacity:1;
@@ -391,8 +404,9 @@
 .hist-entry-live{
   border-color: rgba(245,200,66,.45);
   background:
-    linear-gradient(180deg, rgba(245,200,66,.07) 0%, rgba(245,200,66,.02) 100%),
-    rgba(12,10,31,.6);
+    linear-gradient(180deg, rgba(245,200,66,.10) 0%, rgba(245,200,66,.03) 100%),
+    rgba(12,10,31,.82);
+  box-shadow: 0 16px 36px rgba(0,0,0,.45), 0 0 0 1px rgba(245,200,66,.18) inset;
 }
 .hist-entry-live::before{ background: linear-gradient(90deg, transparent, var(--hist-gold), transparent); }
 .hist-entry-live::after{ background: linear-gradient(135deg, transparent 50%, rgba(245,200,66,.55) 50%); }

@@ -60,11 +60,12 @@ class Event(models.Model):
         if self.image:
             from .image_utils import resize_image
             resize_image(self.image, max_width=1200, max_height=1200, quality=85)
-        # Invalidate caches that depend on events
+        # Drop every cache entry that depends on the Event table — the
+        # canonical list lives in cache_config so we can't forget a new one.
         from django.core.cache import cache
-        cache.delete("home_hero_images")
-        cache.delete("home_context")
-        cache.delete("events_list")
+        from .cache_config import EVENT_DEPENDENT_CACHE_KEYS
+        for key in EVENT_DEPENDENT_CACHE_KEYS:
+            cache.delete(key)
 
     def __str__(self):
         return f"{self.name} - {self.date} - {self.place} - {self.sheet_id}"
@@ -88,7 +89,8 @@ class ImageToEvent(models.Model):
             from .image_utils import resize_image
             resize_image(self.image, max_width=1024, max_height=1024, quality=75)
         from django.core.cache import cache
-        cache.delete("home_hero_images")
+        from .cache_config import CACHE_KEY_HERO_IMAGES
+        cache.delete(CACHE_KEY_HERO_IMAGES)
 
 
 class User(models.Model):

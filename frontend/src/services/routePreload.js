@@ -10,6 +10,7 @@
  */
 
 import { prefetchQuery } from './queryCache';
+import { CACHE_TTL, PAGE_SIZE_EVENTS, PAGE_SIZE_GALLERY } from '../constants/config';
 import {
   fetchEvents,
   fetchGallery,
@@ -37,11 +38,11 @@ const dataWarmers = {
   '/': () => prefetchQuery('home', fetchHome),
   '/akce': () => prefetchQuery(
     'events:upcoming|Vše|',
-    () => fetchEvents({ limit: 30, offset: 0, period: 'upcoming' }),
+    () => fetchEvents({ limit: PAGE_SIZE_EVENTS, offset: 0, period: 'upcoming' }),
   ),
   '/galerie': () => prefetchQuery(
     'gallery:first',
-    () => fetchGallery({ limit: 60, offset: 0 }),
+    () => fetchGallery({ limit: PAGE_SIZE_GALLERY, offset: 0 }),
   ),
   '/leaderboard': () => prefetchQuery(
     'leaderboard:total',

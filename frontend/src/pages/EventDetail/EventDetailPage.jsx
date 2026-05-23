@@ -2,6 +2,8 @@ import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { fetchEventDetail, toggleRsvp } from '../../services/api';
 import { useCachedQuery, invalidateQuery } from '../../services/queryCache';
+import { reportError } from '../../services/errors';
+import { CACHE_TTL } from '../../constants/config';
 import { useAuth } from '../../context/AuthContext';
 import Button from '../../components/Button/Button';
 import SectionHeader from '../../components/SectionHeader/SectionHeader';
@@ -23,7 +25,7 @@ export default function EventDetailPage() {
   const { data: event, error: queryError, refetch: refetchEvent } = useCachedQuery(
     `event:${slug}`,
     () => fetchEventDetail(slug),
-    { enabled: !!slug, ttl: 60 * 1000 }, // 1 min — short, RSVP changes matter
+    { enabled: !!slug, ttl: CACHE_TTL.EVENT_DETAIL },
   );
   const error = queryError
     ? (queryError.response?.status === 404 ? 'Akce nenalezena.' : 'Nepodařilo se načíst akci.')
@@ -79,7 +81,7 @@ export default function EventDetailPage() {
       invalidateQuery((k) => k.startsWith('events:'));
       await refetchEvent();
     } catch (err) {
-      alert(err.response?.data?.error || 'Akce selhala.');
+      reportError('RSVP se nepodařilo. Zkus to prosím znovu.', err);
     } finally {
       setBusy(false);
     }
@@ -203,6 +205,9 @@ export default function EventDetailPage() {
             onClick={() => {
               const url = window.location.href;
               if (navigator.share) {
+                // Intentional silent swallow: navigator.share throws
+                // AbortError when the user dismisses the share sheet. That's
+                // not an error from the user's POV, so don't toast it.
                 navigator.share({ title: event.name, url }).catch(() => {});
               } else {
                 navigator.clipboard?.writeText(url);

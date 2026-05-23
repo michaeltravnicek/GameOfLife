@@ -1,6 +1,7 @@
 import { memo, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { fmtDate } from '../../utils/date';
+import { HERO_AUTO_CYCLE_MS } from '../../constants/config';
 import HeroDots from './HeroDots';
 import './Hero.css';
 
@@ -30,7 +31,7 @@ export default function Hero({
   ctaLabel = 'Zobrazit akce',
   eyebrow = '— Sezóna 2026 —',
   fallbackTitle = 'Game of Life',
-  autoCycleMs = 5000,
+  autoCycleMs = HERO_AUTO_CYCLE_MS,
 }) {
   const [current, setCurrent] = useState(0);
 

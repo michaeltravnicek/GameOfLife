@@ -1,24 +1,23 @@
-import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { fetchGallery } from '../../services/api';
-import { useCachedQuery } from '../../services/queryCache';
+import { usePaginatedQuery } from '../../services/usePaginatedQuery';
+import { CACHE_TTL, GALLERY_PREFETCH_TAIL, PAGE_SIZE_GALLERY } from '../../constants/config';
 import { monthKey, monthLabel } from '../../utils/date';
 import './GalleryPage.css';
 
 // Lightbox loaded only when user opens a fullscreen photo.
 const Lightbox = lazy(() => import('../../components/Lightbox/Lightbox'));
 
-const PAGE_SIZE = 60;
-// Prefetch next page when slideshow cursor is within this many photos of the end.
-const PREFETCH_TAIL = 5;
+const PAGE_SIZE = PAGE_SIZE_GALLERY;
+const PREFETCH_TAIL = GALLERY_PREFETCH_TAIL;
+
+const extractPhotos = (r) => r.photos || [];
+const extractHasMore = (r) => !!r.has_more;
+const extractCount = (r) => r.count ?? 0;
 
 export default function GalleryPage() {
   const [view, setView] = useState('slideshow');
-  // Extra pages appended via auto-prefetch or "Load more" — kept outside cache.
-  const [extraPhotos, setExtraPhotos] = useState([]);
-  const [extraHasMore, setExtraHasMore] = useState(null);
-  const [loadingMore, setLoadingMore] = useState(false);
-
   const [cur, setCur] = useState(0);
   const [activeMonth, setActiveMonth] = useState('all');
   const [lbOpen, setLbOpen] = useState(false);
@@ -27,33 +26,27 @@ export default function GalleryPage() {
 
   const tx = useRef(0);
 
-  // First page lives in the shared cache so returning to /galerie is instant.
-  const { data: firstPage, loading: firstLoading } = useCachedQuery(
-    'gallery:first',
-    () => fetchGallery({ limit: PAGE_SIZE, offset: 0 }),
-    { ttl: 5 * 60 * 1000 },
-  );
+  const {
+    items: photos, hasMore, totalCount, loading, loadingMore, loadMore,
+  } = usePaginatedQuery({
+    cacheKey: 'gallery:first',
+    fetcher: (offset, limit) => fetchGallery({ limit, offset }),
+    pageSize: PAGE_SIZE,
+    ttl: CACHE_TTL.GALLERY,
+    errorMessage: 'Nepodařilo se načíst další fotografie.',
+    extractItems: extractPhotos,
+    extractHasMore,
+    extractCount,
+  });
 
-  const firstPhotos = firstPage?.photos || [];
-  const totalCount = firstPage?.count ?? firstPhotos.length + extraPhotos.length;
-  const photos = useMemo(
-    () => (extraPhotos.length ? [...firstPhotos, ...extraPhotos] : firstPhotos),
-    [firstPhotos, extraPhotos],
-  );
-  const hasMore = extraHasMore !== null ? extraHasMore : !!firstPage?.has_more;
-  const loading = firstLoading && photos.length === 0;
-
-  const loadMore = useCallback(() => {
-    if (loadingMore || !hasMore) return Promise.resolve();
-    setLoadingMore(true);
-    return fetchGallery({ limit: PAGE_SIZE, offset: photos.length })
-      .then((d) => {
-        setExtraPhotos((prev) => [...prev, ...(d.photos || [])]);
-        setExtraHasMore(!!d.has_more);
-      })
-      .catch(() => {})
-      .finally(() => setLoadingMore(false));
-  }, [photos.length, hasMore, loadingMore]);
+  // If the loaded photo set shrinks (cache invalidation, filter), keep `cur`
+  // in bounds so we don't index undefined and blank the slideshow.
+  useEffect(() => {
+    setCur((c) => {
+      if (photos.length === 0) return 0;
+      return c >= photos.length ? photos.length - 1 : c;
+    });
+  }, [photos.length]);
 
   // Auto-prefetch next page when the slideshow cursor approaches the loaded tail.
   useEffect(() => {
@@ -144,11 +137,25 @@ export default function GalleryPage() {
               onTouchStart={onTouchStart}
               onTouchEnd={onTouchEnd}
             >
-              <div className="gal-zone gal-zone-left" onClick={() => goSlide(cur - 1)}>
-                <div className="gal-zone-arrow">‹</div>
+              <div
+                className="gal-zone gal-zone-left"
+                role="button"
+                tabIndex={0}
+                aria-label="Předchozí fotografie"
+                onClick={() => goSlide(cur - 1)}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goSlide(cur - 1); } }}
+              >
+                <div className="gal-zone-arrow" aria-hidden="true">‹</div>
               </div>
-              <div className="gal-zone gal-zone-right" onClick={() => goSlide(cur + 1)}>
-                <div className="gal-zone-arrow">›</div>
+              <div
+                className="gal-zone gal-zone-right"
+                role="button"
+                tabIndex={0}
+                aria-label="Další fotografie"
+                onClick={() => goSlide(cur + 1)}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goSlide(cur + 1); } }}
+              >
+                <div className="gal-zone-arrow" aria-hidden="true">›</div>
               </div>
               <div className="gal-caption">
                 <div className="gal-caption-label">{slidePhoto.is_user_photo ? `Foto: ${slidePhoto.uploaded_by}` : 'Akce'}</div>
@@ -161,12 +168,17 @@ export default function GalleryPage() {
               onClick={() => goSlide(cur + 1)}
             />
           </div>
-          <div className="gal-dots">
+          <div className="gal-dots" role="tablist" aria-label="Přepnout na konkrétní fotografii">
             {photos.map((_, i) => (
               <div
                 key={i}
+                role="tab"
+                tabIndex={0}
+                aria-label={`Snímek ${i + 1} z ${photos.length}`}
+                aria-selected={i === cur}
                 className={`gal-dot${i === cur ? ' on' : ''}`}
                 onClick={() => goSlide(i)}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goSlide(i); } }}
               />
             ))}
           </div>

@@ -1,80 +1,610 @@
-/* All selectors scoped under .obodech-page to prevent cross-page leaks. */
-.obodech-page{min-height:100vh;color:var(--color-cream-light);overflow-x:hidden}
-.obodech-page .stage{position:fixed;inset:0;z-index:-2;background:url('/gallery/gal2.jpg') center 28%/cover no-repeat;filter:saturate(.7) contrast(1.02);transform:scale(1.05)}
-.obodech-page .stage::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 15%,rgba(45,42,142,.10) 0%,transparent 55%),linear-gradient(180deg,rgba(45,42,142,.08) 0%,rgba(26,15,10,.60) 50%,rgba(26,15,10,.82) 100%)}
-.obodech-page .grain{position:fixed;inset:0;z-index:-1;pointer-events:none;background:url('/assets/Grain_texture_blue.png') center/cover;opacity:.08;mix-blend-mode:overlay}
+/* ============================================================
+   O BODECH — Manual / system spec layout
+   Shares atmosphere stack with Historie & other photo pages.
+   ============================================================ */
 
-.obodech-page .hero{position:relative;z-index:2;max-width:880px;margin:0 auto;padding:148px 24px 16px;text-align:center}
-.obodech-page .eyebrow{font-family:var(--font-mono);font-style:italic;font-size:13px;letter-spacing:.3em;text-transform:uppercase;color:var(--color-pink);margin-bottom:8px;display:inline-flex;align-items:center;gap:10px}
-.obodech-page .eyebrow::before,.obodech-page .eyebrow::after{content:'✦';font-size:11px;opacity:.9}
-.obodech-page .hero h1{font-family:var(--font-display);font-weight:400;font-size:clamp(70px,10vw,120px);line-height:.92;color:var(--color-cream-light);text-transform:uppercase;letter-spacing:.03em;text-shadow:0 6px 34px rgba(0,0,0,.6)}
-.obodech-page .hero .tagline{font-family:var(--font-serif);font-weight:300;font-style:italic;font-size:14px;color:rgba(255,241,212,.72);max-width:520px;margin:10px auto 0;line-height:1.5}
-.obodech-page .divider{width:120px;height:1px;margin:26px auto 0;background:repeating-linear-gradient(90deg,rgba(255,241,212,.45) 0 5px,transparent 5px 10px)}
+.obodech-page{
+  --obo-ink:        #fff1d4;
+  --obo-ink-soft:   rgba(255,241,212,.78);
+  --obo-ink-mute:   rgba(255,241,212,.50);
+  --obo-ink-faint:  rgba(255,241,212,.18);
+  --obo-rule:       rgba(255,241,212,.24);
+  --obo-pink:       #e15463;
+  --obo-pink-soft:  rgba(225,84,99,.16);
+  --obo-gold:       #f5c842;
+  --obo-bg-deep:    #0c0a1f;
 
-.obodech-page .content-main{position:relative;z-index:2;max-width:880px;margin:0 auto;padding:50px 24px 80px}
-
-.obodech-page .info-section{margin-bottom:44px}
-.obodech-page .section-title{font-family:var(--font-display);font-size:28px;letter-spacing:.04em;color:var(--color-cream-light);text-transform:uppercase;margin-bottom:18px;display:flex;align-items:center;justify-content:center;gap:14px;text-align:center}
-.obodech-page .section-title::before,.obodech-page .section-title::after{content:'';flex:1;max-width:80px;height:1px;background:repeating-linear-gradient(90deg,rgba(255,241,212,.45) 0 5px,transparent 5px 10px)}
-
-.obodech-page .info-card{position:relative;background:#1a0f0a url('/assets/Grain_texture_blue.png') center/cover;border:1.5px dashed rgba(255,241,212,.38);border-radius:14px;padding:32px;margin-bottom:22px;box-shadow:0 12px 28px rgba(0,0,0,.5),0 0 0 1px rgba(0,0,0,.4) inset;overflow:hidden}
-.obodech-page .info-card::before{content:'';position:absolute;top:0;left:10%;right:10%;height:1px;background:linear-gradient(90deg,transparent,rgba(255,241,212,.35),transparent)}
-.obodech-page .info-card > *{position:relative;z-index:1}
-
-.obodech-page .card-heading{font-family:var(--font-hv-rnd);font-size:20px;letter-spacing:.03em;color:var(--color-pink);text-transform:uppercase;margin-bottom:14px}
-.obodech-page .card-text{font-family:var(--font-serif);font-size:15px;line-height:1.75;color:rgba(255,241,212,.85)}
-
-.obodech-page .points-list{list-style:none;display:flex;flex-direction:column;gap:16px;margin-top:14px;padding:0}
-.obodech-page .points-list li{display:flex;gap:14px;align-items:flex-start;font-family:var(--font-serif);font-size:14.5px;line-height:1.6;color:rgba(255,241,212,.8)}
-.obodech-page .points-list li::before{content:'→';flex-shrink:0;color:var(--color-pink);font-weight:700;font-size:16px}
-
-.obodech-page .reward-tiers{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:14px}
-.obodech-page .tier{background:rgba(255,241,212,.04);border:1px dashed rgba(255,241,212,.2);border-radius:8px;padding:14px;text-align:center}
-.obodech-page .tier-label{font-family:var(--font-mono);font-style:italic;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,241,212,.6);margin-bottom:6px}
-.obodech-page .tier-value{font-family:var(--font-display);font-size:24px;color:var(--color-pink);letter-spacing:.02em}
-
-.obodech-page .cta-section{text-align:center;padding:32px;background:rgba(225,84,99,.08);border:1.5px dashed var(--color-pink);border-radius:14px;margin-top:44px}
-.obodech-page .cta-text{font-family:var(--font-serif);font-size:15px;color:rgba(255,241,212,.85);margin-bottom:16px;line-height:1.6}
-.obodech-page .cta-links{display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap}
-.obodech-page .cta-link{display:inline-flex;align-items:center;gap:8px;background:var(--color-pink);color:#fff;padding:10px 18px;border-radius:9999px;font-family:var(--font-hv);font-weight:700;font-size:12px;letter-spacing:.08em;text-transform:uppercase;box-shadow:0 4px 14px rgba(225,84,99,.4);transition:transform .18s,background .18s;text-decoration:none}
-.obodech-page .cta-link:hover{background:#cf4453;transform:translateY(-1px)}
-
-@media(max-width:720px){
-  .obodech-page .hero{padding:120px 20px 14px}
-  .obodech-page .content-main{padding:30px 20px 60px}
-  .obodech-page .section-title::before,.obodech-page .section-title::after{display:none}
-  .obodech-page .info-card{padding:22px}
-  .obodech-page .reward-tiers{grid-template-columns:1fr}
+  position:relative;
+  min-height:100vh;
+  color:var(--obo-ink);
+  overflow-x:hidden;
+  font-feature-settings:"ss01","ss02","liga","kern";
 }
 
-@media(max-width:480px){
-  .obodech-page .hero{padding:104px 14px 12px}
-  .obodech-page .hero h1{font-size:clamp(48px,13vw,80px)}
-  .obodech-page .hero .tagline{font-size:13px}
-  .obodech-page .content-main{padding:24px 14px 48px}
-  .obodech-page .section-title{font-size:22px;margin-bottom:14px}
-  .obodech-page .info-section{margin-bottom:32px}
-  .obodech-page .info-card{padding:18px 16px;border-radius:10px}
-  .obodech-page .card-heading{font-size:17px}
-  .obodech-page .card-text{font-size:14px;line-height:1.65}
-  .obodech-page .points-list li{font-size:13.5px}
-  .obodech-page .cta-section{padding:22px 18px;margin-top:28px}
-  .obodech-page .cta-text{font-size:14px}
-  .obodech-page .cta-link{font-size:11px;padding:9px 14px}
+/* ── Atmosphere stack (same pattern as Events / Leaderboard / Historie) ── */
+.obodech-page .obo-stage{
+  position:fixed; inset:0; z-index:-3;
+  background:url('/gallery/gal2.jpg') center 28%/cover no-repeat;
+  filter:saturate(.55) contrast(1.04) brightness(.78);
+  transform:scale(1.05);
+}
+.obodech-page .obo-stage::after{
+  content:''; position:absolute; inset:0;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(45,42,142,.50) 0%, transparent 60%),
+    radial-gradient(ellipse 90% 70% at 50% 100%, rgba(225,84,99,.14) 0%, transparent 55%),
+    linear-gradient(180deg, rgba(26,20,80,.55) 0%, rgba(12,10,31,.80) 55%, rgba(5,4,16,.92) 100%);
+}
+.obodech-page .obo-grain{
+  position:fixed; inset:0; z-index:-2; pointer-events:none;
+  background:var(--tex-blue) 0 0/620px 620px repeat;
+  opacity:.16; mix-blend-mode:overlay;
+}
+.obodech-page .obo-vignette{
+  position:fixed; inset:0; z-index:-1; pointer-events:none;
+  background:
+    radial-gradient(ellipse 70% 60% at 50% 50%, transparent 40%, rgba(0,0,0,.55) 100%),
+    repeating-linear-gradient(0deg, rgba(255,241,212,.02) 0 1px, transparent 1px 4px);
 }
 
-@media(max-width:375px){
-  .obodech-page .hero{padding:96px 12px 10px}
-  .obodech-page .hero h1{font-size:42px;letter-spacing:.02em}
-  .obodech-page .content-main{padding:20px 10px 40px}
-  .obodech-page .section-title{font-size:19px}
-  .obodech-page .info-card{padding:16px 14px}
-  .obodech-page .cta-links{flex-direction:column;align-items:stretch;gap:8px}
-  .obodech-page .cta-link{justify-content:center}
+/* ============================================================
+   HERO — split title with legend aside (echoes Historie)
+   ============================================================ */
+.obodech-page .obo-hero{
+  position:relative; z-index:2;
+  max-width:1280px; margin:0 auto;
+  padding:160px clamp(24px,5vw,72px) 60px;
+  display:grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 280px);
+  grid-template-rows: auto auto auto auto;
+  column-gap: clamp(24px, 4vw, 64px);
+  row-gap: 18px;
+  align-items:end;
 }
 
-@media(max-width:320px){
-  .obodech-page .hero h1{font-size:34px}
-  .obodech-page .section-title{font-size:17px}
-  .obodech-page .card-heading{font-size:15px}
+.obodech-page .obo-hero-meta{
+  grid-column:1 / -1;
+  display:flex; align-items:center; gap:14px;
+  font-family:var(--font-mono); font-style:italic;
+  font-size:12px; letter-spacing:.28em; text-transform:uppercase;
+  color:var(--obo-pink);
+  animation:oboRise .6s cubic-bezier(.22,.68,0,1) both .05s;
+}
+.obodech-page .obo-hero-vol{
+  background:rgba(225,84,99,.12);
+  border:1px dashed rgba(225,84,99,.55);
+  padding:5px 10px; border-radius:3px;
+}
+.obodech-page .obo-hero-rule{
+  flex:0 0 56px; height:1px;
+  background:repeating-linear-gradient(90deg, var(--obo-pink) 0 4px, transparent 4px 8px);
+}
+.obodech-page .obo-hero-range{ color:var(--obo-ink-soft); }
+
+.obodech-page .obo-hero-title{
+  grid-column:1 / 2; grid-row:2;
+  margin:6px 0 0; padding:0;
+  font-family:var(--font-display);
+  font-weight:400;
+  font-size: clamp(90px, 16vw, 240px);
+  line-height:.82;
+  letter-spacing:-.01em;
+  text-transform:uppercase;
+  color:var(--obo-ink);
+  text-shadow: 0 8px 60px rgba(0,0,0,.55);
+}
+.obodech-page .obo-hero-line{ display:block; position:relative; }
+.obodech-page .obo-hero-line-1{
+  transform:translateX(-2px);
+  animation:oboRise .9s cubic-bezier(.22,.68,0,1.05) both .18s;
+}
+.obodech-page .obo-hero-line-2{
+  padding-left: clamp(40px, 9vw, 130px);
+  color: var(--obo-pink);
+  animation:oboRise .9s cubic-bezier(.22,.68,0,1.05) both .32s;
+}
+.obodech-page .obo-hero-mark{
+  font-family:var(--font-serif); font-style:italic; font-weight:400;
+  font-size:.42em; vertical-align:super; margin-left:.04em;
+  color:var(--obo-gold);
+}
+
+.obodech-page .obo-hero-tagline{
+  grid-column:1 / 2; grid-row:3;
+  max-width: 56ch;
+  margin: 28px 0 0;
+  font-family: var(--font-serif);
+  font-weight:300; font-size: clamp(16px, 1.5vw, 19px);
+  line-height:1.55; color: var(--obo-ink-soft);
+  animation:oboRise .7s ease both .5s;
+}
+.obodech-page .obo-hero-tagline em{
+  font-style:italic; color:var(--obo-ink);
+  background: linear-gradient(transparent 62%, rgba(225,84,99,.28) 62% 86%, transparent 86%);
+  padding:0 .12em;
+}
+
+/* Legend card */
+.obodech-page .obo-hero-key{
+  grid-column:2 / 3; grid-row:2 / 4;
+  align-self:end;
+  position:relative;
+  background: rgba(12,10,31,.72);
+  backdrop-filter: blur(10px) saturate(1.1);
+  -webkit-backdrop-filter: blur(10px) saturate(1.1);
+  border:1.5px dashed var(--obo-rule);
+  border-radius:4px;
+  padding:22px 22px 18px;
+  box-shadow: 0 18px 40px rgba(0,0,0,.45), 0 0 0 1px rgba(0,0,0,.35) inset;
+  animation:oboRise .8s cubic-bezier(.22,.68,0,1.05) both .55s;
+}
+.obodech-page .obo-hero-key::before{
+  content:'LEGENDA'; position:absolute; top:-11px; left:18px;
+  background: var(--obo-bg-deep);
+  font-family: var(--font-mono); font-style:italic;
+  font-size:10px; letter-spacing:.32em;
+  color:var(--obo-pink);
+  padding: 2px 8px;
+}
+.obodech-page .obo-hero-key-row{
+  display:grid;
+  grid-template-columns: 22px 70px 1fr;
+  align-items:baseline; gap:10px;
+  padding:8px 4px;
+  border-bottom: 1px dotted var(--obo-ink-faint);
+}
+.obodech-page .obo-hero-key-row:last-child{ border-bottom:none; }
+.obodech-page .obo-hero-key-glyph{
+  font-family:var(--font-serif); font-style:italic;
+  font-size:14px; color:var(--obo-pink); text-align:center;
+}
+.obodech-page .obo-hero-key-label{
+  font-family:var(--font-display); font-size:16px;
+  letter-spacing:.04em; color:var(--obo-ink);
+  text-transform:uppercase;
+}
+.obodech-page .obo-hero-key-val{
+  font-family:var(--font-mono); font-style:italic;
+  font-size:11px; letter-spacing:.06em;
+  color:var(--obo-ink-mute);
+}
+
+.obodech-page .obo-hero-foot{
+  grid-column:1 / -1; grid-row:4;
+  display:flex; align-items:center; gap:14px;
+  margin-top:36px;
+  font-family:var(--font-mono); font-style:italic;
+  font-size:11px; letter-spacing:.22em; text-transform:uppercase;
+  color:var(--obo-ink-mute);
+  border-top: 1px dashed var(--obo-rule);
+  padding-top:18px;
+  animation:oboRise .6s ease both .68s;
+}
+.obodech-page .obo-hero-foot-dot{ color:var(--obo-pink); font-size:8px; }
+
+/* ============================================================
+   MAIN — numbered sections
+   ============================================================ */
+.obodech-page .obo-main{
+  position:relative; z-index:2;
+  max-width: 1080px;
+  margin:0 auto;
+  padding: 0 clamp(24px,5vw,72px) 100px;
+}
+
+.obodech-page .obo-section{
+  padding: 64px 0;
+  border-top: 1px dashed var(--obo-rule);
+}
+.obodech-page .obo-section:first-of-type{ border-top:none; padding-top:32px; }
+
+.obodech-page .obo-section-head{
+  display:flex; align-items:flex-end; gap:24px;
+  margin-bottom: 32px;
+}
+.obodech-page .obo-section-num{
+  font-family: var(--font-serif); font-style:italic; font-weight:400;
+  font-size: clamp(80px, 9vw, 120px);
+  line-height:.78;
+  color: var(--obo-pink);
+  text-shadow: 0 6px 24px rgba(0,0,0,.6);
+}
+.obodech-page .obo-section-meta{
+  display:flex; flex-direction:column;
+  padding-bottom: 6px;
+}
+.obodech-page .obo-section-tag{
+  font-family:var(--font-mono); font-style:italic;
+  font-size:11px; letter-spacing:.32em; text-transform:uppercase;
+  color:var(--obo-pink);
+  display:inline-flex; align-items:center; gap:8px;
+  margin-bottom: 10px;
+}
+.obodech-page .obo-section-tag::after{
+  content:''; width:32px; height:1px;
+  background: var(--obo-pink); opacity:.6;
+}
+.obodech-page .obo-section-title{
+  font-family: var(--font-display);
+  font-weight:400;
+  font-size: clamp(32px, 4vw, 52px);
+  line-height: 1;
+  letter-spacing: .02em;
+  text-transform: uppercase;
+  color: var(--obo-ink);
+  margin:0;
+}
+.obodech-page .obo-section-lead{
+  font-family: var(--font-serif);
+  font-weight:300; font-size:17px;
+  line-height:1.6; color: var(--obo-ink-soft);
+  max-width: 62ch;
+  margin: 0 0 36px;
+}
+
+/* ── Intro split (text + stat) ── */
+.obodech-page .obo-intro{
+  display:grid;
+  grid-template-columns: minmax(0, 1fr) 220px;
+  gap: 36px;
+  align-items:center;
+  background:
+    linear-gradient(180deg, rgba(255,241,212,.05) 0%, rgba(255,241,212,.02) 100%),
+    rgba(12,10,31,.72);
+  backdrop-filter: blur(8px) saturate(1.05);
+  -webkit-backdrop-filter: blur(8px) saturate(1.05);
+  border: 1.5px dashed var(--obo-rule);
+  border-radius: 3px;
+  padding: 32px 34px;
+  box-shadow: 0 16px 36px rgba(0,0,0,.45), 0 0 0 1px rgba(0,0,0,.3) inset;
+  position:relative;
+}
+.obodech-page .obo-intro::before{
+  content:''; position:absolute;
+  top:-1px; left:14px; right:14px; height:1px;
+  background: linear-gradient(90deg, transparent, var(--obo-pink), transparent);
+  opacity:.55;
+}
+.obodech-page .obo-intro-text{
+  font-family: var(--font-serif);
+  font-weight:300; font-size: 16px;
+  line-height: 1.72;
+  color: var(--obo-ink-soft);
+  margin:0;
+}
+.obodech-page .obo-intro-stat{
+  text-align:center;
+  padding:18px 12px;
+  border-left: 1px dashed var(--obo-ink-faint);
+}
+.obodech-page .obo-intro-stat-num{
+  font-family: var(--font-hv-comp), var(--font-display);
+  font-size: 72px;
+  line-height:1;
+  color: var(--obo-pink);
+  letter-spacing:.02em;
+  text-shadow: 0 4px 20px rgba(225,84,99,.25);
+}
+.obodech-page .obo-intro-stat-label{
+  margin-top:10px;
+  font-family:var(--font-mono); font-style:italic;
+  font-size:11px; letter-spacing:.22em; text-transform:uppercase;
+  color:var(--obo-ink-mute);
+}
+
+/* ── Sources grid (3 cards) ── */
+.obodech-page .obo-sources{
+  display:grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  margin-bottom: 36px;
+}
+.obodech-page .obo-source{
+  position:relative;
+  background:
+    linear-gradient(180deg, rgba(255,241,212,.05) 0%, rgba(255,241,212,.02) 100%),
+    rgba(12,10,31,.75);
+  backdrop-filter: blur(8px) saturate(1.05);
+  -webkit-backdrop-filter: blur(8px) saturate(1.05);
+  border: 1.5px dashed var(--obo-rule);
+  border-radius: 3px;
+  padding: 24px 24px 22px;
+  box-shadow: 0 12px 28px rgba(0,0,0,.4), 0 0 0 1px rgba(0,0,0,.3) inset;
+}
+.obodech-page .obo-source::before{
+  content:''; position:absolute;
+  top:-1px; left:14px; right:14px; height:1px;
+  background: linear-gradient(90deg, transparent, var(--obo-pink), transparent);
+  opacity:.55;
+}
+.obodech-page .obo-source::after{
+  content:''; position:absolute;
+  top:0; right:0; width:16px; height:16px;
+  background: linear-gradient(135deg, transparent 50%, rgba(225,84,99,.45) 50%);
+  border-radius: 0 3px 0 0;
+}
+.obodech-page .obo-source-head{
+  display:flex; align-items:center; justify-content:space-between;
+  gap:12px;
+  padding-bottom:12px;
+  border-bottom: 1px dotted var(--obo-ink-faint);
+  font-family:var(--font-mono); font-style:italic;
+  font-size:10.5px; letter-spacing:.22em; text-transform:uppercase;
+  color: var(--obo-ink-mute);
+}
+.obodech-page .obo-source-no{
+  color: var(--obo-pink);
+  background: var(--obo-pink-soft);
+  border: 1px dashed rgba(225,84,99,.4);
+  padding: 3px 8px;
+  border-radius: 2px;
+}
+.obodech-page .obo-source-title{
+  font-family: var(--font-display);
+  font-weight:400;
+  font-size: 22px;
+  line-height: 1.1;
+  text-transform: uppercase;
+  letter-spacing:.02em;
+  color: var(--obo-ink);
+  margin: 16px 0 10px;
+}
+.obodech-page .obo-source-body{
+  font-family: var(--font-serif);
+  font-weight:300; font-size:14.5px;
+  line-height: 1.6;
+  color: var(--obo-ink-soft);
+  margin:0;
+}
+
+/* ── Valuation block — labeled criteria ── */
+.obodech-page .obo-valuation{
+  position:relative;
+  padding: 24px 28px 18px;
+  border: 1.5px dashed var(--obo-ink-faint);
+  border-radius: 3px;
+  background: rgba(12,10,31,.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.obodech-page .obo-valuation-label{
+  display:inline-flex; align-items:center; gap:8px;
+  font-family: var(--font-mono); font-style:italic;
+  font-size:11px; letter-spacing:.22em; text-transform:uppercase;
+  color: var(--obo-pink);
+  margin-bottom:14px;
+}
+.obodech-page .obo-valuation-label-mark{ color: var(--obo-gold); font-style:normal; }
+.obodech-page .obo-valuation-list{
+  list-style:none; padding:0; margin:0;
+  display:grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+.obodech-page .obo-valuation-item{
+  padding-top:10px;
+  border-top: 1px dotted var(--obo-ink-faint);
+}
+.obodech-page .obo-valuation-key{
+  font-family: var(--font-display);
+  font-size: 16px;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+  color: var(--obo-ink);
+  margin-bottom:4px;
+}
+.obodech-page .obo-valuation-val{
+  font-family: var(--font-serif); font-style:italic; font-weight:300;
+  font-size: 13.5px;
+  color: var(--obo-ink-soft);
+  line-height:1.5;
+}
+
+/* ── Reward tiers ── */
+.obodech-page .obo-tiers{
+  display:grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  margin-bottom: 50px;
+}
+.obodech-page .obo-tier{
+  position:relative;
+  background:
+    linear-gradient(180deg, rgba(255,241,212,.05) 0%, rgba(255,241,212,.02) 100%),
+    rgba(12,10,31,.78);
+  backdrop-filter: blur(8px) saturate(1.05);
+  -webkit-backdrop-filter: blur(8px) saturate(1.05);
+  border: 1.5px dashed var(--obo-rule);
+  border-radius: 3px;
+  padding: 28px 24px 24px;
+  box-shadow: 0 16px 36px rgba(0,0,0,.45), 0 0 0 1px rgba(0,0,0,.3) inset;
+  transition: transform .25s, border-color .25s;
+}
+.obodech-page .obo-tier:hover{
+  transform: translateY(-3px);
+  border-color: rgba(255,241,212,.45);
+}
+.obodech-page .obo-tier-rk{
+  position:absolute; top:14px; right:18px;
+  font-family: var(--font-serif); font-style:italic;
+  font-size: 26px; line-height:1;
+  color: var(--obo-ink-mute);
+  opacity:.7;
+}
+.obodech-page .obo-tier-range{
+  display:inline-block;
+  font-family: var(--font-hv-comp), var(--font-display);
+  font-size: 32px;
+  line-height: 1;
+  letter-spacing:.02em;
+  color: var(--obo-ink);
+  margin-bottom: 6px;
+}
+.obodech-page .obo-tier-range span{
+  font-family: var(--font-mono); font-style:italic;
+  font-size: 11px; letter-spacing:.22em; text-transform:uppercase;
+  color: var(--obo-ink-mute);
+  margin-left:6px;
+}
+.obodech-page .obo-tier-title{
+  font-family: var(--font-display);
+  font-weight:400;
+  font-size: 26px; line-height:1.05;
+  text-transform: uppercase;
+  letter-spacing:.02em;
+  color: var(--obo-pink);
+  margin: 4px 0 14px;
+}
+.obodech-page .obo-tier-body{
+  font-family: var(--font-serif);
+  font-weight:300; font-size: 14.5px;
+  line-height: 1.6;
+  color: var(--obo-ink-soft);
+  margin: 0 0 20px;
+  min-height: 4.8em;
+}
+.obodech-page .obo-tier-perk{
+  display:inline-flex; align-items:center; gap:8px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--obo-ink-faint);
+  font-family: var(--font-mono); font-style:italic;
+  font-size:11.5px; letter-spacing:.18em; text-transform:uppercase;
+  color: var(--obo-ink);
+}
+.obodech-page .obo-tier-perk-mark{ color: var(--obo-pink); font-weight:700; font-style:normal; }
+
+/* Highlighted tier */
+.obodech-page .obo-tier-accent{
+  border-color: rgba(245,200,66,.5);
+  background:
+    linear-gradient(180deg, rgba(245,200,66,.08) 0%, rgba(245,200,66,.02) 100%),
+    rgba(12,10,31,.82);
+  box-shadow: 0 18px 44px rgba(0,0,0,.5), 0 0 0 1px rgba(245,200,66,.20) inset;
+}
+.obodech-page .obo-tier-accent .obo-tier-title{ color: var(--obo-gold); }
+.obodech-page .obo-tier-accent .obo-tier-rk{ color: var(--obo-gold); opacity:.85; }
+.obodech-page .obo-tier-accent .obo-tier-perk-mark{ color: var(--obo-gold); }
+.obodech-page .obo-tier-accent::after{
+  content:'DOSTUPNÉ'; position:absolute;
+  top:-10px; left:18px;
+  background: var(--obo-bg-deep);
+  font-family: var(--font-mono); font-style:italic;
+  font-size:10px; letter-spacing:.28em;
+  color: var(--obo-gold);
+  padding: 2px 8px;
+  border: 1px dashed rgba(245,200,66,.45);
+}
+
+/* ── CTA / coda stamp ── */
+.obodech-page .obo-cta{
+  margin-top: 28px;
+  padding: 50px 24px 36px;
+  text-align:center;
+  border-top: 1px dashed var(--obo-rule);
+  position:relative;
+}
+.obodech-page .obo-cta::before{
+  content:''; position:absolute; left:50%; top:-1px;
+  width:120px; height:3px; background: var(--obo-bg-deep);
+  transform:translateX(-50%);
+}
+.obodech-page .obo-cta-stamp{
+  display:inline-flex; align-items:center; gap:14px;
+  padding: 14px 26px;
+  border: 2.5px solid var(--obo-pink);
+  border-radius: 4px;
+  font-family: var(--font-display);
+  font-size: 28px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--obo-pink);
+  transform: rotate(-3.5deg);
+  background: rgba(225,84,99,.05);
+  margin-bottom: 26px;
+  box-shadow: inset 0 0 0 1px rgba(225,84,99,.25);
+}
+.obodech-page .obo-cta-stamp-arrow{ font-family: var(--font-serif); font-style:italic; }
+.obodech-page .obo-cta-text{
+  font-family: var(--font-serif); font-style:italic; font-weight:300;
+  font-size: 17px; line-height:1.55;
+  color: var(--obo-ink-soft);
+  max-width: 44ch; margin: 0 auto 26px;
+}
+.obodech-page .obo-cta-links{
+  display:flex; align-items:center; justify-content:center;
+  gap:14px; flex-wrap:wrap;
+}
+
+/* ============================================================
+   ANIMATIONS
+   ============================================================ */
+@keyframes oboRise{
+  from{ opacity:0; transform: translateY(28px); }
+  to  { opacity:1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce){
+  .obodech-page *,
+  .obodech-page *::before,
+  .obodech-page *::after{
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
+  }
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 1024px){
+  .obodech-page .obo-hero{
+    grid-template-columns: 1fr;
+    padding-top: 130px;
+  }
+  .obodech-page .obo-hero-title{ grid-column:1 / -1; grid-row:auto; }
+  .obodech-page .obo-hero-line-2{ padding-left: clamp(28px, 6vw, 70px); }
+  .obodech-page .obo-hero-tagline{ grid-column:1 / -1; grid-row:auto; }
+  .obodech-page .obo-hero-key{ grid-column:1 / -1; grid-row:auto; align-self:auto; margin-top:24px; }
+
+  .obodech-page .obo-sources{ grid-template-columns: 1fr 1fr; }
+  .obodech-page .obo-tiers{ grid-template-columns: 1fr; }
+  .obodech-page .obo-valuation-list{ grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 720px){
+  .obodech-page .obo-hero{ padding: 120px 20px 48px; }
+  .obodech-page .obo-hero-title{ font-size: clamp(70px, 22vw, 110px); }
+  .obodech-page .obo-hero-line-2{ padding-left: 0; }
+  .obodech-page .obo-main{ padding: 0 20px 80px; }
+
+  .obodech-page .obo-section{ padding: 48px 0; }
+  .obodech-page .obo-section-head{ gap: 16px; }
+  .obodech-page .obo-section-num{ font-size: 72px; }
+
+  .obodech-page .obo-intro{
+    grid-template-columns: 1fr;
+    padding: 26px 22px;
+    gap:24px;
+  }
+  .obodech-page .obo-intro-stat{
+    border-left:none;
+    border-top: 1px dashed var(--obo-ink-faint);
+    padding-top:22px;
+  }
+
+  .obodech-page .obo-sources{ grid-template-columns: 1fr; }
+  .obodech-page .obo-valuation-list{ grid-template-columns: 1fr; }
+  .obodech-page .obo-valuation{ padding: 22px 20px 16px; }
+
+  .obodech-page .obo-cta-stamp{ font-size:22px; padding:12px 20px; }
+}
+
+@media (max-width: 420px){
+  .obodech-page .obo-hero{ padding: 104px 16px 40px; }
+  .obodech-page .obo-section-title{ font-size: 26px; }
+  .obodech-page .obo-source{ padding: 22px 20px 20px; }
+  .obodech-page .obo-tier{ padding: 24px 20px 22px; }
+  .obodech-page .obo-tier-range{ font-size: 26px; }
+  .obodech-page .obo-tier-title{ font-size: 22px; }
+  .obodech-page .obo-intro-stat-num{ font-size: 60px; }
+  .obodech-page .obo-cta-links > *{ width:100%; }
 }

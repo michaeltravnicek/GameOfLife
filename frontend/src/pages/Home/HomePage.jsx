@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { fetchHome } from '../../services/api';
 import { useCachedQuery } from '../../services/queryCache';
+import { CACHE_TTL } from '../../constants/config';
 import EventCard from '../../components/EventCard/EventCard';
 import Avatar from '../../components/Avatar/Avatar';
 import Hero from '../../components/Hero/Hero';
@@ -21,7 +22,7 @@ const LB_ROW_LINK_STYLE = { textDecoration: 'none', color: 'inherit' };
 const INITIAL_DATA = { hero_events: [], upcoming_events: [], top_players: [], about_stats: {} };
 
 export default function HomePage() {
-  const { data: payload } = useCachedQuery('home', fetchHome, { ttl: 5 * 60 * 1000 });
+  const { data: payload } = useCachedQuery('home', fetchHome, { ttl: CACHE_TTL.HOME });
   const data = payload || INITIAL_DATA;
   const [galCur, setGalCur] = useState(0);
 

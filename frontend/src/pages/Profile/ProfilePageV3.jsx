@@ -147,6 +147,7 @@ export default function ProfilePageV3() {
 
   const handleShare = () => {
     if (navigator.share) {
+      // Web Share AbortError when user dismisses the share sheet → ignore.
       navigator.share({ title: document.title, url: window.location.href }).catch(() => {});
     } else {
       navigator.clipboard?.writeText(window.location.href);

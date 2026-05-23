@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { fetchLeaderboard } from '../../services/api';
 import { useCachedQuery } from '../../services/queryCache';
+import { CACHE_TTL } from '../../constants/config';
 import TabBar from '../../components/TabBar/TabBar';
 import SearchInput from '../../components/SearchInput/SearchInput';
 import Avatar from '../../components/Avatar/Avatar';
@@ -23,7 +24,7 @@ export default function LeaderboardPage() {
   const { data, loading: queryLoading } = useCachedQuery(
     `leaderboard:${period}`,
     () => fetchLeaderboard(period),
-    { ttl: 5 * 60 * 1000 },
+    { ttl: CACHE_TTL.LEADERBOARD },
   );
   const entries = data?.entries || [];
   const loading = queryLoading && entries.length === 0;

@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import './Lightbox.css';
 
@@ -32,15 +32,25 @@ export default function Lightbox({
   const current = list[index] || null;
   const imgSrc = current ? (typeof current === 'string' ? current : current.url) : null;
 
+  // Restore focus to whatever element the user activated to open the lightbox.
+  // Without this, closing the lightbox drops focus on document.body and the
+  // keyboard user loses their place in the page.
+  const previousFocusRef = useRef(null);
+
   useEffect(() => {
-    if (!open) return;
+    if (!open) return undefined;
+    previousFocusRef.current = document.activeElement;
     const onKey = (e) => {
       if (e.key === 'Escape') onClose();
       if (e.key === 'ArrowLeft') onPrev();
       if (e.key === 'ArrowRight') onNext();
     };
     document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      const prev = previousFocusRef.current;
+      if (prev && typeof prev.focus === 'function') prev.focus();
+    };
   }, [open, onClose, onNext, onPrev]);
 
   if (!open || !imgSrc) return null;

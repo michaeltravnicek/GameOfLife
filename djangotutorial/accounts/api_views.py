@@ -86,6 +86,16 @@ def login_api(request):
         return Response({"error": "Účet je deaktivovaný."}, status=400)
 
     login(request, user)
+
+    # "Remember me": persist the session for 30 days. Otherwise expire when
+    # the browser closes (default behavior, but we set it explicitly so the
+    # session age doesn't carry over from a previous "remember" login).
+    remember = bool(request.data.get("remember", False))
+    if remember:
+        request.session.set_expiry(60 * 60 * 24 * 30)  # 30 days
+    else:
+        request.session.set_expiry(0)  # 0 = on browser close
+
     return Response({"user": _serialize_user(user)})
 
 

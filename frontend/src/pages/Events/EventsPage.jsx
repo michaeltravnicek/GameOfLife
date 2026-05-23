@@ -1,13 +1,11 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { fetchEvents } from '../../services/api';
-import { useCachedQuery } from '../../services/queryCache';
+import { usePaginatedQuery } from '../../services/usePaginatedQuery';
+import { CACHE_TTL, PAGE_SIZE_EVENTS, SEARCH_DEBOUNCE_MS } from '../../constants/config';
 import EventCard from '../../components/EventCard/EventCard';
 import TabBar from '../../components/TabBar/TabBar';
 import SearchInput from '../../components/SearchInput/SearchInput';
 import './EventsPage.css';
-
-const PAGE_SIZE = 30;
-const SEARCH_DEBOUNCE_MS = 300;
 
 const TABS = [
   { key: 'upcoming', label: 'Nadcházející' },
@@ -15,96 +13,67 @@ const TABS = [
   { key: 'all', label: 'Vše' },
 ];
 
+// Server response → local fields. Used by the pagination hook.
+const extractEvents = (r) => r.events || [];
+const extractHasMore = (r) => !!r.has_more;
+const extractCount = (r) => r.count ?? 0;
+
 export default function EventsPage() {
   const [tab, setTab] = useState('upcoming');
   const [city, setCity] = useState('Vše');
   const [query, setQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
-
-  // Pages appended via "Load more" — kept outside the cache because they're
-  // composed on the fly and rarely revisited at the same offset.
-  const [extraEvents, setExtraEvents] = useState([]);
-  const [extraHasMore, setExtraHasMore] = useState(null); // null = use first-page value
-  const [loadingMore, setLoadingMore] = useState(false);
-  // Cities are sticky across filter changes — once loaded, keep showing.
+  // Cities are returned only on the first page; we keep them locally so
+  // they survive filter changes.
   const [cities, setCities] = useState([]);
-  const reqIdRef = useRef(0);
 
-  // Debounce the search query (avoids one API call per keystroke).
+  // Debounce search input so we don't fire a request per keystroke.
   useEffect(() => {
     const t = setTimeout(() => setDebouncedQuery(query), SEARCH_DEBOUNCE_MS);
     return () => clearTimeout(t);
   }, [query]);
 
-  const buildParams = useCallback((offset) => {
-    const params = { limit: PAGE_SIZE, offset };
+  // Build the per-request params from current filters.
+  const buildParams = useCallback((offset, limit) => {
+    const params = { limit, offset };
     if (tab !== 'all') params.period = tab;
     if (city !== 'Vše') params.city = city;
     if (debouncedQuery.trim()) params.q = debouncedQuery.trim();
     return params;
   }, [tab, city, debouncedQuery]);
 
-  // Per-filter cache key — the same tab/city/query combination hits cache on
-  // re-mount without a network round-trip.
+  // Cache key encodes the filter combo so going back to the same filters
+  // hits cache instantly.
   const cacheKey = useMemo(
     () => `events:${tab}|${city}|${debouncedQuery.trim()}`,
     [tab, city, debouncedQuery],
   );
 
-  // First page lives in the shared cache (stale-while-revalidate enabled).
-  const firstPageParams = useMemo(() => buildParams(0), [buildParams]);
-  const { data: firstPage, loading: firstLoading } = useCachedQuery(
+  const {
+    items: events, hasMore, totalCount, loading, loadingMore, loadMore, firstPage,
+  } = usePaginatedQuery({
     cacheKey,
-    () => fetchEvents(firstPageParams),
-    { ttl: 2 * 60 * 1000 }, // 2 min — events list changes occasionally
-  );
+    fetcher: (offset, limit) => fetchEvents(buildParams(offset, limit)),
+    pageSize: PAGE_SIZE_EVENTS,
+    ttl: CACHE_TTL.EVENTS,
+    errorMessage: 'Nepodařilo se načíst další akce.',
+    extractItems: extractEvents,
+    extractHasMore,
+    extractCount,
+  });
 
-  // Whenever filter changes, drop locally-accumulated extra pages.
+  // Sticky cities — only the first page of each filter set returns them.
   useEffect(() => {
-    setExtraEvents([]);
-    setExtraHasMore(null);
-    reqIdRef.current += 1;
-  }, [cacheKey]);
-
-  const firstEvents = firstPage?.events || [];
-  const firstCities = firstPage?.cities || [];
-  const totalCount = firstPage?.count ?? firstEvents.length + extraEvents.length;
-
-  const events = useMemo(
-    () => (extraEvents.length ? [...firstEvents, ...extraEvents] : firstEvents),
-    [firstEvents, extraEvents],
-  );
-  const hasMore = extraHasMore !== null ? extraHasMore : !!firstPage?.has_more;
-
-  const loadMore = useCallback(() => {
-    if (loadingMore || !hasMore) return;
-    const myReq = reqIdRef.current; // freeze for this load
-    setLoadingMore(true);
-    fetchEvents(buildParams(events.length))
-      .then((d) => {
-        if (reqIdRef.current !== myReq) return; // user changed filters meanwhile
-        setExtraEvents((prev) => [...prev, ...(d.events || [])]);
-        setExtraHasMore(!!d.has_more);
-      })
-      .catch(() => {})
-      .finally(() => {
-        if (reqIdRef.current === myReq) setLoadingMore(false);
-      });
-  }, [buildParams, events.length, hasMore, loadingMore]);
-
-  // Surface cities from whatever cache entry is currently active.
-  useEffect(() => {
+    const firstCities = firstPage?.cities || [];
     if (firstCities.length) setCities(firstCities);
-  }, [firstCities]);
-
-  const loading = firstLoading && events.length === 0;
+  }, [firstPage]);
 
   const cityChoices = useMemo(
     () => ['Vše', ...cities.map((c) => c.name)],
     [cities],
   );
 
-  // Group already-loaded events into upcoming / past for display.
+  // Visual split (server already filtered, this is purely for display).
   const { upcoming, past } = useMemo(() => ({
     upcoming: events
       .filter((ev) => !ev.is_past)

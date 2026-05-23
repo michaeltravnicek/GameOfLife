@@ -26,18 +26,19 @@ from .models import (
 )
 
 
-MINUTES = 5
-CACHE_KEY = "leaderboard_data"
-CACHE_TTL = MINUTES * 60
-CACHE_KEY_MONTH = "leaderboard_data_month"
-
-# RAM optimization: cache heavy queries
-CACHE_KEY_HERO_IMAGES = "home_hero_images"
-CACHE_TTL_HERO_IMAGES = 60 * 60  # 1 hour — images rarely change
-CACHE_KEY_HOME_CONTEXT = "home_context"
-CACHE_TTL_HOME_CONTEXT = 5 * 60  # 5 min — stats/upcoming
-CACHE_KEY_EVENTS_LIST = "events_list"
-CACHE_TTL_EVENTS_LIST = 5 * 60
+# Cache keys + TTLs all live in cache_config.py; re-exported here so the
+# rest of this module can keep its short names without touching every line.
+from .cache_config import (  # noqa: F401  (re-export)
+    CACHE_KEY,
+    CACHE_KEY_MONTH,
+    CACHE_TTL,
+    CACHE_KEY_HERO_IMAGES,
+    CACHE_TTL_HERO_IMAGES,
+    CACHE_KEY_HOME_CONTEXT,
+    CACHE_TTL_HOME_CONTEXT,
+    CACHE_KEY_EVENTS_LIST,
+    CACHE_TTL_EVENTS_LIST,
+)
 
 def get_month_start():
     now = timezone.now()
@@ -645,61 +646,10 @@ def admin_panel_view(request):
     })
 
 
-def _haversine_distance(lat1, lon1, lat2, lon2):
-    R = 6_371_000
-    phi1, phi2 = math.radians(lat1), math.radians(lat2)
-    dphi = math.radians(lat2 - lat1)
-    dlambda = math.radians(lon2 - lon1)
-    a = math.sin(dphi / 2) ** 2 + math.cos(phi1) * math.cos(phi2) * math.sin(dlambda / 2) ** 2
-    return R * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
-
-
-@login_required
-@require_http_methods(["POST"])
-def event_checkin_view(request, slug):
-    event = get_object_or_404(Event, slug=slug)
-
-    if event.latitude is None or event.longitude is None:
-        return JsonResponse({"ok": False, "error": "Tato akce nemá aktivní check-in."}, status=400)
-
-    now = timezone.now()
-    window_open = event.date - timedelta(minutes=30)
-    window_close = event.checkin_window_end
-    if not (window_open <= now <= window_close):
-        return JsonResponse(
-            {"ok": False, "error": "Check-in je mimo časové okno akce."},
-            status=400,
-        )
-
-    try:
-        body = json.loads(request.body)
-        user_lat = float(body["latitude"])
-        user_lon = float(body["longitude"])
-    except (KeyError, ValueError, TypeError):
-        return JsonResponse({"ok": False, "error": "Neplatné souřadnice."}, status=400)
-
-    distance = _haversine_distance(user_lat, user_lon, event.latitude, event.longitude)
-    if distance > event.checkin_radius:
-        return JsonResponse(
-            {
-                "ok": False,
-                "error": f"Jsi příliš daleko ({distance / 1000:.1f} km). Check-in vyžaduje být do {event.checkin_radius} m.",
-                "distance_m": round(distance),
-            },
-            status=400,
-        )
-
-    from accounts.models import Profile
-    profile = Profile.objects.filter(user=request.user).select_related("leaderboard_user").first()
-    lb_user = profile.leaderboard_user if profile else None
-    if lb_user is None:
-        return JsonResponse({"ok": False, "error": "Tvůj účet není propojen s leaderboardem."}, status=400)
-
-    _, created = UserToEvent.objects.get_or_create(
-        user=lb_user, event=event, defaults={"points": event.points}
-    )
-    if created:
-        cache.delete(CACHE_KEY)
-        cache.delete(CACHE_KEY_MONTH)
-        cache.delete(CACHE_KEY_HOME_CONTEXT)
-    return JsonResponse({"ok": True, "points": event.points if created else 0, "already_had": not created})
+# `event_checkin_view` (HTML/JSON hybrid) was removed. The canonical entry
+# point is the DRF view `leaderboard.api_views.event_checkin` (POST
+# /api/events/<slug>/checkin/). Both used to share copy-pasted geo + window
+# logic; that logic now lives in `leaderboard.checkin.validate_and_record_checkin`.
+# The check-in primitive can still be imported and called from any view if
+# we ever need a non-REST path again.
+from .checkin import haversine_distance_m  # noqa: F401 — re-exported for any legacy imports

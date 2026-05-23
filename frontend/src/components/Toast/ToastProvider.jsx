@@ -67,12 +67,14 @@ export function ToastProvider({ children }) {
     <ToastContext.Provider value={api}>
       {children}
       {createPortal(
-        <div className="toast-stack" role="region" aria-label="Notifikace" aria-live="polite">
+        <div className="toast-stack" role="region" aria-label="Notifikace">
           {toasts.map((t) => (
             <div
               key={t.id}
               className={`toast toast-${t.type}`}
               role={t.type === 'error' ? 'alert' : 'status'}
+              aria-live={t.type === 'error' ? 'assertive' : 'polite'}
+              aria-atomic="true"
             >
               <div className="toast-icon" aria-hidden="true">
                 {t.type === 'success' && '✓'}

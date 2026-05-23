@@ -25,9 +25,15 @@ urlpatterns = [
     # Legacy JSON helpers retained until React wires them
     path("api/photos/<int:photo_id>/like/", legacy_views.toggle_photo_like_view, name="photo_like"),
     path("api/profile/<str:username>/monthly-points/", legacy_views.profile_monthly_points_api, name="profile-monthly-points"),
+
+    # Django's built-in password-reset confirm/complete pages are still
+    # server-rendered. The React SPA owns the "forgot password" form at
+    # /zapomenute-heslo (POSTs to /api/auth/password-reset/); the email
+    # link then lands users on these Django pages to set a new password.
+    path("accounts/", include("accounts.urls")),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
-# React catch-all: must come last so /api/* and /admin/* are matched first.
+# React catch-all: must come last so /api/*, /admin/*, /accounts/* match first.
 urlpatterns += [
-    re_path(r"^(?!api/|admin/|media/|static/).*$", react_views.react_index, name="react-index"),
+    re_path(r"^(?!api/|admin/|media/|static/|accounts/).*$", react_views.react_index, name="react-index"),
 ]

@@ -27,8 +27,8 @@ export default api;
 
 // --- Auth ---
 export const fetchMe = () => api.get('/auth/me/').then((r) => r.data);
-export const apiLogin = (identifier, password) =>
-  api.post('/auth/login/', { identifier, password }).then((r) => r.data);
+export const apiLogin = (identifier, password, remember = false) =>
+  api.post('/auth/login/', { identifier, password, remember }).then((r) => r.data);
 export const apiLogout = () => api.post('/auth/logout/').then((r) => r.data);
 export const apiRegister = (payload) =>
   api.post('/auth/register/', payload).then((r) => r.data);

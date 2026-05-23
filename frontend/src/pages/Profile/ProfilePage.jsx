@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import { fetchProfile } from '../../services/api';
 import { useCachedQuery } from '../../services/queryCache';
+import { CACHE_TTL } from '../../constants/config';
 import { useAuth } from '../../context/AuthContext';
 import Button from '../../components/Button/Button';
 import TabBar from '../../components/TabBar/TabBar';
@@ -24,7 +25,7 @@ export default function ProfilePage() {
   const { data: profile, error: queryError } = useCachedQuery(
     `profile:${username}`,
     () => fetchProfile(username),
-    { enabled: !!username, ttl: 60 * 1000 },
+    { enabled: !!username, ttl: CACHE_TTL.PROFILE },
   );
   const error = queryError
     ? (queryError.response?.status === 404 ? 'Profil nenalezen.' : 'Chyba při načítání profilu.')
@@ -44,6 +45,7 @@ export default function ProfilePage() {
   const handleShare = () => {
     const url = window.location.href;
     if (navigator.share) {
+      // Web Share AbortError when user dismisses the share sheet → ignore.
       navigator.share({ title: document.title, url }).catch(() => {});
     } else {
       navigator.clipboard?.writeText(url);

@@ -225,12 +225,11 @@ export default function HistoriePage() {
           </div>
           <p className="hist-coda-text">
             Tahle stránka se píše dál.<br />
-            Každá akce přidá další záznam do archivu.
           </p>
           <div className="hist-coda-meta">
             <span>End&nbsp;of&nbsp;Vol.&nbsp;01</span>
             <span className="hist-coda-rule" />
-            <span>Game&nbsp;of&nbsp;Life&nbsp;©&nbsp;2021—{new Date().getFullYear()}</span>
+            <span>Game&nbsp;of&nbsp;Life&nbsp;©&nbsp;2025—{new Date().getFullYear()}</span>
           </div>
         </div>
       </main>

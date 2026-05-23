@@ -1,5 +1,3 @@
-import json
-import math
 from datetime import timedelta
 
 from django.core.cache import cache
@@ -41,12 +39,21 @@ from .views import (
 )
 
 
+from .cache_config import (
+    CACHE_KEY,
+    CACHE_KEY_MONTH,
+    CACHE_KEY_HOME_CONTEXT,
+    CACHE_KEY_HOME_STATS,
+    CACHE_TTL_HOME_STATS,
+    CACHE_KEY_EVENTS_CITIES,
+    CACHE_TTL_EVENTS_CITIES,
+)
+from .utils import parse_int_param
+
 _EVENTS_LIST_FIELDS = (
     "id", "slug", "name", "description", "place",
     "date", "points", "image", "capacity",
 )
-CACHE_KEY_EVENTS_CITIES = "api_events_cities"
-CACHE_TTL_EVENTS_CITIES = 30 * 60  # 30 min — places change slowly
 
 
 def _cities_cached():
@@ -85,15 +92,8 @@ def events_list(request):
     period = request.GET.get("period", "all")
     city = request.GET.get("city", "")
     q = request.GET.get("q", "").strip()
-
-    try:
-        limit = min(max(int(request.GET.get("limit", 30)), 1), 100)
-    except (TypeError, ValueError):
-        limit = 30
-    try:
-        offset = max(int(request.GET.get("offset", 0)), 0)
-    except (TypeError, ValueError):
-        offset = 0
+    limit = parse_int_param(request.GET.get("limit"), 30, min_val=1, max_val=100)
+    offset = parse_int_param(request.GET.get("offset"), 0, min_val=0)
 
     # .only() — fetch ONLY the columns the list serializer needs.
     # Skips heavy fields like rules (TextField), latitude/longitude,
@@ -211,14 +211,8 @@ def gallery_view(request):
 
     Response: { photos, count, has_more }
     """
-    try:
-        limit = min(max(int(request.GET.get("limit", 60)), 1), 200)
-    except (TypeError, ValueError):
-        limit = 60
-    try:
-        offset = max(int(request.GET.get("offset", 0)), 0)
-    except (TypeError, ValueError):
-        offset = 0
+    limit = parse_int_param(request.GET.get("limit"), 60, min_val=1, max_val=200)
+    offset = parse_int_param(request.GET.get("offset"), 0, min_val=0)
 
     # .only() — restrict each queryset to columns we actually serialize.
     # Combined with select_related, this means a single JOIN that pulls a
@@ -288,10 +282,6 @@ def gallery_view(request):
         "count": total,
         "has_more": (offset + limit) < total,
     })
-
-
-CACHE_KEY_HOME_STATS = "api_home_stats"
-CACHE_TTL_HOME_STATS = 30 * 60  # 30 min — counts change slowly enough
 
 
 def _home_stats_cached():
@@ -418,85 +408,34 @@ def home_view(request):
 
 
 # --------------------------------------------------------------------------
-# Event check-in (geolocation-gated)
+# Event check-in (geolocation-gated). All real work lives in
+# leaderboard.checkin.validate_and_record_checkin — this view is just the
+# HTTP adapter.
 # --------------------------------------------------------------------------
-
-def _haversine_distance_m(lat1, lon1, lat2, lon2):
-    R = 6_371_000
-    phi1, phi2 = math.radians(lat1), math.radians(lat2)
-    dphi = math.radians(lat2 - lat1)
-    dlambda = math.radians(lon2 - lon1)
-    a = math.sin(dphi / 2) ** 2 + math.cos(phi1) * math.cos(phi2) * math.sin(dlambda / 2) ** 2
-    return R * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
-
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def event_checkin(request, slug):
-    """Submit geo-verified attendance. Body: {latitude, longitude}.
+    """Submit geo-verified attendance. Body: {latitude, longitude}."""
+    from .checkin import validate_and_record_checkin
 
-    Mirrors leaderboard.views.event_checkin_view but JSON-only for the React
-    client. Awards `event.points` if the user is within `event.checkin_radius`
-    meters and the time window is open.
-    """
     event = get_object_or_404(
-        Event.objects.only("id", "slug", "name", "date", "end_date",
-                           "points", "latitude", "longitude", "checkin_radius"),
+        Event.objects.only(
+            "id", "slug", "name", "date", "end_date",
+            "points", "latitude", "longitude", "checkin_radius",
+        ),
         slug=slug,
     )
-
-    if event.latitude is None or event.longitude is None:
-        return Response({"ok": False, "error": "Tato akce nemá aktivní check-in."}, status=400)
-
-    now = timezone.now()
-    window_open = event.date - timedelta(minutes=30)
-    if not (window_open <= now <= event.checkin_window_end):
-        return Response({"ok": False, "error": "Check-in je mimo časové okno akce."}, status=400)
-
-    try:
-        lat = float(request.data.get("latitude"))
-        lon = float(request.data.get("longitude"))
-    except (TypeError, ValueError):
-        return Response({"ok": False, "error": "Neplatné souřadnice."}, status=400)
-
-    distance = _haversine_distance_m(lat, lon, event.latitude, event.longitude)
-    if distance > event.checkin_radius:
-        return Response({
-            "ok": False,
-            "error": (
-                f"Jsi příliš daleko ({distance / 1000:.1f} km). "
-                f"Check-in vyžaduje být do {event.checkin_radius} m."
-            ),
-            "distance_m": round(distance),
-        }, status=400)
-
-    from accounts.models import Profile
-    profile = (
-        Profile.objects
-        .filter(user=request.user)
-        .select_related("leaderboard_user")
-        .first()
+    result = validate_and_record_checkin(
+        event, request.user,
+        request.data.get("latitude"), request.data.get("longitude"),
     )
-    lb_user = profile.leaderboard_user if profile else None
-    if lb_user is None:
-        return Response(
-            {"ok": False, "error": "Tvůj účet není propojen s leaderboardem."},
-            status=400,
-        )
-
-    _, created = UserToEvent.objects.get_or_create(
-        user=lb_user, event=event, defaults={"points": event.points},
-    )
-    if created:
-        # Drop leaderboards + home cache so the new points show immediately.
-        cache.delete(CACHE_KEY)
-        cache.delete(CACHE_KEY_MONTH)
-        cache.delete(CACHE_KEY_HOME_CONTEXT)
-        cache.delete(CACHE_KEY_HOME_STATS)
-
-    return Response({
-        "ok": True,
-        "points": event.points if created else 0,
-        "already_had": not created,
-        "distance_m": round(distance),
-    })
+    payload = {"ok": result.ok}
+    if result.error:
+        payload["error"] = result.error
+    if result.distance_m is not None:
+        payload["distance_m"] = result.distance_m
+    if result.ok:
+        payload["points"] = result.points
+        payload["already_had"] = not result.created
+    return Response(payload, status=result.status)

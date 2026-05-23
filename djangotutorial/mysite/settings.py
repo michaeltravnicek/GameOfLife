@@ -57,6 +57,10 @@ _prod_origin = os.getenv("CSRF_TRUSTED_ORIGIN")
 if _prod_origin:
     CSRF_TRUSTED_ORIGINS.append(_prod_origin)
 
+# Sessions: default to expiring on browser close. The "remember me" checkbox
+# on the login form overrides this per-session via session.set_expiry(...).
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+
 # Application definition
 
 INSTALLED_APPS = [

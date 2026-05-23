@@ -24,8 +24,8 @@ export function AuthProvider({ children }) {
     refresh();
   }, [refresh]);
 
-  const login = useCallback(async (identifier, password) => {
-    const data = await apiLogin(identifier, password);
+  const login = useCallback(async (identifier, password, remember = false) => {
+    const data = await apiLogin(identifier, password, remember);
     // New user identity: drop all cached responses that may have been
     // computed against the anonymous user (RSVPs, profile-specific data).
     clearCache();
