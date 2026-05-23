@@ -28,8 +28,8 @@ python manage.py ensure_season
 python superuser.py
 
 # Register daily 4 AM Google Sheets sync cron job
-PROJECT_DIR="$(pwd)"
-PYTHON_BIN="$(which python3)"
-CRON_CMD="0 4 * * * cd $PROJECT_DIR && $PYTHON_BIN manage.py sync_sheets >> /tmp/sync_sheets.log 2>&1"
-( crontab -l 2>/dev/null | grep -v "sync_sheets"; echo "$CRON_CMD" ) | crontab -
-echo "Cron job registered: daily sync at 4 AM"
+# PROJECT_DIR="$(pwd)"
+# PYTHON_BIN="$(which python3)"
+# CRON_CMD="0 4 * * * cd $PROJECT_DIR && $PYTHON_BIN manage.py sync_sheets >> /tmp/sync_sheets.log 2>&1"
+# ( crontab -l 2>/dev/null | grep -v "sync_sheets"; echo "$CRON_CMD" ) | crontab -
+# echo "Cron job registered: daily sync at 4 AM"
