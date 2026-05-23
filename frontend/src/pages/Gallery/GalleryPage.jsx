@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { fetchGallery } from '../../services/api';
 import { usePaginatedQuery } from '../../services/usePaginatedQuery';
@@ -25,6 +25,23 @@ export default function GalleryPage() {
   const [lbIndex, setLbIndex] = useState(0);
 
   const tx = useRef(0);
+  const viewToggleRef = useRef(null);
+  const [vtInd, setVtInd] = useState({ left: 5, width: 0, visible: false });
+
+  useLayoutEffect(() => {
+    const group = viewToggleRef.current;
+    if (!group) return undefined;
+    const measure = () => {
+      const activeBtn = group.querySelector('.vt-btn.on');
+      if (!activeBtn) { setVtInd((s) => ({ ...s, visible: false })); return; }
+      const g = group.getBoundingClientRect();
+      const a = activeBtn.getBoundingClientRect();
+      setVtInd({ left: a.left - g.left, width: a.width, visible: true });
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, [view]);
 
   const {
     items: photos, hasMore, totalCount, loading, loadingMore, loadMore,
@@ -100,7 +117,11 @@ export default function GalleryPage() {
         <div className="divider" />
       </div>
 
-      <div className="view-toggle">
+      <div
+        ref={viewToggleRef}
+        className={`view-toggle${vtInd.visible ? ' has-active' : ''}`}
+        style={{ '--pill-left': `${vtInd.left}px`, '--pill-w': `${vtInd.width}px` }}
+      >
         <button className={`vt-btn${view === 'slideshow' ? ' on' : ''}`} onClick={() => setView('slideshow')}>
           <span className="vt-icon">▶</span> Slideshow
         </button>

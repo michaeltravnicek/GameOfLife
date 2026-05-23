@@ -1,0 +1,5 @@
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chips .chip{font-family:var(--font-mono);font-style:italic;font-size:11px;letter-spacing:.18em;text-transform:uppercase;padding:8px 14px;border-radius:var(--radius-pill);background:var(--alpha-cream-04);color:var(--alpha-cream-70);border:1.5px dashed var(--alpha-cream-22);cursor:pointer;transition:.18s;display:inline-flex;align-items:center;gap:6px}
+.chips .chip:hover{border-color:var(--alpha-cream-45);color:var(--color-white)}
+.chips .chip.on{background:var(--color-pink);color:var(--color-white);border-color:transparent;border-style:solid;box-shadow:0 4px 12px var(--alpha-pink-40)}
+.chips .chip.on::before{content:'✓';font-style:normal;font-weight:700;font-size:10px}

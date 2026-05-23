@@ -1,238 +1,185 @@
+import { Link } from 'react-router-dom';
 import './HistoriePage.css';
 
-const chapters = [
+const credits = [
+  { label: '— Rok 0 —', value: '2024', sub: 'První ročník' },
+  { label: '— Akcí —', value: '42', sub: 'a počítáme dál' },
+  { label: '— Hráčů —', value: '250+', sub: 'z Brna i odjinud' },
+  { label: '— Bodů —', value: '25K', sub: 'rozdáno do žebříčku' },
+];
+
+const years = [
   {
-    roman: 'I',
-    year: '2021',
-    yearWords: 'Two‑Thousand Twenty‑One',
-    subtitle: 'Kde to všechno začalo',
-    entries: [
+    year: '2026',
+    muted: false,
+    rows: [
       {
-        season: 'Jaro',
-        tag: 'Začátek',
-        title: 'Zrození Game of Life',
-        body: 'Vše začalo jednoduchou myšlenkou — přestat jen přemýšlet a začít skutečně žít. Parta přátel se sešla u prvního společného výletu a rozhodla, že z toho udělá zvyk. Pravidla byla jednoduchá: přijít, zažít, opakovat.',
-        statLabel: 'Zakladatelů',
-        statValue: '05',
-        archive: '001',
+        side: 'left', type: 'photo', img: '/gallery/gal0.jpg', first: '★ Poprvé', date: '12. 05. 2026', pts: '+50 pts', evStamp: '/logos/GOL_FrogJumps_transparent.png',
+        tag: 'Nová disciplína · Brno', title: 'Frog Jumps',
+        text: 'První ročník žabích skoků kolem celé Brněnské přehrady. 18 km na čtyřech, bahno za uši, večer pivo a omluvy. Nikdo nečekal, že to bude tak vyčerpávající.',
+        chips: [{ label: '📍 Bystrc' }, { label: '⏱ 4h 12min' }, { label: '★ 38 hráčů', attended: true }],
       },
       {
-        season: 'Léto',
-        tag: 'První sezóna',
-        title: 'Rosteme',
-        body: 'Slovo se šíří. Po prvních akcích — výletech, sportovních výzvách a workshopech — se ke komunitě přidávají noví lidé. Formuje se první neoficiální leaderboard na papíře a rozjíždí se pravidelný rytmus akcí.',
-        statLabel: 'Členů · Akcí',
-        statValue: '20 · 08',
-        archive: '002',
+        side: 'right', type: 'note', noteDate: '15. 05. 2026 · Milník', title: 'Hráč číslo 250',
+        text: <>Tři dny po Frog Jumps se přidává <strong>Eliška z Olomouce</strong> — a tím překračujeme symbolickou hranici 250 aktivních hráčů. Z hospodského žertu v roce 2022 je teď komunita o velikosti malé vesnice.</>,
       },
       {
-        season: 'Podzim',
-        tag: 'Systém',
-        title: 'První Leaderboard',
-        body: 'Bodový systém dostává jasná pravidla. Každá akce má hodnotu, každý účastník sbírá body. Vzniká první digitální žebříček — a s ním i zdravé soutěžení, které komunitu stmeluje místo toho, aby ji rozdělilo.',
-        statLabel: 'Vítěz sezóny',
-        statValue: '№ 01',
-        archive: '003',
+        side: 'left', type: 'photo', img: '/gallery/gal3.jpg', first: '★ Poprvé v PRAZE', date: '18. 05. 2026', pts: '+50 pts', evStamp: '/logos/GOL_Dance_transparent.png',
+        tag: 'Tělo · Praha', title: 'Dance Class',
+        text: 'První pražská taneční hodina. 47 lidí v Karlíně, dvě hodiny, žádné zrcadlo — jenom hudba a stěna. Tím se Game of Life oficiálně přesouvá za hranice Brna.',
+        chips: [{ label: '📍 Karlín' }, { label: '🎵 Live DJ' }, { label: '★ 47 hráčů', attended: true }],
       },
     ],
   },
   {
-    roman: 'II',
-    year: '2022',
-    yearWords: 'Two‑Thousand Twenty‑Two',
-    subtitle: 'Hra dostává tvar',
-    entries: [
-      {
-        season: 'Jaro',
-        tag: 'Komunita',
-        title: '50 členů & Instagram',
-        body: 'Game of Life překračuje hranici 50 aktivních členů a spouští Instagram. Pravidelné posty, fotky z akcí a zákulisí přitahují nové lidi. Akce se diverzifikují — tanec, lezení, jazykové výzvy, meditace.',
-        statLabel: 'Členů · Kanál',
-        statValue: '50 · @gameofyolo',
-        archive: '004',
-      },
-      {
-        season: 'Podzim',
-        tag: 'Online',
-        title: 'Spuštění gameofyolo.com',
-        body: 'Komunita dostává svůj digitální domov. Web přináší přehled akcí, veřejný leaderboard a možnost přihlásit se na akce online. Správa komunity se profesionalizuje a databáze hráčů roste.',
-        statLabel: 'Doména',
-        statValue: 'gameofyolo.com',
-        archive: '005',
-      },
-    ],
-  },
-  {
-    roman: 'III',
-    year: '2023',
-    yearWords: 'Two‑Thousand Twenty‑Three',
-    subtitle: 'Magická stovka',
-    entries: [
-      {
-        season: 'Jaro',
-        tag: 'Milestone',
-        title: '100 aktivních hráčů',
-        body: 'Magická stovka. Game of Life slaví s výjezdním víkendem pro celou komunitu — největší akcí v historii. Vzniká fotogalerie, kde si hráči sdílejí vlastní záběry z akcí a zachycují společné vzpomínky.',
-        statLabel: 'Hráčů · Galerie',
-        statValue: '100 · live',
-        archive: '006',
-      },
-    ],
-  },
-  {
-    roman: 'IV',
-    year: '2024',
-    yearWords: 'Two‑Thousand Twenty‑Four',
-    subtitle: 'Zralá sezóna',
-    entries: [
-      {
-        season: 'Celý rok',
-        tag: 'Evoluce',
-        title: 'Nová sezóna, nové funkce',
-        body: 'Redesign webu, srdíčka na fotky, profily hráčů a propracovanější bodový systém. Komunita se stává zralejší — vědomě buduje kulturu vzájemné podpory a odvahy jít mimo komfortní zónu.',
-        statLabel: 'Profily · Lajky · Žebříček',
-        statValue: 'v 2.0',
-        archive: '007',
-      },
-    ],
-  },
-  {
-    roman: 'V',
     year: '2025',
-    yearWords: 'Two‑Thousand Twenty‑Five',
-    subtitle: 'Příběh se píše dál',
-    closing: true,
-    entries: [
+    muted: true,
+    rows: [
       {
-        season: 'Teď',
-        tag: 'Přítomnost',
-        title: 'Stále v pohybu',
-        body: 'Game of Life pokračuje. Každý měsíc nové akce, každá sezóna nové výzvy. Příběh se píše dál — a ty jsi jeho součástí. Přidej se, sbírej body a dokaž, že život stojí za to žít naplno.',
-        statLabel: 'Status',
-        statValue: 'OPEN',
-        archive: '008',
-        live: true,
+        side: 'right', type: 'photo', muted: true, img: '/gallery/gal2.jpg', first: '★ Poprvé na náměstí', date: '14. 09. 2025', pts: '+80 pts',
+        tag: 'Legenda · Brno', title: 'Táborák na náměstí Svobody',
+        text: 'Vůbec první oheň, který jsme zapálili přímo na náměstí — bez povolení, ale s úsměvem. Kytary, kouř a zpívání do tří do rána. Po akci jsme přespávali na dlažbě v dekách. Strážníci jen kroutili hlavou.',
+        chips: [{ label: '📍 Náměstí Svobody' }, { label: '🔥 6h zpívání' }, { label: '★ 64 hráčů', attended: true }],
+      },
+      {
+        side: 'left', type: 'note', noteDate: '01. 08. 2025 · Nový rituál', title: 'Spustili jsme leaderboard',
+        text: <>Konec Excelu. Po dvou letech ručního počítání bodů spouštíme veřejný žebříček. <em>„Hlavně to nepoužívejte vážně,“</em> zní oficiální motto. Pak Toman s Müllerem hodinu vyšetřují, kdo má víc bodů.</>,
+      },
+      {
+        side: 'right', type: 'photo', muted: true, img: '/gallery/gal1.jpg', date: '28. 06. 2025', pts: '+120 pts',
+        tag: 'Výzva · Brno', title: 'Nahá Míle',
+        text: '1 609 metrů. Bez triček, bez výmluv. Druhý ročník — letos i v dešti. Vyhrál Toman v 5:42, ale fakt na tom nezáleží.',
+        chips: [{ label: '📍 Lužánky' }, { label: '🌧 9 °C' }, { label: '★ 22 hráčů', attended: true }],
+      },
+      {
+        side: 'left', type: 'photo', muted: true, img: '/gallery/gal0.jpg', first: '★ Poprvé na vodě', date: '11. 04. 2025', pts: '+40 pts',
+        tag: 'Voda · Vysočina', title: 'Sázava Splav',
+        text: 'První vícedenní vodácká výprava komunity. Tři dny, čtyři jezy, sedm raftů. Jeden převrácený, dva ztracené pádla, nula utopených.',
+        chips: [{ label: '📍 Sázava' }, { label: '🛶 3 dny' }, { label: '★ 31 hráčů', attended: true }],
+      },
+    ],
+  },
+  {
+    year: '2024',
+    muted: true,
+    rows: [
+      {
+        side: 'right', type: 'photo', muted: true, img: '/gallery/gal3.jpg', first: '★ Poprvé', date: '07. 09. 2024', pts: '+150 pts', evStamp: '/logos/GOL_C50_transparent.png',
+        tag: 'Kolo · Brno', title: 'První C50',
+        text: 'Padesát kilometrů na kole, prvních dvacet hráčů, sedmnáct dojelo. Zrodila se tradice, která teď táhne celý kalendář — a do roka přibyla C100.',
+        chips: [{ label: '📍 Brno → Vranov' }, { label: '🚴 50 km' }, { label: '★ 20 hráčů', attended: true }],
+      },
+      {
+        side: 'left', type: 'note', noteDate: 'Léto 2024 · Manifest', title: 'Život je hra. Tak ho hrej.',
+        text: <>Na pivním tácku vzniká věta, která se později stane sloganem celé komunity. Napsal ji <strong>Vojta Toman</strong> mezi třetím a čtvrtým pivem. Ráno ji nechtěl ani uznat — ale tácek se zachoval.</>,
+      },
+      {
+        side: 'right', type: 'photo', muted: true, img: '/gallery/gal2.jpg', first: '★ Poprvé v noci', date: '22. 06. 2024', pts: '+60 pts',
+        tag: 'Hra · Brno', title: 'Noční bojovka v Lužánkách',
+        text: 'První večerní akce vůbec. Čtyři týmy, baterky, šifry vyryté do stromů. Vyhráli ti, co se nechali ztratit nejdéle. Od té doby je nocí v kalendáři víc než dnů.',
+        chips: [{ label: '📍 Lužánky' }, { label: '🌙 23:00 → 04:00' }, { label: '★ 28 hráčů', attended: true }],
+      },
+      {
+        side: 'left', type: 'photo', muted: true, img: '/gallery/gal1.jpg', date: '15. 02. 2024', pts: '+30 pts',
+        tag: 'Mráz · Krkonoše', title: 'Zimní výstup na Sněžku',
+        text: <>−14 °C, vítr 60 km/h, žádné lyže. Vystoupali jsme všichni, sestoupili jsme jen někteří (zbytek lanovkou). Den, kdy se zrodilo pravidlo: <em>kdo dojde, dostane bod navíc.</em></>,
+        chips: [{ label: '📍 Krkonoše' }, { label: '🥶 −14 °C' }, { label: '★ 14 hráčů', attended: true }],
+      },
+      {
+        side: 'right', type: 'note', noteDate: 'Leden 2024 · Rok 0', title: 'Začalo to v hospodě',
+        text: <>Vojta a Lukáš v hospodě U Kubišty vysloví větu: <em>„Co kdyby měl život vlastní body?“</em> Načrtnou na pivní tácek první pravidla — výzvy, žebříček, táboráky. Mělo to zůstat jen vtip.<br /><br /><strong>Nezůstalo.</strong></>,
       },
     ],
   },
 ];
 
-const yearIndex = chapters.map(c => c.year);
+function PhotoCard({ row }) {
+  return (
+    <div className={`card${row.muted ? ' muted' : ''}`}>
+      <div className="card-media" style={{ backgroundImage: `url('${row.img}')` }}>
+        {row.first && <span className="first-stamp">{row.first}</span>}
+        <span className="date-stamp">{row.date}</span>
+        <span className="pts-badge">{row.pts}</span>
+        {row.evStamp && <img className="ev-stamp" src={row.evStamp} alt="" />}
+      </div>
+      <div className="card-body">
+        <div className="card-tag">{row.tag}</div>
+        <h3 className="card-title">{row.title}</h3>
+        <p className="card-text">{row.text}</p>
+        <div className="card-meta">
+          {row.chips.map((c) => (
+            <span key={c.label} className={`chip${c.attended ? ' attended' : ''}`}>{c.label}</span>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function NoteCard({ row }) {
+  return (
+    <div className="card note">
+      <span className="note-mark">&ldquo;</span>
+      <div className="card-body">
+        <div className="note-date">{row.noteDate}</div>
+        <h3 className="card-title">{row.title}</h3>
+        <p className="card-text">{row.text}</p>
+      </div>
+    </div>
+  );
+}
 
 export default function HistoriePage() {
   return (
-    <div className="hist-page">
-      <div className="hist-stage" aria-hidden="true" />
-      <div className="hist-grain" aria-hidden="true" />
-      <div className="hist-vignette" aria-hidden="true" />
+    <div className="historie-page">
+      <div className="stage" aria-hidden="true" />
+      <div className="grain" aria-hidden="true" />
 
-      <header className="hist-hero">
-        <div className="hist-hero-meta">
-          <span className="hist-hero-vol">Vol. 01</span>
-          <span className="hist-hero-rule" />
-          <span className="hist-hero-range">2021 — 2025</span>
-        </div>
-
-        <h1 className="hist-hero-title">
-          <span className="hist-hero-line hist-hero-line-1">Histo</span>
-          <span className="hist-hero-line hist-hero-line-2">rie<span className="hist-hero-mark">*</span></span>
-        </h1>
-
-        <p className="hist-hero-tagline">
-          Od party přátel <em>ke komunitě stovek lidí</em> — kronika toho,
-          jak vznikl a rostl Game&nbsp;of&nbsp;Life.
-        </p>
-
-        <aside className="hist-hero-toc" aria-label="Obsah">
-          <span className="hist-toc-label">Obsah</span>
-          <ol className="hist-toc-list">
-            {chapters.map((c, i) => (
-              <li key={c.year}>
-                <a href={`#chapter-${c.year}`}>
-                  <span className="hist-toc-roman">{c.roman}</span>
-                  <span className="hist-toc-year">{c.year}</span>
-                  <span className="hist-toc-sub">{c.subtitle}</span>
-                </a>
-              </li>
-            ))}
-          </ol>
-        </aside>
-
-        <div className="hist-hero-foot">
-          <span>Archiv komunity</span>
-          <span className="hist-hero-foot-dot">●</span>
-          <span>{chapters.reduce((n, c) => n + c.entries.length, 0)} záznamů</span>
-        </div>
+      <header className="hero">
+        <div className="eyebrow">Co se stalo</div>
+        <h1>Historie</h1>
+        <p className="tagline">Každý táborák, každá míle, každý společný večer. Tady je naše paměť — kronika všeho, co se nedá smazat.</p>
+        <div className="divider" />
       </header>
 
-      <main className="hist-main">
-        {chapters.map((chapter, ci) => (
-          <section
-            key={chapter.year}
-            id={`chapter-${chapter.year}`}
-            className={`hist-chapter${chapter.closing ? ' hist-chapter-closing' : ''}`}
-          >
-            <div className="hist-chapter-marker">
-              <div className="hist-chapter-sticky">
-                <div className="hist-chapter-tag">Kapitola</div>
-                <div className="hist-chapter-roman">{chapter.roman}</div>
-                <div className="hist-chapter-year">{chapter.year}</div>
-                <div className="hist-chapter-words">{chapter.yearWords}</div>
-                <div className="hist-chapter-rule" />
-                <div className="hist-chapter-sub">{chapter.subtitle}</div>
-              </div>
-            </div>
+      <section className="credits" aria-label="Souhrn">
+        {credits.map((c) => (
+          <div key={c.label} className="credit">
+            <div className="credit-label">{c.label}</div>
+            <div className="credit-value">{c.value}</div>
+            <div className="credit-sub">{c.sub}</div>
+          </div>
+        ))}
+      </section>
 
-            <div className="hist-chapter-feed">
-              {chapter.entries.map((entry, ei) => (
-                <article
-                  key={entry.archive}
-                  className={`hist-entry hist-entry-${ei % 2 === 0 ? 'left' : 'right'}${entry.live ? ' hist-entry-live' : ''}`}
-                >
-                  <header className="hist-entry-head">
-                    <span className="hist-entry-arch">
-                      Archiv № {entry.archive} / {chapter.year}
-                    </span>
-                    <span className="hist-entry-season">{entry.season}</span>
-                  </header>
-
-                  <div className="hist-entry-tag">
-                    <span className="hist-entry-tag-mark">✦</span>
-                    {entry.tag}
-                  </div>
-
-                  <h3 className="hist-entry-title">{entry.title}</h3>
-
-                  <p className="hist-entry-body">{entry.body}</p>
-
-                  <footer className="hist-entry-foot">
-                    <div className="hist-entry-stat">
-                      <span className="hist-entry-stat-label">{entry.statLabel}</span>
-                      <span className="hist-entry-stat-value">{entry.statValue}</span>
-                    </div>
-                    {entry.live && <span className="hist-entry-pulse" aria-hidden="true" />}
-                  </footer>
+      <main className="timeline">
+        {years.map((y) => (
+          <div key={y.year}>
+            <div className={`year-mark${y.muted ? ' muted' : ''}`}><span className="y">{y.year}</span></div>
+            <div className="spine">
+              {y.rows.map((row, i) => (
+                <article key={`${y.year}-${i}`} className={`row ${row.side}`}>
+                  {row.side === 'right' && <div className="node"><div className="node-dot" /></div>}
+                  {row.type === 'photo' ? <PhotoCard row={row} /> : <NoteCard row={row} />}
+                  {row.side === 'left' && <div className="node"><div className="node-dot" /></div>}
                 </article>
               ))}
             </div>
-          </section>
+          </div>
         ))}
-
-        <div className="hist-coda">
-          <div className="hist-coda-stamp">
-            <span>Pokračuje</span>
-            <span className="hist-coda-stamp-arrow">→</span>
-          </div>
-          <p className="hist-coda-text">
-            Tahle stránka se píše dál.<br />
-          </p>
-          <div className="hist-coda-meta">
-            <span>End&nbsp;of&nbsp;Vol.&nbsp;01</span>
-            <span className="hist-coda-rule" />
-            <span>Game&nbsp;of&nbsp;Life&nbsp;©&nbsp;2025—{new Date().getFullYear()}</span>
-          </div>
-        </div>
       </main>
+
+      <div className="hist-coda">
+        <div className="hist-coda-stamp">
+          <span>Pokračuje</span>
+          <span className="hist-coda-stamp-arrow">→</span>
+        </div>
+      </div>
+
+      <section className="cta-foot">
+        <div className="label">— A teď je řada na tobě —</div>
+        <Link to="/akce" className="btn-pill">Zobrazit nadcházející akce <span className="arr" /></Link>
+      </section>
     </div>
   );
 }

@@ -1,213 +1,146 @@
-import Button from '../../components/Button/Button';
+import { Link } from 'react-router-dom';
 import './OBodechPage.css';
 
-const pointSources = [
-  {
-    no: '01',
-    title: 'Účast na akcích',
-    body: 'Každá akce má svou hodnotu bodů — od ranní jógy po vícedenní výjezd. Body se přepisují automaticky po skončení.',
-    tag: 'Hlavní zdroj',
-  },
-  {
-    no: '02',
-    title: 'Speciální výzvy',
-    body: 'Občasné challenge a tematické úkoly, které ti můžou vystřelit pozici v žebříčku.',
-    tag: 'Bonus',
-  },
-  {
-    no: '03',
-    title: 'Aktivita v komunitě',
-    body: 'Fotky, zpětná vazba, pomoc s organizací — věci, které drží Game of Life při životě.',
-    tag: 'Komunita',
-  },
+const sources = [
+  { pts: '+25–250', num: '01', tag: 'Účast', title: 'Akce Game of Life', text: 'Hlavní zdroj bodů. Každá akce má svoji hodnotu — od ranní pětky po vícedenní expedici. Body se připisují za samotnou účast, nepočítá se umístění.' },
+  { pts: '+50–500', num: '02', tag: 'Bonus', title: 'Speciální výzvy', text: 'Extra body za vybrané challenges mezi akcemi — solo úkoly, sezónní mise, skryté questy. Vyhlašujeme je nepravidelně, vyplatí se sledovat IG.' },
+  { pts: '+10–80', num: '03', tag: 'Komunita', title: 'Aktivita v komunitě', text: 'Body za to, že tu fyzicky držíš věci pohromadě. Pomoc s organizací, přivedený nový hráč, fotka z akce do galerie, ranní příprava ohně.' },
 ];
 
-const valuationCriteria = [
-  { label: 'Typ akce', detail: 'Běh, tanec, workshop, výjezd…' },
-  { label: 'Délka & intenzita', detail: 'Hodina vs. víkend, lehká vs. tvrdá' },
-  { label: 'Obtížnost', detail: 'Kolik tě stojí překonat sám sebe' },
+const examples = [
+  { name: 'Ranní pětka v Lužánkách', sub: '5 km · 1 hod', type: 'sport', typeLabel: 'Sport', diff: '★ ★', pts: 25 },
+  { name: 'Dance Class · Karlín', sub: '2 hod · live DJ', type: 'body', typeLabel: 'Tělo', diff: '★ ★ ★', pts: 50 },
+  { name: 'Frog Jumps', sub: '18 km na čtyřech', type: 'sport', typeLabel: 'Sport', diff: '★ ★ ★ ★', pts: 50 },
+  { name: 'Táborák na náměstí Svobody', sub: '6 hod zpívání + přespání', type: 'game', typeLabel: 'Hra', diff: '★ ★ ★', pts: 80 },
+  { name: 'Nahá Míle', sub: '1 609 m · bez triček', type: 'sport', typeLabel: 'Sport', diff: '★ ★ ★ ★ ★', pts: 120 },
+  { name: 'C50', sub: '50 km na kole · Brno → Vranov', type: 'sport', typeLabel: 'Sport', diff: '★ ★ ★ ★', pts: 150 },
+  { name: 'Sázava splav', sub: '3 dny · 4 jezy · 7 raftů', type: 'game', typeLabel: 'Hra', diff: '★ ★ ★', pts: 250 },
 ];
 
-const rewardTiers = [
-  {
-    range: '0 — 100',
-    title: 'Začátečník',
-    body: 'První kroky. Poznáš lidi, vyzkoušíš formát a najdeš si svůj rytmus.',
-    perk: 'Členský status',
-  },
-  {
-    range: '100 — 500',
-    title: 'Stálice',
-    body: 'Tvoje jméno už komunitě něco říká. Časem otevíráme přístup ke slevám na akce.',
-    perk: 'Slevy na vstupné',
-    accent: true,
-  },
-  {
-    range: '500 +',
-    title: 'Legenda',
-    body: 'Top hráči sezóny. Plánujeme exkluzivní benefity, merch a pozvánky.',
-    perk: 'Exkluzivní benefity',
-  },
+const rewards = [
+  { ico: '★', title: 'Úrovně podle leaderboardu', text: 'Bronz · Stříbro · Zlato · Legenda. Každá úroveň otevírá vlastní okruh akcí, čepic a vnitřních vtipů, kterým venku nikdo nerozumí.' },
+  { ico: '%', title: 'Slevy na vstupné', text: 'Body půjde uplatnit jako slevu na vstupné na placené akce. Čím víc hraješ, tím levnější další hra. Logické.' },
+  { ico: '+', title: 'Další výhody', text: 'Přednostní registrace na vyprodané akce, merch zdarma za milníky, pozvánky na uzavřené nočky. Detaily upřesníme.' },
 ];
 
 export default function OBodechPage() {
   return (
     <div className="obodech-page">
-      <div className="obo-stage" aria-hidden="true" />
-      <div className="obo-grain" aria-hidden="true" />
-      <div className="obo-vignette" aria-hidden="true" />
+      <div className="stage" aria-hidden="true" />
+      <div className="grain" aria-hidden="true" />
 
-      <header className="obo-hero">
-        <div className="obo-hero-meta">
-          <span className="obo-hero-vol">Manuál</span>
-          <span className="obo-hero-rule" />
-          <span className="obo-hero-range">Systém bodů & odměn</span>
-        </div>
-
-        <h1 className="obo-hero-title">
-          <span className="obo-hero-line obo-hero-line-1">O bo</span>
-          <span className="obo-hero-line obo-hero-line-2">dech<span className="obo-hero-mark">*</span></span>
-        </h1>
-
-        <p className="obo-hero-tagline">
-          Body jsou <em>měřítkem tvého zapojení</em> v Game of Life — odměna za to,
-          že přijdeš, vyjdeš z komfortní zóny a žiješ.
-        </p>
-
-        <aside className="obo-hero-key" aria-label="Legenda">
-          <div className="obo-hero-key-row">
-            <span className="obo-hero-key-glyph">✦</span>
-            <span className="obo-hero-key-label">Body</span>
-            <span className="obo-hero-key-val">aktivita</span>
-          </div>
-          <div className="obo-hero-key-row">
-            <span className="obo-hero-key-glyph">▲</span>
-            <span className="obo-hero-key-label">Pozice</span>
-            <span className="obo-hero-key-val">leaderboard</span>
-          </div>
-          <div className="obo-hero-key-row">
-            <span className="obo-hero-key-glyph">●</span>
-            <span className="obo-hero-key-label">Status</span>
-            <span className="obo-hero-key-val">komunita</span>
-          </div>
-        </aside>
-
-        <div className="obo-hero-foot">
-          <span>Verze</span>
-          <span className="obo-hero-foot-dot">●</span>
-          <span>v 2.0 — Sezóna 2026</span>
-        </div>
+      <header className="hero">
+        <div className="eyebrow">Systém bodů</div>
+        <h1>O bodech<br />a cenách</h1>
+        <p className="tagline">Body jsou měřítkem tvého zapojení. Odměňují odvahu vyjít z komfortní zóny, ne výhru. Tohle je kompletní pravidelník — od toho, jak se rozdávají, až po to, co za ně jednou bude.</p>
+        <div className="divider" />
       </header>
 
-      <main className="obo-main">
-        {/* Section 1 — What */}
-        <section className="obo-section">
-          <div className="obo-section-head">
-            <div className="obo-section-num">I</div>
-            <div className="obo-section-meta">
-              <div className="obo-section-tag">Sekce</div>
-              <h2 className="obo-section-title">Co jsou body?</h2>
-            </div>
-          </div>
+      <section className="credits" aria-label="Rozsah bodů">
+        <div className="credit">
+          <div className="credit-label">— Od —</div>
+          <div className="credit-value">+10</div>
+          <div className="credit-sub">za fotku v galerii nebo přivedení nového hráče</div>
+        </div>
+        <div className="credit">
+          <div className="credit-label">— Do —</div>
+          <div className="credit-value">+250</div>
+          <div className="credit-sub">za vícedenní expedici, kdy zvedneš tábor</div>
+        </div>
+      </section>
 
-          <div className="obo-intro">
-            <p className="obo-intro-text">
-              Body měří tvoje zapojení v Game of Life. Jsou odměnou za účast na akcích,
-              za odvahu jít mimo komfortní zónu a za aktivní angažování se v komunitě.
-              Tvůj celkový počet bodů určuje pozici na leaderboardu a ovlivňuje status v partě.
-            </p>
-            <div className="obo-intro-stat">
-              <div className="obo-intro-stat-num">100+</div>
-              <div className="obo-intro-stat-label">aktivních hráčů</div>
-            </div>
+      <main className="body">
+        <section className="section">
+          <div className="sec-eyebrow">Co jsou body</div>
+          <h2 className="sec-heading">Měřítko <span className="pink">zapojení</span>, ne výhry</h2>
+          <p className="intro-quote">Body měří, kolik jsi do hry vložil. Jsou odměnou za účast, za odvahu jít mimo komfortní zónu a za to, že jsi prostě přišel. Neměří, kdo doběhl první — měří, kdo se nepostavil mimo hru.</p>
+          <div className="intro-meta">
+            <span>★ Určují tvoji pozici na leaderboardu</span>
+            <span className="dot" />
+            <span>★ Ovlivňují tvůj status v komunitě</span>
+            <span className="dot" />
+            <span>★ Otevírají budoucí odměny</span>
           </div>
         </section>
 
-        {/* Section 2 — How */}
-        <section className="obo-section">
-          <div className="obo-section-head">
-            <div className="obo-section-num">II</div>
-            <div className="obo-section-meta">
-              <div className="obo-section-tag">Sekce</div>
-              <h2 className="obo-section-title">Jak sbírat body</h2>
-            </div>
-          </div>
-
-          <div className="obo-sources">
-            {pointSources.map((s) => (
-              <article key={s.no} className="obo-source">
-                <div className="obo-source-head">
-                  <span className="obo-source-no">№ {s.no}</span>
-                  <span className="obo-source-tag">{s.tag}</span>
-                </div>
-                <h3 className="obo-source-title">{s.title}</h3>
-                <p className="obo-source-body">{s.body}</p>
+        <section className="section">
+          <div className="sec-eyebrow">Jak sbírat body</div>
+          <h2 className="sec-heading">Tři zdroje, <span className="pink">žádné zkratky</span></h2>
+          <div className="sources">
+            {sources.map((s) => (
+              <article key={s.num} className="source">
+                <span className="source-pts">{s.pts}</span>
+                <div className="source-num">{s.num}</div>
+                <div className="source-tag">{s.tag}</div>
+                <h3 className="source-title">{s.title}</h3>
+                <p className="source-text">{s.text}</p>
               </article>
             ))}
           </div>
+        </section>
 
-          <div className="obo-valuation">
-            <div className="obo-valuation-label">
-              <span className="obo-valuation-label-mark">✦</span>
-              Hodnota bodů závisí na
-            </div>
-            <ul className="obo-valuation-list">
-              {valuationCriteria.map((v) => (
-                <li key={v.label} className="obo-valuation-item">
-                  <div className="obo-valuation-key">{v.label}</div>
-                  <div className="obo-valuation-val">{v.detail}</div>
-                </li>
+        <section className="section">
+          <div className="sec-eyebrow">Příklady</div>
+          <h2 className="sec-heading">Kolik za <span className="pink">co</span></h2>
+          <p className="intro-quote" style={{ marginBottom: 28 }}>Žádný kalkulátor, žádný vzorec. Pořadatel přiřkne akci hodnotu předem podle toho, jak je dlouhá, náročná a kolik k ní bude potřeba odvahy. Pár příkladů, abys měl představu.</p>
+
+          <div className="examples" aria-label="Příklady">
+            <div className="examples-inner">
+              <div className="ex-head">
+                <div>Akce</div>
+                <div className="col-type">Typ</div>
+                <div className="col-diff">Obtížnost</div>
+                <div style={{ textAlign: 'right' }}>pts</div>
+              </div>
+              {examples.map((e) => (
+                <div className="ex-row" key={e.name}>
+                  <div className="ex-name">{e.name}<span className="s">{e.sub}</span></div>
+                  <span className={`ex-pill t-${e.type}`}>{e.typeLabel}</span>
+                  <span className="ex-diff">{e.diff}</span>
+                  <span className="ex-pts">{e.pts}<span className="u">pts</span></span>
+                </div>
               ))}
-            </ul>
+            </div>
           </div>
         </section>
 
-        {/* Section 3 — Rewards */}
-        <section className="obo-section">
-          <div className="obo-section-head">
-            <div className="obo-section-num">III</div>
-            <div className="obo-section-meta">
-              <div className="obo-section-tag">Sekce</div>
-              <h2 className="obo-section-title">Odměny a výhody</h2>
-            </div>
-          </div>
+        <section className="section">
+          <div className="sec-eyebrow">Odměny a výhody</div>
+          <h2 className="sec-heading">Co za to <span className="pink">jednou bude</span></h2>
+          <p className="intro-quote" style={{ marginBottom: 30 }}>Reward systém se teď peče. Body si zatím šetříš na něco, co ještě neexistuje — a to je vlastně docela hezké. Tady je, co plánujeme.</p>
 
-          <p className="obo-section-lead">
-            Game of Life vyvíjí systém odměn propojený s pozicí na leaderboardu.
-            Tady je, co plánujeme — a co už dnes funguje.
-          </p>
-
-          <div className="obo-tiers">
-            {rewardTiers.map((t, i) => (
-              <article key={t.range} className={`obo-tier${t.accent ? ' obo-tier-accent' : ''}`}>
-                <div className="obo-tier-rk">{['I', 'II', 'III'][i]}</div>
-                <div className="obo-tier-range">{t.range} <span>bodů</span></div>
-                <h3 className="obo-tier-title">{t.title}</h3>
-                <p className="obo-tier-body">{t.body}</p>
-                <div className="obo-tier-perk">
-                  <span className="obo-tier-perk-mark">→</span>
-                  {t.perk}
-                </div>
+          <div className="rewards">
+            {rewards.map((r) => (
+              <article key={r.title} className="reward">
+                <span className="soon-stamp">★ Brzy</span>
+                <div className="reward-ico">{r.ico}</div>
+                <h3 className="reward-title">{r.title}</h3>
+                <p className="reward-text">{r.text}</p>
               </article>
             ))}
-          </div>
-
-          <div className="obo-cta">
-            <div className="obo-cta-stamp">
-              <span>Brzy</span>
-              <span className="obo-cta-stamp-arrow">→</span>
-            </div>
-            <p className="obo-cta-text">
-              Sleduj naše sociální sítě a web, ať ti neunikly nové informace
-              o odměnách a benefitech.
-            </p>
-            <div className="obo-cta-links">
-              <Button variant="cta" size="sm" as="a" href="https://www.instagram.com/gameofyolo" target="_blank" rel="noopener noreferrer">Instagram</Button>
-              <Button variant="cta" size="sm" as="a" href="https://www.facebook.com/gameofyolo" target="_blank" rel="noopener noreferrer">Facebook</Button>
-            </div>
           </div>
         </section>
       </main>
+
+      <section className="obo-cta" aria-label="Sleduj nás">
+        <div className="obo-cta-stamp">
+          <span>Brzy</span>
+          <span className="obo-cta-stamp-arrow">→</span>
+        </div>
+        <p className="obo-cta-text">Sleduj naše sociální sítě a web, ať ti neunikly nové informace o odměnách a benefitech.</p>
+        <div className="obo-cta-links">
+          <a className="btn-pill" href="https://www.instagram.com/gameofyolo" target="_blank" rel="noopener noreferrer">Instagram</a>
+          <a className="btn-pill" href="https://www.facebook.com/gameofyolo" target="_blank" rel="noopener noreferrer">Facebook</a>
+        </div>
+      </section>
+
+      <section className="cta-foot">
+        <div className="label">— Body se nesbírají od stolu —</div>
+        <div className="cta-row">
+          <Link to="/leaderboard" className="btn-ghost">← Zpět na leaderboard</Link>
+          <Link to="/akce" className="btn-pill">Zobrazit akce <span className="arr" /></Link>
+        </div>
+      </section>
     </div>
   );
 }

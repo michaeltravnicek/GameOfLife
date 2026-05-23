@@ -626,8 +626,8 @@
 
 /* ── Past events log ──────────────────────────────────────── */
 .pv3-log{
-  background: rgba(0,0,0,.3);
-  border: 1.5px dashed var(--pv3-rule);
+  background: #1a0f0a url('/assets/Grain_texture_blue.png') center/cover;
+  border: 1.5px solid rgba(255,241,212,.08);
   border-radius: 12px;
   padding: 8px;
   overflow: hidden;

@@ -187,6 +187,11 @@ if not DEBUG:
     # CompressedStaticFilesStorage (no manifest/hashing): simpler + forgiving.
     # Avoids "Missing staticfiles manifest entry" errors if anything is out of sync.
     STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
+    # Serve the Vite build at the site root so its root-absolute references
+    # (/assets/*, /gallery/*, /logos/*, /fonts/*) resolve. WHITENOISE_INDEX_FILE
+    # stays off, so "/" and SPA routes fall through to the react_index view
+    # (which sets the CSRF cookie).
+    WHITENOISE_ROOT = os.path.join(STATIC_ROOT, 'react')
 
 WHITENOISE_AUTOREFRESH = True
 
