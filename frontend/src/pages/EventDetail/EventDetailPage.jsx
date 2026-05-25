@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { fetchEventDetail, toggleRsvp } from '../../services/api';
+import { fetchEventDetail, toggleRsvp, submitFeedback, uploadEventImages } from '../../services/api';
 import { useCachedQuery, invalidateQuery } from '../../services/queryCache';
 import { reportError } from '../../services/errors';
 import { CACHE_TTL } from '../../constants/config';
@@ -17,10 +17,15 @@ const Lightbox = lazy(() => import('../../components/Lightbox/Lightbox'));
 export default function EventDetailPage() {
   const { slug } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, canUpload, isAdmin } = useAuth();
   const [busy, setBusy] = useState(false);
   const [lbOpen, setLbOpen] = useState(false);
   const [lbIndex, setLbIndex] = useState(0);
+  const [rating, setRating] = useState(0);
+  const [comment, setComment] = useState('');
+  const [fbBusy, setFbBusy] = useState(false);
+  const [fbDone, setFbDone] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   const { data: event, error: queryError, refetch: refetchEvent } = useCachedQuery(
     `event:${slug}`,
@@ -84,6 +89,36 @@ export default function EventDetailPage() {
       reportError('RSVP se nepodařilo. Zkus to prosím znovu.', err);
     } finally {
       setBusy(false);
+    }
+  };
+
+  const handleFeedback = async (e) => {
+    e.preventDefault();
+    if (!rating) return;
+    setFbBusy(true);
+    try {
+      await submitFeedback(slug, rating, comment.trim());
+      setFbDone(true);
+    } catch (err) {
+      reportError('Nepodařilo se odeslat hodnocení.', err);
+    } finally {
+      setFbBusy(false);
+    }
+  };
+
+  const handleUpload = async (e) => {
+    const files = e.target.files;
+    if (!files || !files.length) return;
+    setUploading(true);
+    try {
+      await uploadEventImages(slug, files);
+      invalidateQuery(`event:${slug}`);
+      await refetchEvent();
+    } catch (err) {
+      reportError('Nahrání obrázků se nepodařilo.', err);
+    } finally {
+      setUploading(false);
+      e.target.value = '';
     }
   };
 
@@ -181,16 +216,65 @@ export default function EventDetailPage() {
             </section>
           )}
 
-          {displayImages.length > 0 && (
+          {(displayImages.length > 0 || canUpload) && (
             <section className="section">
               <SectionHeader eyebrow="— Galerie —" heading="Z této akce." />
-              <div className="collage" data-count={imgCount}>
-                {displayImages.map((src, i) => (
-                  <figure key={i} onClick={() => openLb(i)}>
-                    <img src={src} alt={`Galerie ${i + 1}`} loading="lazy" />
-                  </figure>
-                ))}
-              </div>
+              {displayImages.length > 0 && (
+                <div className="collage" data-count={imgCount}>
+                  {displayImages.map((src, i) => (
+                    <figure key={i} onClick={() => openLb(i)}>
+                      <img src={src} alt={`Galerie ${i + 1}`} loading="lazy" />
+                    </figure>
+                  ))}
+                </div>
+              )}
+              {canUpload && (
+                <div className="admin-upload">
+                  <label className="admin-upload-btn">
+                    {uploading ? 'Nahrávám…' : '+ Nahrát fotky k akci'}
+                    <input type="file" accept="image/*" multiple hidden disabled={uploading} onChange={handleUpload} />
+                  </label>
+                </div>
+              )}
+            </section>
+          )}
+
+          {user && (
+            <section className="section">
+              <SectionHeader eyebrow="— Zpětná vazba —" heading="Jak se ti akce líbila?" />
+              {isAdmin && (
+                <Link to={`/sprava/zpetna-vazba?event=${slug}`} className="admin-btn fb-admin-link">
+                  📊 Zobrazit zpětnou vazbu k akci
+                </Link>
+              )}
+              {fbDone ? (
+                <p className="fb-thanks">Díky za hodnocení! 🙌</p>
+              ) : (
+                <form className="fb-form" onSubmit={handleFeedback}>
+                  <div className="fb-stars" role="radiogroup" aria-label="Hodnocení 1 až 5">
+                    {[1, 2, 3, 4, 5].map((n) => (
+                      <button
+                        type="button"
+                        key={n}
+                        className={`fb-star${n <= rating ? ' on' : ''}`}
+                        aria-label={`${n} z 5`}
+                        aria-pressed={n === rating}
+                        onClick={() => setRating(n)}
+                      >★</button>
+                    ))}
+                  </div>
+                  <textarea
+                    className="fb-comment"
+                    placeholder="Napiš pár slov (nepovinné)…"
+                    value={comment}
+                    onChange={(e) => setComment(e.target.value)}
+                    rows={3}
+                  />
+                  <Button type="submit" variant="cta" busy={fbBusy} disabled={!rating}>
+                    Odeslat hodnocení
+                  </Button>
+                </form>
+              )}
             </section>
           )}
         </main>

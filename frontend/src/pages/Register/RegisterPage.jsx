@@ -9,6 +9,7 @@ export default function RegisterPage() {
   const { register } = useAuth();
   const navigate = useNavigate();
   const [first, setFirst] = useState('');
+  const [username, setUsername] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [pw, setPw] = useState('');
@@ -27,6 +28,7 @@ export default function RegisterPage() {
     try {
       const u = await register({
         first_name: first,
+        username,
         email,
         phone,
         password1: pw,
@@ -71,6 +73,11 @@ export default function RegisterPage() {
                 id="reg-first" label="Jméno" type="text"
                 placeholder="Jan" autoComplete="given-name"
                 value={first} onChange={(e) => setFirst(e.target.value)} required
+              />
+              <FormInput
+                id="reg-username" label="Přezdívka" type="text"
+                placeholder="honzic" autoComplete="username"
+                value={username} onChange={(e) => setUsername(e.target.value)} required
               />
               <FormInput
                 id="reg-phone" label="Telefon (9 číslic)" type="tel"

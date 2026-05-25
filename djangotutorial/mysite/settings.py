@@ -12,7 +12,6 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 import os
 import dj_database_url
 from pathlib import Path
-from .middleware import Debug500Middleware
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -78,13 +77,13 @@ INSTALLED_APPS = [
     'accounts',
 ]
 
-LOGIN_URL = '/prihlasit/'
+# Auth lives in the React SPA; these only matter for Django's own redirects.
+LOGIN_URL = '/prihlasit'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 AUTHENTICATION_BACKENDS = ['django.contrib.auth.backends.ModelBackend']
 
 MIDDLEWARE = [
-    'mysite.middleware.Debug500Middleware',
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'corsheaders.middleware.CorsMiddleware',
@@ -117,8 +116,6 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'mysite.context_processors.current_season',
-                'mysite.context_processors.user_role',
             ],
         },
     },
@@ -132,6 +129,7 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.AllowAny',
     ],
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    'EXCEPTION_HANDLER': 'mysite.drf.api_exception_handler',
 }
 
 SPECTACULAR_SETTINGS = {

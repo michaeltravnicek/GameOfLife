@@ -8,6 +8,24 @@ import os
 
 from PIL import Image, ImageOps
 
+# Pre-resize guard: reject obvious junk before PIL loads the file into memory.
+ALLOWED_IMAGE_CONTENT_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
+MAX_UPLOAD_BYTES = 15 * 1024 * 1024  # 15 MB
+
+
+def validate_upload(field_file):
+    """Reject non-images and oversized uploads before they're saved/resized.
+
+    Raises ValueError with a user-facing message. The stored file is still
+    downscaled by ``resize_image`` on the model's ``save()`` — this only stops
+    a huge or wrong-type upload from reaching (and exhausting) PIL.
+    """
+    content_type = (getattr(field_file, "content_type", "") or "").lower()
+    if content_type and content_type not in ALLOWED_IMAGE_CONTENT_TYPES:
+        raise ValueError("Nepodporovaný formát. Povolené: JPEG, PNG, WebP, GIF.")
+    if (getattr(field_file, "size", 0) or 0) > MAX_UPLOAD_BYTES:
+        raise ValueError("Obrázek je příliš velký (max 15 MB).")
+
 
 def resize_image(field_file, max_width=1200, max_height=1200, quality=85):
     """Resize an ImageFieldFile in place. Safe to call multiple times.

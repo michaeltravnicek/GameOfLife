@@ -2,62 +2,151 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Switch from '../../components/Switch/Switch';
 import ChipSelect from '../../components/ChipSelect/ChipSelect';
+import { fetchMe, fetchProfile, updateProfile, fetchCategories } from '../../services/api';
 import './EditProfilePage.css';
 
-const CATEGORIES = ['Běh', 'Tanec', 'Karaoke', 'Bruslení', 'Akce', 'Festival', 'Plavání', 'Cyklistika', 'Lezení', 'Deskovky'];
 const BIO_MAX = 220;
 
 const SOCIALS = [
-  { key: 'ig', ico: 'IG', pre: 'instagram.com/', placeholder: 'uživatel' },
-  { key: 'st', ico: 'ST', pre: 'strava.com/athletes/', placeholder: 'uživatel' },
-  { key: 'sp', ico: 'SP', pre: 'spotify.com/user/', placeholder: 'uživatel' },
-  { key: 'tt', ico: 'TT', pre: 'tiktok.com/@', placeholder: 'uživatel' },
+  { key: 'instagram', ico: 'IG', pre: 'instagram.com/', placeholder: 'uživatel' },
+  { key: 'strava', ico: 'ST', pre: 'strava.com/athletes/', placeholder: 'uživatel' },
+  { key: 'spotify', ico: 'SP', pre: 'spotify.com/user/', placeholder: 'uživatel' },
+  { key: 'tiktok', ico: 'TT', pre: 'tiktok.com/@', placeholder: 'uživatel' },
 ];
 
 export default function EditProfilePage() {
+  const [loading, setLoading] = useState(true);
+  const [allCategories, setAllCategories] = useState([]);
   const [form, setForm] = useState({
-    name: 'Lukáš Müller',
-    handle: 'lukasmuller',
-    city: 'Brno, CZ',
-    since: '2024-02',
-    email: 'lukas@lukasmuller.cz',
-    phone: '+420 731 005 976',
-    bio: 'Karaoke v sobotu, deskovky ve středu, nahá míle kdykoliv. Každá akce je výmluva potkat lidi, co mají života plné zuby — a chtějí ho prožít naplno.',
+    first_name: '',
+    last_name: '',
+    username: '',
+    email: '',
+    city: '',
+    bio: '',
   });
   const [avatar, setAvatar] = useState(null);
-  const [categories, setCategories] = useState(['Běh', 'Tanec', 'Karaoke']);
-  const [socials, setSocials] = useState({ ig: 'lukasmuller', st: 'lukasmuller', sp: 'lukasmuller', tt: '' });
-  const [privacy, setPrivacy] = useState({ p_pts: false, p_events: false, p_members: true });
+  const [removePhoto, setRemovePhoto] = useState(false);
+  const [avatarFile, setAvatarFile] = useState(null);
+  const [categories, setCategories] = useState([]);
+  const [socials, setSocials] = useState({ instagram: '', strava: '', spotify: '', tiktok: '' });
+  const [privacy, setPrivacy] = useState({ hide_pts: false, hide_events: false, members_only: false });
 
   const [dirty, setDirty] = useState(false);
   const [saved, setSaved] = useState(false);
   const [barVisible, setBarVisible] = useState(false);
   const [btnSaved, setBtnSaved] = useState(false);
+  const [saveError, setSaveError] = useState(null);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    Promise.all([
+      fetchMe().then((data) => {
+        const username = data.user?.username;
+        return username ? fetchProfile(username) : null;
+      }),
+      fetchCategories(),
+    ])
+      .then(([profile, cats]) => {
+        if (profile) {
+          setForm({
+            first_name: profile.first_name || '',
+            last_name: profile.last_name || '',
+            username: profile.username,
+            email: profile.email || '',
+            city: profile.city || '',
+            bio: profile.bio || '',
+          });
+          setCategories((profile.favourite_categories || []).map((c) => c.name));
+          setSocials({
+            instagram: profile.instagram || '',
+            strava: profile.strava || '',
+            spotify: profile.spotify || '',
+            tiktok: profile.tiktok || '',
+          });
+          setPrivacy({
+            hide_pts: profile.privacy?.hide_pts || false,
+            hide_events: profile.privacy?.hide_events || false,
+            members_only: profile.privacy?.members_only || false,
+          });
+          if (profile.photo) {
+            setAvatar(profile.photo);
+          }
+        }
+        if (cats?.categories) {
+          setAllCategories(cats.categories);
+        }
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error('Failed to load profile:', err);
+        setLoading(false);
+      });
+  }, []);
 
   const markDirty = () => {
     setDirty(true);
     setSaved(false);
     setBarVisible(true);
+    setSaveError(null);
   };
 
   const setField = (key) => (e) => { setForm((f) => ({ ...f, [key]: e.target.value })); markDirty(); };
 
-  const handleSave = () => {
-    setDirty(false);
-    setSaved(true);
-    setBarVisible(true);
-    setBtnSaved(true);
+  const handleSave = async () => {
+    setSaving(true);
+    setSaveError(null);
+    try {
+      const formData = new FormData();
+      formData.append('first_name', form.first_name);
+      formData.append('last_name', form.last_name);
+      formData.append('username', form.username);
+      formData.append('email', form.email);
+      formData.append('city', form.city);
+      formData.append('bio', form.bio);
+      if (avatarFile) formData.append('photo', avatarFile);
+      if (removePhoto) formData.append('remove_photo', '1');
+      // ChipSelect works in category names; map them back to ids for the API.
+      const nameToId = new Map(allCategories.map((c) => [c.name, c.id]));
+      categories.forEach((name) => {
+        const id = nameToId.get(name);
+        if (id != null) formData.append('favourite_categories', id);
+      });
+      formData.append('hide_pts', privacy.hide_pts ? '1' : '0');
+      formData.append('hide_events', privacy.hide_events ? '1' : '0');
+      formData.append('members_only', privacy.members_only ? '1' : '0');
+      formData.append('instagram', socials.instagram);
+      formData.append('strava', socials.strava);
+      formData.append('spotify', socials.spotify);
+      formData.append('tiktok', socials.tiktok);
+
+      await updateProfile(formData);
+      setDirty(false);
+      setSaved(true);
+      setBarVisible(true);
+      setBtnSaved(true);
+      setRemovePhoto(false);
+      setAvatarFile(null);
+    } catch (err) {
+      setSaveError(err.response?.data?.error || 'Chyba při ukládání.');
+      setBarVisible(true);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleAvatar = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = () => { setAvatar(reader.result); markDirty(); };
+    reader.onload = () => { setAvatar(reader.result); };
     reader.readAsDataURL(file);
+    setAvatarFile(file);
+    setRemovePhoto(false);
+    markDirty();
   };
 
-  const removeAvatar = () => { setAvatar(null); markDirty(); };
+  const removeAvatar = () => { setAvatar(null); setAvatarFile(null); setRemovePhoto(true); markDirty(); };
 
   const setSocial = (key) => (e) => { setSocials((s) => ({ ...s, [key]: e.target.value })); markDirty(); };
   const togglePrivacy = (key) => (next) => { setPrivacy((p) => ({ ...p, [key]: next })); markDirty(); };
@@ -94,7 +183,12 @@ export default function EditProfilePage() {
     return () => clearTimeout(t);
   }, [btnSaved]);
 
-  const initials = form.name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase() || 'GO';
+  if (loading) {
+    return <div className="editprofile-page"><div style={{ padding: '2rem', textAlign: 'center' }}>Načítání profilu…</div></div>;
+  }
+
+  const fullName = `${form.first_name || ''} ${form.last_name || ''}`.trim();
+  const initials = fullName.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase() || 'GO';
 
   return (
     <div className="editprofile-page">
@@ -102,7 +196,7 @@ export default function EditProfilePage() {
       <div className="ep-grain" aria-hidden="true" />
 
       <section className="ep-head">
-        <div className="ep-crumb">— <Link to="/profil">Profil</Link> · Upravit —</div>
+        <div className="ep-crumb">— <Link to={`/profil/${form.username}`}>Profil</Link> · Upravit —</div>
         <div className="ep-eyebrow">Tvůj kus stránky</div>
         <h1>Upravit profil</h1>
         <p className="ep-lede">Tady si nastav, jak tě uvidí ostatní hráči — od jména po playlist, kterým je rozsekáš na karaoke.</p>
@@ -115,32 +209,28 @@ export default function EditProfilePage() {
           <div className="ep-sec-rule" />
           <div className="ep-sec-eyebrow">— 01 · Základy —</div>
           <h2 className="ep-sec-heading">Kdo <span className="pink">jsi.</span></h2>
-          <p className="ep-sec-sub">Tyhle údaje uvidí každý, kdo otevře tvůj profil. Telefon &amp; e-mail jsou jen pro organizátory.</p>
+          <p className="ep-sec-sub">Tyhle údaje uvidí každý, kdo otevře tvůj profil. E-mail jsou jen pro organizátory.</p>
           <div className="ep-card">
             <div className="ep-grid-2">
               <div className="ep-field">
-                <label htmlFor="f-name">Jméno &amp; příjmení</label>
-                <input className="ep-input" id="f-name" value={form.name} onChange={setField('name')} />
+                <label htmlFor="f-name">Jméno</label>
+                <input className="ep-input" id="f-name" value={form.first_name} onChange={setField('first_name')} />
               </div>
               <div className="ep-field">
-                <label htmlFor="f-handle">Přezdívka <span className="ep-hint">objeví se jako @handle</span></label>
-                <div className="ep-input-prefix"><span className="ep-pre">@</span><input className="ep-input" id="f-handle" value={form.handle} onChange={setField('handle')} /></div>
+                <label htmlFor="f-surname">Příjmení</label>
+                <input className="ep-input" id="f-surname" value={form.last_name} onChange={setField('last_name')} />
+              </div>
+              <div className="ep-field">
+                <label htmlFor="f-handle">Přezdívka <span className="ep-hint">nebude se dát měnit</span></label>
+                <div className="ep-input-prefix"><span className="ep-pre">@</span><input className="ep-input" id="f-handle" value={form.username} disabled /></div>
               </div>
               <div className="ep-field">
                 <label htmlFor="f-city">Město</label>
                 <input className="ep-input" id="f-city" value={form.city} onChange={setField('city')} placeholder="Brno, CZ" />
               </div>
               <div className="ep-field">
-                <label htmlFor="f-since">Hraje od</label>
-                <input className="ep-input" id="f-since" type="month" value={form.since} onChange={setField('since')} />
-              </div>
-              <div className="ep-field">
                 <label htmlFor="f-email">E-mail <span className="ep-hint">jen pro organizátory</span></label>
                 <input className="ep-input" id="f-email" type="email" value={form.email} onChange={setField('email')} />
-              </div>
-              <div className="ep-field">
-                <label htmlFor="f-phone">Telefon <span className="ep-hint">jen pro organizátory</span></label>
-                <input className="ep-input" id="f-phone" type="tel" value={form.phone} onChange={setField('phone')} />
               </div>
             </div>
           </div>
@@ -161,7 +251,7 @@ export default function EditProfilePage() {
             </div>
             <div className="ep-avatar-meta">
               <div className="ep-l">— Profilová fotka —</div>
-              <div className="ep-h">{form.name}</div>
+              <div className="ep-h">{fullName || 'Tvoje jméno'}</div>
               <div className="ep-s">JPG nebo PNG, alespoň 400×400 px. Co tam dáš — z toho ti budou ostatní vařit kávu.</div>
               <div className="ep-avatar-actions">
                 <label className="ep-btn primary" htmlFor="avatar-input">Nahrát fotku
@@ -202,7 +292,7 @@ export default function EditProfilePage() {
           <h2 className="ep-sec-heading">V čem <span className="pink">jedeš.</span></h2>
           <p className="ep-sec-sub">Vyber 1–4 kategorie, ve kterých se nejvíc realizuješ. Pomůže nám doporučit ti akce na míru.</p>
           <div className="ep-card">
-            <ChipSelect options={CATEGORIES} selected={categories} onChange={handleCategories} max={4} />
+            <ChipSelect options={allCategories.map((c) => c.name)} selected={categories} onChange={handleCategories} max={3} />
           </div>
         </section>
 
@@ -236,15 +326,15 @@ export default function EditProfilePage() {
           <div className="ep-card">
             <div className="ep-toggle-row">
               <div className="ep-txt"><h4>Skrýt celkové body</h4><p>Tvoje pozice v leaderboardu zůstane, body neuvidí nikdo kromě tebe.</p></div>
-              <Switch checked={privacy.p_pts} onChange={togglePrivacy('p_pts')} ariaLabel="Skrýt celkové body" />
+              <Switch checked={privacy.hide_pts} onChange={togglePrivacy('hide_pts')} ariaLabel="Skrýt celkové body" />
             </div>
             <div className="ep-toggle-row">
               <div className="ep-txt"><h4>Skrýt seznam absolvovaných akcí</h4><p>Tvůj profil ukáže jen highlighty.</p></div>
-              <Switch checked={privacy.p_events} onChange={togglePrivacy('p_events')} ariaLabel="Skrýt seznam akcí" />
+              <Switch checked={privacy.hide_events} onChange={togglePrivacy('hide_events')} ariaLabel="Skrýt seznam akcí" />
             </div>
             <div className="ep-toggle-row">
               <div className="ep-txt"><h4>Profil pouze pro členy</h4><p>Nepřihlášení návštěvníci uvidí jen jméno a fotku.</p></div>
-              <Switch checked={privacy.p_members} onChange={togglePrivacy('p_members')} ariaLabel="Profil pouze pro členy" />
+              <Switch checked={privacy.members_only} onChange={togglePrivacy('members_only')} ariaLabel="Profil pouze pro členy" />
             </div>
           </div>
         </section>
@@ -272,18 +362,18 @@ export default function EditProfilePage() {
         <div className="ep-commit-label">— Hotovo? —</div>
         <h2>Uložit změny</h2>
         <div className="ep-commit-row">
-          <Link className="ep-btn ghost" to="/profil">Zrušit</Link>
-          <button type="button" className="ep-btn primary lg" onClick={handleSave}>{btnSaved ? '✓ Uloženo' : 'Uložit profil'}</button>
+          <Link className="ep-btn ghost" to={`/profil/${form.username}`}>Zrušit</Link>
+          <button type="button" className="ep-btn primary lg" onClick={handleSave} disabled={saving}>{btnSaved ? '✓ Uloženo' : 'Uložit profil'}</button>
         </div>
-        <div className="ep-commit-note">{dirty ? '— Neuložené změny —' : '— Vše uloženo —'}</div>
+        <div className="ep-commit-note">{saveError ? `— Chyba: ${saveError} —` : (dirty ? '— Neuložené změny —' : '— Vše uloženo —')}</div>
       </section>
 
       <div className={`ep-savebar${barVisible ? ' visible' : ''}`}>
         <div className="ep-savebar-inner">
-          <div className={`ep-status${saved ? ' saved' : ''}`}><span className="ep-pulse" />{saved ? 'Vše uloženo' : 'Neuložené změny'}</div>
+          <div className={`ep-status${saved ? ' saved' : ''}${saveError ? ' error' : ''}`}><span className="ep-pulse" />{saveError ? saveError : (saved ? 'Vše uloženo' : 'Neuložené změny')}</div>
           <div className="ep-savebar-actions">
-            <Link className="ep-btn ghost" to="/profil">Zrušit</Link>
-            <button type="button" className="ep-btn primary" onClick={handleSave}>{btnSaved ? '✓ Uloženo' : 'Uložit změny'}</button>
+            <Link className="ep-btn ghost" to={`/profil/${form.username}`}>Zrušit</Link>
+            <button type="button" className="ep-btn primary" onClick={handleSave} disabled={saving}>{btnSaved ? '✓ Uloženo' : 'Uložit změny'}</button>
           </div>
         </div>
       </div>

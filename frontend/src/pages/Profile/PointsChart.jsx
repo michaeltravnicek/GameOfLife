@@ -54,7 +54,7 @@ export default function PointsChart({ stats, today }) {
     const parent = svg.parentElement.getBoundingClientRect();
     const cx = p.x * (r.width / W) + r.left - parent.left;
     const cy = p.y * (r.height / H) + r.top - parent.top;
-    setTip({ left: cx, top: cy - 12, nm: p.event.nm, pts: p.event.pts, cum: p.cumPts, date: p.event.date });
+    setTip({ left: cx, top: cy - 12, nm: p.event.name, pts: p.event.pts, cum: p.cumPts, date: p.event.date });
   };
 
   return (

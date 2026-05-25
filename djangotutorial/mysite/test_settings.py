@@ -11,9 +11,21 @@ Run:
 """
 import os
 os.environ.setdefault("DJANGO_SECRET_KEY", "test-only-not-secret")
-os.environ.setdefault("DATABASE_URL", "sqlite:///:memory:")
 
 from .settings import *  # noqa: F401,F403,E402
+
+# Force a portable in-memory DB. We override DATABASES directly rather than via
+# DATABASE_URL — manage.py calls load_dotenv() before settings load, so a
+# DATABASE_URL in .env would otherwise win and point tests at Postgres.
+DATABASES = {
+    "default": {"ENGINE": "django.db.backends.sqlite3", "NAME": ":memory:"}
+}
+
+# In-memory cache so the suite doesn't require a running Redis (CI / local dev).
+CACHES = {
+    "default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}
+}
+
 
 # Skip all app migrations — `manage.py test` will create tables from models.
 class _SkipMigrations:

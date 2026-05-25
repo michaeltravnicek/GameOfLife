@@ -1,7 +1,10 @@
 import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { fetchGallery } from '../../services/api';
+import { fetchGallery, uploadGalleryPhoto } from '../../services/api';
 import { usePaginatedQuery } from '../../services/usePaginatedQuery';
+import { prefetchQuery, invalidateQuery } from '../../services/queryCache';
+import { useAuth } from '../../context/AuthContext';
+import { reportError } from '../../services/errors';
 import { CACHE_TTL, GALLERY_PREFETCH_TAIL, PAGE_SIZE_GALLERY } from '../../constants/config';
 import { monthKey, monthLabel } from '../../utils/date';
 import './GalleryPage.css';
@@ -17,12 +20,14 @@ const extractHasMore = (r) => !!r.has_more;
 const extractCount = (r) => r.count ?? 0;
 
 export default function GalleryPage() {
+  const { canUpload } = useAuth();
   const [view, setView] = useState('slideshow');
   const [cur, setCur] = useState(0);
   const [activeMonth, setActiveMonth] = useState('all');
   const [lbOpen, setLbOpen] = useState(false);
   const [lbPhotos, setLbPhotos] = useState([]);
   const [lbIndex, setLbIndex] = useState(0);
+  const [uploading, setUploading] = useState(false);
 
   const tx = useRef(0);
   const viewToggleRef = useRef(null);
@@ -55,6 +60,23 @@ export default function GalleryPage() {
     extractHasMore,
     extractCount,
   });
+
+  const handleUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      await uploadGalleryPhoto({ image: file });
+      // Refresh the shared first page so the new photo shows up immediately.
+      invalidateQuery('gallery:first');
+      await prefetchQuery('gallery:first', () => fetchGallery({ limit: PAGE_SIZE, offset: 0 }));
+    } catch (err) {
+      reportError('Nahrání fotky se nepodařilo.', err);
+    } finally {
+      setUploading(false);
+      e.target.value = '';
+    }
+  };
 
   // If the loaded photo set shrinks (cache invalidation, filter), keep `cur`
   // in bounds so we don't index undefined and blank the slideshow.
@@ -116,6 +138,15 @@ export default function GalleryPage() {
         <p className="tagline">Vzpomínky, zážitky a okamžiky, které stojí za to si připomenout.</p>
         <div className="divider" />
       </div>
+
+      {canUpload && (
+        <div className="gal-upload">
+          <label className="gal-upload-btn">
+            {uploading ? 'Nahrávám…' : '+ Nahrát fotku do galerie'}
+            <input type="file" accept="image/*" hidden disabled={uploading} onChange={handleUpload} />
+          </label>
+        </div>
+      )}
 
       <div
         ref={viewToggleRef}

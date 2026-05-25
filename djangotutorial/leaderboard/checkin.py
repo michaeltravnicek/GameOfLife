@@ -9,10 +9,9 @@ from datetime import timedelta
 from math import asin, cos, radians, sin, sqrt
 from typing import Optional
 
-from django.core.cache import cache
 from django.utils import timezone
 
-from .cache_config import USER_TO_EVENT_DEPENDENT_CACHE_KEYS
+from .cache_config import invalidate_points_dependent_caches
 
 
 def haversine_distance_m(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
@@ -95,8 +94,7 @@ def validate_and_record_checkin(event, auth_user, latitude, longitude) -> Checki
         user=lb_user, event=event, defaults={"points": event.points},
     )
     if created:
-        for key in USER_TO_EVENT_DEPENDENT_CACHE_KEYS:
-            cache.delete(key)
+        invalidate_points_dependent_caches()
 
     return CheckinResult(
         ok=True,

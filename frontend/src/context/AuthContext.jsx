@@ -58,8 +58,16 @@ export function AuthProvider({ children }) {
     toast.info('Byl jsi odhlášen. Brzy nashle!', { title: 'Odhlášení' });
   }, []);
 
+  // Role-based capabilities, mirroring accounts/permissions.py
+  // (Profile.ROLE_ADMIN / ROLE_PHOTOGRAPHER).
+  const role = user?.role || '';
+  const isAdmin = role === 'admin';
+  const canUpload = role === 'admin' || role === 'photographer';
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, refresh }}>
+    <AuthContext.Provider
+      value={{ user, loading, login, register, logout, refresh, role, isAdmin, canUpload }}
+    >
       {children}
     </AuthContext.Provider>
   );

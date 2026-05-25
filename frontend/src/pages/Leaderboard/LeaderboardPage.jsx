@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { fetchLeaderboard } from '../../services/api';
+import { fetchLeaderboard, fetchSeasons } from '../../services/api';
 import { useCachedQuery } from '../../services/queryCache';
 import { CACHE_TTL } from '../../constants/config';
 import TabBar from '../../components/TabBar/TabBar';
@@ -10,20 +10,33 @@ import './LeaderboardPage.css';
 
 const TROPHIES = ['🏆', '🥈', '🥉'];
 
-const LB_TABS = [
-  { key: 'total', label: 'Celkem' },
-  { key: 'month', label: 'Tento rok' },
-];
+// Link target for a leaderboard entry: registered players go to their profile,
+// everyone else (Google-Sheets players with no account) to the player page.
+const playerLink = (p) =>
+  p.profile_username ? `/profil/${p.profile_username}` : `/hrac/${p.id}`;
 
 export default function LeaderboardPage() {
-  const [tab, setTab] = useState('total');
+  // `seasonId` is what we send the API: 'active' (default), 'all', or a season id.
+  const [seasonId, setSeasonId] = useState('active');
   const [query, setQuery] = useState('');
 
-  // Cached per period — server itself caches for 5 min, so we mirror that.
-  const period = tab === 'month' ? 'month' : 'total';
+  const { data: seasonsData } = useCachedQuery('seasons', fetchSeasons, { ttl: CACHE_TTL.LEADERBOARD });
+  const seasons = seasonsData?.seasons || [];
+
+  // Tabs: All-time + one per season. The active season's id-tab is highlighted
+  // while the API param is still the resolver token 'active'.
+  const activeSeason = useMemo(() => seasons.find((s) => s.is_active), [seasons]);
+  const tabs = useMemo(
+    () => [{ key: 'all', label: 'Celkem' }, ...seasons.map((s) => ({ key: String(s.id), label: s.name }))],
+    [seasons],
+  );
+  const activeTab = seasonId === 'active'
+    ? (activeSeason ? String(activeSeason.id) : 'all')
+    : seasonId;
+
   const { data, loading: queryLoading } = useCachedQuery(
-    `leaderboard:${period}`,
-    () => fetchLeaderboard(period),
+    `leaderboard:${seasonId}`,
+    () => fetchLeaderboard(seasonId),
     { ttl: CACHE_TTL.LEADERBOARD },
   );
   const entries = data?.entries || [];
@@ -35,10 +48,13 @@ export default function LeaderboardPage() {
   // podium display order: 2nd (left), 1st (center), 3rd (right)
   const podiumOrder = [1, 0, 2];
 
-  const visibleRest = useMemo(
-    () => (q ? rest.filter((p) => p.name.toLowerCase().includes(q)) : rest),
-    [rest, q],
-  );
+  // Derive `rest` inside the memo from `entries` (a stable cache reference).
+  // The outer `rest` above is a fresh array every render, so depending on it
+  // made this memo recompute every render and re-filter even while typing.
+  const visibleRest = useMemo(() => {
+    const r = entries.slice(3);
+    return q ? r.filter((p) => p.name.toLowerCase().includes(q)) : r;
+  }, [entries, q]);
 
   return (
     <div className="leaderboard-page">
@@ -46,16 +62,16 @@ export default function LeaderboardPage() {
       <div className="grain" />
 
       <header className="hero">
-        <div className="eyebrow">Ranking · Sezóna 2025/26</div>
+        <div className="eyebrow">Ranking · {data?.season?.name || 'Celkem'}</div>
         <h1>Leaderboard</h1>
         <div className="divider" />
       </header>
 
       <section className="controls">
         <TabBar
-          tabs={LB_TABS}
-          active={tab}
-          onChange={setTab}
+          tabs={tabs}
+          active={activeTab}
+          onChange={setSeasonId}
         />
         <SearchInput
           value={query}
@@ -81,32 +97,19 @@ export default function LeaderboardPage() {
                 if (!p) return null;
                 const cls = idx === 0 ? 'p1' : idx === 1 ? 'p2' : 'p3';
                 const dim = q && !p.name.toLowerCase().includes(q);
-                const profileLink = p.profile_username ? `/profil/${p.profile_username}` : null;
-                return profileLink ? (
+                return (
                   <Link
                     key={p.id}
-                    to={profileLink}
+                    to={playerLink(p)}
                     className={`pod ${cls} clickable`}
                     style={dim ? { opacity: 0.22 } : undefined}
                   >
                     <div className="trophy">{TROPHIES[idx]}</div>
-                    <Avatar name={p.name} size={idx === 0 ? 'xl' : 'lg'} rank={idx === 0 ? 'gold' : idx === 1 ? 'silver' : 'bronze'} className="ava" />
+                    <Avatar name={p.name} photo={p.photo} size={idx === 0 ? 'xl' : 'lg'} rank={idx === 0 ? 'gold' : idx === 1 ? 'silver' : 'bronze'} className="ava" />
                     <div className="nm">{p.name}</div>
                     <div className="pts">{p.total_points}<span className="pts-u">pts</span></div>
                     <div className="base"><span className="rk">{idx + 1}</span></div>
                   </Link>
-                ) : (
-                  <div
-                    key={p.id}
-                    className={`pod ${cls}`}
-                    style={dim ? { opacity: 0.22 } : undefined}
-                  >
-                    <div className="trophy">{TROPHIES[idx]}</div>
-                    <Avatar name={p.name} size={idx === 0 ? 'xl' : 'lg'} rank={idx === 0 ? 'gold' : idx === 1 ? 'silver' : 'bronze'} className="ava" />
-                    <div className="nm">{p.name}</div>
-                    <div className="pts">{p.total_points}<span className="pts-u">pts</span></div>
-                    <div className="base"><span className="rk">{idx + 1}</span></div>
-                  </div>
                 );
               })}
             </div>
@@ -122,32 +125,20 @@ export default function LeaderboardPage() {
                 {visibleRest.length === 0 && q ? (
                   <div className="empty">Nikdo nenalezen.</div>
                 ) : (
-                  visibleRest.map((p) => {
-                    const profileLink = p.profile_username ? `/profil/${p.profile_username}` : null;
-                    return profileLink ? (
-                      <Link
-                        key={p.id}
-                        to={profileLink}
-                        className="row clickable"
-                      >
-                        <div className="rk">{p.rank}.</div>
-                        <div className="nm">
-                          <Avatar name={p.name} size="sm" />
-                          <span className="txt">{p.name}</span>
-                        </div>
-                        <div className="pt">{p.total_points}<span className="u">pts</span></div>
-                      </Link>
-                    ) : (
-                      <div key={p.id} className="row">
-                        <div className="rk">{p.rank}.</div>
-                        <div className="nm">
-                          <Avatar name={p.name} size="sm" />
-                          <span className="txt">{p.name}</span>
-                        </div>
-                        <div className="pt">{p.total_points}<span className="u">pts</span></div>
+                  visibleRest.map((p) => (
+                    <Link
+                      key={p.id}
+                      to={playerLink(p)}
+                      className="row clickable"
+                    >
+                      <div className="rk">{p.rank}.</div>
+                      <div className="nm">
+                        <Avatar name={p.name} photo={p.photo} size="xs" />
+                        <span className="txt">{p.name}</span>
                       </div>
-                    );
-                  })
+                      <div className="pt">{p.total_points}<span className="u">pts</span></div>
+                    </Link>
+                  ))
                 )}
               </div>
             </div>

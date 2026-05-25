@@ -16,18 +16,19 @@ class SeasonAdmin(admin.ModelAdmin):
 
 @admin.register(Event)
 class EventAdmin(admin.ModelAdmin):
-    list_display = ("id", "name", "category", "date", "place", "points")
-    list_filter = ("category",)
+    list_display = ("id", "name", "category", "date", "place", "points", "visible_to_users")
+    list_filter = ("category", "visible_to_users")
     search_fields = ("name", "description")
     fieldsets = (
         (None, {
-            "fields": ("name", "category", "description", "rules", "date", "end_date", "points", "capacity", "image", "logo")
+            "fields": ("name", "category", "description", "rules", "date", "end_date",
+                       "points", "capacity", "image", "logo", "visible_to_users", "survey_url")
         }),
         ("Místo a check-in", {
             "description": "Vyplňte souřadnice pro aktivaci mapy a check-in tlačítka. Souřadnice najdete na maps.google.com (pravý klik → 'Co je tady?').",
             "fields": ("place", "latitude", "longitude", "checkin_radius"),
         }),
-        ("Technické", {
+        ("Technické (Google Sheets — volitelné)", {
             "classes": ("collapse",),
             "fields": ("sheet_id", "sheet_list_id", "slug"),
         }),

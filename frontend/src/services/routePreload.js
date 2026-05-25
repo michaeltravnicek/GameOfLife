@@ -15,7 +15,8 @@ import {
   fetchEvents,
   fetchGallery,
   fetchLeaderboard,
-  fetchHome,
+  fetchHero,
+  fetchStats,
   fetchEventDetail,
   fetchProfile,
 } from './api';
@@ -34,8 +35,20 @@ const importers = {
   '/registrace': () => import('../pages/Register/RegisterPage'),
 };
 
+// The home page is composed from several endpoints now (the old /home/ is gone),
+// so warming it means warming each piece the page reads on mount.
+const warmHome = () => {
+  prefetchQuery('hero', fetchHero);
+  prefetchQuery('stats', fetchStats);
+  prefetchQuery(
+    'events:upcoming|Vše|',
+    () => fetchEvents({ limit: PAGE_SIZE_EVENTS, offset: 0, period: 'upcoming' }),
+  );
+  prefetchQuery('leaderboard:home', () => fetchLeaderboard('active', { limit: 10 }));
+};
+
 const dataWarmers = {
-  '/': () => prefetchQuery('home', fetchHome),
+  '/': warmHome,
   '/akce': () => prefetchQuery(
     'events:upcoming|Vše|',
     () => fetchEvents({ limit: PAGE_SIZE_EVENTS, offset: 0, period: 'upcoming' }),
@@ -45,8 +58,8 @@ const dataWarmers = {
     () => fetchGallery({ limit: PAGE_SIZE_GALLERY, offset: 0 }),
   ),
   '/leaderboard': () => prefetchQuery(
-    'leaderboard:total',
-    () => fetchLeaderboard('total'),
+    'leaderboard:active',
+    () => fetchLeaderboard('active'),
   ),
 };
 

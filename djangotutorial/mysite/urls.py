@@ -14,25 +14,15 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path, re_path
 
-from leaderboard import views as legacy_views
 from . import views as react_views
 
 urlpatterns = [
     path("admin/", admin.site.urls),
 
     # JSON API for the React frontend
-    path("api/", include("leaderboard.api_urls")),
-    path("api/auth/", include("accounts.api_urls")),
-
-    # Legacy JSON helpers retained until React wires them
-    path("api/photos/<int:photo_id>/like/", legacy_views.toggle_photo_like_view, name="photo_like"),
-    path("api/profile/<str:username>/monthly-points/", legacy_views.profile_monthly_points_api, name="profile-monthly-points"),
-
-    # Django's built-in password-reset confirm/complete pages are still
-    # server-rendered. The React SPA owns the "forgot password" form at
-    # /zapomenute-heslo (POSTs to /api/auth/password-reset/); the email
-    # link then lands users on these Django pages to set a new password.
-    path("accounts/", include("accounts.urls")),
+    path("api/", include("leaderboard.api.urls")),
+    path("api/auth/", include("accounts.api.urls")),
+    path("api/profiles/", include("accounts.api.profiles_urls")),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 if settings.DEBUG:
@@ -43,7 +33,9 @@ if settings.DEBUG:
         path("api/schema/redoc/", SpectacularRedocView.as_view(url_name="schema"), name="redoc"),
     ]
 
-# React catch-all: must come last so /api/*, /admin/*, /accounts/* match first.
+# React catch-all: must come last so /api/*, /admin/*, /media/*, /static/* match first.
+# The (/|$) lets us also reserve the bare prefixes (e.g. /admin with no trailing
+# slash) for Django — otherwise React would serve them and show a blank screen.
 urlpatterns += [
-    re_path(r"^(?!api/|admin/|media/|static/|accounts/).*$", react_views.react_index, name="react-index"),
+    re_path(r"^(?!(api|admin|media|static)(/|$)).*$", react_views.react_index, name="react-index"),
 ]

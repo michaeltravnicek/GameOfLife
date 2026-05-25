@@ -1,8 +1,10 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { fetchHome } from '../../services/api';
+import {
+  fetchHero, fetchStats, fetchCheckinEvents, fetchEvents, fetchLeaderboard,
+} from '../../services/api';
 import { useCachedQuery } from '../../services/queryCache';
-import { CACHE_TTL } from '../../constants/config';
+import { CACHE_TTL, PAGE_SIZE_EVENTS } from '../../constants/config';
 import EventCard from '../../components/EventCard/EventCard';
 import Avatar from '../../components/Avatar/Avatar';
 import Hero from '../../components/Hero/Hero';
@@ -19,21 +21,43 @@ const TROPHIES = { 1: '🏆', 2: '🥈', 3: '🥉' };
 // Static row style — extracted so React skips diffing on every render.
 const LB_ROW_LINK_STYLE = { textDecoration: 'none', color: 'inherit' };
 
-const INITIAL_DATA = { hero_events: [], upcoming_events: [], top_players: [], about_stats: {} };
+const EMPTY = [];
+const HOME_TOP_PLAYERS = 10;
 
 export default function HomePage() {
-  const { data: payload } = useCachedQuery('home', fetchHome, { ttl: CACHE_TTL.HOME });
-  const data = payload || INITIAL_DATA;
+  // The old monolithic /home/ endpoint is gone — the page now composes several
+  // independent, individually-cached endpoints. They fetch in parallel (each
+  // useCachedQuery fires its own request), so there's no waterfall.
+  const { data: hero } = useCachedQuery('hero', fetchHero, { ttl: CACHE_TTL.HOME });
+  const { data: statsData } = useCachedQuery('stats', fetchStats, { ttl: CACHE_TTL.HOME });
+  const { data: checkin } = useCachedQuery('checkin-events', fetchCheckinEvents, { ttl: CACHE_TTL.EVENT_DETAIL });
+  const { data: upcomingData } = useCachedQuery(
+    'events:upcoming|Vše|',
+    () => fetchEvents({ limit: PAGE_SIZE_EVENTS, offset: 0, period: 'upcoming' }),
+    { ttl: CACHE_TTL.EVENTS },
+  );
+  const { data: lbData } = useCachedQuery(
+    'leaderboard:home',
+    () => fetchLeaderboard('active', { limit: HOME_TOP_PLAYERS }),
+    { ttl: CACHE_TTL.LEADERBOARD },
+  );
+
   const [galCur, setGalCur] = useState(0);
+
+  const heroEvents = hero?.hero_events || EMPTY;
+  const upcomingEvents = upcomingData?.events || EMPTY;
+  const topPlayers = lbData?.entries || EMPTY;
+  const checkinEvents = checkin?.events || EMPTY;
+  const stats = statsData || {};
 
   // Stable references across renders — only recomputed when API data changes.
   const heroSlides = useMemo(
-    () => (data.hero_events.length ? data.hero_events : FALLBACK_HERO_SLIDES),
-    [data.hero_events],
+    () => (heroEvents.length ? heroEvents : FALLBACK_HERO_SLIDES),
+    [heroEvents],
   );
   const galImages = useMemo(
-    () => (data.hero_events.length ? data.hero_events.map((h) => h.url) : FALLBACK_GAL),
-    [data.hero_events],
+    () => (heroEvents.length ? heroEvents.map((h) => h.url) : FALLBACK_GAL),
+    [heroEvents],
   );
 
   const galN = galImages.length;
@@ -46,12 +70,10 @@ export default function HomePage() {
     [galN],
   );
 
-  const stats = data.about_stats || {};
-
   return (
     <div className="home-page">
 
-      <CheckinBanner events={data.active_checkin_events || []} />
+      <CheckinBanner events={checkinEvents} />
 
       <Hero slides={heroSlides} ctaTo="/akce" ctaLabel="Zobrazit akce" />
 
@@ -59,10 +81,10 @@ export default function HomePage() {
       <section className="events-section">
         <h2 className="sec-title"><span className="star">✦</span> Nadcházející akce <span className="star">✦</span></h2>
         <div className="events-grid">
-          {data.upcoming_events.length === 0 && (
+          {upcomingEvents.length === 0 && (
             <p className="events-empty">Žádné nadcházející akce. Sleduj nás na sítích!</p>
           )}
-          {data.upcoming_events.map((e) => (
+          {upcomingEvents.map((e) => (
             <EventCard key={e.id} event={e} />
           ))}
         </div>
@@ -76,23 +98,22 @@ export default function HomePage() {
           <h2 className="lb-title"><span className="tr">🏆</span> Top hráči <span className="tr">🏆</span></h2>
           <div className="lb-card">
             <div className="lb-head"><div>#</div><div>hráč</div><div className="lb-head-pts">pts</div></div>
-            {data.top_players.map((p) => {
+            {topPlayers.map((p) => {
               const isTop = p.rank <= 3;
-              const link = p.profile_username ? `/profil/${p.profile_username}` : null;
-              const Row = link ? Link : 'div';
+              const link = p.profile_username ? `/profil/${p.profile_username}` : `/hrac/${p.id}`;
               return (
-                <Row
+                <Link
                   key={p.id}
-                  to={link || undefined}
+                  to={link}
                   className="lb-row"
-                  style={link ? LB_ROW_LINK_STYLE : undefined}
+                  style={LB_ROW_LINK_STYLE}
                 >
                   <span className={`lb-rank${isTop ? ' top' : ''}`}>
                     {TROPHIES[p.rank] || `${p.rank}.`}
                   </span>
-                  <div className="lb-name"><Avatar name={p.name} size="xs" className="lb-av" />{p.name}</div>
+                  <div className="lb-name"><Avatar name={p.name} photo={p.photo} size="xs" className="lb-av" />{p.name}</div>
                   <div className="lb-pts">{p.total_points}</div>
-                </Row>
+                </Link>
               );
             })}
           </div>

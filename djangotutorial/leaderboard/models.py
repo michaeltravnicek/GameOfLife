@@ -1,4 +1,6 @@
 from django.conf import settings
+from django.core.exceptions import ValidationError
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils.text import slugify
 
@@ -28,8 +30,9 @@ class Category(models.Model):
 
 
 class Event(models.Model):
-    sheet_id = models.CharField(max_length=255)
-    sheet_list_id = models.CharField(max_length=255)
+    # Google Sheets is optional — events can be created manually in the admin.
+    sheet_id = models.CharField(max_length=255, blank=True, default="")
+    sheet_list_id = models.CharField(max_length=255, blank=True, default="")
     name = models.CharField(max_length=255, default="Akce")
     description = models.CharField(max_length=1023, default="")
     place = models.CharField(max_length=255)
@@ -39,20 +42,31 @@ class Event(models.Model):
     logo = models.ImageField(upload_to="event_logos/", blank=True, null=True)
     rules = models.TextField(blank=True, default="")
     capacity = models.IntegerField(null=True, blank=True)
+    visible_to_users = models.BooleanField(
+        default=True,
+        help_text="Pokud vypnuto, akce se nezobrazuje uživatelům (jen v adminu).",
+    )
+    survey_url = models.URLField(
+        blank=True, default="",
+        help_text="Volitelný dotazník. Zobrazí se uživateli po přihlášení na akci.",
+    )
     end_date = models.DateTimeField(
         null=True, blank=True,
         help_text="Konec check-in okna. Pokud nevyplněno, použije se začátek + 4 hodiny."
     )
     latitude = models.FloatField(
         null=True, blank=True,
+        validators=[MinValueValidator(-90), MaxValueValidator(90)],
         help_text="Zeměpisná šířka (např. 49.1951). Povinné pro mapu a check-in."
     )
     longitude = models.FloatField(
         null=True, blank=True,
+        validators=[MinValueValidator(-180), MaxValueValidator(180)],
         help_text="Zeměpisná délka (např. 16.6068). Povinné pro mapu a check-in."
     )
     checkin_radius = models.IntegerField(
         default=500,
+        validators=[MinValueValidator(1)],
         help_text="Poloměr check-in zóny v metrech. Výchozí: 500 m."
     )
 
@@ -61,6 +75,13 @@ class Event(models.Model):
         related_name='events',
     )
     slug = models.SlugField(max_length=280, unique=True, null=True, blank=True)
+
+    def clean(self):
+        # Geo check-in needs a full coordinate pair — reject a half-set location.
+        if (self.latitude is None) != (self.longitude is None):
+            raise ValidationError(
+                "Zadej zeměpisnou šířku i délku, nebo ani jednu."
+            )
 
     def save(self, *args, **kwargs):
         if not self.slug:
@@ -75,12 +96,9 @@ class Event(models.Model):
         if self.image:
             from .image_utils import resize_image
             resize_image(self.image, max_width=1200, max_height=1200, quality=85)
-        # Drop every cache entry that depends on the Event table — the
-        # canonical list lives in cache_config so we can't forget a new one.
-        from django.core.cache import cache
-        from .cache_config import EVENT_DEPENDENT_CACHE_KEYS
-        for key in EVENT_DEPENDENT_CACHE_KEYS:
-            cache.delete(key)
+        # Best-effort: a cache outage must not break saving an event.
+        from .cache_config import invalidate_event_caches
+        invalidate_event_caches()
 
     def __str__(self):
         return f"{self.name} - {self.date} - {self.place} - {self.sheet_id}"
@@ -89,9 +107,6 @@ class Event(models.Model):
     def checkin_window_end(self):
         from datetime import timedelta
         return self.end_date if self.end_date else self.date + timedelta(hours=4)
-
-    class Meta:
-        unique_together = ("sheet_id", "sheet_list_id")
 
 
 class ImageToEvent(models.Model):
@@ -103,9 +118,8 @@ class ImageToEvent(models.Model):
         if self.image:
             from .image_utils import resize_image
             resize_image(self.image, max_width=1024, max_height=1024, quality=75)
-        from django.core.cache import cache
-        from .cache_config import CACHE_KEY_HERO_IMAGES
-        cache.delete(CACHE_KEY_HERO_IMAGES)
+        from .cache_config import invalidate_hero_cache
+        invalidate_hero_cache()
 
 
 class User(models.Model):

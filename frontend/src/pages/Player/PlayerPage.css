@@ -1,0 +1,38 @@
+/* All selectors scoped under .player-page. Mirrors the leaderboard look:
+   fixed photo background + blue grain overlay, with the shared <Table>
+   re-textured to "blue 2". */
+.player-page{min-height:100vh;color:var(--color-cream-light);overflow-x:hidden;padding:120px 20px 80px;max-width:900px;margin:0 auto}
+
+.player-page .stage{position:fixed;inset:0;z-index:-2;background:url('/gallery/gal0.jpg') center 28%/cover no-repeat;filter:saturate(.7) contrast(1.02);transform:scale(1.05)}
+.player-page .stage::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 15%,rgba(45,42,142,.12) 0%,transparent 55%),linear-gradient(180deg,rgba(45,42,142,.10) 0%,rgba(26,15,10,.62) 50%,rgba(26,15,10,.84) 100%)}
+.player-page .grain{position:fixed;inset:0;z-index:-1;pointer-events:none;background:url('/assets/Grain_texture_blue2.png') 0 0/var(--tex-size) var(--tex-size) repeat;opacity:var(--grain-opacity);mix-blend-mode:overlay}
+
+.player-page .player-status{text-align:center;padding:80px 20px;color:var(--alpha-cream-55);font-family:var(--font-mono);font-style:italic}
+
+.player-page .player-hero{text-align:center;display:flex;flex-direction:column;align-items:center;gap:12px;margin-bottom:36px}
+.player-page .player-eyebrow{font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.18em;font-size:var(--text-xs);color:var(--alpha-cream-55)}
+.player-page .player-avatar{width:96px;height:96px;font-size:30px}
+.player-page .player-name{font-family:var(--font-display);font-size:var(--text-5xl);letter-spacing:.02em;margin:2px 0}
+.player-page .player-stats{display:flex;gap:38px;margin-top:6px}
+.player-page .player-stat{display:flex;flex-direction:column;align-items:center;gap:2px}
+.player-page .player-stat-val{font-family:var(--font-number);font-size:var(--text-2xl);color:var(--color-pink)}
+.player-page .player-stat-label{font-size:var(--text-xs);text-transform:uppercase;letter-spacing:.14em;color:var(--alpha-cream-45)}
+.player-page .player-note{font-size:var(--text-sm);color:var(--alpha-cream-45);font-style:italic;margin:4px 0 0}
+.player-page .player-divider{width:48px;height:2px;background:var(--color-pink);margin-top:14px;opacity:.7}
+
+.player-page .player-list-label{font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.16em;font-size:var(--text-xs);color:var(--alpha-cream-55);margin-bottom:14px}
+
+/* Re-texture the shared Table with blue 2 (instead of the default blue). */
+.player-page .data-table-wrap.pl-table{background-image:url('/assets/Grain_texture_blue2.png')}
+.player-page .pl-link{color:var(--color-pink);text-decoration:none}
+.player-page .pl-link:hover{text-decoration:underline}
+
+.player-page .player-back{margin-top:36px;text-align:center}
+.player-page .player-back a{color:var(--color-pink);text-decoration:none;font-family:var(--font-mono);letter-spacing:.04em}
+.player-page .player-back a:hover{text-decoration:underline}
+
+@media(max-width:520px){
+  .player-page{padding:100px 14px 60px}
+  .player-page .player-stats{gap:24px}
+  .player-page .player-name{font-size:var(--text-4xl)}
+}

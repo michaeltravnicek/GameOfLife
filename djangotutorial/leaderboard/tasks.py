@@ -1,28 +1,19 @@
-import re
-from background_task import background
+import gc
 from datetime import datetime
+
+from background_task import background
+from django.db import reset_queries
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
-import gc
 
-from leaderboard.models import Event, User, UserToEvent  # import modelů
-from django.core.cache import cache
-from django.db import reset_queries
 from leaderboard.models import Event, User, UserToEvent
+from leaderboard.utils import parse_phone_number
 
 SCOPES = [
     'https://www.googleapis.com/auth/drive.metadata.readonly',
     'https://www.googleapis.com/auth/spreadsheets.readonly'
 ]
 SERVICE_ACCOUNT_FILE = '../credentials.json'
-
-
-def parse_phone_number(raw_number: str) -> str:
-    if not raw_number:
-        return None
-
-    clean_number = re.sub(r"\D", "", raw_number)
-    return clean_number if len(clean_number) == 9 else None
 
 
 def insert_event(sheet_id: str, sheet: dict):
@@ -42,12 +33,6 @@ def insert_event(sheet_id: str, sheet: dict):
     if created:
         print("New event")
     return event
-
-
-def handle_events(sheets: dict):
-    for sheet in sheets.get("sheets", []):
-        print("insert: ", sheet["name"])
-        insert_event(sheet)
 
 
 def handle_new_user(rec: tuple) -> User | None:
@@ -136,7 +121,6 @@ def main(run_all: bool):
             spreadsheetId=sheet_id
         ).execute()
 
-        #handle_events(sheet_info)
         for sheet_meta in spreadsheet.get("sheets", []):
             title = sheet_meta["properties"]["title"]
             print(f"Processing sheet: {title}")
@@ -157,8 +141,11 @@ def main(run_all: bool):
     del service_sheets, sheets, service
     gc.collect()
 
+    # Points changed → drop the leaderboard / stats caches.
+    from leaderboard.cache_config import invalidate_points_dependent_caches
+    invalidate_points_dependent_caches()
+
 
 @background(schedule=60)
-def run_google_sheet_sync():
-    main()
-    #run_google_sheet_sync()
+def run_google_sheet_sync(run_all=True):
+    main(run_all)

@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { fetchEvents } from '../../services/api';
+import { Link } from 'react-router-dom';
+import { fetchEvents, fetchSeasons } from '../../services/api';
 import { usePaginatedQuery } from '../../services/usePaginatedQuery';
+import { useCachedQuery } from '../../services/queryCache';
+import { useAuth } from '../../context/AuthContext';
 import { CACHE_TTL, PAGE_SIZE_EVENTS, SEARCH_DEBOUNCE_MS } from '../../constants/config';
 import EventCard from '../../components/EventCard/EventCard';
 import TabBar from '../../components/TabBar/TabBar';
@@ -19,13 +22,22 @@ const extractHasMore = (r) => !!r.has_more;
 const extractCount = (r) => r.count ?? 0;
 
 export default function EventsPage() {
+  const { isAdmin } = useAuth();
   const [tab, setTab] = useState('upcoming');
   const [city, setCity] = useState('Vše');
+  const [season, setSeason] = useState('all'); // 'all' or a season id
   const [query, setQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
   // Cities are returned only on the first page; we keep them locally so
   // they survive filter changes.
   const [cities, setCities] = useState([]);
+
+  // Season selector options (All-time + each season).
+  const { data: seasonsData } = useCachedQuery('seasons', fetchSeasons, { ttl: CACHE_TTL.LEADERBOARD });
+  const seasonChoices = useMemo(
+    () => [{ id: 'all', name: 'Vše' }, ...(seasonsData?.seasons || []).map((s) => ({ id: s.id, name: s.name }))],
+    [seasonsData],
+  );
 
   // Debounce search input so we don't fire a request per keystroke.
   useEffect(() => {
@@ -38,15 +50,16 @@ export default function EventsPage() {
     const params = { limit, offset };
     if (tab !== 'all') params.period = tab;
     if (city !== 'Vše') params.city = city;
+    if (season !== 'all') params.season_id = season;
     if (debouncedQuery.trim()) params.q = debouncedQuery.trim();
     return params;
-  }, [tab, city, debouncedQuery]);
+  }, [tab, city, season, debouncedQuery]);
 
   // Cache key encodes the filter combo so going back to the same filters
   // hits cache instantly.
   const cacheKey = useMemo(
-    () => `events:${tab}|${city}|${debouncedQuery.trim()}`,
-    [tab, city, debouncedQuery],
+    () => `events:${tab}|${city}|${season}|${debouncedQuery.trim()}`,
+    [tab, city, season, debouncedQuery],
   );
 
   const {
@@ -104,7 +117,24 @@ export default function EventsPage() {
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Hledat akci…"
         />
+        {isAdmin && (
+          <Link to="/sprava/zpetna-vazba" className="admin-btn">📊 Zpětná vazba</Link>
+        )}
       </section>
+
+      {seasonChoices.length > 1 && (
+        <section className="locations seasons">
+          {seasonChoices.map((s) => (
+            <button
+              key={s.id}
+              className={`loc${season === s.id ? ' on' : ''}`}
+              onClick={() => setSeason(s.id)}
+            >
+              {s.name}
+            </button>
+          ))}
+        </section>
+      )}
 
       <section className="locations">
         {cityChoices.map((c) => (

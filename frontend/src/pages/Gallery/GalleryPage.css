@@ -1,5 +1,8 @@
 /* All selectors scoped under .gallery-page to prevent cross-page leaks. */
 .gallery-page{min-height:100vh;color:var(--color-cream-light);overflow-x:hidden}
+.gallery-page .gal-upload{position:relative;z-index:2;text-align:center;margin:8px auto 0}
+.gallery-page .gal-upload-btn{display:inline-block;cursor:pointer;padding:10px 20px;border-radius:var(--radius-pill);border:1px dashed var(--alpha-pink-45);color:var(--color-pink);font-family:var(--font-mono);font-size:var(--text-sm);letter-spacing:.04em;transition:background .15s}
+.gallery-page .gal-upload-btn:hover{background:var(--alpha-pink-12)}
 .gallery-page .bg-texture{position:fixed;inset:0;z-index:0;background:url('/gallery/gal2.jpg') center 30%/cover no-repeat;filter:saturate(.78) contrast(1.02);transform:scale(1.06)}
 .gallery-page .bg-texture::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(45,42,142,.25) 0%,transparent 38%),linear-gradient(180deg,rgba(26,15,10,.68) 0%,rgba(26,15,10,.86) 38%,rgba(26,15,10,.96) 100%)}
 

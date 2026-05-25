@@ -1,12 +1,10 @@
-import re
-
 from django import forms
-from django.contrib.auth import authenticate
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from django.db import transaction
 
 from leaderboard.models import User as LeaderboardUser
+from leaderboard.utils import parse_phone_number
 
 from .models import Profile
 
@@ -19,75 +17,8 @@ def _input_attrs(placeholder="", autocomplete=""):
     }
 
 
-def parse_phone_number(raw: str):
-    """Parse a Czech phone number to the 9-digit integer form used by leaderboard.User.number."""
-    if not raw:
-        return None
-    digits = re.sub(r"\D", "", raw)
-    if digits.startswith("420") and len(digits) == 12:
-        digits = digits[3:]
-    if len(digits) == 9:
-        try:
-            return int(digits)
-        except ValueError:
-            return None
-    return None
-
-
-class PhoneOrUsernameLoginForm(forms.Form):
-    identifier = forms.CharField(
-        label="Telefon nebo přezdívka",
-        widget=forms.TextInput(attrs=_input_attrs("Telefon nebo přezdívka", "username")),
-    )
-    password = forms.CharField(
-        label="Heslo",
-        widget=forms.PasswordInput(attrs=_input_attrs("Heslo", "current-password")),
-    )
-
-    def __init__(self, request=None, *args, **kwargs):
-        self.request = request
-        self.user_cache = None
-        super().__init__(*args, **kwargs)
-
-    def clean(self):
-        cleaned = super().clean()
-        identifier = cleaned.get("identifier")
-        password = cleaned.get("password")
-        if not identifier or not password:
-            return cleaned
-
-        username = None
-        phone = parse_phone_number(identifier)
-        if phone is not None:
-            try:
-                lb_user = LeaderboardUser.objects.get(number=phone)
-                profile = getattr(lb_user, "profile", None)
-                if profile is not None:
-                    username = profile.user.username
-            except LeaderboardUser.DoesNotExist:
-                pass
-
-        if username is None:
-            if User.objects.filter(username=identifier).exists():
-                username = identifier
-
-        if username is None:
-            raise forms.ValidationError("Uživatel nenalezen.")
-
-        user = authenticate(self.request, username=username, password=password)
-        if user is None:
-            raise forms.ValidationError("Nesprávné heslo.")
-        if not user.is_active:
-            raise forms.ValidationError("Účet je deaktivovaný.")
-
-        self.user_cache = user
-        return cleaned
-
-    def get_user(self):
-        return self.user_cache
-
-
 class CustomUserCreationForm(UserCreationForm):
+    """Registration form: email as username, phone links to a leaderboard user."""
     first_name = forms.CharField(
         label="Jméno",
         max_length=150,
@@ -106,10 +37,17 @@ class CustomUserCreationForm(UserCreationForm):
 
     class Meta:
         model = User
-        fields = ("first_name", "email", "phone", "password1", "password2")
+        fields = ("first_name", "username", "email", "phone", "password1", "password2")
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        # Keep the default `username` field (with its validators) but present it
+        # as the public "přezdívka". It becomes the account's username.
+        self.fields["username"].label = "Přezdívka"
+        self.fields["username"].help_text = "Tvé veřejné jméno na webu."
+        self.fields["username"].widget = forms.TextInput(
+            attrs=_input_attrs("prezdivka", "username")
+        )
         self.fields["password1"].label = "Heslo"
         self.fields["password1"].widget = forms.PasswordInput(
             attrs=_input_attrs("Heslo", "new-password")
@@ -118,12 +56,15 @@ class CustomUserCreationForm(UserCreationForm):
         self.fields["password2"].widget = forms.PasswordInput(
             attrs=_input_attrs("Heslo znovu", "new-password")
         )
-        if "username" in self.fields:
-            del self.fields["username"]
+
+    def clean_username(self):
+        username = self.cleaned_data["username"].strip()
+        if User.objects.filter(username__iexact=username).exists():
+            raise forms.ValidationError("Tato přezdívka je už obsazená.")
+        return username
 
     def clean_phone(self):
-        raw = self.cleaned_data["phone"]
-        phone = parse_phone_number(raw)
+        phone = parse_phone_number(self.cleaned_data["phone"])
         if phone is None:
             raise forms.ValidationError("Zadej platné 9-místné české číslo.")
         return phone
@@ -148,7 +89,7 @@ class CustomUserCreationForm(UserCreationForm):
     @transaction.atomic
     def save(self, commit=True):
         user = User.objects.create_user(
-            username=self.cleaned_data["email"],
+            username=self.cleaned_data["username"],
             email=self.cleaned_data["email"],
             password=self.cleaned_data["password1"],
             first_name=self.cleaned_data["first_name"],
@@ -162,53 +103,3 @@ class CustomUserCreationForm(UserCreationForm):
             )
         Profile.objects.create(user=user, leaderboard_user=lb_user)
         return user
-
-
-class ProfileEditForm(forms.Form):
-    photo = forms.ImageField(
-        label="Profilová fotka",
-        required=False,
-        widget=forms.FileInput(attrs={"class": "field-input", "accept": "image/*"}),
-    )
-    instagram = forms.CharField(
-        label="Instagram",
-        max_length=255,
-        required=False,
-        widget=forms.TextInput(attrs=_input_attrs("@tvoj_instagram", "url")),
-    )
-
-    def __init__(self, *args, user=None, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.user = user
-        if user:
-            from leaderboard.models import ProfileQuestion
-            for question in ProfileQuestion.objects.all():
-                field_name = f"question_{question.id}"
-                self.fields[field_name] = forms.CharField(
-                    label=question.text,
-                    required=False,
-                    widget=forms.Textarea(attrs={
-                        "class": "field-input",
-                        "rows": "3",
-                        "placeholder": "Tvá odpověď...",
-                    }),
-                )
-
-    def save(self):
-        if not self.user:
-            return
-        profile, _ = Profile.objects.get_or_create(user=self.user)
-        if "photo" in self.cleaned_data and self.cleaned_data["photo"]:
-            profile.photo = self.cleaned_data["photo"]
-        profile.instagram = self.cleaned_data.get("instagram", "")
-        profile.save()
-
-        from leaderboard.models import ProfileQuestion, ProfileAnswer
-        for question in ProfileQuestion.objects.all():
-            field_name = f"question_{question.id}"
-            answer_text = self.cleaned_data.get(field_name, "")
-            ProfileAnswer.objects.update_or_create(
-                auth_user=self.user,
-                question=question,
-                defaults={"answer": answer_text},
-            )
