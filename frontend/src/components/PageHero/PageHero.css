@@ -1,0 +1,42 @@
+/* Shared interior-page hero. Unifies top padding, H1 scale, and entrance
+   animation so every page matches the leaderboard reference. */
+.page-hero{position:relative;z-index:2;max-width:1100px;margin:0 auto;padding:148px 24px 16px;text-align:center}
+
+.page-hero-eyebrow{font-family:var(--font-mono);font-style:italic;font-size:13px;letter-spacing:.3em;text-transform:uppercase;color:var(--color-pink);margin-bottom:8px;display:inline-flex;align-items:center;gap:10px}
+.page-hero-eyebrow::before,.page-hero-eyebrow::after{content:'✦';font-size:11px;opacity:.9}
+
+.page-hero-title{font-family:var(--font-display);font-weight:400;font-size:clamp(70px,10vw,140px);line-height:.92;color:var(--color-cream-light);text-transform:uppercase;letter-spacing:.03em;text-shadow:0 6px 34px var(--alpha-black-60)}
+
+.page-hero-tagline{font-family:var(--font-serif);font-weight:300;font-style:italic;font-size:14px;color:var(--alpha-cream-70);max-width:580px;margin:12px auto 0;line-height:1.5}
+
+.page-hero-divider{width:120px;height:1px;margin:26px auto 0;background:repeating-linear-gradient(90deg,var(--alpha-cream-45) 0 5px,transparent 5px 10px)}
+
+/* ── Entrance animation (staggered fade-up) ── */
+@keyframes heroFade{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
+.page-hero-eyebrow{animation:heroFade .6s cubic-bezier(.22,.68,0,1.2) both .05s}
+.page-hero-title{animation:heroFade .8s cubic-bezier(.22,.68,0,1.2) both .2s}
+.page-hero-tagline{animation:heroFade .6s ease both .34s}
+.page-hero-divider{animation:heroFade .5s ease both .42s}
+
+@media(prefers-reduced-motion:reduce){
+  .page-hero-eyebrow,.page-hero-title,.page-hero-tagline,.page-hero-divider{animation:none}
+}
+
+/* ── Responsive (matches leaderboard reference) ── */
+@media(max-width:768px){
+  .page-hero{padding:120px 20px 14px}
+  .page-hero-tagline{font-size:13px}
+}
+@media(max-width:640px){
+  .page-hero{padding:104px 16px 12px}
+  .page-hero-title{font-size:clamp(52px,13vw,100px)}
+}
+@media(max-width:560px){
+  .page-hero{padding:96px 12px 10px}
+}
+@media(max-width:375px){
+  .page-hero-title{font-size:clamp(40px,15vw,80px)}
+}
+@media(max-width:320px){
+  .page-hero-title{font-size:36px}
+}

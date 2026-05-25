@@ -6,6 +6,7 @@ import { CACHE_TTL } from '../../constants/config';
 import TabBar from '../../components/TabBar/TabBar';
 import SearchInput from '../../components/SearchInput/SearchInput';
 import Avatar from '../../components/Avatar/Avatar';
+import PageHero from '../../components/PageHero/PageHero';
 import './LeaderboardPage.css';
 
 const TROPHIES = ['🏆', '🥈', '🥉'];
@@ -61,11 +62,10 @@ export default function LeaderboardPage() {
       <div className="stage" />
       <div className="grain" />
 
-      <header className="hero">
-        <div className="eyebrow">Ranking · {data?.season?.name || 'Celkem'}</div>
-        <h1>Leaderboard</h1>
-        <div className="divider" />
-      </header>
+      <PageHero
+        eyebrow={`Ranking · ${data?.season?.name || 'Celkem'}`}
+        title="Leaderboard"
+      />
 
       <section className="controls">
         <TabBar

@@ -24,8 +24,13 @@ export default function Nav() {
   const page = activeKey(location.pathname);
   const [hidden, setHidden] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const lastY = useRef(0);
   const upRef = useRef(0);
+  const navRef = useRef(null);
+  const userRef = useRef(null);
+
+  const closeMenu = () => setMenuOpen(false);
 
   useEffect(() => {
     const onScroll = () => {
@@ -46,24 +51,42 @@ export default function Nav() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  // Close mobile menu on navigation
+  // On navigation: close menus and make sure the nav is visible at the top of
+  // the freshly-loaded page (the page also scrolls to 0).
   useEffect(() => {
     setMenuOpen(false);
-    document.body.style.overflow = '';
+    setUserMenuOpen(false);
+    setHidden(false);
+    lastY.current = 0;
+    upRef.current = 0;
   }, [location.pathname]);
 
   // Close on Escape
   useEffect(() => {
-    const onKey = (e) => { if (e.key === 'Escape') closeMenu(); };
+    const onKey = (e) => { if (e.key === 'Escape') { setMenuOpen(false); setUserMenuOpen(false); } };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
   }, []);
 
-  // Always release body scroll lock on unmount (in case Nav is removed mid-open)
-  useEffect(() => () => { document.body.style.overflow = ''; }, []);
+  // Close the avatar dropdown when clicking outside it.
+  useEffect(() => {
+    if (!userMenuOpen) return undefined;
+    const onClick = (e) => {
+      if (userRef.current && !userRef.current.contains(e.target)) setUserMenuOpen(false);
+    };
+    document.addEventListener('mousedown', onClick);
+    return () => document.removeEventListener('mousedown', onClick);
+  }, [userMenuOpen]);
 
-  const openMenu = () => { setMenuOpen(true); document.body.style.overflow = 'hidden'; };
-  const closeMenu = () => { setMenuOpen(false); document.body.style.overflow = ''; };
+  // Close the mobile dropdown when tapping anywhere outside the nav.
+  useEffect(() => {
+    if (!menuOpen) return undefined;
+    const onClick = (e) => {
+      if (navRef.current && !navRef.current.contains(e.target)) setMenuOpen(false);
+    };
+    document.addEventListener('mousedown', onClick);
+    return () => document.removeEventListener('mousedown', onClick);
+  }, [menuOpen]);
 
   // Preload chunk + data when the user signals intent (hover / keyboard focus).
   // By the time they click, the route's JS + first API response are usually
@@ -81,71 +104,96 @@ export default function Nav() {
     </NavLink>
   );
 
+  const dropItem = (to, label, key) => (
+    <Link
+      to={to}
+      className={`nav-drop-item${page === key ? ' active' : ''}`}
+      role="menuitem"
+      onClick={closeMenu}
+      onMouseEnter={handlePreload(to)}
+    >
+      {label}
+    </Link>
+  );
+
   const profileHref = user ? `/profil/${user.username}` : '/prihlasit';
   const displayName = user?.full_name || user?.username || '';
 
   return (
-    <>
-      <nav className={`top${hidden ? ' hidden' : ''}`} id="gol-nav">
-        <div className="nav-left">
-          {navItem('/', 'Domů', 'home')}
-          {navItem('/akce', 'Akce', 'events')}
-          {navItem('/galerie', 'Galerie', 'gallery')}
-          {navItem('/leaderboard', 'Leaderboard', 'leaderboard')}
-          {navItem('/historie', 'Historie', 'historie')}
-        </div>
-        <Link to="/" className="nav-logo" aria-label="Game of Life">
-          <img src="/assets/gameoflive-onrender-com-english-us-by-html-to-design-free-version-0905-gol-logo-bw-1.svg" alt="Game of Life" />
-        </Link>
-        <div className="nav-right">
-          {user ? (
-            <Link
-              to={profileHref}
+    <nav className={`top${hidden ? ' hidden' : ''}`} id="gol-nav" ref={navRef}>
+      <div className="nav-left">
+        <button
+          className="nav-hamburger"
+          onClick={() => setMenuOpen((o) => !o)}
+          aria-label="Menu"
+          aria-haspopup="menu"
+          aria-expanded={menuOpen}
+        >☰</button>
+        {navItem('/', 'Domů', 'home')}
+        {navItem('/akce', 'Akce', 'events')}
+        {navItem('/galerie', 'Galerie', 'gallery')}
+      </div>
+      <Link to="/" className="nav-logo" aria-label="Game of Life">
+        <img src="/assets/gameoflive-onrender-com-english-us-by-html-to-design-free-version-0905-gol-logo-bw-1.svg" alt="Game of Life" />
+      </Link>
+      <div className="nav-right">
+        {navItem('/leaderboard', 'Leaderboard', 'leaderboard')}
+        {navItem('/historie', 'Historie', 'historie')}
+        {user ? (
+          <div className="nav-user" ref={userRef}>
+            <button
+              type="button"
               className={`nav-avatar${page === 'profile' ? ' active' : ''}`}
               title={displayName}
+              aria-haspopup="menu"
+              aria-expanded={userMenuOpen}
+              onClick={() => setUserMenuOpen((o) => !o)}
             >
               {user.photo ? <img src={user.photo} alt={displayName} /> : initials(displayName)}
-            </Link>
-          ) : (
-            <StartPlayingButton />
-          )}
-          <button
-            className="nav-hamburger"
-            onClick={openMenu}
-            aria-label="Otevřít menu"
-          >☰</button>
-        </div>
-      </nav>
+            </button>
+            <div className={`nav-user-menu${userMenuOpen ? ' open' : ''}`} role="menu">
+              <div className="nav-user-name">{displayName}</div>
+              <Link className="nav-user-item" role="menuitem" to={profileHref}>Profil</Link>
+              <button
+                type="button"
+                className="nav-user-item nav-user-logout"
+                role="menuitem"
+                onClick={() => { setUserMenuOpen(false); logout(); }}
+              >Odhlásit se</button>
+            </div>
+          </div>
+        ) : (
+          <StartPlayingButton />
+        )}
+      </div>
 
-      {/* Full-screen mobile menu overlay */}
-      <div
-        className={`nav-mobile-menu${menuOpen ? ' open' : ''}`}
-        onClick={(e) => { if (e.target === e.currentTarget) closeMenu(); }}
-      >
-        <button className="nav-mob-close" onClick={closeMenu} aria-label="Zavřít menu">×</button>
-        <Link className="nav-mob-item" to="/">Domů</Link>
-        <Link className="nav-mob-item" to="/akce">Akce</Link>
-        <Link className="nav-mob-item" to="/galerie">Galerie</Link>
-        <Link className="nav-mob-item" to="/leaderboard">Leaderboard</Link>
-        <Link className="nav-mob-item" to="/historie">Historie</Link>
+      {/* Full-width mobile dropdown — same popup style as the avatar menu. */}
+      <div className={`nav-drop${menuOpen ? ' open' : ''}`} role="menu">
+        {user && <div className="nav-drop-name">{displayName}</div>}
+        {dropItem('/', 'Domů', 'home')}
+        {dropItem('/akce', 'Akce', 'events')}
+        {dropItem('/galerie', 'Galerie', 'gallery')}
+        {dropItem('/leaderboard', 'Leaderboard', 'leaderboard')}
+        {dropItem('/historie', 'Historie', 'historie')}
         {user ? (
           <>
-            <Link className="nav-mob-item" to={profileHref}>Profil ({displayName})</Link>
+            {dropItem(profileHref, 'Profil', 'profile')}
             {logout && (
               <button
-                className="nav-mob-item"
-                style={{ color: 'rgba(255,255,255,.45)' }}
+                type="button"
+                className="nav-drop-item nav-drop-logout"
+                role="menuitem"
                 onClick={() => { closeMenu(); logout(); }}
               >Odhlásit se</button>
             )}
           </>
         ) : (
           <>
-            <Link className="nav-mob-item" to="/prihlasit">Přihlásit se</Link>
-            <Link className="nav-mob-item nav-mob-start" to="/registrace">Start Playing ➤</Link>
+            <Link className="nav-drop-item" role="menuitem" to="/prihlasit" onClick={closeMenu}>Přihlásit se</Link>
+            <Link className="nav-drop-item nav-drop-start" role="menuitem" to="/registrace" onClick={closeMenu}>Start Playing ➤</Link>
           </>
         )}
       </div>
-    </>
+    </nav>
   );
 }

@@ -1,4 +1,6 @@
 import { Link } from 'react-router-dom';
+import PageHero from '../../components/PageHero/PageHero';
+import Reveal from '../../components/Reveal/Reveal';
 import './HistoriePage.css';
 
 const credits = [
@@ -135,14 +137,13 @@ export default function HistoriePage() {
       <div className="stage" aria-hidden="true" />
       <div className="grain" aria-hidden="true" />
 
-      <header className="hero">
-        <div className="eyebrow">Co se stalo</div>
-        <h1>Historie</h1>
-        <p className="tagline">Každý táborák, každá míle, každý společný večer. Tady je naše paměť — kronika všeho, co se nedá smazat.</p>
-        <div className="divider" />
-      </header>
+      <PageHero
+        eyebrow="Co se stalo"
+        title="Historie"
+        tagline="Každý táborák, každá míle, každý společný večer. Tady je naše paměť — kronika všeho, co se nedá smazat."
+      />
 
-      <section className="credits" aria-label="Souhrn">
+      <Reveal as="section" stagger className="credits" aria-label="Souhrn">
         {credits.map((c) => (
           <div key={c.label} className="credit">
             <div className="credit-label">{c.label}</div>
@@ -150,13 +151,13 @@ export default function HistoriePage() {
             <div className="credit-sub">{c.sub}</div>
           </div>
         ))}
-      </section>
+      </Reveal>
 
       <main className="timeline">
         {years.map((y) => (
           <div key={y.year}>
             <div className={`year-mark${y.muted ? ' muted' : ''}`}><span className="y">{y.year}</span></div>
-            <div className="spine">
+            <Reveal stagger className="spine">
               {y.rows.map((row, i) => (
                 <article key={`${y.year}-${i}`} className={`row ${row.side}`}>
                   {row.side === 'right' && <div className="node"><div className="node-dot" /></div>}
@@ -164,7 +165,7 @@ export default function HistoriePage() {
                   {row.side === 'left' && <div className="node"><div className="node-dot" /></div>}
                 </article>
               ))}
-            </div>
+            </Reveal>
           </div>
         ))}
       </main>

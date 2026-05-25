@@ -4,12 +4,6 @@
 .leaderboard-page .stage::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 15%,rgba(45,42,142,.10) 0%,transparent 55%),linear-gradient(180deg,rgba(45,42,142,.08) 0%,rgba(26,15,10,.60) 50%,rgba(26,15,10,.82) 100%)}
 .leaderboard-page .grain{position:fixed;inset:0;z-index:-1;pointer-events:none;background:url('/assets/Grain_texture_blue.png') 0 0/var(--tex-size) var(--tex-size) repeat;opacity:var(--grain-opacity);mix-blend-mode:overlay}
 
-.leaderboard-page .hero{position:relative;z-index:2;max-width:880px;margin:0 auto;padding:148px 24px 16px;text-align:center}
-.leaderboard-page .eyebrow{font-family:var(--font-mono);font-style:italic;font-size:13px;letter-spacing:.3em;text-transform:uppercase;color:var(--color-pink);margin-bottom:8px;display:inline-flex;align-items:center;gap:10px}
-.leaderboard-page .eyebrow::before,.leaderboard-page .eyebrow::after{content:'✦';font-size:11px;opacity:.9}
-.leaderboard-page .hero h1{font-family:var(--font-display);font-weight:400;font-size:clamp(70px,10vw,140px);line-height:.92;color:var(--color-cream-light);text-transform:uppercase;letter-spacing:.03em;text-shadow:0 6px 34px rgba(0,0,0,.6)}
-.leaderboard-page .divider{width:120px;height:1px;margin:26px auto 0;background:repeating-linear-gradient(90deg,rgba(255,241,212,.45) 0 5px,transparent 5px 10px)}
-
 .leaderboard-page .controls{position:relative;z-index:2;max-width:880px;margin:32px auto 0;padding:0 24px;display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap}
 .leaderboard-page .controls .search-wrap{flex:1;max-width:290px}
 .leaderboard-page .tabs{display:inline-flex;padding:5px;gap:5px;background:rgba(26,15,10,.45);border:1.5px dashed rgba(255,241,212,.32);border-radius:9999px;backdrop-filter:blur(8px)}
@@ -72,11 +66,7 @@
 .leaderboard-page .row .pt .u{font-family:var(--font-mono);font-style:italic;font-size:10px;color:rgba(255,241,212,.48);letter-spacing:.16em;margin-left:5px}
 .leaderboard-page .empty{text-align:center;padding:44px 20px;font-family:var(--font-serif);font-style:italic;color:rgba(255,241,212,.55);font-size:14px}
 
-/* ── Animations ── */
-@keyframes heroFade{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
-.leaderboard-page .eyebrow{animation:heroFade .6s cubic-bezier(.22,.68,0,1.2) both .05s}
-.leaderboard-page .hero h1{animation:heroFade .8s cubic-bezier(.22,.68,0,1.2) both .2s}
-.leaderboard-page .divider{animation:heroFade .5s ease both .42s}
+/* ── Animations ── (heroFade keyframe is defined in PageHero.css) */
 .leaderboard-page .controls{animation:heroFade .5s ease both .56s}
 
 @keyframes podRise{from{opacity:0;transform:translateY(36px)}to{opacity:1;transform:none}}
@@ -108,7 +98,6 @@
 
 /* ── Responsive ── */
 @media(max-width:768px){
-  .leaderboard-page .hero{padding:120px 20px 14px}
   .leaderboard-page .controls{flex-direction:column;align-items:stretch;gap:12px;padding:0 16px}
   .leaderboard-page .search{max-width:100%}
   .leaderboard-page .lb-search{max-width:100%;width:100%}
@@ -119,13 +108,10 @@
 }
 
 @media(max-width:640px){
-  .leaderboard-page .hero{padding:104px 16px 12px}
-  .leaderboard-page .hero h1{font-size:clamp(52px,13vw,100px)}
   .leaderboard-page .row{grid-template-columns:40px 1fr 100px;padding:11px 14px;gap:10px}
 }
 
 @media(max-width:560px){
-  .leaderboard-page .hero{padding:96px 12px 10px}
   .leaderboard-page .controls{padding:0 12px}
   .leaderboard-page .lb-main{padding:24px 12px 56px}
   .leaderboard-page .podium{gap:6px}
@@ -148,7 +134,6 @@
 }
 
 @media(max-width:375px){
-  .leaderboard-page .hero h1{font-size:clamp(40px,15vw,80px)}
   .leaderboard-page .podium{gap:3px}
   .leaderboard-page .pod .trophy{font-size:24px}
   .leaderboard-page .pod.p1 .trophy{font-size:34px}
@@ -170,7 +155,6 @@
 }
 
 @media(max-width:320px){
-  .leaderboard-page .hero h1{font-size:36px}
   .leaderboard-page .pod .nm{font-size:8px;max-width:56px}
   .leaderboard-page .row{grid-template-columns:26px 1fr 58px;padding:7px 6px;gap:4px}
   .leaderboard-page .row .rk{font-size:15px}

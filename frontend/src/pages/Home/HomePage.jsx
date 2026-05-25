@@ -9,6 +9,7 @@ import EventCard from '../../components/EventCard/EventCard';
 import Avatar from '../../components/Avatar/Avatar';
 import Hero from '../../components/Hero/Hero';
 import CheckinBanner from '../../components/CheckinBanner/CheckinBanner';
+import { useReveal } from '../../hooks/useReveal';
 import './HomePage.css';
 
 const FALLBACK_GAL = ['/gallery/gal0.jpg', '/gallery/gal1.jpg', '/gallery/gal2.jpg', '/gallery/gal3.jpg'];
@@ -43,6 +44,15 @@ export default function HomePage() {
   );
 
   const [galCur, setGalCur] = useState(0);
+
+  // Scroll-reveal refs — each section fades/staggers in as it enters view.
+  const [evTitleRef, evTitleIn] = useReveal();
+  const [evGridRef, evGridIn] = useReveal();
+  const [lbTitleRef, lbTitleIn] = useReveal();
+  const [lbCardRef, lbCardIn] = useReveal();
+  const [aboutRef, aboutIn] = useReveal();
+  const [galHeadRef, galHeadIn] = useReveal();
+  const [galRef, galIn] = useReveal();
 
   const heroEvents = hero?.hero_events || EMPTY;
   const upcomingEvents = upcomingData?.events || EMPTY;
@@ -79,8 +89,8 @@ export default function HomePage() {
 
       {/* UPCOMING EVENTS */}
       <section className="events-section">
-        <h2 className="sec-title"><span className="star">✦</span> Nadcházející akce <span className="star">✦</span></h2>
-        <div className="events-grid">
+        <h2 ref={evTitleRef} className={`sec-title reveal${evTitleIn ? ' in' : ''}`}><span className="star">✦</span> Nadcházející akce <span className="star">✦</span></h2>
+        <div ref={evGridRef} className={`events-grid reveal-stagger${evGridIn ? ' in' : ''}`}>
           {upcomingEvents.length === 0 && (
             <p className="events-empty">Žádné nadcházející akce. Sleduj nás na sítích!</p>
           )}
@@ -95,8 +105,8 @@ export default function HomePage() {
         <div className="lb-bg" />
         <div className="lb-tint" />
         <div className="lb-inner">
-          <h2 className="lb-title"><span className="tr">🏆</span> Top hráči <span className="tr">🏆</span></h2>
-          <div className="lb-card">
+          <h2 ref={lbTitleRef} className={`lb-title reveal${lbTitleIn ? ' in' : ''}`}><span className="tr">🏆</span> Top hráči <span className="tr">🏆</span></h2>
+          <div ref={lbCardRef} className={`lb-card reveal-stagger${lbCardIn ? ' in' : ''}`}>
             <div className="lb-head"><div>#</div><div>hráč</div><div className="lb-head-pts">pts</div></div>
             {topPlayers.map((p) => {
               const isTop = p.rank <= 3;
@@ -122,7 +132,7 @@ export default function HomePage() {
 
       {/* ABOUT */}
       <section className="about-section">
-        <div className="about-inner">
+        <div ref={aboutRef} className={`about-inner reveal${aboutIn ? ' in' : ''}`}>
           <div className="about-photo">
             <img src="/gallery/gal3.jpg" alt="Game of Life komunita" loading="lazy" />
           </div>
@@ -152,10 +162,10 @@ export default function HomePage() {
 
       {/* GALLERY */}
       <section className="gallery-section">
-        <div className="gal-header">
+        <div ref={galHeadRef} className={`gal-header reveal${galHeadIn ? ' in' : ''}`}>
           <h2 className="gal-title"><span className="gal-star">📷</span> Galerie <span className="gal-star">📷</span></h2>
         </div>
-        <div className="gal-container">
+        <div ref={galRef} className={`gal-container reveal${galIn ? ' in' : ''}`}>
           <div
             className="gal-side"
             onClick={galPrev}

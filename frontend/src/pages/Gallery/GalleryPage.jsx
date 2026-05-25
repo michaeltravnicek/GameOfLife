@@ -7,6 +7,8 @@ import { useAuth } from '../../context/AuthContext';
 import { reportError } from '../../services/errors';
 import { CACHE_TTL, GALLERY_PREFETCH_TAIL, PAGE_SIZE_GALLERY } from '../../constants/config';
 import { monthKey, monthLabel } from '../../utils/date';
+import PageHero from '../../components/PageHero/PageHero';
+import Reveal from '../../components/Reveal/Reveal';
 import './GalleryPage.css';
 
 // Lightbox loaded only when user opens a fullscreen photo.
@@ -132,12 +134,11 @@ export default function GalleryPage() {
     <div className="gallery-page">
       <div className="bg-texture" />
 
-      <div className="hero">
-        <div className="eyebrow">Game of Life</div>
-        <h1>Galerie</h1>
-        <p className="tagline">Vzpomínky, zážitky a okamžiky, které stojí za to si připomenout.</p>
-        <div className="divider" />
-      </div>
+      <PageHero
+        eyebrow="Game of Life"
+        title="Galerie"
+        tagline="Vzpomínky, zážitky a okamžiky, které stojí za to si připomenout."
+      />
 
       {canUpload && (
         <div className="gal-upload">
@@ -259,7 +260,7 @@ export default function GalleryPage() {
                 <div className="month-count">
                   {monthPhotos.length} {monthPhotos.length === 1 ? 'fotografie' : 'fotografií'}
                 </div>
-                <div className="photo-grid">
+                <Reveal stagger className="photo-grid">
                   {monthPhotos.map((p, i) => (
                     <div key={i} className="photo-item" onClick={() => openLb(monthPhotos, i)}>
                       <img src={p.url} alt={p.event_name} loading="lazy" />
@@ -269,7 +270,7 @@ export default function GalleryPage() {
                       </div>
                     </div>
                   ))}
-                </div>
+                </Reveal>
               </div>
             );
           })}

@@ -44,13 +44,15 @@
 .home-page .about-section{background-color:#3a2418;background-image:var(--tex-brown);background-size:var(--tex-size) var(--tex-size);background-repeat:repeat;padding:72px 24px}
 .home-page .about-inner{max-width:980px;margin:0 auto;display:grid;grid-template-columns:300px 1fr;gap:60px;align-items:center}
 .home-page .about-photo{aspect-ratio:3/4;border-radius:2px;border:2px solid rgba(255,255,255,.85);overflow:hidden;align-self:center;flex-shrink:0}
-.home-page .about-photo img{width:100%;height:100%;display:block;object-fit:cover}
+.home-page .about-photo img{width:100%;height:100%;display:block;object-fit:cover;transition:transform .5s cubic-bezier(.22,.68,0,1.1)}
+.home-page .about-photo:hover img{transform:scale(1.05)}
 .home-page .about-content{display:flex;flex-direction:column;gap:14px}
 .home-page .about-eyebrow{font-family:var(--font-mono);font-style:italic;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--color-pink)}
 .home-page .about-heading{font-family:var(--font-display);font-size:clamp(28px,3.6vw,46px);letter-spacing:.03em;line-height:1;color:var(--color-cream-light);text-transform:uppercase}
 .home-page .about-body{font-family:var(--font-hv);font-weight:300;font-size:14px;line-height:1.78;color:rgba(255,241,212,.78);max-width:520px}
 .home-page .stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;padding-top:24px;margin-top:8px;border-top:1px dashed rgba(255,241,212,.28)}
-.home-page .stat-item{text-align:center}
+.home-page .stat-item{text-align:center;transition:transform .2s ease}
+.home-page .stat-item:hover{transform:translateY(-3px)}
 .home-page .stat-num{font-family:var(--font-number);font-weight:600;font-size:36px;color:var(--color-pink);margin-bottom:4px}
 .home-page .stat-label{font-family:var(--font-body);font-size:11px;color:rgba(255,241,212,.65);text-transform:uppercase;letter-spacing:.1em}
 

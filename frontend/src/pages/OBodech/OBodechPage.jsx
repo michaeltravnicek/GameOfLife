@@ -1,4 +1,6 @@
 import { Link } from 'react-router-dom';
+import PageHero from '../../components/PageHero/PageHero';
+import Reveal from '../../components/Reveal/Reveal';
 import './OBodechPage.css';
 
 const sources = [
@@ -29,14 +31,13 @@ export default function OBodechPage() {
       <div className="stage" aria-hidden="true" />
       <div className="grain" aria-hidden="true" />
 
-      <header className="hero">
-        <div className="eyebrow">Systém bodů</div>
-        <h1>O bodech<br />a cenách</h1>
-        <p className="tagline">Body jsou měřítkem tvého zapojení. Odměňují odvahu vyjít z komfortní zóny, ne výhru. Tohle je kompletní pravidelník — od toho, jak se rozdávají, až po to, co za ně jednou bude.</p>
-        <div className="divider" />
-      </header>
+      <PageHero
+        eyebrow="Systém bodů"
+        title={<>O bodech<br />a cenách</>}
+        tagline="Body jsou měřítkem tvého zapojení. Odměňují odvahu vyjít z komfortní zóny, ne výhru. Tohle je kompletní pravidelník — od toho, jak se rozdávají, až po to, co za ně jednou bude."
+      />
 
-      <section className="credits" aria-label="Rozsah bodů">
+      <Reveal as="section" stagger className="credits" aria-label="Rozsah bodů">
         <div className="credit">
           <div className="credit-label">— Od —</div>
           <div className="credit-value">+10</div>
@@ -47,10 +48,10 @@ export default function OBodechPage() {
           <div className="credit-value">+250</div>
           <div className="credit-sub">za vícedenní expedici, kdy zvedneš tábor</div>
         </div>
-      </section>
+      </Reveal>
 
       <main className="body">
-        <section className="section">
+        <Reveal as="section" className="section">
           <div className="sec-eyebrow">Co jsou body</div>
           <h2 className="sec-heading">Měřítko <span className="pink">zapojení</span>, ne výhry</h2>
           <p className="intro-quote">Body měří, kolik jsi do hry vložil. Jsou odměnou za účast, za odvahu jít mimo komfortní zónu a za to, že jsi prostě přišel. Neměří, kdo doběhl první — měří, kdo se nepostavil mimo hru.</p>
@@ -61,9 +62,9 @@ export default function OBodechPage() {
             <span className="dot" />
             <span>★ Otevírají budoucí odměny</span>
           </div>
-        </section>
+        </Reveal>
 
-        <section className="section">
+        <Reveal as="section" className="section">
           <div className="sec-eyebrow">Jak sbírat body</div>
           <h2 className="sec-heading">Tři zdroje, <span className="pink">žádné zkratky</span></h2>
           <div className="sources">
@@ -77,9 +78,9 @@ export default function OBodechPage() {
               </article>
             ))}
           </div>
-        </section>
+        </Reveal>
 
-        <section className="section">
+        <Reveal as="section" className="section">
           <div className="sec-eyebrow">Příklady</div>
           <h2 className="sec-heading">Kolik za <span className="pink">co</span></h2>
           <p className="intro-quote" style={{ marginBottom: 28 }}>Žádný kalkulátor, žádný vzorec. Pořadatel přiřkne akci hodnotu předem podle toho, jak je dlouhá, náročná a kolik k ní bude potřeba odvahy. Pár příkladů, abys měl představu.</p>
@@ -102,9 +103,9 @@ export default function OBodechPage() {
               ))}
             </div>
           </div>
-        </section>
+        </Reveal>
 
-        <section className="section">
+        <Reveal as="section" className="section">
           <div className="sec-eyebrow">Odměny a výhody</div>
           <h2 className="sec-heading">Co za to <span className="pink">jednou bude</span></h2>
           <p className="intro-quote" style={{ marginBottom: 30 }}>Reward systém se teď peče. Body si zatím šetříš na něco, co ještě neexistuje — a to je vlastně docela hezké. Tady je, co plánujeme.</p>
@@ -119,7 +120,7 @@ export default function OBodechPage() {
               </article>
             ))}
           </div>
-        </section>
+        </Reveal>
       </main>
 
       <section className="obo-cta" aria-label="Sleduj nás">

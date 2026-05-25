@@ -7,12 +7,6 @@
   linear-gradient(180deg, var(--alpha-dark-55) 0%, var(--alpha-dark-80) 38%, var(--alpha-dark-95) 100%)}
 .obodech-page .grain{position:fixed;inset:0;z-index:0;pointer-events:none;background:url('/assets/Grain_texture_brown.png') 0 0/var(--tex-size) var(--tex-size) repeat;opacity:var(--grain-opacity);mix-blend-mode:overlay}
 
-.obodech-page .hero{position:relative;z-index:2;max-width:1100px;margin:0 auto;padding:148px 24px 24px;text-align:center}
-.obodech-page .eyebrow{font-family:var(--font-mono);font-style:italic;font-size:13px;letter-spacing:.3em;text-transform:uppercase;color:var(--color-pink);margin-bottom:10px;display:inline-flex;align-items:center;gap:10px}
-.obodech-page .eyebrow::before,.obodech-page .eyebrow::after{content:'✦';font-size:11px;opacity:.9}
-.obodech-page .hero h1{font-family:var(--font-display);font-weight:400;font-size:clamp(72px,11vw,160px);line-height:.92;color:var(--color-cream-light);text-transform:uppercase;letter-spacing:.03em;text-shadow:0 6px 34px var(--alpha-black-60);margin-bottom:10px}
-.obodech-page .hero .tagline{font-family:var(--font-body);font-style:italic;font-size:15px;color:var(--alpha-cream-78);max-width:620px;margin:14px auto 0;line-height:1.6}
-.obodech-page .divider{width:140px;height:1px;margin:30px auto 0;background:repeating-linear-gradient(90deg,var(--alpha-cream-45) 0 5px,transparent 5px 10px)}
 
 .obodech-page .credits{position:relative;z-index:2;max-width:980px;margin:36px auto 0;padding:34px 24px 0;display:flex;justify-content:center;align-items:flex-start;gap:0}
 .obodech-page .credits::before{content:'';position:absolute;left:50%;transform:translateX(-50%);top:0;width:min(820px,calc(100% - 48px));height:1px;background:repeating-linear-gradient(90deg,var(--alpha-cream-45) 0 6px,transparent 6px 12px)}
