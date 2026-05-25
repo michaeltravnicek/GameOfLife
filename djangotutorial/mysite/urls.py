@@ -37,5 +37,5 @@ if settings.DEBUG:
 # The (/|$) lets us also reserve the bare prefixes (e.g. /admin with no trailing
 # slash) for Django — otherwise React would serve them and show a blank screen.
 urlpatterns += [
-    re_path(r"^(?!(api|admin|media|static)(/|$)).*$", react_views.react_index, name="react-index"),
+    re_path(r"^(?!(?:api|admin|media|static)(?:/|$)).*$", react_views.react_index, name="react-index"),
 ]
