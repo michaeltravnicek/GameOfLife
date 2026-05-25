@@ -70,6 +70,10 @@ export const uploadEventImages = (slug, files) => {
   Array.from(files).forEach((f) => fd.append('images', f));
   return api.post(`/events/${slug}/images/`, fd, MULTIPART).then((r) => r.data);
 };
+export const createEvent = (formData) =>
+  api.post('/events/create/', formData, MULTIPART).then((r) => r.data);
+export const updateEvent = (slug, formData) =>
+  api.patch(`/events/${slug}/update/`, formData, MULTIPART).then((r) => r.data);
 
 // --- Leaderboard / Seasons / Players ---
 export const fetchLeaderboard = (seasonId = 'active', { limit } = {}) =>
@@ -78,6 +82,8 @@ export const fetchLeaderboard = (seasonId = 'active', { limit } = {}) =>
 export const fetchSeasons = () => api.get('/seasons/').then((r) => r.data);
 export const fetchPlayer = (userId) =>
   api.get(`/players/${userId}/`).then((r) => r.data);
+export const fetchPlayerSeason = (userId, seasonId) =>
+  api.get(`/players/${userId}/seasons/${seasonId}/`).then((r) => r.data);
 
 // --- Home (split endpoints; the old /home/ no longer exists) ---
 export const fetchHero = () => api.get('/hero/').then((r) => r.data);

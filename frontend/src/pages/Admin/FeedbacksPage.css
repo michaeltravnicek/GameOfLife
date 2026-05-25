@@ -1,10 +1,37 @@
-.feedbacks-page{min-height:100vh;background:var(--bg-primary);color:var(--color-cream-light);padding:120px 20px 80px;max-width:1000px;margin:0 auto}
-.fb-head{margin-bottom:32px}
+/* Mirrors the leaderboard look: fixed photo background + blue grain overlay,
+   with per-event feedback tables rendered through the shared <StatList>. */
+.feedbacks-page{position:relative;min-height:100vh;color:var(--color-cream-light);overflow-x:hidden;padding:120px 20px 80px;max-width:1000px;margin:0 auto}
+
+.feedbacks-page .stage{position:fixed;inset:0;z-index:-2;background:url('/gallery/gal2.jpg') center 28%/cover no-repeat;filter:saturate(.7) contrast(1.02);transform:scale(1.05)}
+.feedbacks-page .stage::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 15%,rgba(45,42,142,.12) 0%,transparent 55%),linear-gradient(180deg,rgba(45,42,142,.10) 0%,rgba(26,15,10,.62) 50%,rgba(26,15,10,.84) 100%)}
+.feedbacks-page .grain{position:fixed;inset:0;z-index:-1;pointer-events:none;background:url('/assets/Grain_texture_blue.png') 0 0/var(--tex-size) var(--tex-size) repeat;opacity:.08;mix-blend-mode:overlay}
+
+.fb-head{text-align:center;margin-bottom:28px}
 .fb-eyebrow{font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.16em;font-size:var(--text-xs);color:var(--color-pink)}
-.fb-head h1{font-family:var(--font-display);font-size:var(--text-4xl);margin:6px 0 4px}
+.fb-head h1{font-family:var(--font-display);font-size:var(--text-5xl);margin:6px 0 4px;letter-spacing:.02em}
 .fb-sub{color:var(--alpha-cream-55);font-size:var(--text-sm)}
 .fb-status{text-align:center;padding:40px;color:var(--alpha-cream-55);font-family:var(--font-mono);font-style:italic}
-.fb-stars{color:var(--color-gold);letter-spacing:2px}
+
+.fb-controls{display:flex;justify-content:center;margin-bottom:30px}
+
+/* One event = one heading (name + date) above its table. */
+.fb-group{margin-bottom:40px}
+.fb-event-head{margin:0 6px 14px}
+.fb-event-name{display:block;font-family:var(--font-display);font-size:var(--text-3xl);letter-spacing:.02em;color:var(--color-cream-light);text-decoration:none;line-height:1.05}
+.fb-event-name:hover{color:var(--color-pink)}
+.fb-event-date{font-family:var(--font-mono);font-style:italic;font-size:var(--text-xs);letter-spacing:.14em;text-transform:uppercase;color:var(--alpha-cream-55);margin-top:4px}
+
+/* StatList cells. */
+.fb-player{font-family:var(--font-hv);font-size:14px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.fb-stars{color:var(--color-gold);letter-spacing:2px;text-align:center;font-size:14px}
+.fb-comment{font-family:var(--font-body);font-size:13.5px;line-height:1.5;color:var(--alpha-cream-78)}
 .fb-muted{color:var(--alpha-cream-45)}
 .fb-event-link{color:var(--color-pink);text-decoration:none}
 .fb-event-link:hover{text-decoration:underline}
+
+@media(max-width:600px){
+  .feedbacks-page{padding:100px 14px 60px}
+  .fb-group .stat-row{grid-template-columns:1fr 96px!important;row-gap:6px}
+  /* Comment drops to a full-width second line on narrow screens. */
+  .fb-comment{grid-column:1 / -1;border-top:1px dashed rgba(255,241,212,.10);padding-top:8px}
+}

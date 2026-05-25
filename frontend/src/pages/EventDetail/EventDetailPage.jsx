@@ -243,9 +243,14 @@ export default function EventDetailPage() {
             <section className="section">
               <SectionHeader eyebrow="— Zpětná vazba —" heading="Jak se ti akce líbila?" />
               {isAdmin && (
-                <Link to={`/sprava/zpetna-vazba?event=${slug}`} className="admin-btn fb-admin-link">
-                  📊 Zobrazit zpětnou vazbu k akci
-                </Link>
+                <div className="admin-btns">
+                  <Link to={`/sprava/zpetna-vazba?event=${slug}`} className="admin-btn fb-admin-link">
+                    📊 Zobrazit zpětnou vazbu k akci
+                  </Link>
+                  <Link to="/akce/vytvorit" className="admin-btn">
+                    ➕ Vytvořit akci
+                  </Link>
+                </div>
               )}
               {fbDone ? (
                 <p className="fb-thanks">Díky za hodnocení! 🙌</p>
@@ -284,22 +289,29 @@ export default function EventDetailPage() {
       <div className="back-strip">
         <div className="back-strip-inner">
           <Link className="back-link" to="/akce">← Zpět na všechny akce</Link>
-          <Button
-            variant="ghost"
-            onClick={() => {
-              const url = window.location.href;
-              if (navigator.share) {
-                // Intentional silent swallow: navigator.share throws
-                // AbortError when the user dismisses the share sheet. That's
-                // not an error from the user's POV, so don't toast it.
-                navigator.share({ title: event.name, url }).catch(() => {});
-              } else {
-                navigator.clipboard?.writeText(url);
-              }
-            }}
-          >
-            Sdílet kámošům
-          </Button>
+          <div className="back-strip-actions">
+            {isAdmin && (
+              <Link className="back-link" to={`/akce/${slug}/upravit`}>
+                ✏️ Upravit akci
+              </Link>
+            )}
+            <Button
+              variant="ghost"
+              onClick={() => {
+                const url = window.location.href;
+                if (navigator.share) {
+                  // Intentional silent swallow: navigator.share throws
+                  // AbortError when the user dismisses the share sheet. That's
+                  // not an error from the user's POV, so don't toast it.
+                  navigator.share({ title: event.name, url }).catch(() => {});
+                } else {
+                  navigator.clipboard?.writeText(url);
+                }
+              }}
+            >
+              Sdílet kámošům
+            </Button>
+          </div>
         </div>
       </div>
 

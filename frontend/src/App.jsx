@@ -9,6 +9,8 @@ import HomePage from './pages/Home/HomePage';
 
 const EventsPage = lazy(() => import('./pages/Events/EventsPage'));
 const EventDetailPage = lazy(() => import('./pages/EventDetail/EventDetailPage'));
+const CreateEventPage = lazy(() => import('./pages/Events/CreateEventPage'));
+const EditEventPage = lazy(() => import('./pages/Events/EditEventPage'));
 const GalleryPage = lazy(() => import('./pages/Gallery/GalleryPage'));
 const LeaderboardPage = lazy(() => import('./pages/Leaderboard/LeaderboardPage'));
 const ProfilePage = lazy(() => import('./pages/Profile/ProfilePage'));
@@ -57,6 +59,8 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Layout><HomePage /></Layout>} />
           <Route path="/akce" element={<Layout><EventsPage /></Layout>} />
+          <Route path="/akce/:slug/upravit" element={<Layout><EditEventPage /></Layout>} />
+          <Route path="/akce/vytvorit" element={<Layout><CreateEventPage /></Layout>} />
           <Route path="/akce/:slug" element={<Layout><EventDetailPage /></Layout>} />
           <Route path="/galerie" element={<Layout><GalleryPage /></Layout>} />
           <Route path="/leaderboard" element={<Layout><LeaderboardPage /></Layout>} />

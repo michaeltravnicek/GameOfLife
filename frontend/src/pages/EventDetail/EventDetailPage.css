@@ -72,8 +72,14 @@
 /* ── BACK STRIP ── */
 .event-detail-page .back-strip{background:#1a0f0a;background-image:url('/assets/Grain_texture_brown2.png');background-size:var(--tex-size) var(--tex-size);background-repeat:repeat;background-position:0 0;padding:32px 24px 64px}
 .event-detail-page .back-strip-inner{max-width:780px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.event-detail-page .back-strip-actions{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
 .event-detail-page .back-link{font-family:var(--font-body);font-style:italic;font-size:14px;color:rgba(255,241,212,.75);display:inline-flex;align-items:center;gap:8px;border-bottom:1px dashed rgba(255,241,212,.35);padding-bottom:2px;transition:color .18s,border-color .18s;text-decoration:none}
 .event-detail-page .back-link:hover{color:var(--color-pink);border-color:var(--color-pink)}
+
+/* ── ADMIN BUTTONS ── */
+.event-detail-page .admin-btns{display:flex;flex-direction:column;gap:12px;margin-bottom:22px}
+.event-detail-page .admin-btn{font-family:var(--font-body);font-style:italic;font-size:12.5px;color:rgba(255,241,212,.75);display:inline-flex;align-items:center;gap:8px;border-bottom:1px dashed rgba(255,241,212,.35);padding-bottom:2px;transition:color .18s,border-color .18s;text-decoration:none}
+.event-detail-page .admin-btn:hover{color:var(--color-pink);border-color:var(--color-pink)}
 
 /* ── LIGHTBOX ── */
 .event-detail-page .lightbox{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.94);display:none;align-items:center;justify-content:center;padding:40px}

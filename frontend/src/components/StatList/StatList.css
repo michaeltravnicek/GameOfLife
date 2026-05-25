@@ -1,0 +1,25 @@
+/* Leaderboard-style list — kept structurally identical to `.leaderboard-page .list`
+   so every page using <StatList> matches the leaderboard exactly. Cell styling
+   (the inner .stat-cell contents) is left to each page. */
+.stat-list{position:relative;padding:10px;background-color:#1a0f0a;background-image:url('/assets/Grain_texture_blue.png');background-repeat:repeat;background-size:cover;border:1.5px solid rgba(255,255,255,.08);border-radius:14px;box-shadow:0 20px 44px rgba(0,0,0,.5)}
+.stat-list::before{content:'';position:absolute;inset:6px;border:1.5px dashed rgba(255,241,212,.22);border-radius:10px;pointer-events:none}
+.stat-list-inner{position:relative;z-index:1;padding:8px 6px}
+
+.stat-list .stat-row{display:grid;align-items:center;gap:14px;padding:13px 18px;border-bottom:1px dashed rgba(255,241,212,.10);transition:background .18s,transform .18s;text-decoration:none;color:inherit}
+.stat-list .stat-row:last-child{border-bottom:0}
+.stat-list .stat-row.clickable{cursor:pointer}
+.stat-list .stat-row.clickable:hover{background:rgba(255,241,212,.05);transform:translateX(2px)}
+
+.stat-list-empty{text-align:center;padding:44px 20px;font-family:var(--font-serif);font-style:italic;color:rgba(255,241,212,.55);font-size:14px}
+
+/* Row entrance animation, mirroring the leaderboard list. */
+@keyframes statRowSlide{from{opacity:0;transform:translateX(-16px)}to{opacity:1;transform:none}}
+.stat-list .stat-row{animation:statRowSlide .4s cubic-bezier(.22,.68,0,1.2) both}
+.stat-list .stat-row:nth-child(1){animation-delay:.04s}
+.stat-list .stat-row:nth-child(2){animation-delay:.10s}
+.stat-list .stat-row:nth-child(3){animation-delay:.16s}
+.stat-list .stat-row:nth-child(4){animation-delay:.22s}
+.stat-list .stat-row:nth-child(5){animation-delay:.28s}
+.stat-list .stat-row:nth-child(6){animation-delay:.34s}
+.stat-list .stat-row:nth-child(7){animation-delay:.40s}
+.stat-list .stat-row:nth-child(8){animation-delay:.46s}

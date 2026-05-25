@@ -1,36 +1,60 @@
+import { useState } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
-import { fetchPlayer } from '../../services/api';
+import { fetchPlayer, fetchPlayerSeason } from '../../services/api';
 import { useCachedQuery } from '../../services/queryCache';
 import { CACHE_TTL } from '../../constants/config';
 import Avatar from '../../components/Avatar/Avatar';
-import Table from '../../components/Table/Table';
-import { fmtDate } from '../../utils/date';
+import PillTabs from '../../components/PillTabs/PillTabs';
+import StatList from '../../components/StatList/StatList';
+import { fmtDateShort } from '../../utils/date';
 import './PlayerPage.css';
 
-// Attended-events table (newest first). Reuses the shared <Table> styled with
-// the blue grain texture, matching the leaderboard's visual language.
-const COLUMNS = [
-  { key: 'category', label: 'Kategorie', render: (c) => c?.name || 'Akce' },
+// Attended-events table, structured exactly like the leaderboard list (date ·
+// event · points), rendered through the shared <StatList>.
+const EVENT_COLUMNS = [
+  { key: 'date', className: 'pl-date', render: (e) => fmtDateShort(e.date) || '—' },
   {
     key: 'name',
-    label: 'Akce',
-    render: (name, row) => <Link to={`/akce/${row.slug}`} className="pl-link">{name}</Link>,
+    className: 'pl-name',
+    render: (e) => (
+      <>
+        <span className="pl-name-txt">{e.name}</span>
+        {(e.category?.name || e.place) && (
+          <span className="pl-name-sub">{[e.category?.name, e.place].filter(Boolean).join(' · ')}</span>
+        )}
+      </>
+    ),
   },
-  { key: 'place', label: 'Místo' },
-  { key: 'date', label: 'Datum', align: 'right', render: (d) => fmtDate(d) },
-  { key: 'points', label: 'Body', align: 'right', render: (p) => `+${p}` },
+  { key: 'pts', className: 'pl-pts', render: (e) => <>+{e.pts ?? e.points}<span className="u">pts</span></> },
 ];
+const EVENT_GRID = '88px 1fr 84px';
 
 // Public view for a leaderboard player by id. Registered players (those with an
 // account) are redirected to their full /profil/ page; this renders the rest
-// (Google-Sheets players with no account).
+// (Google-Sheets players with no account), with per-season stats like profiles.
 export default function PlayerPage() {
   const { userId } = useParams();
+  const [pickedSeason, setPickedSeason] = useState(null); // explicit season pick (id)
+
   const { data: player, loading, error } = useCachedQuery(
     `player:${userId}`,
     () => fetchPlayer(userId),
     { enabled: !!userId, ttl: CACHE_TTL.PROFILE },
   );
+
+  const seasons = player?.seasons || [];
+  const hasSeasons = seasons.length > 0;
+  // Selected season = explicit pick, else the newest season (same as profiles).
+  const seasonKey = pickedSeason ?? seasons[0]?.id ?? null;
+
+  // Lazy per-season detail (event list + points + rank) for the chosen season.
+  const { data: seasonDetail } = useCachedQuery(
+    `player:${userId}:season:${seasonKey}`,
+    () => fetchPlayerSeason(userId, seasonKey),
+    { enabled: !!userId && seasonKey != null, ttl: CACHE_TTL.PROFILE },
+  );
+  const summary = hasSeasons ? (seasons.find((s) => s.id === seasonKey) || seasons[0]) : null;
+  const seasonData = (seasonDetail && seasonDetail.id === seasonKey) ? seasonDetail : summary;
 
   if (player?.profile_username) {
     return <Navigate to={`/profil/${player.profile_username}`} replace />;
@@ -57,6 +81,14 @@ export default function PlayerPage() {
     );
   }
 
+  // Stats + events reflect the selected season; fall back to all-time when the
+  // player has no leaderboard seasons.
+  const events = hasSeasons ? (seasonData?.events || []) : (player.events || []);
+  const statRank = hasSeasons ? seasonData?.rank : player.rank;
+  const statPoints = hasSeasons ? (seasonData?.season_pts ?? 0) : player.total_points;
+  const statEvents = hasSeasons ? events.length : player.events_count;
+  const seasonTabs = seasons.map((s) => ({ key: s.id, label: s.label }));
+
   return (
     <div className="player-page">
       <div className="stage" />
@@ -68,15 +100,15 @@ export default function PlayerPage() {
         <h1 className="player-name">{player.name}</h1>
         <div className="player-stats">
           <div className="player-stat">
-            <div className="player-stat-val">{player.rank ? `#${player.rank}` : '—'}</div>
+            <div className="player-stat-val">{statRank ? `#${statRank}` : '—'}</div>
             <div className="player-stat-label">Pozice</div>
           </div>
           <div className="player-stat">
-            <div className="player-stat-val">{player.total_points}</div>
+            <div className="player-stat-val">{statPoints ?? 0}</div>
             <div className="player-stat-label">Bodů</div>
           </div>
           <div className="player-stat">
-            <div className="player-stat-val">{player.events_count}</div>
+            <div className="player-stat-val">{statEvents ?? 0}</div>
             <div className="player-stat-label">Akcí</div>
           </div>
         </div>
@@ -85,12 +117,19 @@ export default function PlayerPage() {
       </header>
 
       <main className="player-main">
+        {hasSeasons && (
+          <div className="player-seasons">
+            <PillTabs tabs={seasonTabs} active={seasonKey} onChange={setPickedSeason} />
+          </div>
+        )}
         <div className="player-list-label">Absolvované akce</div>
-        <Table
-          className="pl-table"
-          columns={COLUMNS}
-          rows={player.events || []}
-          emptyText="Žádné zaznamenané akce."
+        <StatList
+          columns={EVENT_COLUMNS}
+          rows={events}
+          gridTemplate={EVENT_GRID}
+          rowKey={(e) => e.slug}
+          rowLink={(e) => `/akce/${e.slug}`}
+          emptyText="Žádné zaznamenané akce v této sezóně."
         />
       </main>
 

@@ -170,6 +170,20 @@ def player_detail(request, user_id):
 
 @api_view(["GET"])
 @permission_classes([AllowAny])
+def player_season_detail(request, user_id, season_id):
+    """One season's events/points/rank for a leaderboard player (lazy per tab).
+
+    Mirrors the profile season endpoint but keyed by leaderboard-user id, so it
+    works for Google-Sheets players who have no account.
+    """
+    from accounts.services import season_detail  # local import — avoid app-load cycle
+    lb_user = get_object_or_404(LeaderboardUser, id=user_id)
+    season = get_object_or_404(Season, pk=season_id)
+    return Response(season_detail(lb_user, season), status=status.HTTP_200_OK)
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
 def gallery_view(request):
     """Combined gallery (official + user photos), date-desc, offset/limit paginated.
 
@@ -325,3 +339,152 @@ def event_images_upload(request, slug):
 def admin_feedbacks(request):
     """All event feedback (admin only) with submitter name + attended-event count."""
     return Response({"feedbacks": admin_feedback_list()}, status=status.HTTP_200_OK)
+
+
+@api_view(["POST"])
+@permission_classes([IsAdmin])
+def event_create(request):
+    """Create a new event (admin only). Multipart body with event fields."""
+    try:
+        name = request.data.get('name', '').strip()
+        if not name:
+            return Response({"error": "Název akce je povinný."}, status=status.HTTP_400_BAD_REQUEST)
+
+        date_str = request.data.get('date', '')
+        date = None
+        if date_str:
+            from datetime import datetime
+            try:
+                date = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
+            except (ValueError, AttributeError):
+                return Response({"error": "Neplatný formát data."}, status=status.HTTP_400_BAD_REQUEST)
+
+        place = request.data.get('place', '').strip()
+        points = int(request.data.get('points', 0)) if request.data.get('points') else 0
+        capacity = int(request.data.get('capacity')) if request.data.get('capacity') else None
+        description = request.data.get('description', '').strip()
+        rules = request.data.get('rules', '').strip()
+        survey_url = request.data.get('survey_url', '').strip()
+        visible_to_users = request.data.get('visible_to_users', '1') in ('1', 'true', 'True')
+
+        latitude = request.data.get('latitude')
+        longitude = request.data.get('longitude')
+        try:
+            latitude = float(latitude) if latitude else None
+            longitude = float(longitude) if longitude else None
+        except (ValueError, TypeError):
+            latitude = longitude = None
+
+        checkin_radius = int(request.data.get('checkin_radius', 500)) if request.data.get('checkin_radius') else 500
+        category_id = request.data.get('category')
+        category = None
+        if category_id:
+            from leaderboard.models import Category
+            try:
+                category = Category.objects.get(id=category_id)
+            except Category.DoesNotExist:
+                pass
+
+        event = Event.objects.create(
+            name=name,
+            date=date,
+            place=place,
+            points=points,
+            capacity=capacity,
+            description=description,
+            rules=rules,
+            survey_url=survey_url,
+            visible_to_users=visible_to_users,
+            latitude=latitude,
+            longitude=longitude,
+            checkin_radius=checkin_radius,
+            category=category,
+        )
+
+        if 'image' in request.FILES:
+            event.image = request.FILES['image']
+        if 'logo' in request.FILES:
+            event.logo = request.FILES['logo']
+
+        event.save()
+
+        return Response(
+            EventDetailSerializer(event, context={"request": request}).data,
+            status=status.HTTP_201_CREATED
+        )
+    except Exception as exc:
+        return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(["PATCH"])
+@permission_classes([IsAdmin])
+def event_update(request, slug):
+    """Update an event (admin only). Multipart body with event fields to update."""
+    try:
+        event = get_object_or_404(Event, slug=slug)
+
+        if 'name' in request.data:
+            event.name = request.data.get('name', '').strip()
+
+        if 'date' in request.data:
+            date_str = request.data.get('date', '')
+            if date_str:
+                from datetime import datetime
+                try:
+                    event.date = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
+                except (ValueError, AttributeError):
+                    return Response({"error": "Neplatný formát data."}, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                event.date = None
+
+        if 'place' in request.data:
+            event.place = request.data.get('place', '').strip()
+        if 'points' in request.data:
+            event.points = int(request.data.get('points', 0)) if request.data.get('points') else 0
+        if 'capacity' in request.data:
+            event.capacity = int(request.data.get('capacity')) if request.data.get('capacity') else None
+        if 'description' in request.data:
+            event.description = request.data.get('description', '').strip()
+        if 'rules' in request.data:
+            event.rules = request.data.get('rules', '').strip()
+        if 'survey_url' in request.data:
+            event.survey_url = request.data.get('survey_url', '').strip()
+        if 'visible_to_users' in request.data:
+            event.visible_to_users = request.data.get('visible_to_users', '1') in ('1', 'true', 'True')
+
+        if 'latitude' in request.data or 'longitude' in request.data:
+            try:
+                lat = request.data.get('latitude')
+                lon = request.data.get('longitude')
+                event.latitude = float(lat) if lat else None
+                event.longitude = float(lon) if lon else None
+            except (ValueError, TypeError):
+                event.latitude = event.longitude = None
+
+        if 'checkin_radius' in request.data:
+            event.checkin_radius = int(request.data.get('checkin_radius', 500))
+
+        if 'category' in request.data:
+            category_id = request.data.get('category')
+            if category_id:
+                from leaderboard.models import Category
+                try:
+                    event.category = Category.objects.get(id=category_id)
+                except Category.DoesNotExist:
+                    event.category = None
+            else:
+                event.category = None
+
+        if 'image' in request.FILES:
+            event.image = request.FILES['image']
+        if 'logo' in request.FILES:
+            event.logo = request.FILES['logo']
+
+        event.save()
+
+        return Response(
+            EventDetailSerializer(event, context={"request": request}).data,
+            status=status.HTTP_200_OK
+        )
+    except Exception as exc:
+        return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)

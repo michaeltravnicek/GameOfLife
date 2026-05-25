@@ -212,7 +212,9 @@ def player_payload(lb_user):
             .filter(tp__gt=total_points).count()
         ) + 1
 
-    from accounts.models import Profile  # local import — avoid app-load cycle
+    # Local imports — avoid app-load cycle (accounts depends on leaderboard).
+    from accounts.models import Profile
+    from accounts.services import season_summaries
     profile = (
         Profile.objects.filter(leaderboard_user=lb_user).select_related("user").first()
     )
@@ -243,4 +245,5 @@ def player_payload(lb_user):
         "rank": rank,
         "profile_username": profile.user.username if profile else None,
         "events": events,
+        "seasons": season_summaries(lb_user),
     }
