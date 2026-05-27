@@ -49,9 +49,12 @@ const warmHome = () => {
 
 const dataWarmers = {
   '/': warmHome,
+  // Must mirror EventsPage's first cacheKey exactly (`events:${city}|${season}|${q}`)
+  // or the warm-up writes a key the page never reads. Defaults: city=Vše,
+  // season=all, empty query.
   '/akce': () => prefetchQuery(
-    'events:upcoming|Vše|',
-    () => fetchEvents({ limit: PAGE_SIZE_EVENTS, offset: 0, period: 'upcoming' }),
+    'events:Vše|all|',
+    () => fetchEvents({ limit: PAGE_SIZE_EVENTS, offset: 0 }),
   ),
   '/galerie': () => prefetchQuery(
     'gallery:first',

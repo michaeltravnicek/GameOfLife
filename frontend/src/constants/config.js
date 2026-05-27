@@ -33,3 +33,12 @@ export const CACHE_TTL = {
 };
 
 export const CACHE_MAX_AGE_MS = 30 * 60 * 1000;  // 30 min — drop entirely
+
+// ── Network resilience ────────────────────────────────────────────────
+//
+// Transient failures (a dropped connection, a 5xx, or — most often on the
+// Render free tier — a slow cold-start that times out) are retried
+// automatically before the user ever sees an error. This is the single
+// biggest cause of "the page loaded empty / no events showed up".
+export const QUERY_MAX_RETRIES = 2;          // extra attempts after the first
+export const QUERY_RETRY_BASE_MS = 700;      // backoff grows: 700ms, 1400ms, …

@@ -30,6 +30,10 @@
 .events-page .group-label.past::before,.events-page .group-label.past::after{background:repeating-linear-gradient(90deg,rgba(255,241,212,.16) 0 6px,transparent 6px 12px)}
 .events-page .events-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:44px 22px;margin-bottom:56px;padding-top:44px}
 .events-page .empty{text-align:center;padding:60px 20px;font-family:var(--font-body);font-style:italic;color:rgba(255,241,212,.5);font-size:14px}
+.events-page .events-error{text-align:center;padding:60px 20px;display:flex;flex-direction:column;align-items:center;gap:18px}
+.events-page .events-error p{font-family:var(--font-body);font-style:italic;color:rgba(255,241,212,.7);font-size:15px;max-width:34ch;margin:0;line-height:1.5}
+.events-page .events-error .loc{cursor:pointer}
+.events-page .events-error .loc[disabled]{opacity:.55;cursor:not-allowed}
 .events-page .load-more-row{display:flex;justify-content:center;margin-top:32px}
 .events-page .load-more-row button{cursor:pointer}
 .events-page .load-more-row button[disabled]{opacity:.55;cursor:not-allowed}

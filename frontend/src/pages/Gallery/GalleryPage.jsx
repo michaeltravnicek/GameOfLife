@@ -1,12 +1,11 @@
-import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { fetchGallery, uploadGalleryPhoto } from '../../services/api';
+import { fetchGallery, fetchSeasons, uploadGalleryPhoto } from '../../services/api';
 import { usePaginatedQuery } from '../../services/usePaginatedQuery';
-import { prefetchQuery, invalidateQuery } from '../../services/queryCache';
+import { prefetchQuery, invalidateQuery, useCachedQuery } from '../../services/queryCache';
 import { useAuth } from '../../context/AuthContext';
 import { reportError } from '../../services/errors';
 import { CACHE_TTL, GALLERY_PREFETCH_TAIL, PAGE_SIZE_GALLERY } from '../../constants/config';
-import { monthKey, monthLabel } from '../../utils/date';
 import PageHero from '../../components/PageHero/PageHero';
 import Reveal from '../../components/Reveal/Reveal';
 import './GalleryPage.css';
@@ -25,7 +24,7 @@ export default function GalleryPage() {
   const { canUpload } = useAuth();
   const [view, setView] = useState('slideshow');
   const [cur, setCur] = useState(0);
-  const [activeMonth, setActiveMonth] = useState('all');
+  const [activeSeason, setActiveSeason] = useState('all'); // 'all', a season id (string), or 'unknown'
   const [lbOpen, setLbOpen] = useState(false);
   const [lbPhotos, setLbPhotos] = useState([]);
   const [lbIndex, setLbIndex] = useState(0);
@@ -99,10 +98,37 @@ export default function GalleryPage() {
     }
   }, [cur, photos.length, view, hasMore, loadingMore, loadMore]);
 
-  const months = useMemo(() => {
-    const set = new Set(photos.map((p) => monthKey(p.event_date)));
-    return Array.from(set);
-  }, [photos]);
+  // Seasons drive the calendar grouping (replaces the old per-month buckets).
+  // Newest season first so the most recent photos lead.
+  const { data: seasonsData } = useCachedQuery('seasons', fetchSeasons, { ttl: CACHE_TTL.LEADERBOARD });
+  const seasons = useMemo(
+    () => [...(seasonsData?.seasons || [])].sort((a, b) => (a.start < b.start ? 1 : -1)),
+    [seasonsData],
+  );
+
+  // Which season a photo's event falls into. Dates are 'YYYY-MM-DD', so a
+  // lexicographic compare on the date portion is correct. 'unknown' = no match
+  // (e.g. a photo whose event predates every configured season).
+  const seasonOf = useCallback((iso) => {
+    if (!iso) return 'unknown';
+    const d = String(iso).slice(0, 10);
+    const hit = seasons.find((s) => s.start <= d && d <= s.end);
+    return hit ? String(hit.id) : 'unknown';
+  }, [seasons]);
+
+  const seasonLabel = useCallback((key) => {
+    if (key === 'unknown') return 'Neurčeno';
+    return seasons.find((s) => String(s.id) === key)?.name || 'Sezóna';
+  }, [seasons]);
+
+  // Season buckets (newest-first) that actually contain photos, plus a trailing
+  // 'unknown' bucket when some photos don't map to any season.
+  const seasonKeys = useMemo(() => {
+    const present = new Set(photos.map((p) => seasonOf(p.event_date)));
+    const ordered = seasons.map((s) => String(s.id)).filter((id) => present.has(id));
+    if (present.has('unknown')) ordered.push('unknown');
+    return ordered;
+  }, [photos, seasons, seasonOf]);
 
   const n = photos.length;
   const goSlide = (idx) => setCur(((idx % Math.max(n, 1)) + Math.max(n, 1)) % Math.max(n, 1));
@@ -114,7 +140,7 @@ export default function GalleryPage() {
   };
   const lbStep = (d) => setLbIndex((i) => (i + d + lbPhotos.length) % lbPhotos.length);
 
-  const visibleMonths = activeMonth === 'all' ? months : [activeMonth];
+  const visibleSeasons = activeSeason === 'all' ? seasonKeys : [activeSeason];
 
   const slidePhoto = photos[cur] || {};
   const prevPhoto = photos[(cur - 1 + n) % n] || {};
@@ -240,29 +266,29 @@ export default function GalleryPage() {
 
       {view === 'calendar' && n > 0 && (
         <div id="view-calendar">
-          <div className="month-filters">
-            <button className={`mf-chip${activeMonth === 'all' ? ' on' : ''}`} onClick={() => setActiveMonth('all')}>Vše</button>
-            {months.map((m) => (
+          <div className="season-filters">
+            <button className={`sf-chip${activeSeason === 'all' ? ' on' : ''}`} onClick={() => setActiveSeason('all')}>Vše</button>
+            {seasonKeys.map((key) => (
               <button
-                key={m}
-                className={`mf-chip${activeMonth === m ? ' on' : ''}`}
-                onClick={() => setActiveMonth(m)}
+                key={key}
+                className={`sf-chip${activeSeason === key ? ' on' : ''}`}
+                onClick={() => setActiveSeason(key)}
               >
-                {monthLabel(m)}
+                {seasonLabel(key)}
               </button>
             ))}
           </div>
-          {visibleMonths.map((m) => {
-            const monthPhotos = photos.filter((p) => monthKey(p.event_date) === m);
+          {visibleSeasons.map((key) => {
+            const seasonPhotos = photos.filter((p) => seasonOf(p.event_date) === key);
             return (
-              <div key={m} className="month-section">
-                <div className="month-heading">{monthLabel(m)}</div>
-                <div className="month-count">
-                  {monthPhotos.length} {monthPhotos.length === 1 ? 'fotografie' : 'fotografií'}
+              <div key={key} className="season-section">
+                <div className="season-heading">{seasonLabel(key)}</div>
+                <div className="season-count">
+                  {seasonPhotos.length} {seasonPhotos.length === 1 ? 'fotografie' : 'fotografií'}
                 </div>
                 <Reveal stagger className="photo-grid">
-                  {monthPhotos.map((p, i) => (
-                    <div key={i} className="photo-item" onClick={() => openLb(monthPhotos, i)}>
+                  {seasonPhotos.map((p, i) => (
+                    <div key={i} className="photo-item" onClick={() => openLb(seasonPhotos, i)}>
                       <img src={p.url} alt={p.event_name} loading="lazy" />
                       <div className="photo-item-caption">
                         <div className="photo-item-label">{p.is_user_photo ? 'Komunita' : 'Akce'}</div>
@@ -279,7 +305,7 @@ export default function GalleryPage() {
             <div className="load-more-row">
               <button
                 type="button"
-                className="mf-chip"
+                className="sf-chip"
                 onClick={loadMore}
                 disabled={loadingMore}
               >

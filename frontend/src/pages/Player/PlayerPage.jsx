@@ -95,25 +95,35 @@ export default function PlayerPage() {
       <div className="grain" />
 
       <header className="player-hero">
-        <div className="player-eyebrow">Hráč · Game of Life</div>
+        <div className="player-badges">
+          {statRank && <span className="player-pill live">★ #{statRank} Leaderboard</span>}
+          {summary?.label && <span className="player-pill">Sezóna {summary.label}</span>}
+        </div>
         <Avatar name={player.name} size="xl" className="player-avatar" />
         <h1 className="player-name">{player.name}</h1>
-        <div className="player-stats">
-          <div className="player-stat">
-            <div className="player-stat-val">{statRank ? `#${statRank}` : '—'}</div>
-            <div className="player-stat-label">Pozice</div>
+        <div className="player-handle">Hráč · Game of Life</div>
+
+        {/* Stats rendered as big "credits" over the photo, like the profile poster. */}
+        <div className="player-credits">
+          <span className="player-credits-rule" />
+          <div className="player-credit">
+            <div className="player-credit-label">— Body —</div>
+            <div className="player-credit-value">{statPoints ?? 0}</div>
+            <div className="player-credit-sub">{hasSeasons ? 'v sezóně' : 'celkem'}</div>
           </div>
-          <div className="player-stat">
-            <div className="player-stat-val">{statPoints ?? 0}</div>
-            <div className="player-stat-label">Bodů</div>
+          <div className="player-credit">
+            <div className="player-credit-label">— Akcí —</div>
+            <div className="player-credit-value">{statEvents ?? 0}</div>
+            <div className="player-credit-sub">absolvováno</div>
           </div>
-          <div className="player-stat">
-            <div className="player-stat-val">{statEvents ?? 0}</div>
-            <div className="player-stat-label">Akcí</div>
+          <div className="player-credit">
+            <div className="player-credit-label">— Pozice —</div>
+            <div className="player-credit-value">{statRank ? `#${statRank}` : '—'}</div>
+            <div className="player-credit-sub">{statRank ? 'v žebříčku' : 'zatím bez bodů'}</div>
           </div>
         </div>
+
         <p className="player-note">Tento hráč zatím nemá účet na webu.</p>
-        <div className="player-divider" />
       </header>
 
       <main className="player-main">

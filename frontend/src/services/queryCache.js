@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { CACHE_MAX_AGE_MS, CACHE_TTL } from '../constants/config';
+import {
+  CACHE_MAX_AGE_MS, CACHE_TTL, QUERY_MAX_RETRIES, QUERY_RETRY_BASE_MS,
+} from '../constants/config';
 
 /**
  * Tiny in-memory query cache with TTL, in-flight deduplication, and
@@ -56,14 +58,43 @@ function setEntry(key, value) {
 }
 
 /**
+ * A failure is worth retrying only if it's transient: a network/timeout error
+ * (no HTTP response at all — common on Render cold starts) or a 5xx. A 4xx is
+ * deterministic (bad request, 404), so retrying it just delays the error.
+ */
+function isRetryable(err) {
+  const status = err?.response?.status;
+  if (status === undefined) return true;   // network error / timeout
+  return status >= 500 && status < 600;
+}
+
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/**
+ * Run `fetcher`, retrying transient failures with linear backoff. This is the
+ * fix for "sometimes the page loads with no data" — a single dropped/slow
+ * request no longer surfaces as an empty page.
+ */
+function fetchWithRetry(fetcher, attempt = 0) {
+  return Promise.resolve()
+    .then(fetcher)
+    .catch((err) => {
+      if (attempt < QUERY_MAX_RETRIES && isRetryable(err)) {
+        return delay(QUERY_RETRY_BASE_MS * (attempt + 1))
+          .then(() => fetchWithRetry(fetcher, attempt + 1));
+      }
+      throw err;
+    });
+}
+
+/**
  * Execute the fetcher with in-flight dedup. If another caller is already
  * fetching this key, both get the same Promise.
  */
 function dedupedFetch(key, fetcher) {
   const existing = inflight.get(key);
   if (existing) return existing;
-  const promise = Promise.resolve()
-    .then(fetcher)
+  const promise = fetchWithRetry(fetcher)
     .then((value) => {
       setEntry(key, value);
       return value;

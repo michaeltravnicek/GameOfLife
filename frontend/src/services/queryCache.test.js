@@ -98,12 +98,33 @@ describe('queryCache', () => {
     expect(fetcher).toHaveBeenCalledTimes(2);
   });
 
-  it('surfaces errors via the hook', async () => {
-    const fetcher = vi.fn().mockRejectedValue(new Error('boom'));
+  it('surfaces a non-retryable (4xx) error via the hook', async () => {
+    // A 4xx is deterministic, so it's surfaced immediately without any retry —
+    // which also keeps this test fast (no backoff wait).
+    const err = Object.assign(new Error('boom'), { response: { status: 404 } });
+    const fetcher = vi.fn().mockRejectedValue(err);
     const { result } = renderHook(() =>
       useCachedQuery('err-key', fetcher, { ttl: 60_000 })
     );
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.error).toBeInstanceOf(Error);
+    expect(fetcher).toHaveBeenCalledTimes(1);
+  });
+
+  it('retries a transient failure, then surfaces the eventual success', async () => {
+    // No `response` ⇒ looks like a network/timeout error ⇒ retryable. The fix
+    // for "the page sometimes loads empty": one blip no longer surfaces.
+    const fetcher = vi.fn()
+      .mockRejectedValueOnce(new Error('network blip'))
+      .mockResolvedValueOnce({ ok: true });
+    const { result } = renderHook(() =>
+      useCachedQuery('retry-key', fetcher, { ttl: 60_000 })
+    );
+    await waitFor(
+      () => expect(result.current.data).toEqual({ ok: true }),
+      { timeout: 3000 },
+    );
+    expect(result.current.error).toBeNull();
+    expect(fetcher).toHaveBeenCalledTimes(2);
   });
 });

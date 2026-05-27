@@ -9,16 +9,23 @@
 
 .player-page .player-status{text-align:center;padding:80px 20px;color:var(--alpha-cream-55);font-family:var(--font-mono);font-style:italic}
 
-.player-page .player-hero{text-align:center;display:flex;flex-direction:column;align-items:center;gap:12px;margin-bottom:36px}
-.player-page .player-eyebrow{font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.18em;font-size:var(--text-xs);color:var(--alpha-cream-55)}
-.player-page .player-avatar{width:96px;height:96px;font-size:30px}
-.player-page .player-name{font-family:var(--font-display);font-size:var(--text-5xl);letter-spacing:.02em;margin:2px 0}
-.player-page .player-stats{display:flex;gap:38px;margin-top:6px}
-.player-page .player-stat{display:flex;flex-direction:column;align-items:center;gap:2px}
-.player-page .player-stat-val{font-family:var(--font-number);font-size:var(--text-2xl);color:var(--color-pink)}
-.player-page .player-stat-label{font-size:var(--text-xs);text-transform:uppercase;letter-spacing:.14em;color:var(--alpha-cream-45)}
-.player-page .player-note{font-size:var(--text-sm);color:var(--alpha-cream-45);font-style:italic;margin:4px 0 0}
-.player-page .player-divider{width:48px;height:2px;background:var(--color-pink);margin-top:14px;opacity:.7}
+.player-page .player-hero{text-align:center;display:flex;flex-direction:column;align-items:center;gap:14px;margin-bottom:40px}
+.player-page .player-badges{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.player-page .player-pill{font-family:var(--font-mono);font-style:italic;font-size:11px;letter-spacing:.18em;text-transform:uppercase;padding:6px 14px;border-radius:9999px;background:rgba(26,15,10,.55);border:1.5px dashed rgba(255,241,212,.4);color:rgba(255,241,212,.92);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.player-page .player-pill.live{background:var(--color-pink);color:#fff;border-color:transparent;box-shadow:0 4px 14px rgba(225,84,99,.5)}
+.player-page .player-avatar{width:128px;height:128px;font-size:42px;box-shadow:0 14px 44px rgba(0,0,0,.55)}
+.player-page .player-name{font-family:var(--font-display);font-size:clamp(44px,7vw,84px);line-height:.92;text-transform:uppercase;letter-spacing:.03em;color:#fff;text-shadow:0 6px 38px rgba(0,0,0,.7);margin:4px 0 0}
+.player-page .player-handle{font-family:var(--font-mono);font-style:italic;font-size:13px;color:rgba(255,241,212,.78);letter-spacing:.16em;text-shadow:0 2px 10px rgba(0,0,0,.5)}
+
+/* Stat "credits" over the background photo — mirrors the profile poster. */
+.player-page .player-credits{position:relative;margin-top:18px;padding-top:30px;display:flex;justify-content:center;align-items:flex-end;gap:0;width:100%;max-width:680px}
+.player-page .player-credits-rule{position:absolute;left:50%;transform:translateX(-50%);top:0;width:min(680px,calc(100% - 12px));height:1px;background:repeating-linear-gradient(90deg,rgba(255,241,212,.45) 0 6px,transparent 6px 12px)}
+.player-page .player-credit{flex:1;max-width:220px;padding:0 18px;text-align:center;color:var(--color-cream-light)}
+.player-page .player-credit + .player-credit{border-left:1px solid rgba(255,241,212,.20)}
+.player-page .player-credit-label{font-family:var(--font-mono);font-style:italic;font-size:10.5px;letter-spacing:.28em;text-transform:uppercase;color:var(--color-pink);margin-bottom:10px;text-shadow:0 2px 12px rgba(0,0,0,.7)}
+.player-page .player-credit-value{font-family:var(--font-display);font-size:clamp(38px,5vw,64px);letter-spacing:.04em;line-height:.95;color:#fff;text-shadow:0 4px 28px rgba(0,0,0,.75),0 1px 0 rgba(0,0,0,.4)}
+.player-page .player-credit-sub{font-family:var(--font-body);font-style:italic;font-size:12.5px;color:rgba(255,241,212,.78);margin-top:8px;text-shadow:0 2px 10px rgba(0,0,0,.6);line-height:1.4}
+.player-page .player-note{font-size:var(--text-sm);color:var(--alpha-cream-45);font-style:italic;margin:8px 0 0}
 
 .player-page .player-seasons{display:flex;justify-content:center;margin-bottom:20px}
 .player-page .player-list-label{font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.16em;font-size:var(--text-xs);color:var(--alpha-cream-55);margin:0 6px 14px;display:flex;align-items:center;gap:14px}
@@ -36,8 +43,10 @@
 .player-page .player-back a{color:var(--color-pink);text-decoration:none;font-family:var(--font-mono);letter-spacing:.04em}
 .player-page .player-back a:hover{text-decoration:underline}
 
-@media(max-width:520px){
+@media(max-width:560px){
   .player-page{padding:100px 14px 60px}
-  .player-page .player-stats{gap:24px}
-  .player-page .player-name{font-size:var(--text-4xl)}
+  .player-page .player-avatar{width:104px;height:104px;font-size:34px}
+  .player-page .player-credits{flex-direction:column;gap:18px;padding-top:24px;max-width:320px}
+  .player-page .player-credit{max-width:none;padding:0}
+  .player-page .player-credit + .player-credit{border-left:0;border-top:1px solid rgba(255,241,212,.2);padding-top:18px}
 }

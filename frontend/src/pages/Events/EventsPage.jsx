@@ -58,7 +58,7 @@ export default function EventsPage() {
   );
 
   const {
-    items: events, hasMore, totalCount, loading, loadingMore, loadMore, firstPage,
+    items: events, hasMore, totalCount, loading, loadingMore, loadMore, firstPage, error, retry,
   } = usePaginatedQuery({
     cacheKey,
     fetcher: (offset, limit) => fetchEvents(buildParams(offset, limit)),
@@ -91,7 +91,18 @@ export default function EventsPage() {
       .sort((a, b) => new Date(b.date) - new Date(a.date)),
   }), [events]);
 
-  const empty = !loading && events.length === 0;
+  // "No results" vs. "load failed" are different states — a failed first page
+  // must NOT masquerade as "Žádné akce nenalezeny." (which made transient
+  // network/cold-start failures look like there were simply no events).
+  const empty = !loading && !error && events.length === 0;
+
+  const [retrying, setRetrying] = useState(false);
+  const handleRetry = useCallback(() => {
+    setRetrying(true);
+    // A failed retry stays surfaced via the hook's `error`, so swallow the
+    // rejection here to avoid an unhandled promise rejection.
+    Promise.resolve(retry()).catch(() => {}).finally(() => setRetrying(false));
+  }, [retry]);
 
   const [upRef, upIn] = useReveal();
   const [pastRef, pastIn] = useReveal();
@@ -130,6 +141,14 @@ export default function EventsPage() {
       <main className="events-main">
         {loading && <div className="empty">Načítám akce…</div>}
         {empty && <div className="empty">Žádné akce nenalezeny.</div>}
+        {error && (
+          <div className="events-error">
+            <p>Akce se nepodařilo načíst. Zkontroluj připojení a zkus to znovu.</p>
+            <button type="button" className="loc" onClick={handleRetry} disabled={retrying}>
+              {retrying ? 'Načítám…' : 'Zkusit znovu'}
+            </button>
+          </div>
+        )}
 
         {upcoming.length > 0 && (
           <>

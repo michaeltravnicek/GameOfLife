@@ -44,7 +44,9 @@ export function usePaginatedQuery({
   const reqIdRef = useRef(0);
 
   // First page is owned by the shared cache.
-  const { data: firstPage, loading: firstLoading } = useCachedQuery(
+  const {
+    data: firstPage, loading: firstLoading, error: firstError, refetch,
+  } = useCachedQuery(
     cacheKey,
     () => fetcher(0, pageSize),
     { ttl },
@@ -66,6 +68,10 @@ export function usePaginatedQuery({
   const totalCount = firstPage ? extractCount(firstPage) : items.length;
   const hasMore = extraHasMore !== null ? extraHasMore : (firstPage ? extractHasMore(firstPage) : false);
   const loading = firstLoading && items.length === 0;
+  // Only treat the first page as "failed" when we have nothing to show. A
+  // background refresh that fails over already-rendered data isn't an error
+  // worth blanking the page for.
+  const error = items.length === 0 ? firstError : null;
 
   const loadMore = useCallback(() => {
     if (loadingMore || !hasMore) return Promise.resolve();
@@ -86,5 +92,7 @@ export function usePaginatedQuery({
     errorMessage, extractItems, extractHasMore,
   ]);
 
-  return { items, hasMore, totalCount, loading, loadingMore, loadMore, firstPage };
+  return {
+    items, hasMore, totalCount, loading, loadingMore, loadMore, firstPage, error, retry: refetch,
+  };
 }

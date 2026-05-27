@@ -44,11 +44,15 @@ export default function EventDetailPage() {
     return list;
   }, [event]);
 
+  // Top poster: prefer the event's own DB image, then an official photo, then a
+  // built-in default. The default is a static asset, so it always resolves even
+  // if media serving is down.
+  const POSTER_FALLBACK = '/gallery/gal0.jpg';
   const posterSrc = useMemo(() => {
-    if (!event) return '/gallery/gal0.jpg';
+    if (!event) return POSTER_FALLBACK;
     if (event.image) return event.image;
     if (event.official_images?.length) return event.official_images[0];
-    return '/gallery/gal0.jpg';
+    return POSTER_FALLBACK;
   }, [event]);
 
 
@@ -132,7 +136,19 @@ export default function EventDetailPage() {
 
       {/* POSTER */}
       <section className="poster">
-        <img className="poster-img" src={posterSrc} alt={event.name} fetchpriority="high" />
+        <img
+          className="poster-img"
+          src={posterSrc}
+          alt={event.name}
+          fetchpriority="high"
+          onError={(e) => {
+            // If the chosen image fails to load (e.g. a missing upload), fall
+            // back to the default so the poster never shows a broken image.
+            if (e.currentTarget.src !== window.location.origin + POSTER_FALLBACK) {
+              e.currentTarget.src = POSTER_FALLBACK;
+            }
+          }}
+        />
         <div className="poster-grain" />
         <div className="poster-vignette" />
         <div className="poster-top">
