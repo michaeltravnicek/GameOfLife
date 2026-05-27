@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from leaderboard.models import Category, Event, EventRSVP, ImageToEvent, UserPhoto
+from leaderboard.models import Category, Event, EventFeedback, EventRSVP, ImageToEvent, UserPhoto
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -19,6 +19,7 @@ class EventListSerializer(serializers.ModelSerializer):
         fields = [
             "id", "slug", "name", "description", "place",
             "date", "points", "image", "capacity", "is_past", "category",
+            "visible_to_users",
         ]
 
     def get_image(self, obj):
@@ -40,6 +41,8 @@ class EventDetailSerializer(serializers.ModelSerializer):
     rsvp_count = serializers.SerializerMethodField()
     is_full = serializers.SerializerMethodField()
     has_rsvp = serializers.SerializerMethodField()
+    has_attended = serializers.SerializerMethodField()
+    feedback_given = serializers.SerializerMethodField()
     official_images = serializers.SerializerMethodField()
     user_photos = serializers.SerializerMethodField()
     category = CategorySerializer(read_only=True)
@@ -52,6 +55,7 @@ class EventDetailSerializer(serializers.ModelSerializer):
             "latitude", "longitude", "category",
             "survey_url", "visible_to_users",
             "is_past", "rsvp_count", "is_full", "has_rsvp",
+            "has_attended", "feedback_given",
             "official_images", "user_photos",
         ]
 
@@ -91,6 +95,26 @@ class EventDetailSerializer(serializers.ModelSerializer):
         if not request or not request.user.is_authenticated:
             return False
         return EventRSVP.objects.filter(auth_user=request.user, event=obj).exists()
+
+    def get_has_attended(self, obj):
+        request = self.context.get("request")
+        if not request or not request.user.is_authenticated:
+            return False
+        from accounts.models import Profile
+        from leaderboard.models import UserToEvent
+        try:
+            lb_user = request.user.profile.leaderboard_user
+        except (AttributeError, Profile.DoesNotExist):
+            return False
+        if lb_user is None:
+            return False
+        return UserToEvent.objects.filter(user=lb_user, event=obj).exists()
+
+    def get_feedback_given(self, obj):
+        request = self.context.get("request")
+        if not request or not request.user.is_authenticated:
+            return False
+        return EventFeedback.objects.filter(auth_user=request.user, event=obj).exists()
 
     def get_official_images(self, obj):
         request = self.context.get("request")

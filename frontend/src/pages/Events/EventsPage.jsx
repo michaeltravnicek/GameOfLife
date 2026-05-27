@@ -35,6 +35,13 @@ export default function EventsPage() {
     [seasonsData],
   );
 
+  // Reset city when season changes — the selected city may not exist in the
+  // new season, producing a silent empty result that looks like "no events".
+  const handleSeasonChange = useCallback((newSeason) => {
+    setSeason(newSeason);
+    setCity('Vše');
+  }, []);
+
   // Debounce search input so we don't fire a request per keystroke.
   useEffect(() => {
     const t = setTimeout(() => setDebouncedQuery(query), SEARCH_DEBOUNCE_MS);
@@ -70,14 +77,21 @@ export default function EventsPage() {
     extractCount,
   });
 
-  // Sticky cities — only the first page of each filter set returns them.
+  // Update city list whenever a new first page arrives. We skip the update
+  // only if firstPage hasn't resolved yet (undefined = still loading) to avoid
+  // a flash of empty filters. Once the response is in, we always overwrite —
+  // stale cities from a previous season must not persist.
   useEffect(() => {
-    const firstCities = firstPage?.cities || [];
-    if (firstCities.length) setCities(firstCities);
+    if (firstPage === undefined) return;
+    setCities(firstPage.cities || []);
   }, [firstPage]);
 
+  // Only show city filters that have more than 1 event (avoids single-result dead-ends).
   const cityChoices = useMemo(
-    () => ['Vše', ...cities.map((c) => c.name)],
+    () => {
+      const filtered = cities.filter((c) => (c.count ?? 1) > 1);
+      return filtered.length > 0 ? ['Vše', ...filtered.map((c) => c.name)] : [];
+    },
     [cities],
   );
 
@@ -104,8 +118,9 @@ export default function EventsPage() {
     Promise.resolve(retry()).catch(() => {}).finally(() => setRetrying(false));
   }, [retry]);
 
-  const [upRef, upIn] = useReveal();
-  const [pastRef, pastIn] = useReveal();
+  // Looser threshold so grids that load just at the viewport edge still reveal.
+  const [upRef, upIn] = useReveal({ threshold: 0.01, rootMargin: '0px 0px 80px 0px' });
+  const [pastRef, pastIn] = useReveal({ threshold: 0.01, rootMargin: '0px 0px 80px 0px' });
 
   return (
     <div className="events-page">
@@ -119,24 +134,29 @@ export default function EventsPage() {
       />
 
       <section className="controls">
-        <PillTabs tabs={seasonTabs} active={season} onChange={setSeason} />
+        <PillTabs tabs={seasonTabs} active={season} onChange={handleSeasonChange} />
         <SearchInput
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Hledat akci…"
         />
         {isAdmin && (
-          <Link to="/sprava/zpetna-vazba" className="admin-btn">📊 Zpětná vazba</Link>
+          <div className="admin-actions">
+            <Link to="/akce/vytvorit" className="admin-btn create-btn">➕ Vytvořit akci</Link>
+            <Link to="/sprava/zpetna-vazba" className="admin-btn">📊 Zpětná vazba</Link>
+          </div>
         )}
       </section>
 
-      <section className="locations">
-        {cityChoices.map((c) => (
-          <button key={c} className={`loc${city === c ? ' on' : ''}`} onClick={() => setCity(c)}>
-            {c}
-          </button>
-        ))}
-      </section>
+      {cityChoices.length > 0 && (
+        <section className="locations">
+          {cityChoices.map((c) => (
+            <button key={c} className={`loc${city === c ? ' on' : ''}`} onClick={() => setCity(c)}>
+              {c}
+            </button>
+          ))}
+        </section>
+      )}
 
       <main className="events-main">
         {loading && <div className="empty">Načítám akce…</div>}
@@ -154,7 +174,12 @@ export default function EventsPage() {
           <>
             <div className="group-label">Nadcházející</div>
             <div ref={upRef} className={`events-grid reveal-stagger${upIn ? ' in' : ''}`}>
-              {upcoming.map((ev) => <EventCard key={ev.id} event={ev} theme="light" />)}
+              {upcoming.map((ev) => (
+                <div key={ev.id} className={`ev-wrap${isAdmin && !ev.visible_to_users ? ' ev-hidden' : ''}`}>
+                  <EventCard event={ev} theme="light" />
+                  {isAdmin && !ev.visible_to_users && <span className="ev-hidden-badge">Skryto</span>}
+                </div>
+              ))}
             </div>
           </>
         )}
@@ -162,7 +187,12 @@ export default function EventsPage() {
           <>
             <div className="group-label past">Proběhlo</div>
             <div ref={pastRef} className={`events-grid reveal-stagger${pastIn ? ' in' : ''}`}>
-              {past.map((ev) => <EventCard key={ev.id} event={ev} theme="light" />)}
+              {past.map((ev) => (
+                <div key={ev.id} className={`ev-wrap${isAdmin && !ev.visible_to_users ? ' ev-hidden' : ''}`}>
+                  <EventCard event={ev} theme="light" />
+                  {isAdmin && !ev.visible_to_users && <span className="ev-hidden-badge">Skryto</span>}
+                </div>
+              ))}
             </div>
           </>
         )}

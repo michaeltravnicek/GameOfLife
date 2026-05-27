@@ -25,6 +25,7 @@ export default function EventDetailPage() {
   const [comment, setComment] = useState('');
   const [fbBusy, setFbBusy] = useState(false);
   const [fbDone, setFbDone] = useState(false);
+  const [fbEditing, setFbEditing] = useState(false);
   const [uploading, setUploading] = useState(false);
 
   const { data: event, error: queryError, refetch: refetchEvent } = useCachedQuery(
@@ -32,6 +33,12 @@ export default function EventDetailPage() {
     () => fetchEventDetail(slug),
     { enabled: !!slug, ttl: CACHE_TTL.EVENT_DETAIL },
   );
+
+  // Pre-set "done" state if the server already recorded feedback from this user.
+  useEffect(() => {
+    if (event?.feedback_given && !fbEditing) setFbDone(true);
+  }, [event?.feedback_given, fbEditing]);
+
   const error = queryError
     ? (queryError.response?.status === 404 ? 'Akce nenalezena.' : 'Nepodařilo se načíst akci.')
     : '';
@@ -255,23 +262,31 @@ export default function EventDetailPage() {
             </section>
           )}
 
-          {user && (
-            <section className="section">
+          {event.is_past && (
+            <section className="section fb-section">
               <SectionHeader eyebrow="— Zpětná vazba —" heading="Jak se ti akce líbila?" />
               {isAdmin && (
                 <div className="admin-btns">
                   <Link to={`/sprava/zpetna-vazba?event=${slug}`} className="admin-btn fb-admin-link">
                     📊 Zobrazit zpětnou vazbu k akci
                   </Link>
-                  <Link to="/akce/vytvorit" className="admin-btn">
-                    ➕ Vytvořit akci
-                  </Link>
                 </div>
               )}
-              {fbDone ? (
-                <p className="fb-thanks">Díky za hodnocení! 🙌</p>
+              {!user ? (
+                <p className="fb-gate">
+                  <Link to="/prihlasit" className="fb-gate-link">Přihlaš se</Link> a ohodnoť akci.
+                </p>
+              ) : !event.has_attended ? (
+                <p className="fb-gate">Hodnotit mohou jen účastníci akce.</p>
+              ) : fbDone && !fbEditing ? (
+                <div className="fb-done">
+                  <p className="fb-thanks">Díky za hodnocení!</p>
+                  <button type="button" className="fb-edit-btn" onClick={() => setFbEditing(true)}>
+                    Upravit hodnocení
+                  </button>
+                </div>
               ) : (
-                <form className="fb-form" onSubmit={handleFeedback}>
+                <form className="fb-form" onSubmit={async (e) => { await handleFeedback(e); setFbEditing(false); }}>
                   <div className="fb-stars" role="radiogroup" aria-label="Hodnocení 1 až 5">
                     {[1, 2, 3, 4, 5].map((n) => (
                       <button
@@ -291,9 +306,16 @@ export default function EventDetailPage() {
                     onChange={(e) => setComment(e.target.value)}
                     rows={3}
                   />
-                  <Button type="submit" variant="action" busy={fbBusy} disabled={!rating}>
-                    Odeslat hodnocení
-                  </Button>
+                  <div className="fb-actions">
+                    <Button type="submit" variant="action" busy={fbBusy} disabled={!rating}>
+                      Odeslat hodnocení
+                    </Button>
+                    {fbEditing && (
+                      <button type="button" className="fb-cancel-btn" onClick={() => setFbEditing(false)}>
+                        Zrušit
+                      </button>
+                    )}
+                  </div>
                 </form>
               )}
             </section>

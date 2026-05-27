@@ -7,6 +7,7 @@
 .events-page .grain{position:fixed;inset:0;z-index:-1;pointer-events:none;background:var(--tex-brown) 0 0/var(--tex-size) var(--tex-size) repeat;opacity:var(--grain-opacity);mix-blend-mode:overlay}
 
 .events-page .controls{position:relative;z-index:2;max-width:1100px;margin:32px auto 0;padding:0 24px;display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap}
+.events-page .admin-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .events-page .controls .search-wrap{flex:1;max-width:290px}
 .events-page .tabs{display:inline-flex;padding:5px;gap:5px;background:rgba(26,15,10,.45);border:1.5px dashed rgba(255,241,212,.32);border-radius:9999px;backdrop-filter:blur(8px)}
 .events-page .tab{font-family:var(--font-hv);font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;padding:9px 20px;border-radius:9999px;cursor:pointer;background:transparent;border:0;color:rgba(255,241,212,.75);transition:all .18s}
@@ -29,6 +30,9 @@
 .events-page .group-label.past{color:rgba(255,241,212,.42)}
 .events-page .group-label.past::before,.events-page .group-label.past::after{background:repeating-linear-gradient(90deg,rgba(255,241,212,.16) 0 6px,transparent 6px 12px)}
 .events-page .events-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:44px 22px;margin-bottom:56px;padding-top:44px}
+.events-page .ev-wrap{position:relative}
+.events-page .ev-hidden{opacity:.65}
+.events-page .ev-hidden-badge{position:absolute;top:10px;right:10px;background:rgba(255,100,50,.18);border:1px dashed rgba(255,100,50,.55);color:rgba(255,160,120,.9);font-family:var(--font-mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;padding:4px 10px;border-radius:var(--radius-pill);pointer-events:none;z-index:2}
 .events-page .empty{text-align:center;padding:60px 20px;font-family:var(--font-body);font-style:italic;color:rgba(255,241,212,.5);font-size:14px}
 .events-page .events-error{text-align:center;padding:60px 20px;display:flex;flex-direction:column;align-items:center;gap:18px}
 .events-page .events-error p{font-family:var(--font-body);font-style:italic;color:rgba(255,241,212,.7);font-size:15px;max-width:34ch;margin:0;line-height:1.5}
@@ -44,10 +48,43 @@
 }
 
 @media(max-width:768px){
-  .events-page .controls{flex-direction:column;align-items:stretch;gap:12px;padding:0 16px}
+  .events-page .controls{flex-direction:column;align-items:stretch;gap:0;padding:0}
+  .events-page .controls .search-wrap{padding:10px 12px 0;order:3}
+  .events-page .controls .admin-actions{order:4;display:flex;gap:10px;flex-wrap:wrap;padding:8px 12px 0;align-self:flex-start}
   .events-page .search{max-width:100%}
   .events-page .events-main{padding:30px 16px 64px}
-  .events-page .locations{padding:0 16px}
+}
+
+@media(max-width:399px){
+  /* Season tabs: full-width scrollable nav strip */
+  .events-page .controls .pilltabs{
+    display:flex;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;
+    width:100%;border-radius:0;border:none;border-bottom:1px dashed rgba(255,241,212,.18);
+    background:rgba(26,15,10,.55);padding:0 4px;gap:0;backdrop-filter:blur(10px);
+  }
+  .events-page .controls .pilltabs::-webkit-scrollbar{display:none}
+  .events-page .controls .pilltabs::before{
+    top:auto;bottom:0;height:2px;border-radius:0;background:var(--color-pink);
+    box-shadow:0 0 10px var(--alpha-pink-45);transition:left .3s,width .3s;
+  }
+  .events-page .controls .pilltabs-btn{
+    flex-shrink:0;padding:13px 18px;font-size:11.5px;border-radius:0;
+    border-bottom:2px solid transparent;margin-bottom:-1px;
+  }
+  .events-page .controls .pilltabs-btn.on{background:transparent;box-shadow:none}
+
+  /* City filters: scrollable pill row */
+  .events-page .locations{
+    display:flex;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;
+    padding:10px 12px;gap:8px;justify-content:flex-start;margin-top:0;
+    background:rgba(26,15,10,.35);border-bottom:1px dashed rgba(255,241,212,.10);
+  }
+  .events-page .locations::-webkit-scrollbar{display:none}
+  .events-page .loc{flex-shrink:0}
+}
+
+@media(min-width:769px){
+  .events-page .controls .search-wrap{order:unset}
 }
 
 @media(max-width:640px){

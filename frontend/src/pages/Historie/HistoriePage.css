@@ -1,7 +1,7 @@
 /* All selectors scoped under .historie-page to prevent cross-page leaks. */
 .historie-page{min-height:100vh;color:var(--color-cream-light);overflow-x:hidden;background:#1a0f0a}
 
-.historie-page .stage{position:fixed;inset:0;z-index:0;background:url('/gallery/gal2.jpg') center 30%/cover no-repeat;filter:saturate(.78) contrast(1.02);transform:scale(1.06)}
+.historie-page .stage{position:fixed;inset:0;z-index:0;background:url('/gallery/gal7.jpg') center 30%/cover no-repeat;filter:saturate(.78) contrast(1.02);transform:scale(1.06)}
 .historie-page .stage::after{content:'';position:absolute;inset:0;background:
   radial-gradient(ellipse at 50% 0%, rgba(45,42,142,.25) 0%, transparent 38%),
   linear-gradient(180deg, rgba(26,15,10,.55) 0%, rgba(26,15,10,.78) 38%, rgba(26,15,10,.94) 100%)}
@@ -84,16 +84,105 @@
 .historie-page .cta-foot h2{font-family:var(--font-display);font-weight:400;font-size:clamp(36px,5vw,60px);line-height:1;color:var(--color-cream-light);text-transform:uppercase;letter-spacing:.03em;margin-bottom:18px}
 /* CTA button renders through the shared <Button> component (Button.css). */
 
+/* ── Tablet / small desktop ── */
 @media(max-width:820px){
-  .historie-page .credits{flex-direction:column;gap:18px;padding-top:24px}
-  .historie-page .credits::before{display:none}
-  .historie-page .credit{max-width:none;padding:14px 18px 0;border-top:1px dashed rgba(255,241,212,.22)}
-  .historie-page .credit + .credit{border-left:0}
-  .historie-page .credit:first-child{border-top:0;padding-top:0}
-  .historie-page .spine::before{left:24px}
-  .historie-page .row{grid-template-columns:48px 1fr;gap:0}
-  .historie-page .row .node{grid-column:1;justify-content:flex-start}
+  /* Keep credits horizontal — just scale down text to fit */
+  .historie-page .credits{flex-direction:row;flex-wrap:nowrap;gap:0;padding:20px 16px 0;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .historie-page .credit{max-width:none;flex:1;padding:0 10px;border-top:0}
+  .historie-page .credit + .credit{border-left:1px solid rgba(255,241,212,.20)}
+  .historie-page .credit-value{font-size:clamp(26px,5.5vw,40px)}
+  .historie-page .credit-label{font-size:9px;letter-spacing:.18em}
+  .historie-page .credit-sub{font-size:11px;margin-top:5px}
+
+  /* Single-column timeline with left spine */
+  .historie-page main.timeline{padding:36px 16px 80px}
+  .historie-page .spine::before{left:20px;transform:none}
+  .historie-page .row{grid-template-columns:40px 1fr;gap:0;margin-bottom:28px;align-items:start;grid-auto-flow:dense}
+  .historie-page .row .node{grid-column:1;justify-content:center;padding-top:20px}
   .historie-page .row .card,.historie-page .row.left .card,.historie-page .row.right .card,.historie-page .row:nth-child(even) .card{grid-column:2}
   .historie-page .card-title{font-size:24px}
-  .historie-page .year-mark .y{font-size:42px;padding:3px 16px 0}
+  .historie-page .year-mark{margin:28px 0 20px}
+  .historie-page .year-mark .y{font-size:40px;padding:3px 16px 0}
+}
+
+/* ── Mobile ── */
+@media(max-width:640px){
+  .historie-page main.timeline{padding:28px 12px 64px}
+  .historie-page .row{grid-template-columns:32px 1fr;align-items:start}
+  .historie-page .row .node{padding-top:18px}
+  .historie-page .spine::before{left:16px}
+  .historie-page .node-dot{width:14px;height:14px}
+
+  .historie-page .card-media{height:160px}
+  /* Reduce ev-stamp size so it doesn't overflow too much into card-body */
+  .historie-page .ev-stamp{width:72px;height:72px;bottom:-8px;right:-6px}
+  .historie-page .first-stamp{font-size:15px;padding:5px 14px 2px;letter-spacing:.1em}
+  .historie-page .pts-badge{font-size:16px;padding:5px 11px 2px}
+  /* Move date-stamp to bottom-left so it doesn't clash with centred first-stamp */
+  .historie-page .date-stamp{font-size:10px;padding:4px 10px;top:auto;bottom:12px;left:12px}
+
+  .historie-page .card-body{padding:16px 16px 18px}
+  .historie-page .card-title{font-size:21px;margin-bottom:8px}
+  .historie-page .card-text{font-size:13.5px;line-height:1.6}
+  .historie-page .card-meta{gap:6px;margin-top:10px;padding-top:10px}
+  .historie-page .chip{font-size:10.5px;padding:3px 9px}
+
+  .historie-page .card.note .card-body{padding:20px 18px 18px}
+  .historie-page .card.note .card-title{font-size:20px}
+  .historie-page .card.note .note-mark{font-size:40px;top:10px;right:14px}
+
+  .historie-page .year-mark .y{font-size:34px;padding:2px 14px 0}
+  .historie-page .credit-value{font-size:clamp(22px,6vw,36px)}
+}
+
+/* ── Small mobile ── */
+@media(max-width:480px){
+  .historie-page main.timeline{padding:20px 10px 56px}
+  .historie-page .row{grid-template-columns:28px 1fr;margin-bottom:20px;align-items:start}
+  .historie-page .row .node{padding-top:16px}
+  .historie-page .spine::before{left:14px}
+  .historie-page .node-dot{width:12px;height:12px;border-width:2px}
+
+  .historie-page .card-media{height:144px}
+  .historie-page .ev-stamp{width:60px;height:60px;bottom:-6px;right:-4px}
+  .historie-page .first-stamp{font-size:13px;padding:4px 12px 2px;max-width:calc(100% - 80px);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .historie-page .pts-badge{font-size:14px;padding:4px 9px 2px;top:8px;right:8px}
+  .historie-page .date-stamp{font-size:10px;padding:3px 8px;top:auto;bottom:8px;left:8px}
+
+  .historie-page .card-body{padding:14px 14px 16px}
+  .historie-page .card-tag{font-size:9.5px;letter-spacing:.14em}
+  .historie-page .card-title{font-size:19px}
+  .historie-page .card-text{font-size:13px;line-height:1.58}
+  .historie-page .chip{font-size:10px;padding:3px 8px}
+
+  .historie-page .card.note .card-body{padding:16px 14px 16px}
+  .historie-page .card.note .card-title{font-size:18px}
+  .historie-page .card.note .note-mark{font-size:34px}
+
+  .historie-page .year-mark{margin:22px 0 16px}
+  .historie-page .year-mark .y{font-size:30px;padding:2px 12px 0}
+  .historie-page .credit-value{font-size:clamp(18px,5vw,28px)}
+  .historie-page .credit-sub{font-size:10px}
+
+  .historie-page .hist-coda{padding:44px 16px 24px}
+  .historie-page .hist-coda-stamp{font-size:22px;padding:12px 18px}
+  .historie-page .cta-foot{padding:0 16px 60px}
+}
+
+/* ── XS / very narrow ── */
+@media(max-width:375px){
+  .historie-page .row{grid-template-columns:24px 1fr;align-items:start}
+  .historie-page .row .node{padding-top:14px}
+  .historie-page .spine::before{left:12px}
+  .historie-page .card-media{height:130px}
+  .historie-page .ev-stamp{width:50px;height:50px;bottom:-4px;right:-2px}
+  .historie-page .first-stamp{font-size:12px;padding:3px 10px 2px;max-width:calc(100% - 70px)}
+  .historie-page .date-stamp{bottom:6px;left:6px;font-size:9.5px;padding:3px 7px}
+  .historie-page .pts-badge{font-size:13px;padding:3px 8px 2px}
+  .historie-page .card-body{padding:12px 12px 14px}
+  .historie-page .card-title{font-size:17px}
+  .historie-page .card-text{font-size:12.5px}
+  .historie-page .card.note .card-title{font-size:16px}
+  .historie-page .year-mark .y{font-size:26px;padding:2px 10px 0}
+  .historie-page .credit-value{font-size:clamp(16px,4.5vw,24px)}
 }

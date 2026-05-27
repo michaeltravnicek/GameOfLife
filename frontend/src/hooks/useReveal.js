@@ -5,51 +5,66 @@ import { useCallback, useRef, useState } from 'react';
  * and `inView` flips to true (and stays true) the first time it scrolls into
  * view. Pair with the `.reveal` / `.reveal-stagger` classes in reveal.css.
  *
- * `ref` is a CALLBACK ref on purpose. The elements we reveal are often rendered
- * conditionally (e.g. an events grid that only appears once data has loaded), so
- * the node attaches AFTER mount. A plain `useRef` + `useEffect` would read
- * `ref.current === null` on the first (empty) render and never re-run when the
- * node finally appears — leaving the content stuck at `opacity:0` ("nothing
- * shows up"). A callback ref runs every time React attaches/detaches the node,
- * so the observer is always wired to the real element.
+ * Uses a callback ref so the observer always attaches to the real DOM node even
+ * when the element renders conditionally (e.g. a grid that only appears once
+ * data has loaded).
  *
- * Falls back to visible when IntersectionObserver is unavailable so content is
- * never stuck hidden.
+ * Safety fallback: if IntersectionObserver never fires within 1.5 s (slow
+ * cold-start, hidden parent, browser quirk), the content is forced visible so
+ * it never stays stuck at opacity:0.
  */
 export function useReveal({ threshold = 0.15, rootMargin = '0px 0px -8% 0px' } = {}) {
   const [inView, setInView] = useState(false);
   const observerRef = useRef(null);
+  const timerRef = useRef(null);
   const revealedRef = useRef(false);
 
-  const ref = useCallback((el) => {
-    // Detach from any previous node (element unmounted or was replaced).
+  const doReveal = useCallback(() => {
+    if (revealedRef.current) return;
+    revealedRef.current = true;
+    setInView(true);
     if (observerRef.current) {
       observerRef.current.disconnect();
       observerRef.current = null;
     }
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+  }, []);
+
+  const ref = useCallback((el) => {
+    // Tear down observer + fallback timer when element unmounts or is replaced.
+    if (observerRef.current) {
+      observerRef.current.disconnect();
+      observerRef.current = null;
+    }
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+
     // Nothing to observe, or already revealed (one-shot — stays visible).
     if (!el || revealedRef.current) return;
 
     if (typeof IntersectionObserver === 'undefined') {
-      revealedRef.current = true;
-      setInView(true);
+      doReveal();
       return;
     }
 
     const io = new IntersectionObserver(
       (entries) => {
-        if (entries.some((e) => e.isIntersecting)) {
-          revealedRef.current = true;
-          setInView(true);
-          io.disconnect();
-          observerRef.current = null;
-        }
+        if (entries.some((e) => e.isIntersecting)) doReveal();
       },
       { threshold, rootMargin },
     );
     io.observe(el);
     observerRef.current = io;
-  }, [threshold, rootMargin]);
+
+    // If IO never fires (content at viewport edge, hidden parent, browser quirk),
+    // force the reveal so items are never permanently stuck invisible.
+    timerRef.current = setTimeout(doReveal, 1500);
+  }, [threshold, rootMargin, doReveal]);
 
   return [ref, inView];
 }

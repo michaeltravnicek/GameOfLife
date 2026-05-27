@@ -70,11 +70,28 @@ def events_list(request):
         limit=limit,
         include_hidden=is_staff_role(request.user),
     )
+    if offset == 0:
+        from django.db.models import Count as _Count
+        city_qs = Event.objects.exclude(place="")
+        if not is_staff_role(request.user):
+            city_qs = city_qs.filter(visible_to_users=True)
+        if season is not None:
+            city_qs = city_qs.filter(
+                date__date__gte=season.start_date,
+                date__date__lte=season.end_date,
+            )
+        cities_data = [
+            {"name": c["place"], "count": c["count"]}
+            for c in city_qs.values("place").annotate(count=_Count("id")).order_by("place")
+        ]
+    else:
+        cities_data = []
+
     return Response({
         "events": EventListSerializer(page, many=True, context={"request": request}).data,
         "count": total,
         "has_more": (offset + limit) < total,
-        "cities": cities_cached() if offset == 0 else [],
+        "cities": cities_data,
         "categories": categories_cached() if offset == 0 else [],
     }, status=status.HTTP_200_OK)
 

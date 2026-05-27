@@ -6,22 +6,15 @@ import {
 import { useCachedQuery } from '../../services/queryCache';
 import { CACHE_TTL, PAGE_SIZE_EVENTS } from '../../constants/config';
 import EventCard from '../../components/EventCard/EventCard';
-import Avatar from '../../components/Avatar/Avatar';
 import Hero from '../../components/Hero/Hero';
 import CheckinBanner from '../../components/CheckinBanner/CheckinBanner';
 import Button from '../../components/Button/Button';
+import PlayerRow from '../../components/PlayerRow/PlayerRow';
 import { useReveal } from '../../hooks/useReveal';
 import './HomePage.css';
 
 const FALLBACK_GAL = ['/gallery/gal0.jpg', '/gallery/gal1.jpg', '/gallery/gal2.jpg', '/gallery/gal3.jpg'];
 const FALLBACK_HERO_SLIDES = FALLBACK_GAL.map((url, i) => ({ url, name: '', slug: '', date: null, _i: i }));
-
-// Hoisted: this used to live inside a `.map(...)` callback and was rebuilt
-// for every leaderboard row on every render.
-const TROPHIES = { 1: '🏆', 2: '🥈', 3: '🥉' };
-
-// Static row style — extracted so React skips diffing on every render.
-const LB_ROW_LINK_STYLE = { textDecoration: 'none', color: 'inherit' };
 
 const EMPTY = [];
 const HOME_TOP_PLAYERS = 10;
@@ -108,25 +101,9 @@ export default function HomePage() {
         <div className="lb-inner">
           <h2 ref={lbTitleRef} className={`lb-title reveal${lbTitleIn ? ' in' : ''}`}><span className="tr">🏆</span> Top hráči <span className="tr">🏆</span></h2>
           <div ref={lbCardRef} className={`lb-card reveal-stagger${lbCardIn ? ' in' : ''}`}>
-            <div className="lb-head"><div>#</div><div>hráč</div><div className="lb-head-pts">pts</div></div>
-            {topPlayers.map((p) => {
-              const isTop = p.rank <= 3;
-              const link = p.profile_username ? `/profil/${p.profile_username}` : `/hrac/${p.id}`;
-              return (
-                <Link
-                  key={p.id}
-                  to={link}
-                  className="lb-row"
-                  style={LB_ROW_LINK_STYLE}
-                >
-                  <span className={`lb-rank${isTop ? ' top' : ''}`}>
-                    {TROPHIES[p.rank] || `${p.rank}.`}
-                  </span>
-                  <div className="lb-name"><Avatar name={p.name} photo={p.photo} size="xs" className="lb-av" />{p.name}</div>
-                  <div className="lb-pts">{p.total_points}</div>
-                </Link>
-              );
-            })}
+            {topPlayers.map((p) => (
+              <PlayerRow key={p.id} player={p} />
+            ))}
           </div>
         </div>
       </section>
@@ -135,7 +112,7 @@ export default function HomePage() {
       <section className="about-section">
         <div ref={aboutRef} className={`about-inner reveal${aboutIn ? ' in' : ''}`}>
           <div className="about-photo">
-            <img src="/gallery/gal3.jpg" alt="Game of Life komunita" loading="lazy" />
+            <img src="/gallery/home-onas.jpg" alt="Game of Life komunita" loading="lazy" />
           </div>
           <div className="about-content">
             <div className="about-eyebrow">— O nás —</div>

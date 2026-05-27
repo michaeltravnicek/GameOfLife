@@ -7,14 +7,10 @@ import PillTabs from '../../components/PillTabs/PillTabs';
 import SearchInput from '../../components/SearchInput/SearchInput';
 import Avatar from '../../components/Avatar/Avatar';
 import PageHero from '../../components/PageHero/PageHero';
+import PlayerRow, { playerLink } from '../../components/PlayerRow/PlayerRow';
 import './LeaderboardPage.css';
 
 const TROPHIES = ['🏆', '🥈', '🥉'];
-
-// Link target for a leaderboard entry: registered players go to their profile,
-// everyone else (Google-Sheets players with no account) to the player page.
-const playerLink = (p) =>
-  p.profile_username ? `/profil/${p.profile_username}` : `/hrac/${p.id}`;
 
 export default function LeaderboardPage() {
   // `seasonId` is what we send the API: 'active' (default), 'all', or a season id.
@@ -126,18 +122,7 @@ export default function LeaderboardPage() {
                   <div className="empty">Nikdo nenalezen.</div>
                 ) : (
                   visibleRest.map((p) => (
-                    <Link
-                      key={p.id}
-                      to={playerLink(p)}
-                      className="row clickable"
-                    >
-                      <div className="rk">{p.rank}.</div>
-                      <div className="nm">
-                        <Avatar name={p.name} photo={p.photo} size="xs" />
-                        <span className="txt">{p.name}</span>
-                      </div>
-                      <div className="pt">{p.total_points}<span className="u">pts</span></div>
-                    </Link>
+                    <PlayerRow key={p.id} player={p} />
                   ))
                 )}
               </div>

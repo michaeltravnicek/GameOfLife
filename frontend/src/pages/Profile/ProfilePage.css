@@ -3,7 +3,7 @@
 
 /* ── POSTER HERO ── */
 .profile-page .poster{position:relative;min-height:88vh;display:flex;flex-direction:column;justify-content:flex-end;overflow:hidden;z-index:1}
-.profile-page .poster-img{position:absolute;inset:0;background:url('/gallery/gal2.jpg') center 38%/cover no-repeat;filter:saturate(.85) contrast(1.06);transform:scale(1.04);z-index:0}
+.profile-page .poster-img{position:absolute;inset:0;background:url('/gallery/gal6.jpg') center 38%/cover no-repeat;filter:saturate(.85) contrast(1.06);transform:scale(1.04);z-index:0}
 .profile-page .poster-grain{position:absolute;inset:0;background:url('/assets/Grain_texture_brown.png') 0 0/var(--tex-size) var(--tex-size) repeat;opacity:var(--grain-opacity);mix-blend-mode:overlay;pointer-events:none;z-index:0}
 .profile-page .poster-vignette{position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,8,30,.35) 0%,rgba(26,15,10,.18) 30%,rgba(26,15,10,.55) 70%,rgba(26,15,10,.92) 100%);pointer-events:none;z-index:0}
 .profile-page .poster-top{position:relative;z-index:2;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:138px 24px 24px;text-align:center}

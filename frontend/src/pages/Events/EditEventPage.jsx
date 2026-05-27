@@ -314,7 +314,7 @@ export default function EditEventPage() {
           <div className="ev-card">
             <div className="ev-toggle-row">
               <div className="ev-txt"><h4>Viditelná pro uživatele</h4><p>Pokud vypnuto, akce se zobrazí jen v adminu.</p></div>
-              <Switch checked={form.visible_to_users} onChange={setField('visible_to_users')} ariaLabel="Viditelná pro uživatele" />
+              <Switch checked={form.visible_to_users} onChange={(val) => { setForm((f) => ({ ...f, visible_to_users: val })); markDirty(); }} ariaLabel="Viditelná pro uživatele" />
             </div>
           </div>
         </section>

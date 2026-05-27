@@ -1,7 +1,7 @@
 /* All selectors scoped under .obodech-page to prevent cross-page leaks. */
 .obodech-page{min-height:100vh;color:var(--color-cream-light);overflow-x:hidden;background:var(--color-dark-brown)}
 
-.obodech-page .stage{position:fixed;inset:0;z-index:0;background:url('/gallery/gal1.jpg') center 35%/cover no-repeat;filter:saturate(.75) contrast(1.02);transform:scale(1.06)}
+.obodech-page .stage{position:fixed;inset:0;z-index:0;background:url('/gallery/gal3.jpg') center 35%/cover no-repeat;filter:saturate(.75) contrast(1.02);transform:scale(1.06)}
 .obodech-page .stage::after{content:'';position:absolute;inset:0;background:
   radial-gradient(ellipse at 50% 0%, var(--alpha-purple-22) 0%, transparent 38%),
   linear-gradient(180deg, var(--alpha-dark-55) 0%, var(--alpha-dark-80) 38%, var(--alpha-dark-95) 100%)}
