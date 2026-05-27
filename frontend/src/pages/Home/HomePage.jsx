@@ -101,6 +101,7 @@ export default function HomePage() {
         <div className="lb-inner">
           <h2 ref={lbTitleRef} className={`lb-title reveal${lbTitleIn ? ' in' : ''}`}><span className="tr">🏆</span> Top hráči <span className="tr">🏆</span></h2>
           <div ref={lbCardRef} className={`lb-card reveal-stagger${lbCardIn ? ' in' : ''}`}>
+            <div className="lb-head"><div>#</div><div>hráč</div><div className="lb-head-pts">pts</div></div>
             {topPlayers.map((p) => (
               <PlayerRow key={p.id} player={p} />
             ))}

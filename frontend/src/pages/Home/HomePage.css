@@ -21,6 +21,8 @@
 .home-page .lb-title{font-family:var(--font-leaderboard);font-size:clamp(28px,3.4vw,44px);letter-spacing:.05em;text-align:center;color:var(--color-cream-light);text-transform:uppercase;margin-bottom:24px;display:flex;justify-content:center;align-items:center;gap:14px}
 .home-page .lb-title .tr{font-size:.85em}
 .home-page .lb-card{background:#1a0f0a var(--tex-blue) 0 0/cover repeat;border:2px solid #1a1a1a;border-bottom:8px solid #1a1a1a;border-radius:14px;overflow:hidden;box-shadow:0 16px 40px rgba(0,0,0,.5)}
+.home-page .lb-head{display:grid;grid-template-columns:52px 1fr 120px;align-items:center;gap:14px;padding:8px 18px;font-family:var(--font-mono);font-style:italic;font-weight:700;font-size:11px;letter-spacing:.14em;text-transform:uppercase;background:var(--tex-light) 0 0/cover repeat;color:#1a1a1a;border-bottom:1px solid rgba(26,26,26,.15)}
+.home-page .lb-head-pts{text-align:right}
 .home-page .lb-cta{text-align:center;margin-top:28px}
 .home-page .lb-link{font-family:var(--font-hv);font-weight:300;font-style:italic;font-size:12px;color:rgba(255,255,255,.65);text-decoration:none;border-bottom:1px dashed rgba(255,255,255,.45);padding-bottom:2px;transition:color .2s}
 .home-page .lb-link:hover{color:rgba(255,255,255,.9)}
@@ -88,6 +90,7 @@
   .home-page .gal-container{height:64vw;gap:4px}
   .home-page .stat-num{font-size:28px}
   .home-page .lb-card{border-radius:10px}
+  .home-page .lb-head{grid-template-columns:40px 1fr 100px;padding:7px 14px;gap:10px}
 }
 
 /* 480px — single column, touch-friendly */
@@ -108,6 +111,7 @@
 /* 375px — small phones */
 @media(max-width:375px){
   .home-page .sec-title{font-size:24px}
+  .home-page .lb-head{grid-template-columns:30px 1fr 68px;padding:6px 8px;gap:6px;font-size:10px}
   .home-page .stats-row{gap:8px}
 }
 
