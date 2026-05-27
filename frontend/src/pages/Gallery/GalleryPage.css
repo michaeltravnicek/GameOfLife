@@ -73,8 +73,7 @@
 .gallery-page .load-more-row{display:flex;justify-content:center;margin:32px 0 8px}
 .gallery-page .load-more-row button[disabled]{opacity:.55;cursor:not-allowed}
 .gallery-page .gallery-footer{position:relative;z-index:2;text-align:center;padding:24px 0 56px}
-.gallery-page .btn-pill{display:inline-flex;align-items:center;gap:12px;background:var(--color-pink);color:#fff;border:0;cursor:pointer;font-family:var(--font-body);font-size:14px;font-weight:700;letter-spacing:.03em;padding:13px 28px;border-radius:9999px;box-shadow:0 6px 22px rgba(225,84,99,.38);transition:transform .18s,background .18s;text-decoration:none}
-.gallery-page .btn-pill:hover{background:#cf4453;transform:translateY(-1px)}
+/* CTA button renders through the shared <Button> component (Button.css). */
 
 @media(max-width:820px){
   .gallery-page .gal-side{width:clamp(70px,13vw,130px)}
@@ -113,5 +112,4 @@
 
 @media(max-width:320px){
   .gallery-page .gal-side{display:none}
-  .gallery-page .btn-pill{font-size:12px;padding:10px 18px}
 }

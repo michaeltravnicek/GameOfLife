@@ -3,7 +3,7 @@ import { Link, Navigate, useSearchParams } from 'react-router-dom';
 import { fetchAdminFeedbacks, fetchSeasons } from '../../services/api';
 import { useCachedQuery } from '../../services/queryCache';
 import { useAuth } from '../../context/AuthContext';
-import TabBar from '../../components/TabBar/TabBar';
+import PillTabs from '../../components/PillTabs/PillTabs';
 import StatList from '../../components/StatList/StatList';
 import { fmtDate } from '../../utils/date';
 import './FeedbacksPage.css';
@@ -91,7 +91,7 @@ export default function FeedbacksPage() {
       <main className="fb-main">
         {!eventSlug && seasons.length > 0 && (
           <div className="fb-controls">
-            <TabBar tabs={seasonTabs} active={season} onChange={setSeason} />
+            <PillTabs tabs={seasonTabs} active={season} onChange={setSeason} />
           </div>
         )}
 

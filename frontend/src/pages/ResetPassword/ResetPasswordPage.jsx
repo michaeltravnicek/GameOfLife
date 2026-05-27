@@ -86,7 +86,7 @@ export default function ResetPasswordPage() {
                 required
               />
               {error && <div className="auth-error">{error}</div>}
-              <Button type="submit" size="lg" busy={busy} className="pts-btn-wrap">
+              <Button type="submit" variant="action" size="lg" busy={busy} className="pts-btn-wrap">
                 {busy ? 'Ukládám…' : 'Nastavit heslo →'}
               </Button>
               <p className="auth-foot">

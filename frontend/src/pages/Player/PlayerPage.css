@@ -31,13 +31,8 @@
 .player-page .player-list-label{font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.16em;font-size:var(--text-xs);color:var(--alpha-cream-55);margin:0 6px 14px;display:flex;align-items:center;gap:14px}
 .player-page .player-list-label::before,.player-page .player-list-label::after{content:'';flex:1;height:1px;background:repeating-linear-gradient(90deg,rgba(255,241,212,.3) 0 6px,transparent 6px 12px)}
 
-/* StatList cells — same column roles as the leaderboard row (left / name / points). */
-.player-page .pl-date{font-family:var(--font-mono);font-style:italic;font-size:12px;letter-spacing:.04em;color:var(--alpha-cream-55);white-space:nowrap}
-.player-page .pl-name{display:flex;flex-direction:column;gap:2px;min-width:0}
-.player-page .pl-name-txt{font-family:var(--font-hv);font-size:15px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.player-page .pl-name-sub{font-family:var(--font-mono);font-style:italic;font-size:11px;color:var(--alpha-cream-45);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.player-page .pl-pts{text-align:right;font-family:var(--font-number);font-size:22px;letter-spacing:.03em;color:var(--color-pink);line-height:1;white-space:nowrap}
-.player-page .pl-pts .u{font-family:var(--font-mono);font-style:italic;font-size:10px;color:var(--alpha-cream-48);letter-spacing:.16em;margin-left:5px}
+/* Event list uses the shared <StatList> (frosted ev-grid skin); row/cell
+   styling lives in StatList.css. */
 
 .player-page .player-back{margin-top:36px;text-align:center}
 .player-page .player-back a{color:var(--color-pink);text-decoration:none;font-family:var(--font-mono);letter-spacing:.04em}

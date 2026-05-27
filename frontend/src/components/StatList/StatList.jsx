@@ -15,6 +15,7 @@ import './StatList.css';
  * gridTemplate : CSS grid-template-columns string for each row
  * rowKey?      : (row, index) => key
  * rowLink?     : (row) => string | null  — renders the row as a <Link> when set
+ * rowClass?    : (row, index) => string  — extra class per row (e.g. 'future'/'past')
  * emptyText?   : string
  */
 export default function StatList({
@@ -23,6 +24,7 @@ export default function StatList({
   gridTemplate,
   rowKey,
   rowLink,
+  rowClass,
   emptyText = 'Žádná data.',
   className = '',
 }) {
@@ -41,10 +43,12 @@ export default function StatList({
             const style = gridTemplate ? { gridTemplateColumns: gridTemplate } : undefined;
             const key = rowKey ? rowKey(row, i) : (row.id ?? i);
             const to = rowLink ? rowLink(row) : null;
+            const extra = rowClass ? rowClass(row, i) : '';
+            const base = `stat-row${extra ? ' ' + extra : ''}`;
             return to ? (
-              <Link key={key} to={to} className="stat-row clickable" style={style}>{cells}</Link>
+              <Link key={key} to={to} className={`${base} clickable`} style={style}>{cells}</Link>
             ) : (
-              <div key={key} className="stat-row" style={style}>{cells}</div>
+              <div key={key} className={base} style={style}>{cells}</div>
             );
           })
         )}

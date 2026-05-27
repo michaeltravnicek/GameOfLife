@@ -9,6 +9,7 @@ import EventCard from '../../components/EventCard/EventCard';
 import Avatar from '../../components/Avatar/Avatar';
 import Hero from '../../components/Hero/Hero';
 import CheckinBanner from '../../components/CheckinBanner/CheckinBanner';
+import Button from '../../components/Button/Button';
 import { useReveal } from '../../hooks/useReveal';
 import './HomePage.css';
 
@@ -154,7 +155,7 @@ export default function HomePage() {
               <div className="stat-item"><div className="stat-num">{stats.points ?? '—'}</div><div className="stat-label">Bodů</div></div>
             </div>
             <div className="about-cta">
-              <Link to="/historie" className="btn-pill">Číst historii <span className="arr"></span></Link>
+              <Button as="link" to="/historie" size="lg">Číst historii <span className="arr" /></Button>
             </div>
           </div>
         </div>
@@ -179,7 +180,7 @@ export default function HomePage() {
           />
         </div>
         <div className="gal-footer">
-          <Link to="/galerie" className="btn-pill">Celá galerie <span className="arr"></span></Link>
+          <Button as="link" to="/galerie" size="lg">Celá galerie <span className="arr" /></Button>
         </div>
       </section>
 

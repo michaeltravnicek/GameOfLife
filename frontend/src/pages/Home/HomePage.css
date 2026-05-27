@@ -3,11 +3,7 @@
 .home-page .lb-head-pts{text-align:right}
 .home-page .about-cta{text-align:center;margin-top:8px}
 
-/* ── BUTTON ── */
-.home-page .btn-pill{display:inline-flex;align-items:center;gap:14px;background:var(--color-pink);color:#fff;font-family:var(--font-hv);font-size:14px;font-weight:700;letter-spacing:.04em;padding:13px 30px;border-radius:16px;border:2px solid #504d4d;border-bottom:5px solid #504d4d;box-shadow:0 6px 22px rgba(225,84,99,.4);transition:transform .18s,background .18s;cursor:pointer;text-decoration:none}
-.home-page .btn-pill:hover{background:#cf4453;transform:translateY(-2px)}
-.home-page .btn-pill .arr::before{content:'';display:inline-block;width:26px;height:1.5px;background:#fff;vertical-align:middle;margin-right:4px;border-radius:2px}
-.home-page .btn-pill .arr::after{content:'➤';font-size:11px}
+/* Buttons render through the shared <Button> component (Button.css). */
 
 /* Hero now lives in <Hero /> component (components/Hero) — all styles scoped to .gol-hero / .gol-hero-dots. */
 
@@ -108,7 +104,6 @@
 
 /* 480px — single column, touch-friendly */
 @media(max-width:480px){
-  .home-page .btn-pill{font-size:13px;padding:11px 22px;gap:10px}
   .home-page .events-section{padding:36px 12px 48px}
   .home-page .events-grid{max-width:100%;row-gap:44px}
   .home-page .sec-title{font-size:clamp(22px,7vw,36px);gap:12px}
@@ -124,7 +119,6 @@
 
 /* 375px — small phones */
 @media(max-width:375px){
-  .home-page .btn-pill{font-size:12px;padding:10px 18px}
   .home-page .sec-title{font-size:24px}
   .home-page .lb-head,.home-page .lb-row{padding:7px 10px;grid-template-columns:36px 1fr 52px;gap:6px}
   .home-page .lb-rank.top{font-size:16px}

@@ -84,7 +84,7 @@ export default function ForgotPasswordPage() {
                   required
                 />
                 {error && <div className="auth-error">{error}</div>}
-                <Button type="submit" size="lg" busy={busy} className="pts-btn-wrap">
+                <Button type="submit" variant="action" size="lg" busy={busy} className="pts-btn-wrap">
                   {busy ? 'Odesílám…' : 'Poslat odkaz →'}
                 </Button>
                 <p className="auth-foot">

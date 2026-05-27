@@ -8,6 +8,8 @@ export const MONTHS_CZ = [
   'Červenec','Srpen','Září','Říjen','Listopad','Prosinec',
 ];
 
+export const MONTHS_SHORT = ['LED','ÚNO','BŘE','DUB','KVĚ','ČER','ČVC','SRP','ZÁŘ','ŘÍJ','LIS','PRO'];
+
 export const DAYS_CZ = ['Neděle','Pondělí','Úterý','Středa','Čtvrtek','Pátek','Sobota'];
 
 export function fmtDate(iso) {
@@ -20,6 +22,13 @@ export function fmtDateShort(iso) {
   if (!iso) return '';
   const d = new Date(iso);
   return `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getFullYear()).slice(2)}`;
+}
+
+// Compact event-list date, e.g. "12. KVĚ 25". Shared by the profile/player lists.
+export function fmtEventDate(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return `${d.getDate()}. ${MONTHS_SHORT[d.getMonth()]} ${String(d.getFullYear()).slice(2)}`;
 }
 
 export function fmtTime(iso) {

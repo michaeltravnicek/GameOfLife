@@ -193,7 +193,7 @@ export default function EventDetailPage() {
                 )}
               </div>
               <Button
-                variant="cta"
+                variant="action"
                 className={event.has_rsvp ? 'joined' : ''}
                 onClick={handleRsvp}
                 disabled={event.is_full && !event.has_rsvp}
@@ -291,7 +291,7 @@ export default function EventDetailPage() {
                     onChange={(e) => setComment(e.target.value)}
                     rows={3}
                   />
-                  <Button type="submit" variant="cta" busy={fbBusy} disabled={!rating}>
+                  <Button type="submit" variant="action" busy={fbBusy} disabled={!rating}>
                     Odeslat hodnocení
                   </Button>
                 </form>

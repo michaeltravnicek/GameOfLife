@@ -6,28 +6,8 @@ import { CACHE_TTL } from '../../constants/config';
 import Avatar from '../../components/Avatar/Avatar';
 import PillTabs from '../../components/PillTabs/PillTabs';
 import StatList from '../../components/StatList/StatList';
-import { fmtDateShort } from '../../utils/date';
+import { EVENT_COLUMNS, EVENT_LIST_CLASS } from '../../components/StatList/eventColumns';
 import './PlayerPage.css';
-
-// Attended-events table, structured exactly like the leaderboard list (date ·
-// event · points), rendered through the shared <StatList>.
-const EVENT_COLUMNS = [
-  { key: 'date', className: 'pl-date', render: (e) => fmtDateShort(e.date) || '—' },
-  {
-    key: 'name',
-    className: 'pl-name',
-    render: (e) => (
-      <>
-        <span className="pl-name-txt">{e.name}</span>
-        {(e.category?.name || e.place) && (
-          <span className="pl-name-sub">{[e.category?.name, e.place].filter(Boolean).join(' · ')}</span>
-        )}
-      </>
-    ),
-  },
-  { key: 'pts', className: 'pl-pts', render: (e) => <>+{e.pts ?? e.points}<span className="u">pts</span></> },
-];
-const EVENT_GRID = '88px 1fr 84px';
 
 // Public view for a leaderboard player by id. Registered players (those with an
 // account) are redirected to their full /profil/ page; this renders the rest
@@ -134,11 +114,12 @@ export default function PlayerPage() {
         )}
         <div className="player-list-label">Absolvované akce</div>
         <StatList
+          className={EVENT_LIST_CLASS}
           columns={EVENT_COLUMNS}
           rows={events}
-          gridTemplate={EVENT_GRID}
           rowKey={(e) => e.slug}
           rowLink={(e) => `/akce/${e.slug}`}
+          rowClass={() => 'past'}
           emptyText="Žádné zaznamenané akce v této sezóně."
         />
       </main>

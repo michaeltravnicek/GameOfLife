@@ -1,6 +1,9 @@
 import { useMemo, useState } from 'react';
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import PillTabs from '../../components/PillTabs/PillTabs';
+import StatList from '../../components/StatList/StatList';
+import { EVENT_COLUMNS, EVENT_LIST_CLASS } from '../../components/StatList/eventColumns';
+import Button from '../../components/Button/Button';
 import PointsChart from './PointsChart';
 import { fetchProfile, fetchProfileSeason } from '../../services/api';
 import { useCachedQuery } from '../../services/queryCache';
@@ -9,15 +12,6 @@ import { CACHE_TTL } from '../../constants/config';
 import './ProfilePage.css';
 
 const TODAY = new Date();
-const MONTHS_SHORT = ['LED', 'ÚNO', 'BŘE', 'DUB', 'KVĚ', 'ČER', 'ČVC', 'SRP', 'ZÁŘ', 'ŘÍJ', 'LIS', 'PRO'];
-
-function formatSeasonLabel(isoStart) {
-  if (!isoStart) return '??/??';
-  const d = new Date(isoStart);
-  const y = String(d.getFullYear()).slice(2);
-  const m = d.getMonth() < 4 ? +y - 1 : +y;
-  return `${m}/${y}`;
-}
 
 function seasonStats(season, today) {
   // `season` may be a lightweight summary (no events, just season_pts) or the
@@ -33,19 +27,6 @@ function seasonStats(season, today) {
   const cities = [...new Set(evs.map((e) => e.place))];
   const rank = season.rank || (totalPts > 0 ? '—' : null);
   return { evs, past, future, totalPts, pastPts, futurePts, cities, start: new Date(season.start), end: new Date(season.end), label: season.label, rank };
-}
-
-function EventRow({ e, rank, kind }) {
-  const d = new Date(e.date);
-  return (
-    <div className={`row ${kind}`}>
-      <span className="rk">{String(rank).padStart(2, '0')}</span>
-      <span className="cat">{e.category?.name || 'Akce'}</span>
-      <div className="info"><div className="nm">{e.name}</div><div className="loc">{e.place}</div></div>
-      <div className="dt">{d.getDate()}. {MONTHS_SHORT[d.getMonth()]} {String(d.getFullYear()).slice(2)}</div>
-      <div className="pt">+{e.pts}<span className="u">pts</span></div>
-    </div>
-  );
 }
 
 export default function ProfilePage() {
@@ -274,9 +255,14 @@ export default function ProfilePage() {
                     <div className="sec-rule" />
                     <div className="sec-eyebrow"><span>— 03 · Nadcházející —</span><span className="meta">+{st.futurePts} pts na cestě</span></div>
                     <h2 className="sec-heading">Co ho <span className="pink">čeká.</span></h2>
-                    <div className="list"><div className="list-inner">
-                      {upcoming.map((e, i) => <EventRow key={e.slug} e={e} rank={i + 1} kind="future" />)}
-                    </div></div>
+                    <StatList
+                      className={EVENT_LIST_CLASS}
+                      columns={EVENT_COLUMNS}
+                      rows={upcoming}
+                      rowKey={(e) => e.slug}
+                      rowLink={(e) => `/akce/${e.slug}`}
+                      rowClass={() => 'future'}
+                    />
                   </div>
                 )}
 
@@ -284,11 +270,15 @@ export default function ProfilePage() {
                   <div className="sec-rule" />
                   <div className="sec-eyebrow"><span>— 04 · Absolvované —</span><span className="meta">+{st.pastPts} pts zatím</span></div>
                   <h2 className="sec-heading">Co má <span className="pink">za sebou.</span></h2>
-                  <div className="list"><div className="list-inner">
-                    {past.length
-                      ? past.map((e, i) => <EventRow key={e.slug} e={e} rank={i + 1} kind="past" />)
-                      : <div className="empty">Zatím žádné absolvované akce v této sezóně.</div>}
-                  </div></div>
+                  <StatList
+                    className={EVENT_LIST_CLASS}
+                    columns={EVENT_COLUMNS}
+                    rows={past}
+                    rowKey={(e) => e.slug}
+                    rowLink={(e) => `/akce/${e.slug}`}
+                    rowClass={() => 'past'}
+                    emptyText="Zatím žádné absolvované akce v této sezóně."
+                  />
                 </div>
               </>
             )}
@@ -348,9 +338,9 @@ export default function ProfilePage() {
         <div className="back-strip-inner">
           <Link className="back-link" to="/">← Zpět na hlavní stránku</Link>
           <div className="back-actions">
-            {profile?.is_own_profile && <Link className="btn-cta" to="/upravit-profil">✎ Upravit profil</Link>}
-            <button type="button" className="btn-cta ghost" onClick={handleShare}>Sdílet profil</button>
-            {profile?.is_own_profile && <button type="button" className="btn-cta ghost" onClick={() => navigate('/')}>Odhlásit se</button>}
+            {profile?.is_own_profile && <Button as="link" to="/upravit-profil" variant="action">✎ Upravit profil</Button>}
+            <Button variant="ghost" onClick={handleShare}>Sdílet profil</Button>
+            {profile?.is_own_profile && <Button variant="ghost" onClick={() => navigate('/')}>Odhlásit se</Button>}
           </div>
         </div>
       </div>

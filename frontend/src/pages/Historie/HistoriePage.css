@@ -82,10 +82,7 @@
 .historie-page .cta-foot{position:relative;z-index:2;max-width:780px;margin:40px auto 0;padding:0 24px 80px;text-align:center}
 .historie-page .cta-foot .label{font-family:var(--font-mono);font-style:italic;font-size:13px;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,241,212,.65);margin-bottom:14px}
 .historie-page .cta-foot h2{font-family:var(--font-display);font-weight:400;font-size:clamp(36px,5vw,60px);line-height:1;color:var(--color-cream-light);text-transform:uppercase;letter-spacing:.03em;margin-bottom:18px}
-.historie-page .btn-pill{display:inline-flex;align-items:center;gap:14px;background:var(--color-pink);color:#fff;border:0;font-family:var(--font-body);font-size:14px;font-weight:700;letter-spacing:.04em;padding:13px 30px;border-radius:9999px;box-shadow:0 6px 22px rgba(225,84,99,.4);transition:transform .18s,background .18s;cursor:pointer;text-decoration:none}
-.historie-page .btn-pill:hover{background:#cf4453;transform:translateY(-2px)}
-.historie-page .btn-pill .arr::before{content:'';display:inline-block;width:26px;height:1.5px;background:#fff;vertical-align:middle;margin-right:4px;border-radius:2px}
-.historie-page .btn-pill .arr::after{content:'➤';font-size:11px}
+/* CTA button renders through the shared <Button> component (Button.css). */
 
 @media(max-width:820px){
   .historie-page .credits{flex-direction:column;gap:18px;padding-top:24px}

@@ -4,12 +4,15 @@ import './Button.css';
 /**
  * Unified button — renders as <button>, <a>, or <Link> depending on `as`.
  *
- * variant : 'primary' | 'ghost' | 'cta'   (default: 'primary')
+ * variant : 'nav' | 'action' | 'ghost'   (default: 'nav')
+ *   nav    — home-page 3D filled button, for links that navigate somewhere
+ *   action — round filled pill, for performing an action (submit, RSVP, share)
+ *   ghost  — round outline, for secondary / back / cancel
  * size    : 'sm' | 'md' | 'lg'            (default: 'md')
  * as      : 'button' | 'a' | 'link'       (default: 'button')
  */
 export default function Button({
-  variant = 'primary',
+  variant = 'nav',
   size = 'md',
   as = 'button',
   to,

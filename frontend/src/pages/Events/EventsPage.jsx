@@ -6,7 +6,7 @@ import { useCachedQuery } from '../../services/queryCache';
 import { useAuth } from '../../context/AuthContext';
 import { CACHE_TTL, PAGE_SIZE_EVENTS, SEARCH_DEBOUNCE_MS } from '../../constants/config';
 import EventCard from '../../components/EventCard/EventCard';
-import TabBar from '../../components/TabBar/TabBar';
+import PillTabs from '../../components/PillTabs/PillTabs';
 import SearchInput from '../../components/SearchInput/SearchInput';
 import PageHero from '../../components/PageHero/PageHero';
 import { useReveal } from '../../hooks/useReveal';
@@ -119,7 +119,7 @@ export default function EventsPage() {
       />
 
       <section className="controls">
-        <TabBar tabs={seasonTabs} active={season} onChange={setSeason} />
+        <PillTabs tabs={seasonTabs} active={season} onChange={setSeason} />
         <SearchInput
           value={query}
           onChange={(e) => setQuery(e.target.value)}

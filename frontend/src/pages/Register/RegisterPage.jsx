@@ -100,7 +100,7 @@ export default function RegisterPage() {
                 value={pw2} onChange={(e) => setPw2(e.target.value)} required
               />
               {error && <div className="auth-error">{error}</div>}
-              <Button type="submit" size="lg" busy={busy} className="pts-btn-wrap">
+              <Button type="submit" variant="action" size="lg" busy={busy} className="pts-btn-wrap">
                 {busy ? 'Registruji…' : 'Registrovat se →'}
               </Button>
             </form>

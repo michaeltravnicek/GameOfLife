@@ -1,6 +1,6 @@
-import { Link } from 'react-router-dom';
 import PageHero from '../../components/PageHero/PageHero';
 import Reveal from '../../components/Reveal/Reveal';
+import Button from '../../components/Button/Button';
 import './HistoriePage.css';
 
 const credits = [
@@ -179,7 +179,7 @@ export default function HistoriePage() {
 
       <section className="cta-foot">
         <div className="label">— A teď je řada na tobě —</div>
-        <Link to="/akce" className="btn-pill">Zobrazit nadcházející akce <span className="arr" /></Link>
+        <Button as="link" to="/akce" size="lg">Zobrazit nadcházející akce <span className="arr" /></Button>
       </section>
     </div>
   );

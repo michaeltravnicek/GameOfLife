@@ -14,7 +14,6 @@ const EditEventPage = lazy(() => import('./pages/Events/EditEventPage'));
 const GalleryPage = lazy(() => import('./pages/Gallery/GalleryPage'));
 const LeaderboardPage = lazy(() => import('./pages/Leaderboard/LeaderboardPage'));
 const ProfilePage = lazy(() => import('./pages/Profile/ProfilePage'));
-const ProfilePageV3 = lazy(() => import('./pages/Profile/ProfilePageV3'));
 const EditProfilePage = lazy(() => import('./pages/Profile/EditProfilePage'));
 const LoginPage = lazy(() => import('./pages/Login/LoginPage'));
 const RegisterPage = lazy(() => import('./pages/Register/RegisterPage'));
@@ -67,8 +66,6 @@ export default function App() {
           <Route path="/profil" element={<Layout><ProfilePage /></Layout>} />
           <Route path="/profil/:username" element={<Layout><ProfilePage /></Layout>} />
           <Route path="/upravit-profil" element={<Layout><EditProfilePage /></Layout>} />
-          <Route path="/profil-v3" element={<Layout><ProfilePageV3 /></Layout>} />
-          <Route path="/profil-v3/:username" element={<Layout><ProfilePageV3 /></Layout>} />
           <Route path="/o-bodech" element={<Layout><OBodechPage /></Layout>} />
           <Route path="/historie" element={<Layout><HistoriePage /></Layout>} />
           <Route path="/prihlasit" element={<Layout><LoginPage /></Layout>} />

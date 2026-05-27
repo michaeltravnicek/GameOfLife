@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { fetchLeaderboard, fetchSeasons } from '../../services/api';
 import { useCachedQuery } from '../../services/queryCache';
 import { CACHE_TTL } from '../../constants/config';
-import TabBar from '../../components/TabBar/TabBar';
+import PillTabs from '../../components/PillTabs/PillTabs';
 import SearchInput from '../../components/SearchInput/SearchInput';
 import Avatar from '../../components/Avatar/Avatar';
 import PageHero from '../../components/PageHero/PageHero';
@@ -68,7 +68,7 @@ export default function LeaderboardPage() {
       />
 
       <section className="controls">
-        <TabBar
+        <PillTabs
           tabs={tabs}
           active={activeTab}
           onChange={setSeasonId}

@@ -66,19 +66,12 @@
 .obodech-page .reward-title{font-family:var(--font-display);font-size:24px;letter-spacing:.02em;text-transform:uppercase;color:var(--color-white);line-height:.95;margin-bottom:10px;padding-right:60px}
 .obodech-page .reward-text{font-family:var(--font-body);font-size:13.5px;line-height:1.6;color:var(--alpha-cream-78)}
 
-.obodech-page .btn-pill{display:inline-flex;align-items:center;gap:14px;background:var(--btn-primary-bg);color:var(--btn-primary-text);border:0;font-family:var(--font-body);font-size:14px;font-weight:700;letter-spacing:.04em;padding:13px 30px;border-radius:var(--radius-pill);box-shadow:0 6px 22px var(--alpha-pink-40);transition:transform .18s,background .18s;cursor:pointer;text-decoration:none}
-.obodech-page .btn-pill:hover{background:var(--btn-primary-hover);transform:translateY(-2px)}
-.obodech-page .btn-pill .arr::before{content:'';display:inline-block;width:26px;height:1.5px;background:var(--color-white);vertical-align:middle;margin-right:4px;border-radius:2px}
-.obodech-page .btn-pill .arr::after{content:'➤';font-size:11px}
-.obodech-page .btn-ghost{display:inline-flex;align-items:center;gap:10px;background:transparent;color:var(--color-cream-light);border:1.5px dashed var(--alpha-cream-45);font-family:var(--font-body);font-size:14px;font-weight:700;letter-spacing:.04em;padding:11.5px 26px;border-radius:var(--radius-pill);transition:.18s;text-decoration:none}
-.obodech-page .btn-ghost:hover{border-color:var(--color-pink);color:var(--color-pink);border-style:solid}
-
+/* Buttons render through the shared <Button> component (Button.css). */
 .obodech-page .obo-cta{position:relative;z-index:2;max-width:720px;margin:24px auto 0;padding:48px 24px 40px;text-align:center}
 .obodech-page .obo-cta-stamp{display:inline-flex;align-items:center;gap:14px;padding:14px 26px;border:2.5px solid var(--color-pink);border-radius:4px;font-family:var(--font-display);font-size:28px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-pink);transform:rotate(-3.5deg);background:var(--alpha-pink-12);margin-bottom:28px;box-shadow:inset 0 0 0 1px var(--alpha-pink-22),0 6px 18px var(--alpha-black-35)}
 .obodech-page .obo-cta-stamp-arrow{font-family:var(--font-body);font-style:italic;font-weight:300;font-size:32px;line-height:.8}
 .obodech-page .obo-cta-text{font-family:var(--font-body);font-style:italic;font-size:17px;line-height:1.55;color:var(--alpha-cream-78);max-width:42ch;margin:0 auto 26px}
 .obodech-page .obo-cta-links{display:inline-flex;gap:12px;flex-wrap:wrap;justify-content:center}
-.obodech-page .obo-cta-links .btn-pill{padding:11px 24px;font-size:13px}
 
 .obodech-page .cta-foot{position:relative;z-index:2;max-width:780px;margin:40px auto 0;padding:0 24px 80px;text-align:center}
 .obodech-page .cta-foot .label{font-family:var(--font-mono);font-style:italic;font-size:13px;letter-spacing:.22em;text-transform:uppercase;color:var(--alpha-cream-65);margin-bottom:22px}

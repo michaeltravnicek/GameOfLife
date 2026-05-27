@@ -1,6 +1,6 @@
-import { Link } from 'react-router-dom';
 import PageHero from '../../components/PageHero/PageHero';
 import Reveal from '../../components/Reveal/Reveal';
+import Button from '../../components/Button/Button';
 import './OBodechPage.css';
 
 const sources = [
@@ -130,16 +130,16 @@ export default function OBodechPage() {
         </div>
         <p className="obo-cta-text">Sleduj naše sociální sítě a web, ať ti neunikly nové informace o odměnách a benefitech.</p>
         <div className="obo-cta-links">
-          <a className="btn-pill" href="https://www.instagram.com/gameofyolo" target="_blank" rel="noopener noreferrer">Instagram</a>
-          <a className="btn-pill" href="https://www.facebook.com/gameofyolo" target="_blank" rel="noopener noreferrer">Facebook</a>
+          <Button as="a" href="https://www.instagram.com/gameofyolo" target="_blank" rel="noopener noreferrer">Instagram</Button>
+          <Button as="a" href="https://www.facebook.com/gameofyolo" target="_blank" rel="noopener noreferrer">Facebook</Button>
         </div>
       </section>
 
       <section className="cta-foot">
         <div className="label">— Body se nesbírají od stolu —</div>
         <div className="cta-row">
-          <Link to="/leaderboard" className="btn-ghost">← Zpět na leaderboard</Link>
-          <Link to="/akce" className="btn-pill">Zobrazit akce <span className="arr" /></Link>
+          <Button as="link" to="/leaderboard" variant="ghost" size="lg">← Zpět na leaderboard</Button>
+          <Button as="link" to="/akce" size="lg">Zobrazit akce <span className="arr" /></Button>
         </div>
       </section>
     </div>

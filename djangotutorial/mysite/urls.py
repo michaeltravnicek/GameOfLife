@@ -10,9 +10,9 @@ The frontend is a React SPA. Django serves:
   - everything else → React index.html (client routing)
 """
 from django.conf import settings
-from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path, re_path
+from django.views.static import serve as serve_media
 
 from . import views as react_views
 
@@ -23,7 +23,19 @@ urlpatterns = [
     path("api/", include("leaderboard.api.urls")),
     path("api/auth/", include("accounts.api.urls")),
     path("api/profiles/", include("accounts.api.profiles_urls")),
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+]
+
+# Serve user-uploaded media (event images, profile photos, gallery uploads).
+#
+# IMPORTANT: `django.conf.urls.static.static()` returns NOTHING when DEBUG=False,
+# and WhiteNoise only serves STATIC_ROOT — never MEDIA_ROOT. The React catch-all
+# below also explicitly excludes `/media/`. So in production (Render, DEBUG=False)
+# every /media/<path> request 404s, which is why uploaded images vanish while
+# static assets work. Serving through Django's `serve` view works in all envs.
+_media_prefix = settings.MEDIA_URL.lstrip("/")
+urlpatterns += [
+    re_path(rf"^{_media_prefix}(?P<path>.*)$", serve_media, {"document_root": settings.MEDIA_ROOT}),
+]
 
 if settings.DEBUG:
     from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView

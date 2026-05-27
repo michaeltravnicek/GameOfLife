@@ -76,23 +76,8 @@
 .profile-page .social:hover .arr{color:var(--color-pink);transform:translateX(3px)}
 
 /* ── AKCE ── */
-.profile-page .list{position:relative;padding:10px;background:rgba(255,241,212,.05);backdrop-filter:blur(18px) saturate(1.1);-webkit-backdrop-filter:blur(18px) saturate(1.1);border:1.5px solid rgba(255,255,255,.10);border-radius:14px;box-shadow:0 20px 44px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.06)}
-.profile-page .list::before{content:'';position:absolute;inset:6px;border:1.5px dashed rgba(255,241,212,.22);border-radius:10px;pointer-events:none}
-.profile-page .list-inner{position:relative;z-index:1;padding:8px 6px}
-.profile-page .row{display:grid;grid-template-columns:52px 90px 1fr 110px 90px;align-items:center;gap:14px;padding:13px 18px;border-bottom:1px dashed rgba(255,241,212,.10);transition:background .18s,transform .18s}
-.profile-page .row:last-child{border-bottom:0}
-.profile-page .row:hover{background:rgba(255,241,212,.05);transform:translateX(2px)}
-.profile-page .row .rk{font-family:var(--font-display);font-size:24px;letter-spacing:.03em;color:rgba(255,241,212,.60);line-height:1}
-.profile-page .row .cat{font-family:var(--font-mono);font-style:italic;font-size:10px;letter-spacing:.18em;text-transform:uppercase;padding:5px 11px;border-radius:9999px;background:rgba(225,84,99,.16);color:var(--color-pink);border:1px dashed rgba(225,84,99,.45);text-align:center;justify-self:start;line-height:1}
-.profile-page .row.future .cat{background:rgba(245,200,66,.15);color:#f5c842;border-color:rgba(245,200,66,.4)}
-.profile-page .row.past .cat{background:rgba(255,241,212,.06);color:rgba(255,241,212,.65);border-color:rgba(255,241,212,.22)}
-.profile-page .row .info{min-width:0;display:flex;flex-direction:column;gap:3px}
-.profile-page .row .info .nm{font-family:var(--font-body);font-weight:600;font-size:15.5px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:.01em}
-.profile-page .row .info .loc{font-family:var(--font-body);font-style:italic;font-size:12.5px;color:rgba(255,241,212,.6)}
-.profile-page .row .dt{font-family:var(--font-mono);font-style:italic;font-size:12px;color:rgba(255,241,212,.7);text-align:right;letter-spacing:.04em}
-.profile-page .row .pt{text-align:right;font-family:var(--font-display);font-size:24px;letter-spacing:.03em;color:#f5c842;line-height:1;white-space:nowrap}
-.profile-page .row .pt .u{font-family:var(--font-mono);font-style:italic;font-size:10px;color:rgba(255,241,212,.5);letter-spacing:.16em;margin-left:4px}
-.profile-page .row.past .pt{color:rgba(245,200,66,.78)}
+/* Event lists render through the shared <StatList> (frosted ev-grid skin);
+   their row/cell styling lives in StatList.css. */
 .profile-page .empty{padding:28px 18px;font-family:var(--font-body);font-style:italic;color:rgba(255,241,212,.55);font-size:14.5px;text-align:center}
 
 /* ── BODY (chart) ── */
@@ -144,18 +129,12 @@
 .profile-page .back-actions{display:flex;gap:10px;flex-wrap:wrap}
 .profile-page .back-link{font-family:var(--font-body);font-style:italic;font-size:14px;color:rgba(255,241,212,.75);display:inline-flex;align-items:center;gap:8px;border-bottom:1px dashed rgba(255,241,212,.35);padding-bottom:2px;transition:color .18s,border-color .18s}
 .profile-page .back-link:hover{color:var(--color-pink);border-color:var(--color-pink)}
-.profile-page .btn-cta{display:inline-flex;align-items:center;gap:10px;background:var(--color-pink);color:#fff;border:0;cursor:pointer;font-family:var(--font-body);font-size:13px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:10px 20px;border-radius:9999px;box-shadow:0 6px 18px rgba(225,84,99,.35);transition:.18s;text-decoration:none}
-.profile-page .btn-cta:hover{background:#cf4453;transform:translateY(-1px)}
-.profile-page .btn-cta.ghost{background:transparent;color:var(--color-cream-light);border:1.5px solid rgba(255,241,212,.4);box-shadow:none}
-.profile-page .btn-cta.ghost:hover{border-color:var(--color-pink);color:var(--color-pink)}
+/* Action buttons render through the shared <Button> component (Button.css). */
 
 @media(max-width:860px){
   .profile-page .factgrid{grid-template-columns:1fr}
   .profile-page .socials-grid{grid-template-columns:repeat(2,1fr)}
   .profile-page .mini-stats{grid-template-columns:repeat(2,1fr)}
-  .profile-page .row{grid-template-columns:38px 1fr 80px;gap:10px;padding:13px 12px}
-  .profile-page .row .cat,.profile-page .row .dt{display:none}
-  .profile-page .row .pt{font-size:20px}
   .profile-page .cat-row{grid-template-columns:90px 1fr auto;gap:12px}
   .profile-page .cat-row .name{font-size:20px}
 }

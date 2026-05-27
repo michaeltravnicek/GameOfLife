@@ -30,12 +30,7 @@
 .event-detail-page .rsvp-recap{display:flex;flex-direction:column;align-items:center;gap:4px;width:100%;text-align:center}
 .event-detail-page .recap-eyebrow{font-family:var(--font-mono);font-style:italic;font-size:10.5px;letter-spacing:.28em;text-transform:uppercase;color:var(--color-pink)}
 .event-detail-page .recap-text{font-family:var(--font-body);font-size:14px;color:rgba(255,241,212,.8);letter-spacing:.04em}
-.event-detail-page .btn-cta{display:inline-flex;align-items:center;gap:10px;background:var(--color-pink);color:#fff;border:0;cursor:pointer;font-family:var(--font-body);font-size:14px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:11px 26px;border-radius:9999px;box-shadow:0 6px 22px rgba(225,84,99,.4);transition:transform .18s,background .18s;text-decoration:none}
-.event-detail-page .btn-cta:hover{background:#cf4453;transform:translateY(-1px)}
-.event-detail-page .btn-cta.joined{background:#4a8a5e}
-.event-detail-page .btn-cta.ghost{background:transparent;color:var(--color-cream-light);border:1.5px solid rgba(255,241,212,.4);box-shadow:none}
-.event-detail-page .btn-cta.ghost:hover{border-color:var(--color-pink);color:var(--color-pink)}
-.event-detail-page .btn-cta:disabled{opacity:.55;cursor:not-allowed;transform:none}
+/* RSVP / share buttons render through the shared <Button> component (Button.css). */
 
 /* ── BODY ── */
 .event-detail-page .body-wrap{background:#1a0f0a;background-image:url('/assets/Grain_texture_brown2.png');background-size:var(--tex-size) var(--tex-size);background-repeat:repeat;background-position:0 0}
@@ -104,7 +99,6 @@
   .event-detail-page .credit + .credit{border-left:0;border-top:1px dashed rgba(255,241,212,.25);padding-top:18px}
   .event-detail-page .credit-value{font-size:clamp(34px,8.5vw,46px)}
   .event-detail-page .rsvp-inner{flex-direction:column;align-items:stretch}
-  .event-detail-page .btn-cta{justify-content:center}
   .event-detail-page .back-strip-inner{justify-content:center}
   .event-detail-page .collage{padding:0;grid-template-rows:auto}
   .event-detail-page .collage[data-count="1"]{grid-template-columns:1fr;grid-template-rows:clamp(220px,55vw,320px)}

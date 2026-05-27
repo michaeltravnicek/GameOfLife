@@ -12,6 +12,30 @@
 
 .stat-list-empty{text-align:center;padding:44px 20px;font-family:var(--font-serif);font-style:italic;color:rgba(255,241,212,.55);font-size:14px}
 
+/* Frosted-glass skin — alternative to the blue grain box, shared by the
+   profile + player event lists. */
+.stat-list.frosted{background-color:rgba(255,241,212,.05);background-image:none;backdrop-filter:blur(18px) saturate(1.1);-webkit-backdrop-filter:blur(18px) saturate(1.1);border:1.5px solid rgba(255,255,255,.10);box-shadow:0 20px 44px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.06)}
+
+/* Shared event-row arrangement: rank · category · name/place · date · points. */
+.stat-list.ev-grid .stat-row{grid-template-columns:52px 90px 1fr 110px 90px}
+.stat-list .ev-rk{font-family:var(--font-display);font-size:24px;letter-spacing:.03em;color:rgba(255,241,212,.60);line-height:1}
+.stat-list .ev-cat{font-family:var(--font-mono);font-style:italic;font-size:10px;letter-spacing:.18em;text-transform:uppercase;padding:5px 11px;border-radius:9999px;background:rgba(225,84,99,.16);color:var(--color-pink);border:1px dashed rgba(225,84,99,.45);text-align:center;justify-self:start;line-height:1}
+.stat-list .stat-row.future .ev-cat{background:rgba(245,200,66,.15);color:#f5c842;border-color:rgba(245,200,66,.4)}
+.stat-list .stat-row.past .ev-cat{background:rgba(255,241,212,.06);color:rgba(255,241,212,.65);border-color:rgba(255,241,212,.22)}
+.stat-list .ev-info{min-width:0;display:flex;flex-direction:column;gap:3px}
+.stat-list .ev-info .nm{font-family:var(--font-body);font-weight:600;font-size:15.5px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:.01em}
+.stat-list .ev-info .loc{font-family:var(--font-body);font-style:italic;font-size:12.5px;color:rgba(255,241,212,.6)}
+.stat-list .ev-dt{font-family:var(--font-mono);font-style:italic;font-size:12px;color:rgba(255,241,212,.7);text-align:right;letter-spacing:.04em}
+.stat-list .ev-pt{text-align:right;font-family:var(--font-display);font-size:24px;letter-spacing:.03em;color:#f5c842;line-height:1;white-space:nowrap}
+.stat-list .ev-pt .u{font-family:var(--font-mono);font-style:italic;font-size:10px;color:rgba(255,241,212,.5);letter-spacing:.16em;margin-left:4px}
+.stat-list .stat-row.past .ev-pt{color:rgba(245,200,66,.78)}
+
+@media(max-width:860px){
+  .stat-list.ev-grid .stat-row{grid-template-columns:38px 1fr 80px;gap:10px;padding:13px 12px}
+  .stat-list.ev-grid .ev-cat,.stat-list.ev-grid .ev-dt{display:none}
+  .stat-list .ev-pt{font-size:20px}
+}
+
 /* Row entrance animation, mirroring the leaderboard list. */
 @keyframes statRowSlide{from{opacity:0;transform:translateX(-16px)}to{opacity:1;transform:none}}
 .stat-list .stat-row{animation:statRowSlide .4s cubic-bezier(.22,.68,0,1.2) both}

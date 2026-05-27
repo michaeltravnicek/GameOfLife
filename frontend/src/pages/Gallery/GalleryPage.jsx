@@ -1,5 +1,4 @@
 import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { fetchGallery, fetchSeasons, uploadGalleryPhoto } from '../../services/api';
 import { usePaginatedQuery } from '../../services/usePaginatedQuery';
 import { prefetchQuery, invalidateQuery, useCachedQuery } from '../../services/queryCache';
@@ -8,6 +7,7 @@ import { reportError } from '../../services/errors';
 import { CACHE_TTL, GALLERY_PREFETCH_TAIL, PAGE_SIZE_GALLERY } from '../../constants/config';
 import PageHero from '../../components/PageHero/PageHero';
 import Reveal from '../../components/Reveal/Reveal';
+import Button from '../../components/Button/Button';
 import './GalleryPage.css';
 
 // Lightbox loaded only when user opens a fullscreen photo.
@@ -317,7 +317,7 @@ export default function GalleryPage() {
       )}
 
       <div className="gallery-footer">
-        <Link to="/akce" className="btn-pill">Zobrazit nadcházející akce ➤</Link>
+        <Button as="link" to="/akce" size="lg">Zobrazit nadcházející akce <span className="arr" /></Button>
       </div>
 
       {lbOpen && (

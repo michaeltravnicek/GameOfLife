@@ -1,20 +1,29 @@
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;cursor:pointer;border-radius:var(--radius-pill);transition:transform .18s,background .18s,border-color .18s,color .18s;text-decoration:none;font-family:var(--font-hv);font-weight:700;letter-spacing:.08em;text-transform:uppercase;line-height:1;white-space:nowrap}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;cursor:pointer;border-radius:var(--radius-pill);transition:transform .18s,background .18s,border-color .18s,color .18s;text-decoration:none;font-family:var(--font-hv);font-weight:700;letter-spacing:.04em;line-height:1;white-space:nowrap}
 .btn:disabled,.btn[aria-disabled="true"]{opacity:.55;cursor:not-allowed;transform:none !important;pointer-events:none}
 
-/* Variants */
-.btn-primary{background:var(--color-pink);color:#fff;border:2px solid #504d4d;border-bottom:5px solid #504d4d;border-radius:16px;box-shadow:0 6px 22px rgba(225,84,99,.4)}
-.btn-primary:hover:not(:disabled){background:#cf4453;transform:translateY(-2px)}
-.btn-ghost{background:transparent;color:var(--color-cream-light);border:1.5px dashed rgba(255,241,212,.36)}
+/* Variants — two roles plus a quiet sibling:
+   nav    → the home-page button (filled pink, chunky 3D bottom border).
+            For links/CTAs that take you somewhere.
+   action → round filled pill, uppercase. For doing something (submit, RSVP, share).
+   ghost  → round outline. For secondary / back / cancel. */
+.btn-nav{background:var(--color-pink);color:#fff;border:2px solid #504d4d;border-bottom:5px solid #504d4d;border-radius:16px;box-shadow:0 6px 22px rgba(225,84,99,.4)}
+.btn-nav:hover:not(:disabled){background:#cf4453;transform:translateY(-2px)}
+.btn-action{background:var(--color-pink);color:#fff;text-transform:uppercase;letter-spacing:.05em;box-shadow:0 6px 22px rgba(225,84,99,.4)}
+.btn-action:hover:not(:disabled){background:#cf4453;transform:translateY(-1px)}
+.btn-action.joined{background:#4a8a5e;box-shadow:0 6px 22px rgba(74,138,94,.35)}
+.btn-action.joined:hover:not(:disabled){background:#3d7a52}
+.btn-ghost{background:transparent;color:var(--color-cream-light);border:1.5px solid rgba(255,241,212,.4)}
 .btn-ghost:hover:not(:disabled){border-color:var(--color-pink);color:var(--color-pink)}
-.btn-cta{background:var(--color-pink);color:#fff;box-shadow:0 6px 22px rgba(225,84,99,.4)}
-.btn-cta:hover:not(:disabled){background:var(--btn-primary-hover);transform:translateY(-1px)}
-.btn-cta.joined{background:#4a8a5e;box-shadow:0 6px 22px rgba(74,138,94,.35)}
-.btn-cta.joined:hover:not(:disabled){background:#3d7a52}
+
+/* Arrow affordance: "Číst historii →". Inherits the button's text color. */
+.btn .arr::before{content:'';display:inline-block;width:26px;height:1.5px;background:currentColor;vertical-align:middle;margin-right:4px;border-radius:2px}
+.btn .arr::after{content:'➤';font-size:11px}
 
 /* Sizes */
 .btn-sm{font-size:11px;padding:7px 16px}
 .btn-md{font-size:13px;padding:11px 24px}
 .btn-lg{font-size:14px;padding:13px 30px}
+@media(max-width:480px){.btn-lg{font-size:13px;padding:11px 22px}}
 
 /* Busy spinner */
 .btn-spinner{width:14px;height:14px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:btn-spin .6s linear infinite;flex-shrink:0}
