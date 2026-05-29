@@ -12,27 +12,31 @@
 .evcard-dark .evcard-brand{color:#fff;font-size:clamp(22px,5vw,30px);font-family:var(--font-display);font-weight:400;text-transform:uppercase;line-height:1;letter-spacing:.015em}
 .evcard-dark .evcard-badge{position:absolute;width:110px;height:110px;top:-14px;right:8px;transform:rotate(14deg);object-fit:contain;pointer-events:none;filter:drop-shadow(0px 4px 10px rgba(0,0,0,.35))}
 
-/* ── Light theme (Events list — cream bg + grain, matches Figma) ── */
-.evcard-light{height:240px;border-radius:14px;background-color:#fff1d4;background-image:url('/assets/Grain_texture_light.png');background-size:var(--tex-size) var(--tex-size);background-repeat:repeat}
-.evcard-light::after{content:'';position:absolute;inset:0;background:rgba(255,253,253,.20);pointer-events:none;border-radius:14px;z-index:0}
-.evcard-light:hover{transform:translateY(-4px)}
-.evcard-light:hover .dashed-border rect:last-child{stroke:#e15463}
+/* ── Light theme (Events list — ticket frame: solid black outer ring + inset dashed inner) ── */
+.evcard-light{height:240px;border-radius:16px;background-color:#fff1d4;background-image:url('/assets/Grain_texture_light.png');background-size:var(--tex-size) var(--tex-size);background-repeat:repeat;box-shadow:0 12px 28px rgba(0,0,0,.22),0 0 0 1.5px rgba(26,26,26,.92)}
+.evcard-light::after{content:'';position:absolute;inset:0;background:rgba(255,253,253,.20);pointer-events:none;border-radius:16px;z-index:0}
+.evcard-light:hover{transform:translateY(-4px);box-shadow:0 18px 36px rgba(0,0,0,.30),0 0 0 1.5px var(--color-pink)}
+.evcard-light:hover .ticket-frame{border-color:var(--color-pink)}
 .evcard-light:hover .evcard-detail{color:#e15463;border-bottom-color:#e15463}
 .evcard-light.is-past{background-color:#e6d2a8}
 .evcard-light.is-past::after{background:rgba(26,15,10,.08)}
 
-.evcard-light .evcard-status{position:absolute;top:16px;left:22px;z-index:3;font-family:'Courier Prime',var(--font-mono),monospace;font-style:italic;font-size:10px;letter-spacing:1.4px;text-transform:uppercase;padding:5px 11px;border-radius:9999px;background:rgba(255,241,212,.75);color:#1a1a1a;border:1px dashed rgba(26,26,26,.35);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);line-height:1.6}
+.evcard-light .ticket-frame{position:absolute;inset:6px;border:1.5px dashed rgba(26,26,26,.42);border-radius:11px;pointer-events:none;z-index:2;transition:border-color .2s ease}
+
+.evcard-light .evcard-status{position:absolute;top:18px;left:24px;z-index:3;font-family:'Courier Prime',var(--font-mono),monospace;font-style:italic;font-size:10px;letter-spacing:1.4px;text-transform:uppercase;padding:5px 11px;border-radius:9999px;background:rgba(255,241,212,.75);color:#1a1a1a;border:1px dashed rgba(26,26,26,.35);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);line-height:1.6}
 .evcard-light .evcard-status.done{background:rgba(26,26,26,.55);color:rgba(255,241,212,.85);border-color:rgba(255,241,212,.25)}
 
-.evcard-light .evcard-badge{position:absolute;top:-28px;right:-14px;width:130px;height:130px;transform:rotate(8deg);object-fit:contain;pointer-events:none;filter:drop-shadow(0px 4px 10px rgba(0,0,0,.3));z-index:4}
+.evcard-light .evcard-badge{position:absolute;top:-38px;right:-14px;width:130px;height:130px;transform:rotate(8deg);object-fit:contain;pointer-events:none;filter:drop-shadow(0px 4px 10px rgba(0,0,0,.3));z-index:4}
 
-.evcard-light .evcard-content{position:relative;z-index:1;height:100%;padding:35px 22px 22px;display:flex;flex-direction:column;box-sizing:border-box}
+.evcard-light .evcard-content{position:relative;z-index:1;height:100%;padding:48px 24px 22px;display:flex;flex-direction:column;box-sizing:border-box}
 .evcard-light .evcard-title{color:#1a1a1a;font-family:var(--font-display);font-size:clamp(26px,2.8vw,34px);font-weight:400;text-transform:uppercase;line-height:.95;letter-spacing:.013em;margin:5px 0 0;padding-right:80px;height:1.9em;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word}
-.evcard-light .evcard-meta{margin-top:auto;display:flex;flex-direction:column;gap:4px;font-family:var(--font-hv);font-size:11.5px;font-style:italic;color:rgba(26,26,26,.70);line-height:1.6}
-.evcard-light .ev-date::before,.evcard-light .ev-place::before{content:'·';display:inline-block;margin-right:4px;color:var(--color-pink);font-style:normal}
+.evcard-light .evcard-meta{margin-top:auto;display:flex;flex-direction:column;gap:6px;font-family:var(--font-hv);font-weight:500;font-size:12px;color:rgba(26,26,26,.78);line-height:1.6}
 .evcard-light .evcard-footer{margin-top:0;padding-top:11px;border-top:1px dashed rgba(26,26,26,.25);display:flex;align-items:center;justify-content:space-between;gap:10px}
 .evcard-light .evcard-pts{display:inline-flex;align-items:center;background:var(--color-pink);color:#fff;font-family:var(--font-hv);font-size:12px;font-weight:500;letter-spacing:.06em;padding:4px 12px;border-radius:9999px;box-shadow:0 4px 7px rgba(225,84,99,.4);line-height:1.6;white-space:nowrap}
 .evcard-light .evcard-detail{font-family:var(--font-hv);font-size:12px;font-weight:700;font-style:italic;padding-bottom:1px;color:#1a1a1a;border-bottom:1px dashed rgba(26,26,26,.45);transition:color .2s,border-color .2s;line-height:1.6;white-space:nowrap}
+
+/* Shared emoji glyph inside meta/footer text */
+.evcard .ev-emoji{display:inline-block;margin-right:6px;font-size:13px;line-height:1;vertical-align:-1px;filter:saturate(.95)}
 
 @media(max-width:1024px){
   .evcard-light .evcard-title{font-size:clamp(26px,3.6vw,34px)}

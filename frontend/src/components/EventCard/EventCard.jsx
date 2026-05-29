@@ -2,7 +2,6 @@ import { memo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { fmtDate } from '../../utils/date';
 import { preloadEventDetail } from '../../services/routePreload';
-import DashedBorder from '../DashedBorder/DashedBorder';
 import './EventCard.css';
 
 function DarkCard({ event }) {
@@ -32,10 +31,12 @@ function DarkCard({ event }) {
   );
 }
 
+/* Light theme: solid black outer ring (via box-shadow) + inset dashed frame.
+   Cream + grain background, emoji-prefixed meta. */
 function LightCard({ event }) {
   return (
     <>
-      <DashedBorder />
+      <span className="ticket-frame" aria-hidden="true" />
 
       <span className={`evcard-status${event.is_past ? ' done' : ''}`}>
         {event.is_past ? 'Proběhlo' : 'Akce'}
@@ -53,12 +54,12 @@ function LightCard({ event }) {
       <div className="evcard-content">
         <h3 className="evcard-title">{event.name}</h3>
         <div className="evcard-meta">
-          <div className="ev-date">{fmtDate(event.date)}</div>
-          <div className="ev-place">{event.place}</div>
+          <div className="ev-date"><span className="ev-emoji">📅</span>{fmtDate(event.date)}</div>
+          <div className="ev-place"><span className="ev-emoji">📍</span>{event.place}</div>
         </div>
         <div className="evcard-footer">
-          <span className="evcard-pts">+{event.points} pts</span>
-          <span className="evcard-detail">Detail eventu →</span>
+          <span className="evcard-pts"><span className="ev-emoji">🏆</span>+{event.points} pts</span>
+          <span className="evcard-detail">Detail →</span>
         </div>
       </div>
     </>
@@ -72,7 +73,6 @@ function LightCard({ event }) {
  * theme : 'dark' | 'light'   (default: 'dark')
  */
 function EventCard({ event, theme = 'dark' }) {
-  // Warm up the detail chunk + this event's data on the first sign of intent.
   const handlePreload = useCallback(() => preloadEventDetail(event.slug), [event.slug]);
   return (
     <Link
@@ -81,15 +81,9 @@ function EventCard({ event, theme = 'dark' }) {
       onMouseEnter={handlePreload}
       onFocus={handlePreload}
     >
-      {theme === 'dark'
-        ? <DarkCard event={event} />
-        : <LightCard event={event} />
-      }
+      {theme === 'dark' ? <DarkCard event={event} /> : <LightCard event={event} />}
     </Link>
   );
 }
 
-// memo: cards re-render only when their `event` reference or `theme` actually
-// changes. Critical for EventsPage where unrelated state (search input,
-// filter chips, "Load more" appends) used to repaint every card.
 export default memo(EventCard);
