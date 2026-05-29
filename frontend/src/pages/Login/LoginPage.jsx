@@ -1,13 +1,15 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import FormInput from '../../components/FormInput/FormInput';
 import Button from '../../components/Button/Button';
+import { extractApiError } from '../../services/errors';
 import './AuthPage.css';
 
 export default function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [identifier, setIdentifier] = useState('');
   const [pw, setPw] = useState('');
   const [remember, setRemember] = useState(false);
@@ -20,9 +22,9 @@ export default function LoginPage() {
     setBusy(true);
     try {
       const u = await login(identifier, pw, remember);
-      navigate(`/profil/${u.username}`);
+      navigate(location.state?.from || `/profil/${u.username}`, { replace: true });
     } catch (err) {
-      setError(err.response?.data?.error || 'Přihlášení selhalo.');
+      setError(extractApiError(err, 'Přihlášení selhalo.'));
     } finally {
       setBusy(false);
     }
@@ -83,7 +85,7 @@ export default function LoginPage() {
                 {busy ? 'Přihlašuji…' : 'Přihlásit se →'}
               </Button>
             </form>
-            <p className="auth-foot">Nemáš účet? <Link to="/registrace">Zaregistrovat se</Link></p>
+            <p className="auth-foot">Nemáš účet? <Link to="/registrace" state={location.state}>Zaregistrovat se</Link></p>
           </div>
         </div>
       </section>

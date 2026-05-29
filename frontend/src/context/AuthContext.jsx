@@ -50,23 +50,30 @@ export function AuthProvider({ children }) {
   const logout = useCallback(async () => {
     try {
       await apiLogout();
-    } catch {
-      // ignore
+    } catch (err) {
+      // The server session may still be alive, but we always clear client state
+      // so the UI reflects a logged-out user. Surface the failure in dev.
+      if (import.meta.env.DEV) {
+        // eslint-disable-next-line no-console
+        console.error('Logout request failed:', err);
+      }
     }
     clearCache();
     setUser(null);
     toast.info('Byl jsi odhlášen. Brzy nashle!', { title: 'Odhlášení' });
   }, []);
 
-  // Role-based capabilities, mirroring accounts/permissions.py
-  // (Profile.ROLE_ADMIN / ROLE_PHOTOGRAPHER).
+  // Role-based capabilities, mirroring accounts/permissions.py.
+  // Capabilities are inclusive upward: admin > photographer > close.
   const role = user?.role || '';
   const isAdmin = role === 'admin';
   const canUpload = role === 'admin' || role === 'photographer';
+  // close + photographer + admin get an early peek at events flagged visible_to_close.
+  const isCloseOrAbove = role === 'admin' || role === 'photographer' || role === 'close';
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, login, register, logout, refresh, role, isAdmin, canUpload }}
+      value={{ user, loading, login, register, logout, refresh, role, isAdmin, canUpload, isCloseOrAbove }}
     >
       {children}
     </AuthContext.Provider>

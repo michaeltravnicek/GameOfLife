@@ -7,6 +7,7 @@
 .evcard-dark-inner{width:100%;min-height:158px;padding:16px 16px 12px;background:rgba(0,0,0,.20);border-radius:12px;box-sizing:border-box;display:flex;flex-direction:column;gap:10px}
 .evcard-dark .evcard-title{color:#fff;font-size:clamp(22px,5vw,30px);font-family:var(--font-display);font-weight:400;text-transform:uppercase;line-height:1;letter-spacing:.015em;margin:0}
 .evcard-dark .evcard-meta{display:flex;flex-direction:column;gap:3px;font-family:var(--font-hv);font-size:11px;font-weight:300;color:rgba(255,255,255,.85);line-height:1.55}
+.evcard-dark .ev-date::before,.evcard-dark .ev-place::before,.evcard-dark .ev-pts-label::before{content:'◆';display:inline-block;margin-right:5px;font-size:5px;vertical-align:middle;color:var(--color-pink)}
 .evcard-dark .evcard-title-wrap{padding-right:72px;display:flex;flex-direction:column;gap:2px}
 .evcard-dark .evcard-brand{color:#fff;font-size:clamp(22px,5vw,30px);font-family:var(--font-display);font-weight:400;text-transform:uppercase;line-height:1;letter-spacing:.015em}
 .evcard-dark .evcard-badge{position:absolute;width:110px;height:110px;top:-14px;right:8px;transform:rotate(14deg);object-fit:contain;pointer-events:none;filter:drop-shadow(0px 4px 10px rgba(0,0,0,.35))}
@@ -28,6 +29,7 @@
 .evcard-light .evcard-content{position:relative;z-index:1;height:100%;padding:35px 22px 22px;display:flex;flex-direction:column;box-sizing:border-box}
 .evcard-light .evcard-title{color:#1a1a1a;font-family:var(--font-display);font-size:clamp(26px,2.8vw,34px);font-weight:400;text-transform:uppercase;line-height:.95;letter-spacing:.013em;margin:5px 0 0;padding-right:80px;height:1.9em;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word}
 .evcard-light .evcard-meta{margin-top:auto;display:flex;flex-direction:column;gap:4px;font-family:var(--font-hv);font-size:11.5px;font-style:italic;color:rgba(26,26,26,.70);line-height:1.6}
+.evcard-light .ev-date::before,.evcard-light .ev-place::before{content:'·';display:inline-block;margin-right:4px;color:var(--color-pink);font-style:normal}
 .evcard-light .evcard-footer{margin-top:0;padding-top:11px;border-top:1px dashed rgba(26,26,26,.25);display:flex;align-items:center;justify-content:space-between;gap:10px}
 .evcard-light .evcard-pts{display:inline-flex;align-items:center;background:var(--color-pink);color:#fff;font-family:var(--font-hv);font-size:12px;font-weight:500;letter-spacing:.06em;padding:4px 12px;border-radius:9999px;box-shadow:0 4px 7px rgba(225,84,99,.4);line-height:1.6;white-space:nowrap}
 .evcard-light .evcard-detail{font-family:var(--font-hv);font-size:12px;font-weight:700;font-style:italic;padding-bottom:1px;color:#1a1a1a;border-bottom:1px dashed rgba(26,26,26,.45);transition:color .2s,border-color .2s;line-height:1.6;white-space:nowrap}

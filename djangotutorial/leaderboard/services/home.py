@@ -65,21 +65,23 @@ def home_stats():
 
 
 def active_checkin_events(user):
-    """Events `user` can currently check into (auth + leaderboard-linked only)."""
-    if not user or not user.is_authenticated:
-        return []
+    """Events currently in their check-in window with location set.
 
-    from accounts.models import Profile  # local import — avoid app-load loop
-
-    profile = (
-        Profile.objects
-        .filter(user=user)
-        .select_related("leaderboard_user")
-        .first()
-    )
-    lb_user = profile.leaderboard_user if profile else None
-    if lb_user is None:
-        return []
+    Authenticated + leaderboard-linked users see only events they haven't
+    already attended. Guests (and authenticated users without a leaderboard
+    link) see every active event — the frontend prompts them to log in when
+    they tap the check-in button.
+    """
+    lb_user = None
+    if user and user.is_authenticated:
+        from accounts.models import Profile  # local import — avoid app-load loop
+        profile = (
+            Profile.objects
+            .filter(user=user)
+            .select_related("leaderboard_user")
+            .first()
+        )
+        lb_user = profile.leaderboard_user if profile else None
 
     now = timezone.now()
     candidates = (
@@ -95,11 +97,13 @@ def active_checkin_events(user):
         .order_by("date")
     )
 
-    already_in_ids = set(
-        UserToEvent.objects
-        .filter(user=lb_user, event__in=candidates)
-        .values_list("event_id", flat=True)
-    )
+    already_in_ids = set()
+    if lb_user is not None:
+        already_in_ids = set(
+            UserToEvent.objects
+            .filter(user=lb_user, event__in=candidates)
+            .values_list("event_id", flat=True)
+        )
 
     result = []
     for event in candidates:

@@ -1,4 +1,7 @@
+from django.core.exceptions import ValidationError
+from django.db import transaction
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from django.views.decorators.cache import cache_control
 
 from rest_framework import status
@@ -6,7 +9,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
-from accounts.permissions import IsAdmin, IsAdminOrPhotographer, is_staff_role
+from accounts.permissions import IsAdmin, IsAdminOrPhotographer, is_admin, is_close_or_above, is_staff_role
 from leaderboard.checkin import validate_and_record_checkin
 from leaderboard.models import (
     Event,
@@ -35,7 +38,7 @@ from leaderboard.services import (
     season_payload,
     seasons_cached,
 )
-from leaderboard.utils import parse_int_param
+from leaderboard.utils import parse_int_param, parse_iso_datetime
 
 from .serializers import EventDetailSerializer, EventListSerializer
 
@@ -60,6 +63,10 @@ def events_list(request):
     except ValueError:
         return Response(_SEASON_INVALID, status=status.HTTP_400_BAD_REQUEST)
 
+    # Visibility tiers: admin sees everything, close + photographer see the
+    # close-preview pool, everyone else sees only visible_to_users=True.
+    _is_admin = is_admin(request.user)
+    _is_close_preview = is_close_or_above(request.user) and not _is_admin
     page, total = list_events(
         period=request.GET.get("period", "all"),
         city=request.GET.get("city", ""),
@@ -68,13 +75,17 @@ def events_list(request):
         season=season,
         offset=offset,
         limit=limit,
-        include_hidden=is_staff_role(request.user),
+        include_hidden=_is_admin,
+        include_close_preview=_is_close_preview,
     )
     if offset == 0:
-        from django.db.models import Count as _Count
+        from django.db.models import Count as _Count, Q as _Q
         city_qs = Event.objects.exclude(place="")
-        if not is_staff_role(request.user):
-            city_qs = city_qs.filter(visible_to_users=True)
+        if not _is_admin:
+            if _is_close_preview:
+                city_qs = city_qs.filter(_Q(visible_to_users=True) | _Q(visible_to_close=True))
+            else:
+                city_qs = city_qs.filter(visible_to_users=True)
         if season is not None:
             city_qs = city_qs.filter(
                 date__date__gte=season.start_date,
@@ -99,19 +110,29 @@ def events_list(request):
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def event_detail(request, slug):
-    """Full detail for a single event (hidden events are 404 for non-staff)."""
+    """Full detail for a single event (hidden events are 404 for non-admin)."""
     event = get_object_or_404(Event, slug=slug)
-    if not event.visible_to_users and not is_staff_role(request.user):
-        return Response({"error": "Akce nenalezena."}, status=status.HTTP_404_NOT_FOUND)
+    if not event.visible_to_users:
+        # Hidden events: admin sees everything; close + photographer see only
+        # the ones explicitly flagged visible_to_close; everyone else gets 404.
+        allowed = is_admin(request.user) or (
+            is_close_or_above(request.user) and event.visible_to_close
+        )
+        if not allowed:
+            return Response({"error": "Akce nenalezena."}, status=status.HTTP_404_NOT_FOUND)
     serializer = EventDetailSerializer(event, context={"request": request})
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
+@transaction.atomic
 def event_rsvp_toggle(request, slug):
     """Toggle the current user's RSVP for an event (respects capacity)."""
-    event = get_object_or_404(Event, slug=slug)
+    # Lock the event row so the capacity check + create below are serialized:
+    # without it two concurrent requests can both pass the count check and
+    # oversell the event (TOCTOU).
+    event = get_object_or_404(Event.objects.select_for_update(), slug=slug)
     rsvp = EventRSVP.objects.filter(auth_user=request.user, event=event).first()
     if rsvp:
         rsvp.delete()
@@ -128,15 +149,13 @@ def event_rsvp_toggle(request, slug):
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
+@transaction.atomic
 def event_feedback(request, slug):
     """Create or update the current user's 1–5 rating + comment for an event."""
     event = get_object_or_404(Event, slug=slug)
-    try:
-        rating = int(request.data.get("rating", 0))
-    except (TypeError, ValueError):
-        rating = 0
+    rating = parse_int_param(request.data.get("rating"), 0)
     if rating < 1 or rating > 5:
-        return Response({"error": "Rating musí být 1–5."}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"error": "Hodnocení musí být 1–5."}, status=status.HTTP_400_BAD_REQUEST)
 
     comment = (request.data.get("comment") or "").strip()
     EventFeedback.objects.update_or_create(
@@ -254,6 +273,7 @@ def checkin_events_view(request):
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
+@transaction.atomic
 def event_checkin(request, slug):
     """Submit geo-verified attendance. Body: {latitude, longitude}."""
     event = get_object_or_404(
@@ -297,27 +317,30 @@ def photo_upload(request):
     if not image:
         return Response({"error": "Nahraj prosím obrázek."}, status=status.HTTP_400_BAD_REQUEST)
     try:
-        photo = create_user_photo(
-            request.user, image,
-            event_slug=request.data.get("event", ""),
-            caption=request.data.get("caption", ""),
-        )
+        with transaction.atomic():
+            photo = create_user_photo(
+                request.user, image,
+                event_slug=request.data.get("event", ""),
+                caption=request.data.get("caption", ""),
+            )
+            payload = {
+                "id": photo.id,
+                "url": request.build_absolute_uri(photo.image.url),
+                "caption": photo.caption,
+                "event_slug": photo.event.slug if photo.event else "",
+                "uploaded_by": photo.auth_user.get_full_name() or photo.auth_user.username,
+                "created_at": photo.created_at,
+            }
     except ValueError as exc:
         return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
     except LookupError as exc:
         return Response({"error": str(exc)}, status=status.HTTP_404_NOT_FOUND)
-    return Response({
-        "id": photo.id,
-        "url": request.build_absolute_uri(photo.image.url),
-        "caption": photo.caption,
-        "event_slug": photo.event.slug if photo.event else "",
-        "uploaded_by": photo.auth_user.get_full_name() or photo.auth_user.username,
-        "created_at": photo.created_at,
-    }, status=status.HTTP_201_CREATED)
+    return Response(payload, status=status.HTTP_201_CREATED)
 
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
+@transaction.atomic
 def photo_like_toggle(request, photo_id):
     """Toggle the current user's like on a community photo. Response: `{liked, count}`."""
     photo = get_object_or_404(UserPhoto, id=photo_id)
@@ -342,13 +365,15 @@ def event_images_upload(request, slug):
     if not files:
         return Response({"error": "Nahraj prosím obrázky."}, status=status.HTTP_400_BAD_REQUEST)
     try:
-        created = add_event_images(event, files)
+        with transaction.atomic():
+            created = add_event_images(event, files)
+            payload = {
+                "images": [request.build_absolute_uri(i.image.url) for i in created],
+                "count": len(created),
+            }
     except ValueError as exc:
         return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
-    return Response({
-        "images": [request.build_absolute_uri(i.image.url) for i in created],
-        "count": len(created),
-    }, status=status.HTTP_201_CREATED)
+    return Response(payload, status=status.HTTP_201_CREATED)
 
 
 @api_view(["GET"])
@@ -362,146 +387,166 @@ def admin_feedbacks(request):
 @permission_classes([IsAdmin])
 def event_create(request):
     """Create a new event (admin only). Multipart body with event fields."""
+    name = request.data.get('name', '').strip()
+    if not name:
+        return Response({"error": "Název akce je povinný."}, status=status.HTTP_400_BAD_REQUEST)
+
     try:
-        name = request.data.get('name', '').strip()
-        if not name:
-            return Response({"error": "Název akce je povinný."}, status=status.HTTP_400_BAD_REQUEST)
+        date = parse_iso_datetime(request.data.get('date', ''))
+    except ValueError:
+        return Response({"error": "Neplatný formát data."}, status=status.HTTP_400_BAD_REQUEST)
+    try:
+        end_date = parse_iso_datetime(request.data.get('end_date', ''))
+    except ValueError:
+        return Response({"error": "Neplatný formát konce akce."}, status=status.HTTP_400_BAD_REQUEST)
 
-        date_str = request.data.get('date', '')
-        date = None
-        if date_str:
-            from datetime import datetime
-            try:
-                date = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
-            except (ValueError, AttributeError):
-                return Response({"error": "Neplatný formát data."}, status=status.HTTP_400_BAD_REQUEST)
+    place = request.data.get('place', '').strip()
+    points = parse_int_param(request.data.get('points'), 0, min_val=0)
+    capacity = (parse_int_param(request.data.get('capacity'), 0, min_val=0)
+                if request.data.get('capacity') else None)
+    description = request.data.get('description', '').strip()
+    rules = request.data.get('rules', '').strip()
+    survey_url = request.data.get('survey_url', '').strip()
+    visible_to_users = request.data.get('visible_to_users', '1') in ('1', 'true', 'True')
+    visible_to_close = request.data.get('visible_to_close', '0') in ('1', 'true', 'True')
 
-        place = request.data.get('place', '').strip()
-        points = int(request.data.get('points', 0)) if request.data.get('points') else 0
-        capacity = int(request.data.get('capacity')) if request.data.get('capacity') else None
-        description = request.data.get('description', '').strip()
-        rules = request.data.get('rules', '').strip()
-        survey_url = request.data.get('survey_url', '').strip()
-        visible_to_users = request.data.get('visible_to_users', '1') in ('1', 'true', 'True')
+    latitude = request.data.get('latitude')
+    longitude = request.data.get('longitude')
+    try:
+        latitude = float(latitude) if latitude else None
+        longitude = float(longitude) if longitude else None
+    except (ValueError, TypeError):
+        latitude = longitude = None
 
-        latitude = request.data.get('latitude')
-        longitude = request.data.get('longitude')
+    checkin_radius = parse_int_param(request.data.get('checkin_radius'), 500, min_val=10, max_val=50000)
+    category_id = request.data.get('category')
+    category = None
+    if category_id:
+        from leaderboard.models import Category
         try:
-            latitude = float(latitude) if latitude else None
-            longitude = float(longitude) if longitude else None
-        except (ValueError, TypeError):
-            latitude = longitude = None
+            category = Category.objects.get(id=category_id)
+        except Category.DoesNotExist:
+            pass
 
-        checkin_radius = int(request.data.get('checkin_radius', 500)) if request.data.get('checkin_radius') else 500
-        category_id = request.data.get('category')
-        category = None
-        if category_id:
-            from leaderboard.models import Category
-            try:
-                category = Category.objects.get(id=category_id)
-            except Category.DoesNotExist:
-                pass
+    event = Event(
+        name=name,
+        date=date,
+        end_date=end_date,
+        place=place,
+        points=points,
+        capacity=capacity,
+        description=description,
+        rules=rules,
+        survey_url=survey_url,
+        visible_to_users=visible_to_users,
+        visible_to_close=visible_to_close,
+        latitude=latitude,
+        longitude=longitude,
+        checkin_radius=checkin_radius,
+        category=category,
+    )
+    if 'image' in request.FILES:
+        event.image = request.FILES['image']
+    if 'logo' in request.FILES:
+        event.logo = request.FILES['logo']
 
-        event = Event.objects.create(
-            name=name,
-            date=date,
-            place=place,
-            points=points,
-            capacity=capacity,
-            description=description,
-            rules=rules,
-            survey_url=survey_url,
-            visible_to_users=visible_to_users,
-            latitude=latitude,
-            longitude=longitude,
-            checkin_radius=checkin_radius,
-            category=category,
-        )
+    # Model-level validation (lat/lng ranges + pairing, radius, URL, lengths).
+    # `date` is excluded: the model requires it but the UI treats it as optional.
+    try:
+        event.full_clean(exclude=['date', 'slug'])
+    except ValidationError as exc:
+        return Response({"error": "; ".join(exc.messages)}, status=status.HTTP_400_BAD_REQUEST)
 
-        if 'image' in request.FILES:
-            event.image = request.FILES['image']
-        if 'logo' in request.FILES:
-            event.logo = request.FILES['logo']
-
+    # Atomic: if response serialization raises, the half-created row rolls back.
+    with transaction.atomic():
         event.save()
-
-        return Response(
-            EventDetailSerializer(event, context={"request": request}).data,
-            status=status.HTTP_201_CREATED
-        )
-    except Exception as exc:
-        return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        payload = EventDetailSerializer(event, context={"request": request}).data
+    return Response(payload, status=status.HTTP_201_CREATED)
 
 
 @api_view(["PATCH"])
 @permission_classes([IsAdmin])
 def event_update(request, slug):
     """Update an event (admin only). Multipart body with event fields to update."""
+    event = get_object_or_404(Event, slug=slug)
+
+    date_provided = 'date' in request.data
+    new_date = None
+    if date_provided and request.data.get('date', ''):
+        try:
+            new_date = parse_iso_datetime(request.data['date'])
+        except ValueError:
+            return Response({"error": "Neplatný formát data."}, status=status.HTTP_400_BAD_REQUEST)
+
+    end_date_provided = 'end_date' in request.data
+    new_end_date = None
+    if end_date_provided and request.data.get('end_date', ''):
+        try:
+            new_end_date = parse_iso_datetime(request.data['end_date'])
+        except ValueError:
+            return Response({"error": "Neplatný formát konce akce."}, status=status.HTTP_400_BAD_REQUEST)
+
     try:
-        event = get_object_or_404(Event, slug=slug)
+        with transaction.atomic():
+            if 'name' in request.data:
+                event.name = request.data.get('name', '').strip()
+            if date_provided:
+                event.date = new_date
+            if end_date_provided:
+                event.end_date = new_end_date
+            if 'place' in request.data:
+                event.place = request.data.get('place', '').strip()
+            if 'points' in request.data:
+                event.points = parse_int_param(request.data.get('points'), 0, min_val=0)
+            if 'capacity' in request.data:
+                event.capacity = (parse_int_param(request.data.get('capacity'), 0, min_val=0)
+                                  if request.data.get('capacity') else None)
+            if 'description' in request.data:
+                event.description = request.data.get('description', '').strip()
+            if 'rules' in request.data:
+                event.rules = request.data.get('rules', '').strip()
+            if 'survey_url' in request.data:
+                event.survey_url = request.data.get('survey_url', '').strip()
+            if 'visible_to_users' in request.data:
+                event.visible_to_users = request.data.get('visible_to_users', '1') in ('1', 'true', 'True')
+            if 'visible_to_close' in request.data:
+                event.visible_to_close = request.data.get('visible_to_close', '0') in ('1', 'true', 'True')
 
-        if 'name' in request.data:
-            event.name = request.data.get('name', '').strip()
-
-        if 'date' in request.data:
-            date_str = request.data.get('date', '')
-            if date_str:
-                from datetime import datetime
+            if 'latitude' in request.data or 'longitude' in request.data:
                 try:
-                    event.date = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
-                except (ValueError, AttributeError):
-                    return Response({"error": "Neplatný formát data."}, status=status.HTTP_400_BAD_REQUEST)
-            else:
-                event.date = None
+                    lat = request.data.get('latitude')
+                    lon = request.data.get('longitude')
+                    event.latitude = float(lat) if lat else None
+                    event.longitude = float(lon) if lon else None
+                except (ValueError, TypeError):
+                    event.latitude = event.longitude = None
 
-        if 'place' in request.data:
-            event.place = request.data.get('place', '').strip()
-        if 'points' in request.data:
-            event.points = int(request.data.get('points', 0)) if request.data.get('points') else 0
-        if 'capacity' in request.data:
-            event.capacity = int(request.data.get('capacity')) if request.data.get('capacity') else None
-        if 'description' in request.data:
-            event.description = request.data.get('description', '').strip()
-        if 'rules' in request.data:
-            event.rules = request.data.get('rules', '').strip()
-        if 'survey_url' in request.data:
-            event.survey_url = request.data.get('survey_url', '').strip()
-        if 'visible_to_users' in request.data:
-            event.visible_to_users = request.data.get('visible_to_users', '1') in ('1', 'true', 'True')
+            if 'checkin_radius' in request.data:
+                event.checkin_radius = parse_int_param(
+                    request.data.get('checkin_radius'), 500, min_val=10, max_val=50000)
 
-        if 'latitude' in request.data or 'longitude' in request.data:
-            try:
-                lat = request.data.get('latitude')
-                lon = request.data.get('longitude')
-                event.latitude = float(lat) if lat else None
-                event.longitude = float(lon) if lon else None
-            except (ValueError, TypeError):
-                event.latitude = event.longitude = None
-
-        if 'checkin_radius' in request.data:
-            event.checkin_radius = int(request.data.get('checkin_radius', 500))
-
-        if 'category' in request.data:
-            category_id = request.data.get('category')
-            if category_id:
-                from leaderboard.models import Category
-                try:
-                    event.category = Category.objects.get(id=category_id)
-                except Category.DoesNotExist:
+            if 'category' in request.data:
+                category_id = request.data.get('category')
+                if category_id:
+                    from leaderboard.models import Category
+                    try:
+                        event.category = Category.objects.get(id=category_id)
+                    except Category.DoesNotExist:
+                        event.category = None
+                else:
                     event.category = None
-            else:
-                event.category = None
 
-        if 'image' in request.FILES:
-            event.image = request.FILES['image']
-        if 'logo' in request.FILES:
-            event.logo = request.FILES['logo']
+            if 'image' in request.FILES:
+                event.image = request.FILES['image']
+            if 'logo' in request.FILES:
+                event.logo = request.FILES['logo']
 
-        event.save()
-
-        return Response(
-            EventDetailSerializer(event, context={"request": request}).data,
-            status=status.HTTP_200_OK
-        )
+            # `date` excluded: required by the model but optional in the UI.
+            event.full_clean(exclude=['date', 'slug'])
+            event.save()
+            payload = EventDetailSerializer(event, context={"request": request}).data
+        return Response(payload, status=status.HTTP_200_OK)
+    except ValidationError as exc:
+        return Response({"error": "; ".join(exc.messages)}, status=status.HTTP_400_BAD_REQUEST)
     except Exception as exc:
         return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)

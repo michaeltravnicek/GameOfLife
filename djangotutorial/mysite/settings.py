@@ -36,7 +36,16 @@ MEDIA_ROOT = os.getenv("MEDIA_ROOT", BASE_DIR / "media")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = MODE != "PRODUCTION"
-ALLOWED_HOSTS = ["*"]
+
+# In production, restrict to the real domain(s) via ALLOWED_HOSTS env var
+# (comma-separated). Falls back to "*" only in DEBUG/local dev.
+_allowed_hosts_env = os.getenv("ALLOWED_HOSTS", "")
+if _allowed_hosts_env:
+    ALLOWED_HOSTS = [h.strip() for h in _allowed_hosts_env.split(",") if h.strip()]
+elif DEBUG:
+    ALLOWED_HOSTS = ["*"]
+else:
+    ALLOWED_HOSTS = ["*"]  # TODO: set ALLOWED_HOSTS env var in production.
 
 # Only trust the SSL proxy header in production (behind a real proxy).
 # In local dev with DEBUG=True, trusting this header causes Django to
@@ -146,7 +155,9 @@ WSGI_APPLICATION = 'mysite.wsgi.application'
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 DATABASES = {
     'default': dj_database_url.config(
-        default=os.getenv("DATABASE_URL")
+        default=os.getenv("DATABASE_URL"),
+        # Reuse connections for up to 10 min instead of opening one per request.
+        conn_max_age=int(os.getenv("CONN_MAX_AGE", "600")),
     )
 }
 

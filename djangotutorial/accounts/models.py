@@ -6,12 +6,14 @@ from leaderboard.models import User as LeaderboardUser
 
 class Profile(models.Model):
     ROLE_NONE = ""
-    ROLE_ADMIN = "admin"
+    ROLE_CLOSE = "close"
     ROLE_PHOTOGRAPHER = "photographer"
+    ROLE_ADMIN = "admin"
     ROLE_CHOICES = [
         (ROLE_NONE, "Bez role"),
-        (ROLE_ADMIN, "Administrátor"),
+        (ROLE_CLOSE, "Close (může vytvářet akce)"),
         (ROLE_PHOTOGRAPHER, "Fotograf"),
+        (ROLE_ADMIN, "Administrátor"),
     ]
 
     user = models.OneToOneField(
@@ -61,6 +63,10 @@ class Profile(models.Model):
     @property
     def is_photographer(self):
         return self.role == self.ROLE_PHOTOGRAPHER
+
+    @property
+    def is_close(self):
+        return self.role == self.ROLE_CLOSE
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)

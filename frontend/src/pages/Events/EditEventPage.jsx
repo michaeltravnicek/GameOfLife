@@ -2,7 +2,11 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import Switch from '../../components/Switch/Switch';
 import ChipSelect from '../../components/ChipSelect/ChipSelect';
+import EventLocationMap from '../../components/EventLocationMap/EventLocationMap';
 import { fetchEventDetail, updateEvent, fetchCategories } from '../../services/api';
+import { useImagePreview } from '../../hooks/useImagePreview';
+import { useBeforeUnload } from '../../hooks/useBeforeUnload';
+import { extractApiError } from '../../services/errors';
 import './EventPage.css';
 
 export default function EditEventPage() {
@@ -15,24 +19,30 @@ export default function EditEventPage() {
     description: '',
     place: '',
     date: '',
+    end_date: '',
     points: '',
     capacity: '',
     rules: '',
     survey_url: '',
     visible_to_users: true,
+    visible_to_close: false,
     latitude: '',
     longitude: '',
     checkin_radius: '500',
   });
-  const [image, setImage] = useState(null);
-  const [imageFile, setImageFile] = useState(null);
-  const [logo, setLogo] = useState(null);
-  const [logoFile, setLogoFile] = useState(null);
   const [categories, setCategories] = useState([]);
 
   const [dirty, setDirty] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
+
+  const markDirty = () => {
+    setDirty(true);
+    setSaveError(null);
+  };
+
+  const poster = useImagePreview({ onChange: markDirty });
+  const logo = useImagePreview({ onChange: markDirty });
 
   useEffect(() => {
     Promise.all([
@@ -46,17 +56,19 @@ export default function EditEventPage() {
             description: event.description || '',
             place: event.place || '',
             date: event.date ? event.date.slice(0, 16) : '',
+            end_date: event.end_date ? event.end_date.slice(0, 16) : '',
             points: event.points || '',
             capacity: event.capacity || '',
             rules: event.rules || '',
             survey_url: event.survey_url || '',
             visible_to_users: event.visible_to_users ?? true,
+            visible_to_close: event.visible_to_close ?? false,
             latitude: event.latitude || '',
             longitude: event.longitude || '',
             checkin_radius: event.checkin_radius || '500',
           });
-          if (event.image) setImage(event.image);
-          if (event.logo) setLogo(event.logo);
+          if (event.image) poster.setPreview(event.image);
+          if (event.logo) logo.setPreview(event.logo);
           if (event.category) setCategories([event.category.name]);
         }
         if (cats?.categories) {
@@ -69,11 +81,6 @@ export default function EditEventPage() {
         setLoading(false);
       });
   }, [slug]);
-
-  const markDirty = () => {
-    setDirty(true);
-    setSaveError(null);
-  };
 
   const setField = (key) => (e) => {
     const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
@@ -90,16 +97,18 @@ export default function EditEventPage() {
       formData.append('description', form.description);
       formData.append('place', form.place);
       if (form.date) formData.append('date', form.date);
+      formData.append('end_date', form.end_date || '');
       formData.append('points', form.points || 0);
       if (form.capacity) formData.append('capacity', form.capacity);
       formData.append('rules', form.rules);
       formData.append('survey_url', form.survey_url);
       formData.append('visible_to_users', form.visible_to_users ? '1' : '0');
+      formData.append('visible_to_close', form.visible_to_close ? '1' : '0');
       if (form.latitude) formData.append('latitude', form.latitude);
       if (form.longitude) formData.append('longitude', form.longitude);
       formData.append('checkin_radius', form.checkin_radius);
-      if (imageFile) formData.append('image', imageFile);
-      if (logoFile) formData.append('logo', logoFile);
+      if (poster.file) formData.append('image', poster.file);
+      if (logo.file) formData.append('logo', logo.file);
       const nameToId = new Map(allCategories.map((c) => [c.name, c.id]));
       categories.forEach((name) => {
         const id = nameToId.get(name);
@@ -109,44 +118,15 @@ export default function EditEventPage() {
       await updateEvent(slug, formData);
       navigate(`/akce/${slug}`);
     } catch (err) {
-      setSaveError(err.response?.data?.error || 'Chyba při aktualizaci akce.');
+      setSaveError(extractApiError(err, 'Chyba při aktualizaci akce.'));
     } finally {
       setSaving(false);
     }
   };
 
-  const handleImage = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => { setImage(reader.result); };
-    reader.readAsDataURL(file);
-    setImageFile(file);
-    markDirty();
-  };
-
-  const removeImage = () => { setImage(null); setImageFile(null); markDirty(); };
-
-  const handleLogo = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => { setLogo(reader.result); };
-    reader.readAsDataURL(file);
-    setLogoFile(file);
-    markDirty();
-  };
-
-  const removeLogo = () => { setLogo(null); setLogoFile(null); markDirty(); };
-
   const handleCategories = (next) => { setCategories(next); markDirty(); };
 
-  useEffect(() => {
-    if (!dirty) return undefined;
-    const onBeforeUnload = (e) => { e.preventDefault(); e.returnValue = ''; };
-    window.addEventListener('beforeunload', onBeforeUnload);
-    return () => window.removeEventListener('beforeunload', onBeforeUnload);
-  }, [dirty]);
+  useBeforeUnload(dirty);
 
   if (loading) {
     return <div className="event-page"><div style={{ padding: '2rem', textAlign: 'center' }}>Načítání akce…</div></div>;
@@ -199,8 +179,12 @@ export default function EditEventPage() {
           <div className="ev-card">
             <div className="ev-grid-2">
               <div className="ev-field">
-                <label htmlFor="f-date">Datum a čas <span className="ev-hint">nepovinné</span></label>
+                <label htmlFor="f-date">Začátek akce <span className="ev-hint">nepovinné</span></label>
                 <input className="ev-input" id="f-date" type="datetime-local" value={form.date} onChange={setField('date')} />
+              </div>
+              <div className="ev-field">
+                <label htmlFor="f-end-date">Konec check-in okna <span className="ev-hint">nepovinné · jinak +4 h</span></label>
+                <input className="ev-input" id="f-end-date" type="datetime-local" value={form.end_date} onChange={setField('end_date')} />
               </div>
               <div className="ev-field">
                 <label htmlFor="f-points">Body</label>
@@ -229,27 +213,27 @@ export default function EditEventPage() {
               <div className="ev-img-section">
                 <div className="ev-img-label">Plakát</div>
                 <div
-                  className={`ev-img-preview${image ? ' has-img' : ''}`}
-                  style={image ? { backgroundImage: `url(${image})` } : undefined}
+                  className={`ev-img-preview${poster.preview ? ' has-img' : ''}`}
+                  style={poster.preview ? { backgroundImage: `url(${poster.preview})` } : undefined}
                 />
                 <div className="ev-img-actions">
                   <label className="ev-btn primary" htmlFor="image-input">Nahrát obrázek
-                    <input type="file" id="image-input" accept="image/*" hidden onChange={handleImage} />
+                    <input type="file" id="image-input" accept="image/*" hidden onChange={poster.onSelect} />
                   </label>
-                  {image && <button type="button" className="ev-btn ghost" onClick={removeImage}>Odebrat</button>}
+                  {poster.preview && <button type="button" className="ev-btn ghost" onClick={poster.clear}>Odebrat</button>}
                 </div>
               </div>
               <div className="ev-img-section">
                 <div className="ev-img-label">Logo</div>
                 <div
-                  className={`ev-img-preview sm${logo ? ' has-img' : ''}`}
-                  style={logo ? { backgroundImage: `url(${logo})` } : undefined}
+                  className={`ev-img-preview sm${logo.preview ? ' has-img' : ''}`}
+                  style={logo.preview ? { backgroundImage: `url(${logo.preview})` } : undefined}
                 />
                 <div className="ev-img-actions">
                   <label className="ev-btn primary" htmlFor="logo-input">Nahrát logo
-                    <input type="file" id="logo-input" accept="image/*" hidden onChange={handleLogo} />
+                    <input type="file" id="logo-input" accept="image/*" hidden onChange={logo.onSelect} />
                   </label>
-                  {logo && <button type="button" className="ev-btn ghost" onClick={removeLogo}>Odebrat</button>}
+                  {logo.preview && <button type="button" className="ev-btn ghost" onClick={logo.clear}>Odebrat</button>}
                 </div>
               </div>
             </div>
@@ -290,18 +274,30 @@ export default function EditEventPage() {
           <div className="ev-sec-rule" />
           <div className="ev-sec-eyebrow">— 06 · Poloha na mapě —</div>
           <h2 className="ev-sec-heading">Kde se to <span className="pink">děje.</span></h2>
-          <p className="ev-sec-sub">Geografické souřadnice pro mapu a check-in. Oba nebo nic.</p>
+          <p className="ev-sec-sub">Klikni na mapu pro výběr místa. Tažením kolíku ho doladíš.</p>
           <div className="ev-card">
-            <div className="ev-grid-2">
-              <div className="ev-field">
-                <label htmlFor="f-lat">Zeměpisná šířka (lat)</label>
-                <input className="ev-input" id="f-lat" type="number" step="0.0001" value={form.latitude} onChange={setField('latitude')} />
+            <EventLocationMap
+              interactive
+              latitude={form.latitude}
+              longitude={form.longitude}
+              radius={Number(form.checkin_radius) || 0}
+              onChange={({ latitude, longitude }) => {
+                setForm((f) => ({ ...f, latitude, longitude }));
+                markDirty();
+              }}
+            />
+            {form.latitude !== '' && form.longitude !== '' && (
+              <div className="ev-map-meta">
+                <span>{Number(form.latitude).toFixed(5)}, {Number(form.longitude).toFixed(5)}</span>
+                <button
+                  type="button"
+                  className="ev-map-clear"
+                  onClick={() => { setForm((f) => ({ ...f, latitude: '', longitude: '' })); markDirty(); }}
+                >
+                  Vymazat polohu
+                </button>
               </div>
-              <div className="ev-field">
-                <label htmlFor="f-long">Zeměpisná délka (long)</label>
-                <input className="ev-input" id="f-long" type="number" step="0.0001" value={form.longitude} onChange={setField('longitude')} />
-              </div>
-            </div>
+            )}
           </div>
         </section>
 
@@ -315,6 +311,10 @@ export default function EditEventPage() {
             <div className="ev-toggle-row">
               <div className="ev-txt"><h4>Viditelná pro uživatele</h4><p>Pokud vypnuto, akce se zobrazí jen v adminu.</p></div>
               <Switch checked={form.visible_to_users} onChange={(val) => { setForm((f) => ({ ...f, visible_to_users: val })); markDirty(); }} ariaLabel="Viditelná pro uživatele" />
+            </div>
+            <div className="ev-toggle-row">
+              <div className="ev-txt"><h4>Náhled pro Close</h4><p>Close uvidí akci dříve než ostatní uživatelé (i když je vypnuto výše).</p></div>
+              <Switch checked={form.visible_to_close} onChange={(val) => { setForm((f) => ({ ...f, visible_to_close: val })); markDirty(); }} ariaLabel="Náhled pro Close" />
             </div>
           </div>
         </section>

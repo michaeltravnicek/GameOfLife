@@ -64,6 +64,10 @@
 .event-page .ev-toggle-row .ev-txt p{font-family:var(--font-body);font-style:italic;font-size:13px;color:var(--alpha-cream-65);line-height:1.5;max-width:48ch}
 .event-page .ev-toggle-row .switch{margin-top:2px}
 
+.event-page .ev-map-meta{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:12px;font-family:var(--font-mono);font-size:12px;color:var(--alpha-cream-65);letter-spacing:.04em}
+.event-page .ev-map-clear{background:none;border:none;color:var(--color-pink);font:inherit;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;padding:4px 6px}
+.event-page .ev-map-clear:hover{color:var(--color-cream-light);text-decoration:underline}
+
 .event-page .ev-commit-zone{position:relative;z-index:2;max-width:980px;margin:0 auto;padding:8px 24px 64px;text-align:center}
 .event-page .ev-commit-label{font-family:var(--font-mono);font-style:italic;font-size:13px;letter-spacing:.22em;text-transform:uppercase;color:var(--alpha-cream-65);margin-bottom:14px}
 .event-page .ev-commit-zone h2{font-family:var(--font-display);font-size:clamp(34px,4.6vw,52px);line-height:1;color:var(--color-cream-light);text-transform:uppercase;letter-spacing:.03em;margin-bottom:22px}

@@ -99,7 +99,7 @@ export default function HomePage() {
         <div className="lb-bg" />
         <div className="lb-tint" />
         <div className="lb-inner">
-          <h2 ref={lbTitleRef} className={`lb-title reveal${lbTitleIn ? ' in' : ''}`}><span className="tr">🏆</span> Top hráči <span className="tr">🏆</span></h2>
+          <h2 ref={lbTitleRef} className={`lb-title reveal${lbTitleIn ? ' in' : ''}`}><span className="star">✦</span> Top hráči <span className="star">✦</span></h2>
           <div ref={lbCardRef} className={`lb-card reveal-stagger${lbCardIn ? ' in' : ''}`}>
             <div className="lb-head"><div>#</div><div>hráč</div><div className="lb-head-pts">pts</div></div>
             {topPlayers.map((p) => (
@@ -142,18 +142,22 @@ export default function HomePage() {
       {/* GALLERY */}
       <section className="gallery-section">
         <div ref={galHeadRef} className={`gal-header reveal${galHeadIn ? ' in' : ''}`}>
-          <h2 className="gal-title"><span className="gal-star">📷</span> Galerie <span className="gal-star">📷</span></h2>
+          <h2 className="gal-title"><span className="gal-star">✦</span> Galerie <span className="gal-star">✦</span></h2>
         </div>
         <div ref={galRef} className={`gal-container reveal${galIn ? ' in' : ''}`}>
-          <div
+          <button
+            type="button"
             className="gal-side"
             onClick={galPrev}
+            aria-label="Předchozí fotka"
             style={{ backgroundImage: `url('${galImages[(galCur - 1 + galN) % galN]}')` }}
           />
           <div className="gal-main" style={{ backgroundImage: `url('${galImages[galCur]}')` }} />
-          <div
+          <button
+            type="button"
             className="gal-side"
             onClick={galNext}
+            aria-label="Další fotka"
             style={{ backgroundImage: `url('${galImages[(galCur + 1) % galN]}')` }}
           />
         </div>

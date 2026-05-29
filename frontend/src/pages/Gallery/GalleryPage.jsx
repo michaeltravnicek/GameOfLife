@@ -1,5 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { fetchGallery, fetchSeasons, uploadGalleryPhoto } from '../../services/api';
+import { fetchEvents, fetchGallery, fetchSeasons, uploadGalleryPhoto } from '../../services/api';
 import { usePaginatedQuery } from '../../services/usePaginatedQuery';
 import { prefetchQuery, invalidateQuery, useCachedQuery } from '../../services/queryCache';
 import { useAuth } from '../../context/AuthContext';
@@ -8,6 +8,8 @@ import { CACHE_TTL, GALLERY_PREFETCH_TAIL, PAGE_SIZE_GALLERY } from '../../const
 import PageHero from '../../components/PageHero/PageHero';
 import Reveal from '../../components/Reveal/Reveal';
 import Button from '../../components/Button/Button';
+import Modal from '../../components/Modal/Modal';
+import { fmtDateShort } from '../../utils/date';
 import './GalleryPage.css';
 
 // Lightbox loaded only when user opens a fullscreen photo.
@@ -29,6 +31,11 @@ export default function GalleryPage() {
   const [lbPhotos, setLbPhotos] = useState([]);
   const [lbIndex, setLbIndex] = useState(0);
   const [uploading, setUploading] = useState(false);
+  const [uploadOpen, setUploadOpen] = useState(false);
+  const [uploadFile, setUploadFile] = useState(null);
+  const [uploadPreview, setUploadPreview] = useState(null);
+  const [uploadEvent, setUploadEvent] = useState('');
+  const [uploadCaption, setUploadCaption] = useState('');
 
   const tx = useRef(0);
   const viewToggleRef = useRef(null);
@@ -62,20 +69,55 @@ export default function GalleryPage() {
     extractCount,
   });
 
-  const handleUpload = async (e) => {
+  // Past events only — newest first — for the upload modal's event picker.
+  // Fetched only once the modal is opened.
+  const { data: pastEventsData } = useCachedQuery(
+    'gallery-upload-past-events',
+    () => fetchEvents({ period: 'past', limit: 200 }),
+    { ttl: CACHE_TTL.EVENTS, enabled: uploadOpen },
+  );
+  const pastEvents = pastEventsData?.events || [];
+
+  const resetUploadModal = () => {
+    setUploadFile(null);
+    setUploadPreview(null);
+    setUploadEvent('');
+    setUploadCaption('');
+  };
+
+  const handleUploadFile = (e) => {
     const file = e.target.files?.[0];
+    e.target.value = '';
     if (!file) return;
+    setUploadFile(file);
+    const reader = new FileReader();
+    reader.onload = () => setUploadPreview(reader.result);
+    reader.readAsDataURL(file);
+  };
+
+  const handleUploadCancel = () => {
+    if (uploading) return;
+    setUploadOpen(false);
+    resetUploadModal();
+  };
+
+  const handleUploadSubmit = async () => {
+    if (!uploadFile) return;
     setUploading(true);
     try {
-      await uploadGalleryPhoto({ image: file });
-      // Refresh the shared first page so the new photo shows up immediately.
+      await uploadGalleryPhoto({
+        image: uploadFile,
+        event: uploadEvent,
+        caption: uploadCaption.trim(),
+      });
       invalidateQuery('gallery:first');
       await prefetchQuery('gallery:first', () => fetchGallery({ limit: PAGE_SIZE, offset: 0 }));
+      setUploadOpen(false);
+      resetUploadModal();
     } catch (err) {
       reportError('Nahrání fotky se nepodařilo.', err);
     } finally {
       setUploading(false);
-      e.target.value = '';
     }
   };
 
@@ -168,10 +210,9 @@ export default function GalleryPage() {
 
       {canUpload && (
         <div className="gal-upload">
-          <label className="gal-upload-btn">
-            {uploading ? 'Nahrávám…' : '+ Nahrát fotku do galerie'}
-            <input type="file" accept="image/*" hidden disabled={uploading} onChange={handleUpload} />
-          </label>
+          <button type="button" className="gal-upload-btn" onClick={() => setUploadOpen(true)}>
+            + Nahrát fotku do galerie
+          </button>
         </div>
       )}
 
@@ -333,6 +374,61 @@ export default function GalleryPage() {
           />
         </Suspense>
       )}
+
+      <Modal open={uploadOpen} onClose={uploading ? undefined : handleUploadCancel} labelledBy="gal-upload-title">
+        <div className="gal-upload-eyebrow">— Nová fotka —</div>
+        <h3 id="gal-upload-title" className="gal-upload-title">
+          Sdílej <span className="pink">moment.</span>
+        </h3>
+
+        <label className="gal-upload-drop">
+          {uploadPreview ? (
+            <img src={uploadPreview} alt="Náhled" className="gal-upload-preview" />
+          ) : (
+            <span className="gal-upload-drop-text">Klikni a vyber obrázek</span>
+          )}
+          <input type="file" accept="image/*" hidden onChange={handleUploadFile} disabled={uploading} />
+        </label>
+
+        <div className="gal-upload-field">
+          <label htmlFor="gal-event-select" className="gal-upload-label">Z jaké akce?</label>
+          <select
+            id="gal-event-select"
+            className="gal-upload-select"
+            value={uploadEvent}
+            onChange={(e) => setUploadEvent(e.target.value)}
+            disabled={uploading}
+          >
+            <option value="">— Bez akce —</option>
+            {pastEvents.map((ev) => (
+              <option key={ev.slug} value={ev.slug}>
+                {fmtDateShort(ev.date)} · {ev.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="gal-upload-field">
+          <label htmlFor="gal-caption" className="gal-upload-label">Popisek <span className="gal-upload-hint">nepovinné</span></label>
+          <input
+            id="gal-caption"
+            type="text"
+            className="gal-upload-input"
+            value={uploadCaption}
+            onChange={(e) => setUploadCaption(e.target.value)}
+            maxLength={255}
+            placeholder="Něco krátkého…"
+            disabled={uploading}
+          />
+        </div>
+
+        <div className="gal-upload-buttons">
+          <Button variant="nav" onClick={handleUploadCancel} disabled={uploading}>Zrušit</Button>
+          <Button variant="nav" onClick={handleUploadSubmit} busy={uploading} disabled={!uploadFile || uploading}>
+            {uploading ? 'Nahrávám…' : 'Nahrát'}
+          </Button>
+        </div>
+      </Modal>
     </div>
   );
 }

@@ -46,6 +46,10 @@ class Event(models.Model):
         default=True,
         help_text="Pokud vypnuto, akce se nezobrazuje uživatelům (jen v adminu).",
     )
+    visible_to_close = models.BooleanField(
+        default=False,
+        help_text="Náhled pro Close: pokud zapnuto, akci uvidí role Close (a vyšší) i když je 'Viditelná pro uživatele' vypnutá.",
+    )
     survey_url = models.URLField(
         blank=True, default="",
         help_text="Volitelný dotazník. Zobrazí se uživateli po přihlášení na akci.",

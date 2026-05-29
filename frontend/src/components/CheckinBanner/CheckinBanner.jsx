@@ -1,5 +1,7 @@
 import { useCallback, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { apiCheckin } from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../Toast/ToastProvider';
 import { invalidateQuery } from '../../services/queryCache';
 import './CheckinBanner.css';
@@ -17,6 +19,9 @@ import './CheckinBanner.css';
  */
 export default function CheckinBanner({ events = [] }) {
   const toast = useToast();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { user } = useAuth();
   // Per-slug status. Each entry: 'idle' | 'locating' | 'submitting' | 'done' | 'error'
   const [statuses, setStatuses] = useState({});
 
@@ -25,6 +30,10 @@ export default function CheckinBanner({ events = [] }) {
   }, []);
 
   const handleCheckin = useCallback((event) => {
+    if (!user) {
+      navigate('/prihlasit', { state: { from: location.pathname } });
+      return;
+    }
     const { slug, name, points } = event;
     if (!navigator.geolocation) {
       toast.error('Tvůj prohlížeč nepodporuje geolokaci.', { title: 'Check-in selhal' });
@@ -65,7 +74,7 @@ export default function CheckinBanner({ events = [] }) {
       },
       { enableHighAccuracy: true, timeout: 10_000, maximumAge: 0 },
     );
-  }, [toast, setStatus]);
+  }, [toast, setStatus, user, navigate, location.pathname]);
 
   if (!events.length) return null;
 
@@ -75,7 +84,9 @@ export default function CheckinBanner({ events = [] }) {
         const st = statuses[ev.slug] || 'idle';
         const isBusy = st === 'locating' || st === 'submitting';
         const isDone = st === 'done';
-        let btnLabel = `Potvrdit přítomnost · +${ev.points} bodů`;
+        let btnLabel = user
+          ? `Potvrdit přítomnost · +${ev.points} bodů`
+          : `Přihlas se a získej +${ev.points} bodů`;
         if (st === 'locating') btnLabel = 'Zjišťuji polohu…';
         else if (st === 'submitting') btnLabel = 'Odesílám…';
         else if (st === 'done') btnLabel = '✓ Hotovo';

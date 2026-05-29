@@ -25,7 +25,7 @@ class EventAdmin(admin.ModelAdmin):
                        "points", "capacity", "image", "logo", "visible_to_users", "survey_url")
         }),
         ("Místo a check-in", {
-            "description": "Vyplňte souřadnice pro aktivaci mapy a check-in tlačítka. Souřadnice najdete na maps.google.com (pravý klik → 'Co je tady?').",
+            "description": "Souřadnice se obvykle nastavují přes mapu při vytváření akce na frontendu. Zde je lze ručně doladit.",
             "fields": ("place", "latitude", "longitude", "checkin_radius"),
         }),
         ("Technické (Google Sheets — volitelné)", {

@@ -142,8 +142,8 @@ export default function EventsPage() {
         />
         {isAdmin && (
           <div className="admin-actions">
-            <Link to="/akce/vytvorit" className="admin-btn create-btn">➕ Vytvořit akci</Link>
-            <Link to="/sprava/zpetna-vazba" className="admin-btn">📊 Zpětná vazba</Link>
+            <Link to="/akce/vytvorit" className="admin-btn create-btn">+ Vytvořit akci</Link>
+            <Link to="/sprava/zpetna-vazba" className="admin-btn">Zpětná vazba</Link>
           </div>
         )}
       </section>

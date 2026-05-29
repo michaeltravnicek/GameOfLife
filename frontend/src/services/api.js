@@ -5,8 +5,11 @@ function readCookie(name) {
   return match ? decodeURIComponent(match[2]) : null;
 }
 
+// Default to the same-origin '/api' (how production serves it, and how the Vite
+// dev server proxies it). Override with VITE_API_URL when running the SPA against
+// a separately-hosted backend.
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: import.meta.env.VITE_API_URL || '/api',
   withCredentials: true,
   xsrfCookieName: 'csrftoken',
   xsrfHeaderName: 'X-CSRFToken',
@@ -22,6 +25,27 @@ api.interceptors.request.use((config) => {
   }
   return config;
 });
+
+// Endpoints where a 401 is normal (guest checking session / failed login) and
+// must NOT trigger a redirect.
+const AUTH_PROBE_PATHS = ['/auth/me/', '/auth/login/', '/auth/register/'];
+
+// Session expiry: a 401 on a protected action means the cookie is gone. Send the
+// user to login (preserving where they were) instead of leaving a dead page.
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const status = error?.response?.status;
+    const url = error?.config?.url || '';
+    const isProbe = AUTH_PROBE_PATHS.some((p) => url.includes(p));
+    const onAuthPage = /\/(prihlasit|registrace)/.test(window.location.pathname);
+    if (status === 401 && !isProbe && !onAuthPage) {
+      const from = window.location.pathname + window.location.search;
+      window.location.assign(`/prihlasit?from=${encodeURIComponent(from)}`);
+    }
+    return Promise.reject(error);
+  },
+);
 
 export default api;
 

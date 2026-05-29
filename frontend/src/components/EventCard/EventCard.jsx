@@ -14,9 +14,9 @@ function DarkCard({ event }) {
           <div className="evcard-title">{event.name}</div>
         </div>
         <div className="evcard-meta">
-          <div>📅 {fmtDate(event.date)}</div>
-          <div>📍 {event.place}</div>
-          <div>🏆 +{event.points} pts</div>
+          <div className="ev-date">{fmtDate(event.date)}</div>
+          <div className="ev-place">{event.place}</div>
+          <div className="ev-pts-label">+{event.points} pts</div>
         </div>
       </div>
 
@@ -53,8 +53,8 @@ function LightCard({ event }) {
       <div className="evcard-content">
         <h3 className="evcard-title">{event.name}</h3>
         <div className="evcard-meta">
-          <div>📅 {fmtDate(event.date)}</div>
-          <div>📍 {event.place}</div>
+          <div className="ev-date">{fmtDate(event.date)}</div>
+          <div className="ev-place">{event.place}</div>
         </div>
         <div className="evcard-footer">
           <span className="evcard-pts">+{event.points} pts</span>

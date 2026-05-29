@@ -9,15 +9,18 @@ from leaderboard.models import Event, ImageToEvent
 EVENTS_LIST_FIELDS = (
     "id", "slug", "name", "description", "place",
     "date", "points", "image", "capacity", "category_id",
+    "visible_to_users", "visible_to_close",
 )
 
 
 def list_events(period="all", city="", category="", q="", season=None,
-                offset=0, limit=30, include_hidden=False):
+                offset=0, limit=30, include_hidden=False, include_close_preview=False):
     """Filtered, ordered events page. Returns ``(page_queryset, total_count)``.
 
     `include_hidden=False` (the default) hides events with
     ``visible_to_users=False`` — pass True only for admin/photographer views.
+    `include_close_preview=True` ALSO surfaces events flagged
+    ``visible_to_close=True`` for users with role 'close' (early peek).
     """
     qs = (
         Event.objects
@@ -26,7 +29,10 @@ def list_events(period="all", city="", category="", q="", season=None,
         .order_by("-date")
     )
     if not include_hidden:
-        qs = qs.filter(visible_to_users=True)
+        if include_close_preview:
+            qs = qs.filter(Q(visible_to_users=True) | Q(visible_to_close=True))
+        else:
+            qs = qs.filter(visible_to_users=True)
 
     now = timezone.now()
     if period == "upcoming":

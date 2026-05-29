@@ -19,7 +19,7 @@ class EventListSerializer(serializers.ModelSerializer):
         fields = [
             "id", "slug", "name", "description", "place",
             "date", "points", "image", "capacity", "is_past", "category",
-            "visible_to_users",
+            "visible_to_users", "visible_to_close",
         ]
 
     def get_image(self, obj):
@@ -53,7 +53,7 @@ class EventDetailSerializer(serializers.ModelSerializer):
             "id", "slug", "name", "description", "place", "date", "end_date",
             "points", "image", "logo", "rules", "capacity",
             "latitude", "longitude", "category",
-            "survey_url", "visible_to_users",
+            "survey_url", "visible_to_users", "visible_to_close",
             "is_past", "rsvp_count", "is_full", "has_rsvp",
             "has_attended", "feedback_given",
             "official_images", "user_photos",

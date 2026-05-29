@@ -1,13 +1,15 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import FormInput from '../../components/FormInput/FormInput';
 import Button from '../../components/Button/Button';
+import { extractApiError } from '../../services/errors';
 import '../Login/AuthPage.css';
 
 export default function RegisterPage() {
   const { register } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [first, setFirst] = useState('');
   const [username, setUsername] = useState('');
   const [phone, setPhone] = useState('');
@@ -34,15 +36,9 @@ export default function RegisterPage() {
         password1: pw,
         password2: pw2,
       });
-      navigate(`/profil/${u.username}`);
+      navigate(location.state?.from || `/profil/${u.username}`, { replace: true });
     } catch (err) {
-      const errs = err.response?.data?.errors;
-      if (errs) {
-        const first = Object.values(errs)[0];
-        setError(Array.isArray(first) ? first[0] : String(first));
-      } else {
-        setError('Registrace selhala.');
-      }
+      setError(extractApiError(err, 'Registrace selhala.'));
     } finally {
       setBusy(false);
     }
@@ -104,7 +100,7 @@ export default function RegisterPage() {
                 {busy ? 'Registruji…' : 'Registrovat se →'}
               </Button>
             </form>
-            <p className="auth-foot">Už máš účet? <Link to="/prihlasit">Přihlásit se</Link></p>
+            <p className="auth-foot">Už máš účet? <Link to="/prihlasit" state={location.state}>Přihlásit se</Link></p>
           </div>
         </div>
       </section>

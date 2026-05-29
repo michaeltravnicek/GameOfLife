@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { fetchEventDetail, toggleRsvp, submitFeedback, uploadEventImages } from '../../services/api';
 import { useCachedQuery, invalidateQuery } from '../../services/queryCache';
 import { reportError } from '../../services/errors';
@@ -7,6 +7,8 @@ import { CACHE_TTL } from '../../constants/config';
 import { useAuth } from '../../context/AuthContext';
 import Button from '../../components/Button/Button';
 import SectionHeader from '../../components/SectionHeader/SectionHeader';
+import EventLocationMap from '../../components/EventLocationMap/EventLocationMap';
+import Modal from '../../components/Modal/Modal';
 import { fmtDateShort, fmtTime, dayName } from '../../utils/date';
 import './EventDetailPage.css';
 
@@ -17,6 +19,7 @@ const Lightbox = lazy(() => import('../../components/Lightbox/Lightbox'));
 export default function EventDetailPage() {
   const { slug } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, canUpload, isAdmin } = useAuth();
   const [busy, setBusy] = useState(false);
   const [lbOpen, setLbOpen] = useState(false);
@@ -27,6 +30,7 @@ export default function EventDetailPage() {
   const [fbDone, setFbDone] = useState(false);
   const [fbEditing, setFbEditing] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [surveyOpen, setSurveyOpen] = useState(false);
 
   const { data: event, error: queryError, refetch: refetchEvent } = useCachedQuery(
     `event:${slug}`,
@@ -86,9 +90,10 @@ export default function EventDetailPage() {
 
   const handleRsvp = async () => {
     if (!user) {
-      navigate('/prihlasit');
+      navigate('/prihlasit', { state: { from: location.pathname } });
       return;
     }
+    const wasJoined = !!event.has_rsvp;
     setBusy(true);
     try {
       await toggleRsvp(slug);
@@ -96,8 +101,26 @@ export default function EventDetailPage() {
       // (rsvp_count on cards there may now be stale).
       invalidateQuery((k) => k.startsWith('events:'));
       await refetchEvent();
+      // Just joined and the event has a follow-up form? Prompt for it.
+      if (!wasJoined && event.survey_url) setSurveyOpen(true);
     } catch (err) {
       reportError('RSVP se nepodařilo. Zkus to prosím znovu.', err);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  // Survey modal: "Hotovo" keeps the RSVP, "Zrušit" cancels it.
+  const handleSurveyDone = () => setSurveyOpen(false);
+  const handleSurveyCancel = async () => {
+    setSurveyOpen(false);
+    setBusy(true);
+    try {
+      await toggleRsvp(slug);
+      invalidateQuery((k) => k.startsWith('events:'));
+      await refetchEvent();
+    } catch (err) {
+      reportError('Zrušení účasti se nepodařilo.', err);
     } finally {
       setBusy(false);
     }
@@ -262,19 +285,30 @@ export default function EventDetailPage() {
             </section>
           )}
 
+          {event.latitude != null && event.longitude != null && (
+            <section className="section">
+              <SectionHeader eyebrow="— Mapa —" heading="Kde se to děje." />
+              <EventLocationMap
+                latitude={event.latitude}
+                longitude={event.longitude}
+                popupLabel={event.place}
+              />
+            </section>
+          )}
+
           {event.is_past && (
             <section className="section fb-section">
               <SectionHeader eyebrow="— Zpětná vazba —" heading="Jak se ti akce líbila?" />
               {isAdmin && (
                 <div className="admin-btns">
                   <Link to={`/sprava/zpetna-vazba?event=${slug}`} className="admin-btn fb-admin-link">
-                    📊 Zobrazit zpětnou vazbu k akci
+                    Zobrazit zpětnou vazbu k akci
                   </Link>
                 </div>
               )}
               {!user ? (
                 <p className="fb-gate">
-                  <Link to="/prihlasit" className="fb-gate-link">Přihlaš se</Link> a ohodnoť akci.
+                  <Link to="/prihlasit" state={{ from: location.pathname }} className="fb-gate-link">Přihlaš se</Link> a ohodnoť akci.
                 </p>
               ) : !event.has_attended ? (
                 <p className="fb-gate">Hodnotit mohou jen účastníci akce.</p>
@@ -365,6 +399,28 @@ export default function EventDetailPage() {
           />
         </Suspense>
       )}
+
+      <Modal open={surveyOpen && !!event.survey_url} labelledBy="survey-modal-title">
+        <div className="survey-modal-eyebrow">— Ještě jedna věc —</div>
+        <h3 id="survey-modal-title" className="survey-modal-title">
+          Potřebovali bychom od vás <span className="pink">pár informací navíc.</span>
+        </h3>
+        <p className="survey-modal-text">
+          Otevřete prosím krátký formulář a vyplňte ho. Po odeslání se vraťte sem a klikněte na <strong>Hotovo</strong>.
+        </p>
+        <a
+          className="survey-modal-link"
+          href={event.survey_url}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Otevřít formulář ↗
+        </a>
+        <div className="survey-modal-buttons">
+          <Button variant="nav" onClick={handleSurveyCancel} disabled={busy}>Zrušit účast</Button>
+          <Button variant="nav" onClick={handleSurveyDone} disabled={busy}>Hotovo</Button>
+        </div>
+      </Modal>
     </div>
   );
 }

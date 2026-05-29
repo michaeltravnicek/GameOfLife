@@ -4,6 +4,9 @@ from rest_framework.permissions import BasePermission
 from .models import Profile
 
 _STAFF_ROLES = (Profile.ROLE_ADMIN, Profile.ROLE_PHOTOGRAPHER)
+# Roles that get an early-preview look at events flagged visible_to_close.
+# Inclusive upward: admin > photographer > close.
+_CLOSE_OR_ABOVE_ROLES = (Profile.ROLE_ADMIN, Profile.ROLE_PHOTOGRAPHER, Profile.ROLE_CLOSE)
 
 
 def role_of(user):
@@ -17,6 +20,16 @@ def role_of(user):
 def is_staff_role(user):
     """True if the user is an admin or photographer."""
     return role_of(user) in _STAFF_ROLES
+
+
+def is_admin(user):
+    """True if the user has the admin role."""
+    return role_of(user) == Profile.ROLE_ADMIN
+
+
+def is_close_or_above(user):
+    """True if the user can see events flagged visible_to_close before public release."""
+    return role_of(user) in _CLOSE_OR_ABOVE_ROLES
 
 
 class IsAdmin(BasePermission):

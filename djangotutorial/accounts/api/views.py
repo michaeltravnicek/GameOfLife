@@ -1,7 +1,12 @@
+import logging
+
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.forms import PasswordResetForm
 from django.contrib.auth.models import User as AuthUser
+from django.db import transaction
 from django.shortcuts import get_object_or_404
+
+logger = logging.getLogger(__name__)
 
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
@@ -74,12 +79,15 @@ def password_reset_api(request):
 
     form = PasswordResetForm({"email": email})
     if form.is_valid():
-        form.save(
-            request=request,
-            use_https=request.is_secure(),
-            email_template_name="accounts/password_reset_email.html",
-            subject_template_name="accounts/password_reset_subject.txt",
-        )
+        try:
+            form.save(
+                request=request,
+                use_https=request.is_secure(),
+                email_template_name="accounts/password_reset_email.html",
+                subject_template_name="accounts/password_reset_subject.txt",
+            )
+        except Exception:
+            logger.exception("Password reset email failed for %s", email)
     return Response({
         "ok": True,
         "message": "Pokud k tomuto e-mailu existuje účet, odeslali jsme odkaz pro reset hesla.",
@@ -88,6 +96,7 @@ def password_reset_api(request):
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
+@transaction.atomic
 def password_reset_confirm_api(request):
     """Set a new password from the email's uid+token. Body: {uid, token, new_password}.
 
@@ -105,6 +114,7 @@ def password_reset_confirm_api(request):
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
+@transaction.atomic
 def register_api(request):
     """Create an account (links to a leaderboard user by phone) and log in."""
     form = CustomUserCreationForm(request.data)
@@ -145,11 +155,12 @@ def profile_photo_upload(request):
     if not photo:
         return Response({"error": "Nahraj prosím fotku."}, status=status.HTTP_400_BAD_REQUEST)
     try:
-        set_profile_photo(request.user, photo)
+        with transaction.atomic():
+            set_profile_photo(request.user, photo)
+            payload = {"ok": True, "user": serialize_user(request.user, request)}
     except ValueError as exc:
         return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
-    return Response({"ok": True, "user": serialize_user(request.user, request)},
-                    status=status.HTTP_200_OK)
+    return Response(payload, status=status.HTTP_200_OK)
 
 
 @api_view(["PATCH", "POST"])
@@ -157,8 +168,9 @@ def profile_photo_upload(request):
 def profile_update(request):
     """Update the current user's account + profile fields, photo, and favourite categories."""
     try:
-        update_profile(request.user, request.data, request.FILES)
+        with transaction.atomic():
+            update_profile(request.user, request.data, request.FILES)
+            payload = {"ok": True, "user": serialize_user(request.user, request)}
     except ValueError as exc:
         return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
-    return Response({"ok": True, "user": serialize_user(request.user, request)},
-                    status=status.HTTP_200_OK)
+    return Response(payload, status=status.HTTP_200_OK)

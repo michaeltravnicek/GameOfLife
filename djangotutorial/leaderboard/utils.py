@@ -2,6 +2,29 @@
 
 import re
 
+from datetime import datetime
+
+from django.utils import timezone
+
+
+def parse_iso_datetime(raw):
+    """Parse an ISO-8601 datetime string into a timezone-aware ``datetime``.
+
+    Returns ``None`` for empty input. Raises ``ValueError`` for an unparseable
+    string. Naive datetimes are made aware in the current timezone. Replaces the
+    repeated ``datetime.fromisoformat(... .replace('Z', '+00:00'))`` + is_naive
+    blocks in the event create/update views.
+    """
+    if not raw:
+        return None
+    try:
+        dt = datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
+    except (ValueError, AttributeError) as exc:
+        raise ValueError("Neplatný formát data.") from exc
+    if timezone.is_naive(dt):
+        dt = timezone.make_aware(dt)
+    return dt
+
 
 def parse_phone_number(raw):
     """Normalize a Czech phone number to the 9-digit int used by ``User.number``.

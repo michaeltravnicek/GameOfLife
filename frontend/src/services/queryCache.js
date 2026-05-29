@@ -174,10 +174,22 @@ export function useCachedQuery(key, fetcher, options = {}) {
     let cancelled = false;
 
     // Subscribe to broadcast updates from siblings / refetches.
+    // When an entry is dropped (clearCache on logout/login, invalidateQuery),
+    // we refetch instead of just blanking — otherwise the page sits on empty
+    // state until the user navigates away and back.
     const unsubscribe = subscribe(key, () => {
       if (cancelled) return;
       const next = getEntry(key);
-      setData(next?.value);
+      if (next) {
+        setData(next.value);
+        return;
+      }
+      setData(undefined);
+      setLoading(true);
+      dedupedFetch(key, () => fetcherRef.current())
+        .then((value) => { if (!cancelled) { setData(value); setError(null); } })
+        .catch((e) => { if (!cancelled) setError(e); })
+        .finally(() => { if (!cancelled) setLoading(false); });
     });
 
     const entry = getEntry(key);
