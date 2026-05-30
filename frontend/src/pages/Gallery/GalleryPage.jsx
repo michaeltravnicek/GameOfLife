@@ -172,6 +172,36 @@ export default function GalleryPage() {
     return ordered;
   }, [photos, seasons, seasonOf]);
 
+  // ── Calendar grouping: filter by season chip, then bucket by YYYY-MM and
+  // sort month-buckets newest-first. Photos without a usable event_date land
+  // in a trailing 'unknown' bucket.
+  const CZ_MONTHS = ['Leden', 'Únor', 'Březen', 'Duben', 'Květen', 'Červen', 'Červenec', 'Srpen', 'Září', 'Říjen', 'Listopad', 'Prosinec'];
+  const monthLabel = useCallback((key) => {
+    if (key === 'unknown') return 'Neurčeno';
+    const [y, m] = key.split('-');
+    return `${CZ_MONTHS[Number(m) - 1]} ${y}`;
+  }, []);
+
+  const monthGroups = useMemo(() => {
+    const filtered = activeSeason === 'all'
+      ? photos
+      : photos.filter((p) => seasonOf(p.event_date) === activeSeason);
+    const buckets = new Map();
+    filtered.forEach((p) => {
+      const iso = String(p.event_date || '').slice(0, 10);
+      const key = /^\d{4}-\d{2}/.test(iso) ? iso.slice(0, 7) : 'unknown';
+      if (!buckets.has(key)) buckets.set(key, []);
+      buckets.get(key).push(p);
+    });
+    // Newest month first; 'unknown' always last.
+    const keys = [...buckets.keys()].sort((a, b) => {
+      if (a === 'unknown') return 1;
+      if (b === 'unknown') return -1;
+      return a < b ? 1 : -1;
+    });
+    return keys.map((key) => ({ key, photos: buckets.get(key) }));
+  }, [photos, activeSeason, seasonOf]);
+
   const n = photos.length;
   const goSlide = (idx) => setCur(((idx % Math.max(n, 1)) + Math.max(n, 1)) % Math.max(n, 1));
 
@@ -181,8 +211,6 @@ export default function GalleryPage() {
     setLbOpen(true);
   };
   const lbStep = (d) => setLbIndex((i) => (i + d + lbPhotos.length) % lbPhotos.length);
-
-  const visibleSeasons = activeSeason === 'all' ? seasonKeys : [activeSeason];
 
   const slidePhoto = photos[cur] || {};
   const prevPhoto = photos[(cur - 1 + n) % n] || {};
@@ -319,28 +347,25 @@ export default function GalleryPage() {
               </button>
             ))}
           </div>
-          {visibleSeasons.map((key) => {
-            const seasonPhotos = photos.filter((p) => seasonOf(p.event_date) === key);
-            return (
-              <div key={key} className="season-section">
-                <div className="season-heading">{seasonLabel(key)}</div>
-                <div className="season-count">
-                  {seasonPhotos.length} {seasonPhotos.length === 1 ? 'fotografie' : 'fotografií'}
-                </div>
-                <Reveal stagger className="photo-grid">
-                  {seasonPhotos.map((p, i) => (
-                    <div key={i} className="photo-item" onClick={() => openLb(seasonPhotos, i)}>
-                      <img src={p.url} alt={p.event_name} loading="lazy" />
-                      <div className="photo-item-caption">
-                        <div className="photo-item-label">{p.is_user_photo ? 'Komunita' : 'Akce'}</div>
-                        <div className="photo-item-title">{p.event_name}</div>
-                      </div>
-                    </div>
-                  ))}
-                </Reveal>
+          {monthGroups.map(({ key, photos: monthPhotos }) => (
+            <div key={key} className="season-section">
+              <div className="season-heading">{monthLabel(key)}</div>
+              <div className="season-count">
+                {monthPhotos.length} {monthPhotos.length === 1 ? 'fotografie' : 'fotografií'}
               </div>
-            );
-          })}
+              <Reveal stagger className="photo-grid">
+                {monthPhotos.map((p, i) => (
+                  <div key={i} className="photo-item" onClick={() => openLb(monthPhotos, i)}>
+                    <img src={p.url} alt={p.event_name} loading="lazy" />
+                    <div className="photo-item-caption">
+                      <div className="photo-item-label">{p.is_user_photo ? 'Komunita' : 'Akce'}</div>
+                      <div className="photo-item-title">{p.event_name}</div>
+                    </div>
+                  </div>
+                ))}
+              </Reveal>
+            </div>
+          ))}
 
           {hasMore && (
             <div className="load-more-row">

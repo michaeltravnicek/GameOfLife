@@ -47,11 +47,13 @@ export default function EventDetailPage() {
     ? (queryError.response?.status === 404 ? 'Akce nenalezena.' : 'Nepodařilo se načíst akci.')
     : '';
 
+  // Gallery shows ImageToEvent entries + community photos only.
+  // The main `event.image` is used as the top poster, not in the gallery,
+  // so we don't include it here (it would duplicate one of the poster image).
   const images = useMemo(() => {
     if (!event) return [];
     const list = [...(event.official_images || [])];
     (event.user_photos || []).forEach((p) => list.push(p.url));
-    if (event.image) list.unshift(event.image);
     return list;
   }, [event]);
 

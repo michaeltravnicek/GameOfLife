@@ -29,13 +29,13 @@
 .historie-page .row .node{grid-column:2;display:flex;justify-content:center;align-items:center}
 .historie-page .node-dot{width:18px;height:18px;border-radius:50%;background:var(--color-pink);border:3px solid #1a0f0a;box-shadow:0 0 0 2px rgba(225,84,99,.4),0 6px 18px rgba(225,84,99,.45);z-index:1}
 
-.historie-page .card{grid-column:1;background:url('/assets/Grain_texture_light.png') 0 0/var(--tex-size) var(--tex-size) repeat, #fff1d4;color:#1a0f0a;border-radius:14px;border:2px dashed rgba(26,26,26,.35);overflow:hidden;box-shadow:0 14px 36px rgba(0,0,0,.45);transition:transform .25s,border-color .25s}
+.historie-page .card{grid-column:1;background:rgba(26,15,10,.55);color:var(--color-cream-light);border-radius:14px;border:2px dashed rgba(255,241,212,.32);overflow:hidden;box-shadow:0 14px 36px rgba(0,0,0,.5);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);transition:transform .25s,border-color .25s}
 .historie-page .card:hover{transform:translateY(-3px);border-color:var(--color-pink)}
 .historie-page .row:nth-child(even) .card{grid-column:3}
 .historie-page .row.right .card{grid-column:3}
 .historie-page .row.left .card{grid-column:1}
 
-.historie-page .card-media{position:relative;height:180px;background-size:cover;background-position:center;border-bottom:2px dashed rgba(26,26,26,.25)}
+.historie-page .card-media{position:relative;height:180px;background-size:cover;background-position:center;border-bottom:2px dashed rgba(255,241,212,.22)}
 .historie-page .card-media::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0) 40%,rgba(0,0,0,.35) 100%)}
 .historie-page .date-stamp{position:absolute;top:12px;left:12px;z-index:2;font-family:var(--font-mono);font-style:italic;font-size:11px;letter-spacing:.18em;text-transform:uppercase;padding:5px 12px;border-radius:9999px;background:rgba(255,241,212,.88);color:#1a1a1a;border:1px dashed rgba(26,26,26,.35);backdrop-filter:blur(6px)}
 .historie-page .first-stamp{position:absolute;top:12px;left:50%;transform:translateX(-50%) rotate(-3deg);z-index:3;font-family:var(--font-display);font-size:18px;letter-spacing:.14em;padding:6px 18px 3px;background:#f5c842;color:#1a0f0a;border:2px dashed #1a0f0a;border-radius:6px;box-shadow:0 6px 18px rgba(0,0,0,.35);text-transform:uppercase}
@@ -43,32 +43,26 @@
 .historie-page .ev-stamp{position:absolute;bottom:-14px;right:-10px;width:96px;height:96px;object-fit:contain;pointer-events:none;transform:rotate(-8deg);filter:drop-shadow(0 4px 10px rgba(0,0,0,.4));z-index:3}
 
 .historie-page .card-body{padding:22px 24px 22px}
-.historie-page .card-tag{font-family:var(--font-mono);font-style:italic;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:#c1394a;margin-bottom:6px}
-.historie-page .card-title{font-family:var(--font-display);font-size:30px;line-height:.95;letter-spacing:.02em;text-transform:uppercase;color:#1a1a1a;margin-bottom:10px}
-.historie-page .card-text{font-family:var(--font-body);font-size:14px;line-height:1.65;color:rgba(26,15,10,.78)}
-.historie-page .card-text em{font-style:italic;color:rgba(26,15,10,.6)}
-.historie-page .card-meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;padding-top:14px;border-top:1px dashed rgba(26,26,26,.2)}
-.historie-page .chip{font-family:var(--font-mono);font-style:italic;font-size:11px;letter-spacing:.06em;padding:3px 10px;border-radius:9999px;background:rgba(26,15,10,.08);color:rgba(26,15,10,.7);display:inline-flex;align-items:center;gap:5px}
-.historie-page .chip.attended{background:rgba(225,84,99,.12);color:#c1394a}
+.historie-page .card-tag{font-family:var(--font-mono);font-style:italic;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--color-pink);margin-bottom:6px}
+.historie-page .card-title{font-family:var(--font-display);font-size:30px;line-height:.95;letter-spacing:.02em;text-transform:uppercase;color:var(--color-cream-light);margin-bottom:10px}
+.historie-page .card-text{font-family:var(--font-body);font-size:14px;line-height:1.65;color:rgba(255,241,212,.82)}
+.historie-page .card-text em{font-style:italic;color:rgba(255,241,212,.55)}
+.historie-page .card-meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;padding-top:14px;border-top:1px dashed rgba(255,241,212,.18)}
+.historie-page .chip{font-family:var(--font-mono);font-style:italic;font-size:11px;letter-spacing:.06em;padding:3px 10px;border-radius:9999px;background:rgba(255,241,212,.06);color:rgba(255,241,212,.7);display:inline-flex;align-items:center;gap:5px}
+.historie-page .chip.attended{background:rgba(225,84,99,.18);color:#ffb0b8}
 
-.historie-page .card.note{background:rgba(26,15,10,.62);color:var(--color-cream-light);border:2px dashed rgba(255,241,212,.32);box-shadow:0 14px 36px rgba(0,0,0,.5);backdrop-filter:blur(10px);position:relative}
+/* Note variant — same frosted base, just larger padding + a smaller title and
+   the decorative quote-mark. */
+.historie-page .card.note{position:relative}
 .historie-page .card.note .card-body{padding:26px 26px 24px}
-.historie-page .card.note .card-tag{color:var(--color-pink)}
-.historie-page .card.note .card-title{color:var(--color-cream-light);font-size:26px}
-.historie-page .card.note .card-text{color:rgba(255,241,212,.82)}
-.historie-page .card.note .card-text em{color:rgba(255,241,212,.55)}
+.historie-page .card.note .card-title{font-size:26px}
 .historie-page .card.note .note-mark{position:absolute;top:14px;right:18px;font-family:var(--font-display);font-size:48px;color:rgba(225,84,99,.35);line-height:.7;letter-spacing:.04em;pointer-events:none}
 .historie-page .card.note .note-date{font-family:var(--font-mono);font-style:italic;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,241,212,.55);margin-bottom:10px}
-.historie-page .card.note .card-meta{border-top-color:rgba(255,241,212,.18)}
-.historie-page .card.note .chip{background:rgba(255,241,212,.06);color:rgba(255,241,212,.7)}
-.historie-page .card.note .chip.attended{background:rgba(225,84,99,.18);color:#ffb0b8}
 
-.historie-page .card.muted{background:rgba(26,15,10,.55);color:rgba(255,241,212,.85);border-color:rgba(255,241,212,.22);box-shadow:0 14px 36px rgba(0,0,0,.45);backdrop-filter:blur(8px)}
-.historie-page .card.muted .card-title{color:var(--color-cream-light)}
+/* Muted variant — same frosted base, slightly faded for older years. */
+.historie-page .card.muted{border-color:rgba(255,241,212,.22)}
 .historie-page .card.muted .card-text{color:rgba(255,241,212,.72)}
-.historie-page .card.muted .card-tag{color:var(--color-pink)}
-.historie-page .card.muted .card-meta{border-top-color:rgba(255,241,212,.18)}
-.historie-page .card.muted .chip{background:rgba(255,241,212,.06);color:rgba(255,241,212,.65)}
+.historie-page .card.muted .chip{color:rgba(255,241,212,.65)}
 .historie-page .card.muted .date-stamp{background:rgba(26,15,10,.55);color:rgba(255,241,212,.85);border-color:rgba(255,241,212,.25)}
 
 .historie-page .hist-coda{position:relative;z-index:2;max-width:780px;margin:60px auto 0;padding:60px 24px 30px;text-align:center;border-top:1px dashed rgba(255,241,212,.3)}

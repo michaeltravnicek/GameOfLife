@@ -30,7 +30,7 @@
 /* ── ABOUT ── */
 .home-page .about-section{background-color:var(--color-brown);background-image:var(--tex-brown);background-size:var(--tex-size) var(--tex-size);background-repeat:repeat;padding:72px 24px}
 .home-page .about-inner{max-width:980px;margin:0 auto;display:grid;grid-template-columns:300px 1fr;gap:60px;align-items:center}
-.home-page .about-photo{aspect-ratio:3/4;border-radius:2px;border:2px solid rgba(255,255,255,.85);overflow:hidden;align-self:center;flex-shrink:0}
+.home-page .about-photo{aspect-ratio:3/4;border-radius:2px;border:5px solid var(--color-cream-light);overflow:hidden;align-self:center;flex-shrink:0}
 .home-page .about-photo img{width:100%;height:100%;display:block;object-fit:cover;transition:transform .5s cubic-bezier(.22,.68,0,1.1)}
 .home-page .about-photo:hover img{transform:scale(1.05)}
 .home-page .about-content{display:flex;flex-direction:column;gap:14px}
@@ -51,12 +51,12 @@
 .home-page .gal-title{font-family:var(--font-display);font-size:clamp(40px,4.5vw,64px);letter-spacing:.04em;text-transform:uppercase;color:var(--color-cream-light);display:flex;align-items:center;justify-content:center;gap:18px}
 .home-page .gal-star{color:var(--color-pink);font-size:.75em}
 .home-page .gal-container{display:flex;align-items:center;justify-content:center;gap:10px;height:72vh;width:100vw;padding:44px 0 0;overflow:hidden}
-.home-page .gal-side{width:222px;height:65vh;flex-shrink:0;background-size:cover;background-position:center;border:3px solid #fff;opacity:.55;cursor:pointer;transition:opacity .3s;padding:0;background-color:transparent;min-width:44px}
+.home-page .gal-side{width:222px;height:65vh;flex-shrink:0;background-size:cover;background-position:center;border:5px solid var(--color-cream-light);opacity:.55;cursor:pointer;transition:opacity .3s;padding:0;background-color:transparent;min-width:44px}
 .home-page .gal-side:focus-visible{outline:2px solid var(--color-pink);outline-offset:3px;opacity:.9}
 .home-page .gal-side:first-child{border-left:none}
 .home-page .gal-side:last-child{border-right:none}
 .home-page .gal-side:hover{opacity:.8}
-.home-page .gal-main{flex:1;height:65vh;background-size:cover;background-position:center;border:3px solid #fff}
+.home-page .gal-main{flex:1;height:65vh;background-size:cover;background-position:center;border:5px solid var(--color-cream-light)}
 .home-page .gal-footer{text-align:center;padding:32px 0 48px}
 
 /* ── RESPONSIVE ── */

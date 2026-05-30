@@ -49,7 +49,8 @@
 
 /* ── GALLERY COLLAGE ── */
 .event-detail-page .collage{display:grid;gap:6px;width:100%;grid-template-rows:repeat(2,clamp(180px,26vw,300px))}
-.event-detail-page .collage figure{margin:0;overflow:hidden;position:relative;cursor:pointer}
+.event-detail-page .collage figure{margin:0;overflow:hidden;position:relative;cursor:pointer;border:5px solid var(--color-cream-light);box-sizing:border-box;transition:border-color .22s}
+.event-detail-page .collage figure:hover{border-color:var(--color-pink)}
 .event-detail-page .collage figure img{width:100%;height:100%;object-fit:cover;transition:filter .25s,transform .4s;filter:saturate(.9) contrast(1.02)}
 .event-detail-page .collage figure:hover img{filter:saturate(1.05) brightness(1.05);transform:scale(1.02)}
 .event-detail-page .collage[data-count="1"]{grid-template-columns:1fr;grid-template-rows:clamp(280px,42vw,520px)}
@@ -79,7 +80,7 @@
 /* ── LIGHTBOX ── */
 .event-detail-page .lightbox{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.94);display:none;align-items:center;justify-content:center;padding:40px}
 .event-detail-page .lightbox.open{display:flex}
-.event-detail-page .lightbox img{max-width:92vw;max-height:88vh;border:2px solid #fff}
+.event-detail-page .lightbox img{max-width:92vw;max-height:88vh;border:5px solid var(--color-cream-light)}
 .event-detail-page .lightbox-close{position:absolute;top:20px;right:30px;background:transparent;border:0;color:#fff;font-size:40px;cursor:pointer;line-height:1}
 .event-detail-page .lightbox-nav{position:absolute;top:50%;transform:translateY(-50%);width:50px;height:50px;border-radius:50%;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;font-size:24px;cursor:pointer;display:flex;align-items:center;justify-content:center}
 .event-detail-page .lightbox-nav.prev{left:30px}

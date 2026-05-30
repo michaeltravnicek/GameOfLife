@@ -81,7 +81,7 @@ export default function LoginPage() {
                 />
                 <span>Zůstat přihlášen</span>
               </label>
-              <Button type="submit" variant="action" size="lg" busy={busy} className="pts-btn-wrap">
+              <Button type="submit" variant="nav" size="lg" busy={busy} className="pts-btn-wrap">
                 {busy ? 'Přihlašuji…' : 'Přihlásit se →'}
               </Button>
             </form>

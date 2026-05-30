@@ -18,9 +18,11 @@
 .gallery-page .counter span{color:rgba(255,241,212,.75)}
 
 .gallery-page .gal-container{position:relative;z-index:2;display:flex;align-items:center;justify-content:center;gap:6px;padding:24px 0 0;height:calc(100vh - 340px);min-height:340px;max-height:660px;overflow:hidden}
-.gallery-page .gal-side{width:clamp(110px,15vw,220px);height:100%;background-size:cover;background-position:center;border:2px solid rgba(255,255,255,.70);opacity:.40;cursor:pointer;flex-shrink:0;transition:opacity .25s,filter .25s;filter:brightness(.70) saturate(.75)}
+.gallery-page .gal-side{width:clamp(110px,15vw,220px);height:100%;background-size:cover;background-position:center;border:5px solid var(--color-cream-light);opacity:.40;cursor:pointer;flex-shrink:0;transition:opacity .25s,filter .25s;filter:brightness(.70) saturate(.75)}
+.gallery-page .gal-side:first-child{border-left:none}
+.gallery-page .gal-side:last-child{border-right:none}
 .gallery-page .gal-side:hover{opacity:.70;filter:brightness(.95) saturate(1)}
-.gallery-page .gal-main{flex:1;height:100%;background-size:cover;background-position:center;border:2px solid #fff;position:relative;overflow:hidden;min-width:0}
+.gallery-page .gal-main{flex:1;height:100%;background-size:cover;background-position:center;border:5px solid var(--color-cream-light);position:relative;overflow:hidden;min-width:0}
 .gallery-page .gal-zone{position:absolute;top:0;bottom:0;width:50%;z-index:3;display:flex;align-items:center;transition:background .18s}
 .gallery-page .gal-zone-left{left:0;justify-content:flex-start;padding-left:20px;cursor:w-resize}
 .gallery-page .gal-zone-right{right:0;justify-content:flex-end;padding-right:20px;cursor:e-resize}
@@ -83,7 +85,7 @@
 @media(max-width:640px){
   .gallery-page .view-toggle{flex-wrap:wrap}
   .gallery-page .gal-container{gap:3px;height:62vh;min-height:260px;max-height:520px}
-  .gallery-page .gal-side{width:48px;border-width:1.5px}
+  .gallery-page .gal-side{width:48px}
   .gallery-page .gal-zone-arrow{width:36px;height:36px;font-size:18px}
   .gallery-page .gal-caption{padding:24px 16px 14px}
   .gallery-page .gal-caption-title{font-size:clamp(18px,5vw,28px)}

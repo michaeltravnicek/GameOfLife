@@ -55,12 +55,9 @@ export default function Lightbox({
 
   if (!open || !imgSrc) return null;
 
-  const caption = showInfo && current && typeof current === 'object'
-    ? [
-        current.event_name,
-        current.is_user_photo && current.uploaded_by ? `foto: ${current.uploaded_by}` : null,
-      ].filter(Boolean).join(' · ')
-    : null;
+  const meta = showInfo && current && typeof current === 'object' ? current : null;
+  const photographer = meta?.is_user_photo && meta?.uploaded_by ? meta.uploaded_by : null;
+  const altText = [meta?.event_name, photographer ? `foto: ${photographer}` : null].filter(Boolean).join(' · ');
 
   return createPortal(
     <div
@@ -76,9 +73,20 @@ export default function Lightbox({
         </>
       )}
 
-      <img src={imgSrc} alt={caption || ''} />
+      <img src={imgSrc} alt={altText} />
 
-      {caption && <div className="lb-info">{caption}</div>}
+      {meta && (meta.event_name || photographer) && (
+        <div className="lb-info">
+          {meta.event_name && <div className="lb-info-title">{meta.event_name}</div>}
+          {photographer && (
+            <div className="lb-info-credit">
+              <span className="lb-info-cam" aria-hidden="true">📷</span>
+              <span className="lb-info-credit-label">Foto:</span>
+              <span className="lb-info-credit-name">{photographer}</span>
+            </div>
+          )}
+        </div>
+      )}
     </div>,
     document.body,
   );

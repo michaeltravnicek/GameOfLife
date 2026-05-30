@@ -30,7 +30,7 @@ export default function EditProfilePage() {
   const [avatarFile, setAvatarFile] = useState(null);
   const [categories, setCategories] = useState([]);
   const [socials, setSocials] = useState({ instagram: '', strava: '', spotify: '', tiktok: '' });
-  const [privacy, setPrivacy] = useState({ hide_pts: false, hide_events: false, members_only: false });
+  const [privacy, setPrivacy] = useState({ hide_events: false, members_only: false });
 
   const [dirty, setDirty] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -65,7 +65,6 @@ export default function EditProfilePage() {
             tiktok: profile.tiktok || '',
           });
           setPrivacy({
-            hide_pts: profile.privacy?.hide_pts || false,
             hide_events: profile.privacy?.hide_events || false,
             members_only: profile.privacy?.members_only || false,
           });
@@ -112,7 +111,6 @@ export default function EditProfilePage() {
         const id = nameToId.get(name);
         if (id != null) formData.append('favourite_categories', id);
       });
-      formData.append('hide_pts', privacy.hide_pts ? '1' : '0');
       formData.append('hide_events', privacy.hide_events ? '1' : '0');
       formData.append('members_only', privacy.members_only ? '1' : '0');
       formData.append('instagram', socials.instagram);
@@ -153,11 +151,6 @@ export default function EditProfilePage() {
 
   const handleCategories = (next) => { setCategories(next); markDirty(); };
 
-  const handlePause = () => {
-    if (window.confirm('Opravdu pozastavit účet? Můžeš se kdykoliv vrátit.')) {
-      window.alert('Účet pozastaven. Vrať se brzy.');
-    }
-  };
   const handleDelete = () => {
     if (window.confirm('Smazat účet NATRVALO? Tato akce je nevratná.')) {
       window.alert('… kdyby to bylo opravdu napojený, teď by ses smazal.');
@@ -221,8 +214,8 @@ export default function EditProfilePage() {
                 <input className="ep-input" id="f-surname" value={form.last_name} onChange={setField('last_name')} />
               </div>
               <div className="ep-field">
-                <label htmlFor="f-handle">Přezdívka <span className="ep-hint">nebude se dát měnit</span></label>
-                <div className="ep-input-prefix"><span className="ep-pre">@</span><input className="ep-input" id="f-handle" value={form.username} disabled /></div>
+                <label htmlFor="f-handle">Přezdívka <span className="ep-hint">jen písmena, číslice a _</span></label>
+                <div className="ep-input-prefix"><span className="ep-pre">@</span><input className="ep-input" id="f-handle" value={form.username} onChange={setField('username')} autoComplete="username" /></div>
               </div>
               <div className="ep-field">
                 <label htmlFor="f-city">Město</label>
@@ -325,10 +318,6 @@ export default function EditProfilePage() {
           <p className="ep-sec-sub">Profil je veřejný, ale tyhle detaily můžeš zamknout.</p>
           <div className="ep-card">
             <div className="ep-toggle-row">
-              <div className="ep-txt"><h4>Skrýt celkové body</h4><p>Tvoje pozice v leaderboardu zůstane, body neuvidí nikdo kromě tebe.</p></div>
-              <Switch checked={privacy.hide_pts} onChange={togglePrivacy('hide_pts')} ariaLabel="Skrýt celkové body" />
-            </div>
-            <div className="ep-toggle-row">
               <div className="ep-txt"><h4>Skrýt seznam absolvovaných akcí</h4><p>Tvůj profil ukáže jen highlighty.</p></div>
               <Switch checked={privacy.hide_events} onChange={togglePrivacy('hide_events')} ariaLabel="Skrýt seznam akcí" />
             </div>
@@ -346,10 +335,6 @@ export default function EditProfilePage() {
           <h2 className="ep-sec-heading">Něco <span className="pink">extrémního.</span></h2>
           <p className="ep-sec-sub">Tyhle akce jsou nevratné. Body, akce, fotky — všechno zmizí. Mysli si dvakrát.</p>
           <div className="ep-card ep-danger-card">
-            <div className="ep-toggle-row">
-              <div className="ep-txt"><h4>Pozastavit účet</h4><p>Tvůj profil zmizí z leaderboardu, ale data si necháme. Kdykoliv se můžeš vrátit.</p></div>
-              <button type="button" className="ep-btn ghost" onClick={handlePause}>Pozastavit</button>
-            </div>
             <div className="ep-toggle-row">
               <div className="ep-txt"><h4>Smazat účet</h4><p>Trvalé. Všechny tvoje akce, body i fotky budou ztraceny v čase, jako slzy v dešti.</p></div>
               <button type="button" className="ep-btn danger" onClick={handleDelete}>Smazat účet</button>

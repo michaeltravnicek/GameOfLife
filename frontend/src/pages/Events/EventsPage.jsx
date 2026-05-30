@@ -86,14 +86,28 @@ export default function EventsPage() {
     setCities(firstPage.cities || []);
   }, [firstPage]);
 
-  // Only show city filters that have more than 1 event (avoids single-result dead-ends).
-  const cityChoices = useMemo(
-    () => {
-      const filtered = cities.filter((c) => (c.count ?? 1) > 1);
-      return filtered.length > 0 ? ['Vše', ...filtered.map((c) => c.name)] : [];
-    },
-    [cities],
-  );
+  // All cities surface in the filter panel (even those with a single event) so
+  // users see the full set of choices. Each chip shows its event count.
+  const cityChoices = useMemo(() => {
+    if (!cities.length) return [];
+    return [{ name: 'Vše', count: null }, ...cities];
+  }, [cities]);
+
+  const activeFilterCount = (season !== 'all' ? 1 : 0)
+    + (city !== 'Vše' ? 1 : 0)
+    + (debouncedQuery.trim() ? 1 : 0);
+
+  const [filtersOpen, setFiltersOpen] = useState(true);
+
+  const handleResetFilters = useCallback(() => {
+    setSeason('all');
+    setCity('Vše');
+    setQuery('');
+    setDebouncedQuery('');
+  }, []);
+
+  // Czech plural for "akce": 1 → akce, 2-4 → akce, 0/5+ → akcí.
+  const fmtCount = (n) => `${n} ${n >= 1 && n <= 4 ? 'akce' : 'akcí'}`;
 
   // Visual split (server already filtered, this is purely for display).
   const { upcoming, past } = useMemo(() => ({
@@ -133,28 +147,75 @@ export default function EventsPage() {
         tagline="Kompletní seznam akcí. Od karaoke přes nahou míli, deskovky až po bruslení. Sbírej body, hraj život."
       />
 
-      <section className="controls">
-        <PillTabs tabs={seasonTabs} active={season} onChange={handleSeasonChange} />
-        <SearchInput
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Hledat akci…"
-        />
-        {isAdmin && (
-          <div className="admin-actions">
-            <Link to="/akce/vytvorit" className="admin-btn create-btn">+ Vytvořit akci</Link>
-            <Link to="/sprava/zpetna-vazba" className="admin-btn">Zpětná vazba</Link>
-          </div>
-        )}
+      <section className="filterbar">
+        <button
+          type="button"
+          className={`filter-toggle${filtersOpen ? ' open' : ''}`}
+          onClick={() => setFiltersOpen((o) => !o)}
+          aria-expanded={filtersOpen}
+          aria-controls="filter-panel"
+        >
+          <span className="ft-ico" aria-hidden="true">⚙</span>
+          <span>Filtry</span>
+          {activeFilterCount > 0 && <span className="ft-badge">{activeFilterCount}</span>}
+          <span className="ft-chev" aria-hidden="true">{filtersOpen ? '▴' : '▾'}</span>
+        </button>
+        <div className="filter-count-pill" aria-live="polite">
+          {loading && events.length === 0
+            ? '…'
+            : <><span className="fc-num">{totalCount}</span><span className="fc-lab">{totalCount >= 1 && totalCount <= 4 ? 'akce' : 'akcí'}</span></>}
+        </div>
       </section>
 
-      {cityChoices.length > 0 && (
-        <section className="locations">
-          {cityChoices.map((c) => (
-            <button key={c} className={`loc${city === c ? ' on' : ''}`} onClick={() => setCity(c)}>
-              {c}
-            </button>
-          ))}
+      {filtersOpen && (
+        <section id="filter-panel" className="filter-panel">
+          <div className="fp-group fp-search">
+            <SearchInput
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Hledat akci…"
+            />
+          </div>
+
+          <div className="fp-group">
+            <div className="fp-label">Sezóna</div>
+            <PillTabs tabs={seasonTabs} active={season} onChange={handleSeasonChange} />
+          </div>
+
+          {cityChoices.length > 1 && (
+            <div className="fp-group">
+              <div className="fp-label">Místo</div>
+              <div className="fp-chips">
+                {cityChoices.map((c) => (
+                  <button
+                    key={c.name}
+                    type="button"
+                    className={`loc${city === c.name ? ' on' : ''}`}
+                    onClick={() => setCity(c.name)}
+                  >
+                    {c.name}
+                    {c.count != null && <span className="loc-count">{c.count}</span>}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {activeFilterCount > 0 && (
+            <div className="fp-footer">
+              <button type="button" className="fp-reset" onClick={handleResetFilters}>
+                × Resetovat filtry
+              </button>
+              <span className="fp-result">{fmtCount(totalCount)}</span>
+            </div>
+          )}
+        </section>
+      )}
+
+      {isAdmin && (
+        <section className="admin-row">
+          <Link to="/akce/vytvorit" className="admin-btn create-btn">+ Vytvořit akci</Link>
+          <Link to="/sprava/zpetna-vazba" className="admin-btn">Zpětná vazba</Link>
         </section>
       )}
 

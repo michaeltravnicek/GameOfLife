@@ -3,10 +3,9 @@ import { Link, Navigate, useParams } from 'react-router-dom';
 import { fetchPlayer, fetchPlayerSeason } from '../../services/api';
 import { useCachedQuery } from '../../services/queryCache';
 import { CACHE_TTL } from '../../constants/config';
-import Avatar from '../../components/Avatar/Avatar';
 import PillTabs from '../../components/PillTabs/PillTabs';
 import StatList from '../../components/StatList/StatList';
-import { EVENT_COLUMNS, EVENT_LIST_CLASS } from '../../components/StatList/eventColumns';
+import { EVENT_COLUMNS } from '../../components/StatList/eventColumns';
 import './PlayerPage.css';
 
 // Public view for a leaderboard player by id. Registered players (those with an
@@ -79,7 +78,6 @@ export default function PlayerPage() {
           {statRank && <span className="player-pill live">★ #{statRank} Leaderboard</span>}
           {summary?.label && <span className="player-pill">Sezóna {summary.label}</span>}
         </div>
-        <Avatar name={player.name} size="xl" className="player-avatar" />
         <h1 className="player-name">{player.name}</h1>
         <div className="player-handle">Hráč · Game of Life</div>
 
@@ -114,7 +112,7 @@ export default function PlayerPage() {
         )}
         <div className="player-list-label">Absolvované akce</div>
         <StatList
-          className={EVENT_LIST_CLASS}
+          className="ev-grid"
           columns={EVENT_COLUMNS}
           rows={events}
           rowKey={(e) => e.slug}

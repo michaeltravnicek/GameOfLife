@@ -1,7 +1,7 @@
 /* All selectors scoped under .player-page. Mirrors the leaderboard look:
    fixed photo background + blue grain overlay, with the shared <Table>
    re-textured to "blue 2". */
-.player-page{min-height:100vh;color:var(--color-cream-light);overflow-x:hidden;padding:120px 20px 80px;max-width:900px;margin:0 auto}
+.player-page{min-height:100vh;color:var(--color-cream-light);overflow-x:hidden;padding:172px 20px 80px;max-width:900px;margin:0 auto}
 
 .player-page .stage{position:fixed;inset:0;z-index:-2;background:url('/gallery/gal4.jpg') center 28%/cover no-repeat;filter:saturate(.7) contrast(1.02);transform:scale(1.05)}
 .player-page .stage::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 15%,rgba(45,42,142,.12) 0%,transparent 55%),linear-gradient(180deg,rgba(45,42,142,.10) 0%,rgba(26,15,10,.62) 50%,rgba(26,15,10,.84) 100%)}
@@ -13,7 +13,6 @@
 .player-page .player-badges{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
 .player-page .player-pill{font-family:var(--font-mono);font-style:italic;font-size:11px;letter-spacing:.18em;text-transform:uppercase;padding:6px 14px;border-radius:9999px;background:rgba(26,15,10,.55);border:1.5px dashed rgba(255,241,212,.4);color:rgba(255,241,212,.92);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
 .player-page .player-pill.live{background:var(--color-pink);color:#fff;border-color:transparent;box-shadow:0 4px 14px rgba(225,84,99,.5)}
-.player-page .player-avatar{width:128px;height:128px;font-size:42px;box-shadow:0 14px 44px rgba(0,0,0,.55)}
 .player-page .player-name{font-family:var(--font-display);font-size:clamp(44px,7vw,84px);line-height:.92;text-transform:uppercase;letter-spacing:.03em;color:#fff;text-shadow:0 6px 38px rgba(0,0,0,.7);margin:4px 0 0}
 .player-page .player-handle{font-family:var(--font-mono);font-style:italic;font-size:13px;color:rgba(255,241,212,.78);letter-spacing:.16em;text-shadow:0 2px 10px rgba(0,0,0,.5)}
 
@@ -39,8 +38,7 @@
 .player-page .player-back a:hover{text-decoration:underline}
 
 @media(max-width:560px){
-  .player-page{padding:100px 14px 60px}
-  .player-page .player-avatar{width:104px;height:104px;font-size:34px}
+  .player-page{padding:140px 14px 60px}
   .player-page .player-credits{flex-direction:column;gap:18px;padding-top:24px;max-width:320px}
   .player-page .player-credit{max-width:none;padding:0}
   .player-page .player-credit + .player-credit{border-left:0;border-top:1px solid rgba(255,241,212,.2);padding-top:18px}
