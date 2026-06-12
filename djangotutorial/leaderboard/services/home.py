@@ -12,6 +12,7 @@ from leaderboard.cache_config import (
     CACHE_TTL_HERO_IMAGES,
     CACHE_TTL_HOME_STATS,
 )
+from leaderboard.image_utils import variant_url
 from leaderboard.models import Event, User, UserToEvent
 
 
@@ -39,6 +40,7 @@ def pick_hero_events(count=5):
         seen_names.add(event.name)
         result.append({
             "url": f"{media_url}{event.image}",
+            "url_mobile": variant_url(event.image),
             "name": event.name,
             "date": event.date,
             "slug": event.slug,

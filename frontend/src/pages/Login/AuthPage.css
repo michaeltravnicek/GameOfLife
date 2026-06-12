@@ -2,9 +2,9 @@
 .auth-page{min-height:100vh;color:var(--color-cream-light);overflow-x:hidden}
 
 /* ── FULL-PAGE BACKGROUND (same pattern as events/leaderboard) ── */
-.auth-page .stage{position:fixed;inset:0;z-index:-2;background:url('/gallery/gal1.jpg') center 50%/cover no-repeat;filter:saturate(.7) contrast(1.02);transform:scale(1.05)}
+.auth-page .stage{position:fixed;inset:0;z-index:-2;background:url('/img/gal1.webp') center 50%/cover no-repeat;filter:saturate(.7) contrast(1.02);transform:scale(1.05)}
 .auth-page .stage::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 8%,rgba(45,42,142,.20) 0%,transparent 25%),linear-gradient(180deg,rgba(45,42,142,.15) 0%,rgba(26,15,10,.60) 50%,rgba(26,15,10,.92) 100%)}
-.auth-page .stage.register-bg{background-image:url('/gallery/gal0.jpg')}
+.auth-page .stage.register-bg{background-image:url('/img/gal0.webp')}
 .auth-page .grain{position:fixed;inset:0;z-index:-1;pointer-events:none;background:var(--tex-brown) 0 0/var(--tex-size) var(--tex-size) repeat;opacity:var(--grain-opacity);mix-blend-mode:overlay}
 
 /* ── HERO (compact — applies identically to Login, Register, Forgot password) ── */

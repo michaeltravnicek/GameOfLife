@@ -1,11 +1,11 @@
 /* All selectors scoped under .obodech-page to prevent cross-page leaks. */
 .obodech-page{min-height:100vh;color:var(--color-cream-light);overflow-x:hidden;background:var(--color-dark-brown)}
 
-.obodech-page .stage{position:fixed;inset:0;z-index:0;background:url('/gallery/gal3.jpg') center 35%/cover no-repeat;filter:saturate(.75) contrast(1.02);transform:scale(1.06)}
+.obodech-page .stage{position:fixed;inset:0;z-index:0;background:url('/img/gal3.webp') center 35%/cover no-repeat;filter:saturate(.75) contrast(1.02);transform:scale(1.06)}
 .obodech-page .stage::after{content:'';position:absolute;inset:0;background:
   radial-gradient(ellipse at 50% 0%, var(--alpha-purple-22) 0%, transparent 38%),
   linear-gradient(180deg, var(--alpha-dark-55) 0%, var(--alpha-dark-80) 38%, var(--alpha-dark-95) 100%)}
-.obodech-page .grain{position:fixed;inset:0;z-index:0;pointer-events:none;background:url('/assets/Grain_texture_brown.png') 0 0/var(--tex-size) var(--tex-size) repeat;opacity:var(--grain-opacity);mix-blend-mode:overlay}
+.obodech-page .grain{position:fixed;inset:0;z-index:0;pointer-events:none;background:url('/img/Grain_texture_brown.webp') 0 0/var(--tex-size) var(--tex-size) repeat;opacity:var(--grain-opacity);mix-blend-mode:overlay}
 
 
 .obodech-page .credits{position:relative;z-index:2;max-width:980px;margin:36px auto 0;padding:34px 24px 0;display:flex;justify-content:center;align-items:flex-start;gap:0}
@@ -31,7 +31,7 @@
 .obodech-page .intro-meta .dot{width:4px;height:4px;border-radius:50%;background:var(--color-pink);display:inline-block}
 
 .obodech-page .sources{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
-.obodech-page .source{position:relative;background:url('/assets/Grain_texture_light.png') 0 0/var(--tex-size) var(--tex-size) repeat,var(--color-cream-light);color:var(--color-dark-brown);border:2px dashed var(--alpha-ink-35);border-radius:14px;padding:26px 24px 24px;box-shadow:0 14px 36px var(--alpha-black-45);transition:transform .25s,border-color .25s;overflow:hidden}
+.obodech-page .source{position:relative;background:url('/img/Grain_texture_light.webp') 0 0/var(--tex-size) var(--tex-size) repeat,var(--color-cream-light);color:var(--color-dark-brown);border:2px dashed var(--alpha-ink-35);border-radius:14px;padding:26px 24px 24px;box-shadow:0 14px 36px var(--alpha-black-45);transition:transform .25s,border-color .25s;overflow:hidden}
 .obodech-page .source:hover{transform:translateY(-3px);border-color:var(--color-pink)}
 .obodech-page .source-num{font-family:var(--font-display);font-size:80px;line-height:.85;color:var(--color-pink);letter-spacing:.02em;margin-bottom:14px;opacity:.85}
 .obodech-page .source-tag{font-family:var(--font-mono);font-style:italic;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--color-pink-dark);margin-bottom:6px}
@@ -39,7 +39,7 @@
 .obodech-page .source-text{font-family:var(--font-body);font-size:13.5px;line-height:1.6;color:var(--alpha-dark-text-78)}
 .obodech-page .source-pts{position:absolute;top:18px;right:14px;font-family:var(--font-display);font-size:18px;letter-spacing:.04em;padding:6px 14px 3px;background:var(--color-pink);color:var(--color-white);border-radius:var(--radius-pill);box-shadow:0 4px 12px var(--alpha-pink-45);transform:rotate(4deg)}
 
-.obodech-page .examples{position:relative;margin-top:22px;padding:10px;background:#1a0f0a url('/assets/Grain_texture_blue.png') 0 0/var(--tex-size) var(--tex-size) repeat;border:1.5px solid var(--alpha-white-10);border-radius:14px;box-shadow:0 20px 44px var(--alpha-black-50);overflow:hidden}
+.obodech-page .examples{position:relative;margin-top:22px;padding:10px;background:#1a0f0a url('/img/Grain_texture_blue.webp') 0 0/var(--tex-size) var(--tex-size) repeat;border:1.5px solid var(--alpha-white-10);border-radius:14px;box-shadow:0 20px 44px var(--alpha-black-50);overflow:hidden}
 .obodech-page .examples::before{content:'';position:absolute;inset:6px;border:1.5px dashed var(--alpha-cream-22);border-radius:10px;pointer-events:none}
 .obodech-page .examples-inner{position:relative;z-index:1;padding:8px 6px}
 .obodech-page .ex-head,.obodech-page .ex-row{display:grid;grid-template-columns:1fr 90px 110px 110px;align-items:center;gap:14px;padding:13px 18px}

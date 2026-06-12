@@ -21,7 +21,7 @@ function DarkCard({ event }) {
 
       <img
         className="evcard-badge"
-        src={event.logo || '/logos/GOL_C50_transparent.png'}
+        src={event.logo || '/img/GOL_C50_transparent.webp'}
         alt={event.name}
         loading="lazy"
         width="110"
@@ -44,7 +44,7 @@ function LightCard({ event }) {
 
       <img
         className="evcard-badge"
-        src={event.logo || '/logos/GOL_main_logo_pink.png'}
+        src={event.logo || '/img/GOL_main_logo_pink.webp'}
         alt=""
         loading="lazy"
         width="110"

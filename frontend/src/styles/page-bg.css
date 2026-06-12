@@ -1,5 +1,5 @@
 /* Shared page background patterns — used across all full-bleed dark pages */
-.page-stage{position:fixed;inset:0;z-index:-2;background:var(--stage-img,url('/gallery/gal0.jpg')) center 28%/cover no-repeat;filter:saturate(.7) contrast(1.02);transform:scale(1.05)}
+.page-stage{position:fixed;inset:0;z-index:-2;background:var(--stage-img,url('/img/gal0.webp')) center 28%/cover no-repeat;filter:saturate(.7) contrast(1.02);transform:scale(1.05)}
 .page-stage::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 15%,rgba(45,42,142,.10) 0%,transparent 55%),linear-gradient(180deg,rgba(45,42,142,.08) 0%,rgba(26,15,10,.60) 50%,rgba(26,15,10,.82) 100%)}
 .page-grain{position:fixed;inset:0;z-index:-1;pointer-events:none;background:var(--tex-blue) 0 0/var(--tex-size) var(--tex-size) repeat;opacity:var(--grain-opacity);mix-blend-mode:overlay}
 

@@ -3,7 +3,7 @@ from datetime import datetime, timezone as _tz
 
 from django.db.models import F
 
-from leaderboard.image_utils import validate_upload
+from leaderboard.image_utils import validate_upload, variant_url
 from leaderboard.models import Event, ImageToEvent, UserPhoto
 
 # Sort key for photos with no event date — they sink to the bottom.
@@ -75,6 +75,7 @@ def gallery_page(offset, limit, request, season=None):
     for img in official[:upper]:
         photos.append({
             "url": request.build_absolute_uri(img.image.url),
+            "url_mobile": variant_url(img.image, request),
             "event_name": img.event_id.name if img.event_id else "",
             "event_slug": img.event_id.slug if img.event_id else "",
             "event_date": img.event_id.date if img.event_id else None,
@@ -84,6 +85,7 @@ def gallery_page(offset, limit, request, season=None):
     for up in user_photos[:upper]:
         photos.append({
             "url": request.build_absolute_uri(up.image.url),
+            "url_mobile": variant_url(up.image, request),
             "event_name": up.event.name if up.event else "",
             "event_slug": up.event.slug if up.event else "",
             "event_date": up.event.date if up.event else None,

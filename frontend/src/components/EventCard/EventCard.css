@@ -13,7 +13,7 @@
 .evcard-dark .evcard-badge{position:absolute;width:110px;height:110px;top:-14px;right:8px;transform:rotate(14deg);object-fit:contain;pointer-events:none;filter:drop-shadow(0px 4px 10px rgba(0,0,0,.35))}
 
 /* ── Light theme (Events list — ticket frame: solid black outer ring + inset dashed inner) ── */
-.evcard-light{height:240px;border-radius:16px;background-color:#fff1d4;background-image:url('/assets/Grain_texture_light.png');background-size:var(--tex-size) var(--tex-size);background-repeat:repeat;box-shadow:0 12px 28px rgba(0,0,0,.22),0 0 0 1.5px rgba(26,26,26,.92)}
+.evcard-light{height:240px;border-radius:16px;background-color:#fff1d4;background-image:url('/img/Grain_texture_light.webp');background-size:var(--tex-size) var(--tex-size);background-repeat:repeat;box-shadow:0 12px 28px rgba(0,0,0,.22),0 0 0 1.5px rgba(26,26,26,.92)}
 .evcard-light::after{content:'';position:absolute;inset:0;background:rgba(255,253,253,.20);pointer-events:none;border-radius:16px;z-index:0}
 .evcard-light:hover{transform:translateY(-4px);box-shadow:0 18px 36px rgba(0,0,0,.30),0 0 0 1.5px var(--color-pink)}
 .evcard-light:hover .ticket-frame{border-color:var(--color-pink)}

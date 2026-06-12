@@ -16,7 +16,7 @@ const years = [
     muted: false,
     rows: [
       {
-        side: 'left', type: 'photo', img: '/gallery/gal0.jpg', first: '★ Poprvé', date: '12. 05. 2026', pts: '+50 pts', evStamp: '/logos/GOL_FrogJumps_transparent.png',
+        side: 'left', type: 'photo', img: '/img/gal0.webp', first: '★ Poprvé', date: '12. 05. 2026', pts: '+50 pts', evStamp: '/img/GOL_FrogJumps_transparent.webp',
         tag: 'Nová disciplína · Brno', title: 'Frog Jumps',
         text: 'První ročník žabích skoků kolem celé Brněnské přehrady. 18 km na čtyřech, bahno za uši, večer pivo a omluvy. Nikdo nečekal, že to bude tak vyčerpávající.',
         chips: [{ label: '📍 Bystrc' }, { label: '⏱ 4h 12min' }, { label: '★ 38 hráčů', attended: true }],
@@ -26,7 +26,7 @@ const years = [
         text: <>Tři dny po Frog Jumps se přidává <strong>Eliška z Olomouce</strong> — a tím překračujeme symbolickou hranici 250 aktivních hráčů. Z hospodského žertu v roce 2022 je teď komunita o velikosti malé vesnice.</>,
       },
       {
-        side: 'left', type: 'photo', img: '/gallery/gal3.jpg', first: '★ Poprvé v PRAZE', date: '18. 05. 2026', pts: '+50 pts', evStamp: '/logos/GOL_Dance_transparent.png',
+        side: 'left', type: 'photo', img: '/img/gal3.webp', first: '★ Poprvé v PRAZE', date: '18. 05. 2026', pts: '+50 pts', evStamp: '/img/GOL_Dance_transparent.webp',
         tag: 'Tělo · Praha', title: 'Dance Class',
         text: 'První pražská taneční hodina. 47 lidí v Karlíně, dvě hodiny, žádné zrcadlo — jenom hudba a stěna. Tím se Game of Life oficiálně přesouvá za hranice Brna.',
         chips: [{ label: '📍 Karlín' }, { label: '🎵 Live DJ' }, { label: '★ 47 hráčů', attended: true }],
@@ -38,7 +38,7 @@ const years = [
     muted: true,
     rows: [
       {
-        side: 'right', type: 'photo', muted: true, img: '/gallery/gal2.jpg', first: '★ Poprvé na náměstí', date: '14. 09. 2025', pts: '+80 pts',
+        side: 'right', type: 'photo', muted: true, img: '/img/gal2.webp', first: '★ Poprvé na náměstí', date: '14. 09. 2025', pts: '+80 pts',
         tag: 'Legenda · Brno', title: 'Táborák na náměstí Svobody',
         text: 'Vůbec první oheň, který jsme zapálili přímo na náměstí — bez povolení, ale s úsměvem. Kytary, kouř a zpívání do tří do rána. Po akci jsme přespávali na dlažbě v dekách. Strážníci jen kroutili hlavou.',
         chips: [{ label: '📍 Náměstí Svobody' }, { label: '🔥 6h zpívání' }, { label: '★ 64 hráčů', attended: true }],
@@ -48,13 +48,13 @@ const years = [
         text: <>Konec Excelu. Po dvou letech ručního počítání bodů spouštíme veřejný žebříček. <em>„Hlavně to nepoužívejte vážně,“</em> zní oficiální motto. Pak Toman s Müllerem hodinu vyšetřují, kdo má víc bodů.</>,
       },
       {
-        side: 'right', type: 'photo', muted: true, img: '/gallery/gal1.jpg', date: '28. 06. 2025', pts: '+120 pts',
+        side: 'right', type: 'photo', muted: true, img: '/img/gal1.webp', date: '28. 06. 2025', pts: '+120 pts',
         tag: 'Výzva · Brno', title: 'Nahá Míle',
         text: '1 609 metrů. Bez triček, bez výmluv. Druhý ročník — letos i v dešti. Vyhrál Toman v 5:42, ale fakt na tom nezáleží.',
         chips: [{ label: '📍 Lužánky' }, { label: '🌧 9 °C' }, { label: '★ 22 hráčů', attended: true }],
       },
       {
-        side: 'left', type: 'photo', muted: true, img: '/gallery/gal0.jpg', first: '★ Poprvé na vodě', date: '11. 04. 2025', pts: '+40 pts',
+        side: 'left', type: 'photo', muted: true, img: '/img/gal0.webp', first: '★ Poprvé na vodě', date: '11. 04. 2025', pts: '+40 pts',
         tag: 'Voda · Vysočina', title: 'Sázava Splav',
         text: 'První vícedenní vodácká výprava komunity. Tři dny, čtyři jezy, sedm raftů. Jeden převrácený, dva ztracené pádla, nula utopených.',
         chips: [{ label: '📍 Sázava' }, { label: '🛶 3 dny' }, { label: '★ 31 hráčů', attended: true }],
@@ -66,7 +66,7 @@ const years = [
     muted: true,
     rows: [
       {
-        side: 'right', type: 'photo', muted: true, img: '/gallery/gal3.jpg', first: '★ Poprvé', date: '07. 09. 2024', pts: '+150 pts', evStamp: '/logos/GOL_C50_transparent.png',
+        side: 'right', type: 'photo', muted: true, img: '/img/gal3.webp', first: '★ Poprvé', date: '07. 09. 2024', pts: '+150 pts', evStamp: '/img/GOL_C50_transparent.webp',
         tag: 'Kolo · Brno', title: 'První C50',
         text: 'Padesát kilometrů na kole, prvních dvacet hráčů, sedmnáct dojelo. Zrodila se tradice, která teď táhne celý kalendář — a do roka přibyla C100.',
         chips: [{ label: '📍 Brno → Vranov' }, { label: '🚴 50 km' }, { label: '★ 20 hráčů', attended: true }],
@@ -76,13 +76,13 @@ const years = [
         text: <>Na pivním tácku vzniká věta, která se později stane sloganem celé komunity. Napsal ji <strong>Vojta Toman</strong> mezi třetím a čtvrtým pivem. Ráno ji nechtěl ani uznat — ale tácek se zachoval.</>,
       },
       {
-        side: 'right', type: 'photo', muted: true, img: '/gallery/gal2.jpg', first: '★ Poprvé v noci', date: '22. 06. 2024', pts: '+60 pts',
+        side: 'right', type: 'photo', muted: true, img: '/img/gal2.webp', first: '★ Poprvé v noci', date: '22. 06. 2024', pts: '+60 pts',
         tag: 'Hra · Brno', title: 'Noční bojovka v Lužánkách',
         text: 'První večerní akce vůbec. Čtyři týmy, baterky, šifry vyryté do stromů. Vyhráli ti, co se nechali ztratit nejdéle. Od té doby je nocí v kalendáři víc než dnů.',
         chips: [{ label: '📍 Lužánky' }, { label: '🌙 23:00 → 04:00' }, { label: '★ 28 hráčů', attended: true }],
       },
       {
-        side: 'left', type: 'photo', muted: true, img: '/gallery/gal1.jpg', date: '15. 02. 2024', pts: '+30 pts',
+        side: 'left', type: 'photo', muted: true, img: '/img/gal1.webp', date: '15. 02. 2024', pts: '+30 pts',
         tag: 'Mráz · Krkonoše', title: 'Zimní výstup na Sněžku',
         text: <>−14 °C, vítr 60 km/h, žádné lyže. Vystoupali jsme všichni, sestoupili jsme jen někteří (zbytek lanovkou). Den, kdy se zrodilo pravidlo: <em>kdo dojde, dostane bod navíc.</em></>,
         chips: [{ label: '📍 Krkonoše' }, { label: '🥶 −14 °C' }, { label: '★ 14 hráčů', attended: true }],

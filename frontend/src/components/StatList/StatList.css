@@ -1,7 +1,7 @@
 /* Leaderboard-style list — kept structurally identical to `.leaderboard-page .list`
    so every page using <StatList> matches the leaderboard exactly. Cell styling
    (the inner .stat-cell contents) is left to each page. */
-.stat-list{position:relative;padding:10px;background-color:#1a0f0a;background-image:url('/assets/Grain_texture_blue.png');background-repeat:repeat;background-size:cover;border:1.5px solid rgba(255,255,255,.08);border-radius:14px;box-shadow:0 20px 44px rgba(0,0,0,.5)}
+.stat-list{position:relative;padding:10px;background-color:#1a0f0a;background-image:url('/img/Grain_texture_blue.webp');background-repeat:repeat;background-size:cover;border:1.5px solid rgba(255,255,255,.08);border-radius:14px;box-shadow:0 20px 44px rgba(0,0,0,.5)}
 .stat-list::before{content:'';position:absolute;inset:6px;border:1.5px dashed rgba(255,241,212,.22);border-radius:10px;pointer-events:none}
 .stat-list-inner{position:relative;z-index:1;padding:8px 6px}
 
@@ -47,3 +47,6 @@
 .stat-list .stat-row:nth-child(6){animation-delay:.34s}
 .stat-list .stat-row:nth-child(7){animation-delay:.40s}
 .stat-list .stat-row:nth-child(8){animation-delay:.46s}
+
+/* Mobile: lighten the frosted glass (smaller blur, no saturate) — far cheaper to repaint. */
+@media (max-width:768px){.stat-list.frosted{backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}}

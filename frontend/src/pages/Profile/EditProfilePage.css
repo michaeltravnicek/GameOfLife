@@ -1,10 +1,10 @@
 .editprofile-page{position:relative;padding-bottom:96px}
 
-.editprofile-page .ep-stage{position:fixed;inset:0;z-index:-2;background:url('/gallery/gal3.jpg') center 30%/cover no-repeat;filter:saturate(.7) contrast(1.02);transform:scale(1.06)}
+.editprofile-page .ep-stage{position:fixed;inset:0;z-index:-2;background:url('/img/gal3.webp') center 30%/cover no-repeat;filter:saturate(.7) contrast(1.02);transform:scale(1.06)}
 .editprofile-page .ep-stage::after{content:'';position:absolute;inset:0;background:
   radial-gradient(ellipse at 50% 0%, var(--alpha-purple-22) 0%, transparent 38%),
   linear-gradient(180deg, var(--alpha-dark-55) 0%, var(--alpha-dark-80) 32%, var(--alpha-dark-95) 100%)}
-.editprofile-page .ep-grain{position:fixed;inset:0;z-index:-1;pointer-events:none;background:url('/assets/Grain_texture_brown.png') 0 0/var(--tex-size) var(--tex-size) repeat;opacity:var(--grain-opacity);mix-blend-mode:overlay}
+.editprofile-page .ep-grain{position:fixed;inset:0;z-index:-1;pointer-events:none;background:url('/img/Grain_texture_brown.webp') 0 0/var(--tex-size) var(--tex-size) repeat;opacity:var(--grain-opacity);mix-blend-mode:overlay}
 
 .editprofile-page .ep-head{position:relative;z-index:2;padding:120px 24px 28px;text-align:center;max-width:1040px;margin:0 auto}
 .editprofile-page .ep-crumb{font-family:var(--font-mono);font-style:italic;font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:var(--alpha-cream-55);margin-bottom:14px}
@@ -27,7 +27,7 @@
 .editprofile-page .ep-sec-sub{font-family:var(--font-body);font-style:italic;font-size:14px;color:var(--alpha-cream-65);margin-bottom:22px;line-height:1.5;max-width:62ch}
 
 .editprofile-page .ep-card{position:relative;background:var(--alpha-dark-62);backdrop-filter:blur(14px) saturate(1.1);-webkit-backdrop-filter:blur(14px) saturate(1.1);border:1.5px dashed var(--alpha-cream-22);border-radius:14px;padding:26px;overflow:hidden;box-shadow:0 14px 36px var(--alpha-black-45)}
-.editprofile-page .ep-card::after{content:'';position:absolute;inset:0;background:url('/assets/Grain_texture_brown.png') 0 0/var(--tex-size) var(--tex-size) repeat;opacity:var(--grain-opacity);mix-blend-mode:soft-light;pointer-events:none}
+.editprofile-page .ep-card::after{content:'';position:absolute;inset:0;background:url('/img/Grain_texture_brown.webp') 0 0/var(--tex-size) var(--tex-size) repeat;opacity:var(--grain-opacity);mix-blend-mode:soft-light;pointer-events:none}
 .editprofile-page .ep-card > *{position:relative;z-index:1}
 
 .editprofile-page .ep-avatar-card{display:grid;grid-template-columns:auto 1fr;gap:28px;align-items:center}
@@ -109,4 +109,9 @@
   .editprofile-page .ep-card{padding:22px 20px}
   .editprofile-page .ep-commit-zone h2{font-size:30px}
   .editprofile-page .ep-savebar-inner{flex-direction:column;gap:10px;padding:14px 18px}
+}
+
+/* Mobile: lighten the frosted card + save bar (smaller blur, no saturate). */
+@media (max-width:768px){
+  .editprofile-page .ep-card,.editprofile-page .ep-savebar{backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
 }

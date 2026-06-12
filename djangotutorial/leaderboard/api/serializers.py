@@ -1,5 +1,6 @@
 from rest_framework import serializers
 
+from leaderboard.image_utils import variant_url
 from leaderboard.models import Category, Event, EventFeedback, EventRSVP, ImageToEvent, UserPhoto
 
 
@@ -36,6 +37,7 @@ class EventListSerializer(serializers.ModelSerializer):
 
 class EventDetailSerializer(serializers.ModelSerializer):
     image = serializers.SerializerMethodField()
+    image_mobile = serializers.SerializerMethodField()
     logo = serializers.SerializerMethodField()
     is_past = serializers.SerializerMethodField()
     rsvp_count = serializers.SerializerMethodField()
@@ -51,7 +53,7 @@ class EventDetailSerializer(serializers.ModelSerializer):
         model = Event
         fields = [
             "id", "slug", "name", "description", "place", "date", "end_date",
-            "points", "image", "logo", "rules", "capacity",
+            "points", "image", "image_mobile", "logo", "rules", "capacity",
             "latitude", "longitude", "category",
             "survey_url", "visible_to_users", "visible_to_close",
             "is_past", "rsvp_count", "is_full", "has_rsvp",
@@ -68,6 +70,9 @@ class EventDetailSerializer(serializers.ModelSerializer):
 
     def get_image(self, obj):
         return self._abs(obj.image)
+
+    def get_image_mobile(self, obj):
+        return variant_url(obj.image, self.context.get("request"))
 
     def get_logo(self, obj):
         return self._abs(obj.logo)

@@ -356,7 +356,10 @@ export default function GalleryPage() {
               <Reveal stagger className="photo-grid">
                 {monthPhotos.map((p, i) => (
                   <div key={i} className="photo-item" onClick={() => openLb(monthPhotos, i)}>
-                    <img src={p.url} alt={p.event_name} loading="lazy" />
+                    <picture>
+                      {p.url_mobile && <source media="(max-width: 768px)" srcSet={p.url_mobile} />}
+                      <img src={p.url} alt={p.event_name} loading="lazy" />
+                    </picture>
                     <div className="photo-item-caption">
                       <div className="photo-item-label">{p.is_user_photo ? 'Komunita' : 'Akce'}</div>
                       <div className="photo-item-title">{p.event_name}</div>

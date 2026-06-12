@@ -15,7 +15,7 @@
 
 /* ── LEADERBOARD ── */
 .home-page .lb-section{position:relative;padding:64px 24px 80px;overflow:hidden}
-.home-page .lb-bg{position:absolute;inset:0;background:url('/gallery/home-tophraci.jpg') center/cover;filter:saturate(.8)}
+.home-page .lb-bg{position:absolute;inset:0;background:url('/img/home-tophraci.webp') center/cover;filter:saturate(.8)}
 .home-page .lb-tint{position:absolute;inset:0;background:linear-gradient(180deg,rgba(45,42,142,.12) 0%,rgba(26,15,10,.48) 100%)}
 .home-page .lb-inner{position:relative;z-index:2;max-width:620px;margin:0 auto}
 .home-page .lb-title{font-family:var(--font-leaderboard);font-size:clamp(28px,3.4vw,44px);letter-spacing:.05em;text-align:center;color:var(--color-cream-light);text-transform:uppercase;margin-bottom:24px;display:flex;justify-content:center;align-items:center;gap:14px}
@@ -45,7 +45,7 @@
 
 /* ── GALLERY ── */
 .home-page .gallery-section{position:relative;overflow:hidden;background:#1a0f0a}
-.home-page .gallery-section::before{content:'';position:absolute;inset:0;background:url('/gallery/home-galeriebg.jpg') center/cover;filter:blur(4px) brightness(.42) saturate(.65);transform:scale(1.05);z-index:0}
+.home-page .gallery-section::before{content:'';position:absolute;inset:0;background:url('/img/home-galeriebg.webp') center/cover;filter:blur(4px) brightness(.42) saturate(.65);transform:scale(1.05);z-index:0}
 .home-page .gallery-section > *{position:relative;z-index:1}
 .home-page .gal-header{text-align:center;padding:44px 0 0}
 .home-page .gal-title{font-family:var(--font-display);font-size:clamp(40px,4.5vw,64px);letter-spacing:.04em;text-transform:uppercase;color:var(--color-cream-light);display:flex;align-items:center;justify-content:center;gap:18px}

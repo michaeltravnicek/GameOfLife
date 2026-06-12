@@ -1,8 +1,8 @@
 /* All selectors scoped under .leaderboard-page to prevent cross-page leaks. */
 .leaderboard-page{min-height:100vh;color:var(--color-cream-light);overflow-x:hidden}
-.leaderboard-page .stage{position:fixed;inset:0;z-index:-2;background:url('/gallery/gal1.jpg') center 28%/cover no-repeat;filter:saturate(.7) contrast(1.02);transform:scale(1.05)}
+.leaderboard-page .stage{position:fixed;inset:0;z-index:-2;background:url('/img/gal1.webp') center 28%/cover no-repeat;filter:saturate(.7) contrast(1.02);transform:scale(1.05)}
 .leaderboard-page .stage::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 15%,rgba(45,42,142,.10) 0%,transparent 55%),linear-gradient(180deg,rgba(45,42,142,.08) 0%,rgba(26,15,10,.60) 50%,rgba(26,15,10,.82) 100%)}
-.leaderboard-page .grain{position:fixed;inset:0;z-index:-1;pointer-events:none;background:url('/assets/Grain_texture_blue.png') 0 0/var(--tex-size) var(--tex-size) repeat;opacity:var(--grain-opacity);mix-blend-mode:overlay}
+.leaderboard-page .grain{position:fixed;inset:0;z-index:-1;pointer-events:none;background:url('/img/Grain_texture_blue.webp') 0 0/var(--tex-size) var(--tex-size) repeat;opacity:var(--grain-opacity);mix-blend-mode:overlay}
 
 .leaderboard-page .controls{position:relative;z-index:2;max-width:880px;margin:32px auto 0;padding:0 24px;display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap}
 .leaderboard-page .controls .search-wrap{flex:1;max-width:290px}
@@ -39,7 +39,7 @@
 .leaderboard-page .pod .pts{font-family:var(--font-display);font-size:26px;letter-spacing:.03em;color:var(--color-cream-light);line-height:1;margin-bottom:14px}
 .leaderboard-page .pod.p1 .pts{font-size:36px;color:var(--color-pink)}
 .leaderboard-page .pod .pts-u{font-family:var(--font-mono);font-style:italic;font-size:10px;color:rgba(255,241,212,.55);letter-spacing:.16em;margin-left:4px}
-.leaderboard-page .pod .base{width:100%;position:relative;background-color:rgba(26,15,10,.55);background-image:url('/assets/Grain_texture_blue.png');background-repeat:repeat;background-size:var(--tex-size) var(--tex-size);background-position:0 0;border:1.5px dashed rgba(255,241,212,.38);border-radius:8px;display:flex;align-items:center;justify-content:center;box-shadow:0 12px 28px rgba(0,0,0,.5),0 0 0 1px rgba(0,0,0,.4) inset}
+.leaderboard-page .pod .base{width:100%;position:relative;background-color:rgba(26,15,10,.55);background-image:url('/img/Grain_texture_blue.webp');background-repeat:repeat;background-size:var(--tex-size) var(--tex-size);background-position:0 0;border:1.5px dashed rgba(255,241,212,.38);border-radius:8px;display:flex;align-items:center;justify-content:center;box-shadow:0 12px 28px rgba(0,0,0,.5),0 0 0 1px rgba(0,0,0,.4) inset}
 .leaderboard-page .pod .base::after{content:'';position:absolute;top:0;left:10%;right:10%;height:1px;background:linear-gradient(90deg,transparent,rgba(255,241,212,.35),transparent)}
 .leaderboard-page .pod .base .rk{font-family:var(--font-display);letter-spacing:.04em;line-height:1}
 .leaderboard-page .pod.p1 .base{height:120px;border-color:#f5c842}
@@ -51,7 +51,7 @@
 
 .leaderboard-page .list-label{font-family:var(--font-mono);font-style:italic;font-size:13px;letter-spacing:.26em;text-transform:uppercase;color:rgba(255,241,212,.75);margin:0 6px 18px;display:flex;align-items:center;gap:14px}
 .leaderboard-page .list-label::before,.leaderboard-page .list-label::after{content:'';flex:1;height:1px;background:repeating-linear-gradient(90deg,rgba(255,241,212,.3) 0 6px,transparent 6px 12px)}
-.leaderboard-page .list{position:relative;padding:10px;background-color:#1a0f0a;background-image:url('/assets/Grain_texture_blue.png');background-repeat:repeat;background-size:var(--tex-size) var(--tex-size);background-position:0 0;border:1.5px solid rgba(255,255,255,.08);border-radius:14px;box-shadow:0 20px 44px rgba(0,0,0,.5)}
+.leaderboard-page .list{position:relative;padding:10px;background-color:#1a0f0a;background-image:url('/img/Grain_texture_blue.webp');background-repeat:repeat;background-size:var(--tex-size) var(--tex-size);background-position:0 0;border:1.5px solid rgba(255,255,255,.08);border-radius:14px;box-shadow:0 20px 44px rgba(0,0,0,.5)}
 .leaderboard-page .list::before{content:'';position:absolute;inset:6px;border:1.5px dashed rgba(255,241,212,.22);border-radius:10px;pointer-events:none}
 .leaderboard-page .list-inner{position:relative;z-index:1;padding:8px 6px}
 .leaderboard-page .empty{text-align:center;padding:44px 20px;font-family:var(--font-serif);font-style:italic;color:rgba(255,241,212,.55);font-size:14px}

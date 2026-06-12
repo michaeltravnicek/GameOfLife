@@ -71,8 +71,9 @@ class Profile(models.Model):
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
         if self.photo:
-            from leaderboard.image_utils import resize_image
+            from leaderboard.image_utils import resize_image, make_webp_variant
             resize_image(self.photo, max_width=400, max_height=400, quality=85)
+            make_webp_variant(self.photo, max_width=200, quality=60)
         # Grant Django auth flags when admin role is assigned, so /admin/ access works.
         # Removal is intentionally manual (don't strip flags from existing superusers).
         if self.role == self.ROLE_ADMIN:

@@ -3,8 +3,8 @@
 
 /* ── POSTER HERO ── */
 .profile-page .poster{position:relative;min-height:88vh;display:flex;flex-direction:column;justify-content:flex-end;overflow:hidden;z-index:1}
-.profile-page .poster-img{position:absolute;inset:0;background:url('/gallery/gal6.jpg') center 38%/cover no-repeat;filter:saturate(.85) contrast(1.06);transform:scale(1.04);z-index:0}
-.profile-page .poster-grain{position:absolute;inset:0;background:url('/assets/Grain_texture_brown.png') 0 0/var(--tex-size) var(--tex-size) repeat;opacity:var(--grain-opacity);mix-blend-mode:overlay;pointer-events:none;z-index:0}
+.profile-page .poster-img{position:absolute;inset:0;background:url('/img/gal6.webp') center 38%/cover no-repeat;filter:saturate(.85) contrast(1.06);transform:scale(1.04);z-index:0}
+.profile-page .poster-grain{position:absolute;inset:0;background:url('/img/Grain_texture_brown.webp') 0 0/var(--tex-size) var(--tex-size) repeat;opacity:var(--grain-opacity);mix-blend-mode:overlay;pointer-events:none;z-index:0}
 .profile-page .poster-vignette{position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,8,30,.35) 0%,rgba(26,15,10,.18) 30%,rgba(26,15,10,.55) 70%,rgba(26,15,10,.92) 100%);pointer-events:none;z-index:0}
 .profile-page .poster-top{position:relative;z-index:2;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:138px 24px 24px;text-align:center}
 .profile-page .badges{display:inline-flex;gap:8px;justify-content:center;margin-bottom:30px;flex-wrap:wrap}
@@ -29,7 +29,7 @@
 .profile-page .action-inner{max-width:1100px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:18px;padding:16px 24px;flex-wrap:wrap}
 
 /* ── BODY ── */
-.profile-page .body-wrap{background:#1a0f0a url('/assets/Grain_texture_brown.png') 0 0/var(--tex-size) var(--tex-size) repeat;position:relative;z-index:1}
+.profile-page .body-wrap{background:#1a0f0a url('/img/Grain_texture_brown.webp') 0 0/var(--tex-size) var(--tex-size) repeat;position:relative;z-index:1}
 .profile-page .profile-main{position:relative;z-index:1;max-width:920px;margin:0 auto;padding:64px 24px 24px}
 .profile-page .profile-view{animation:profileFade .35s ease}
 @keyframes profileFade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
@@ -124,7 +124,7 @@
 .profile-page .cat-row .meta b{font-style:normal;font-weight:700;color:#f5c842;font-family:var(--font-display);font-size:18px;letter-spacing:.04em;margin-left:4px}
 
 /* ── BACK STRIP ── */
-.profile-page .back-strip{background:#1a0f0a url('/assets/Grain_texture_brown.png') 0 0/var(--tex-size) var(--tex-size) repeat;padding:32px 24px 64px;position:relative;z-index:1}
+.profile-page .back-strip{background:#1a0f0a url('/img/Grain_texture_brown.webp') 0 0/var(--tex-size) var(--tex-size) repeat;padding:32px 24px 64px;position:relative;z-index:1}
 .profile-page .back-strip-inner{max-width:920px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
 .profile-page .back-actions{display:flex;gap:10px;flex-wrap:wrap}
 .profile-page .back-link{font-family:var(--font-body);font-style:italic;font-size:14px;color:rgba(255,241,212,.75);display:inline-flex;align-items:center;gap:8px;border-bottom:1px dashed rgba(255,241,212,.35);padding-bottom:2px;transition:color .18s,border-color .18s}
@@ -148,4 +148,12 @@
   .profile-page .highlights li{grid-template-columns:40px 1fr;gap:14px}
   .profile-page .highlights .h-tag{grid-column:1 / -1;grid-row:2;padding-left:54px;margin-top:-4px}
   .profile-page .back-strip-inner{justify-content:center}
+}
+
+/* Mobile: lighten the frosted cards (smaller blur, no saturate) — these repeat down
+   the profile, so the blur(18px)+saturate pass was a major per-frame cost. */
+@media (max-width:768px){
+  .profile-page .action-bar,.profile-page .fact,.profile-page .social,.profile-page .chart-card{
+    backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)
+  }
 }

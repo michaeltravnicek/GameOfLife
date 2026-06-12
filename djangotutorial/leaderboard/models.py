@@ -98,8 +98,9 @@ class Event(models.Model):
             self.slug = slug
         super().save(*args, **kwargs)
         if self.image:
-            from .image_utils import resize_image
+            from .image_utils import resize_image, make_webp_variant
             resize_image(self.image, max_width=1200, max_height=1200, quality=85)
+            make_webp_variant(self.image)
         # Best-effort: a cache outage must not break saving an event.
         from .cache_config import invalidate_event_caches
         invalidate_event_caches()
@@ -120,8 +121,9 @@ class ImageToEvent(models.Model):
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
         if self.image:
-            from .image_utils import resize_image
+            from .image_utils import resize_image, make_webp_variant
             resize_image(self.image, max_width=1024, max_height=1024, quality=75)
+            make_webp_variant(self.image)
         from .cache_config import invalidate_hero_cache
         invalidate_hero_cache()
 
@@ -202,8 +204,9 @@ class UserPhoto(models.Model):
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
         if self.image:
-            from .image_utils import resize_image
+            from .image_utils import resize_image, make_webp_variant
             resize_image(self.image, max_width=1600, max_height=1600, quality=80)
+            make_webp_variant(self.image)
 
     def __str__(self):
         return f"{self.auth_user} → {self.event or 'bez akce'}"

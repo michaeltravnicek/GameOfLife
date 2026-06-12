@@ -10,6 +10,7 @@ import SectionHeader from '../../components/SectionHeader/SectionHeader';
 import EventLocationMap from '../../components/EventLocationMap/EventLocationMap';
 import Modal from '../../components/Modal/Modal';
 import { fmtDateShort, fmtTime, dayName } from '../../utils/date';
+import { isMobileViewport } from '../../utils/img';
 import './EventDetailPage.css';
 
 // Lightbox is only needed once the user clicks on an image — pull it off the
@@ -60,10 +61,12 @@ export default function EventDetailPage() {
   // Top poster: prefer the event's own DB image, then an official photo, then a
   // built-in default. The default is a static asset, so it always resolves even
   // if media serving is down.
-  const POSTER_FALLBACK = '/gallery/gal0.jpg';
+  const POSTER_FALLBACK = '/img/gal0.webp';
   const posterSrc = useMemo(() => {
     if (!event) return POSTER_FALLBACK;
-    if (event.image) return event.image;
+    if (event.image) {
+      return isMobileViewport() && event.image_mobile ? event.image_mobile : event.image;
+    }
     if (event.official_images?.length) return event.official_images[0];
     return POSTER_FALLBACK;
   }, [event]);
@@ -191,7 +194,7 @@ export default function EventDetailPage() {
           </div>
           {event.logo
             ? <img className="poster-logo" src={event.logo} alt={event.name} />
-            : <img className="poster-logo" src="/logos/GOL_main_logo_pink.png" alt={event.name} />}
+            : <img className="poster-logo" src="/img/GOL_main_logo_pink.webp" alt={event.name} />}
         </div>
         <div className="credits">
           <span className="credits-rule" />

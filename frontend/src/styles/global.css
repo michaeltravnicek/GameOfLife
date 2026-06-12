@@ -9,3 +9,17 @@ img{max-width:100%;display:block}
 button{font-family:inherit}
 .app-shell{min-height:100vh;width:100%;display:flex;flex-direction:column}
 .app-main{flex:1;width:100%}
+
+/* ── Mobile: stop the decorative full-bleed backgrounds from pinning to the
+   viewport. On phones a position:fixed layer is re-laid-out every time the URL
+   bar shows/hides while scrolling, which reads as a jarring "jump/click". Anchor
+   them to their (full-height) page root with position:absolute so they scroll
+   naturally with the page, and drop the scale()+filter compositing that makes
+   each scroll frame expensive to repaint. Desktop is untouched. ── */
+@media (max-width:768px){
+  .auth-page,.feedbacks-page,.event-page,.leaderboard-page,.gallery-page,
+  .player-page,.events-page,.historie-page,.obodech-page,.editprofile-page{position:relative}
+
+  .stage,.grain,.ev-stage,.ev-grain,.ep-stage,.ep-grain,.bg-texture,
+  .page-stage,.page-grain{position:absolute;transform:none;filter:none}
+}

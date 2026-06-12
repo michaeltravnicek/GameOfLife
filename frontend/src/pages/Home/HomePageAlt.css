@@ -1,0 +1,13 @@
+/* Overrides for the motion-rich /alt homepage. Base look comes from HomePage.css
+   (the root carries both .home-page and .home-page-alt). */
+
+/* Give the parallax leaderboard backdrop vertical headroom so the drift never
+   exposes the section edges. */
+.home-page-alt .lb-bg{top:-12%;bottom:-12%;height:auto}
+
+/* The GalleryCarousel replaces the old flex .gal-container and brings its own
+   layout/spacing, so nothing else to override here for the gallery. */
+
+@media(prefers-reduced-motion:reduce){
+  .home-page-alt .lb-bg{top:0;bottom:0}
+}

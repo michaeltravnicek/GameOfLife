@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# Generated, optimized WebP variants (rebuilt by `npm run images`)
+public/img/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
