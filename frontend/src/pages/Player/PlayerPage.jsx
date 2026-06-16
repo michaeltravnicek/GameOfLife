@@ -116,7 +116,7 @@ export default function PlayerPage() {
           columns={EVENT_COLUMNS}
           rows={events}
           rowKey={(e) => e.slug}
-          rowLink={(e) => `/akce/${e.slug}`}
+          rowLink={(e) => `/events/${e.slug}`}
           rowClass={() => 'past'}
           emptyText="Žádné zaznamenané akce v této sezóně."
         />

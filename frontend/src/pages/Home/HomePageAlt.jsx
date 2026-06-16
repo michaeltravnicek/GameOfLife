@@ -81,7 +81,7 @@ export default function HomePageAlt() {
 
       <CheckinBanner events={checkinEvents} />
 
-      <Hero slides={heroSlides} ctaTo="/akce" ctaLabel="Zobrazit akce" parallax />
+      <Hero slides={heroSlides} ctaTo="/events" ctaLabel="Zobrazit akce" parallax />
 
       {/* UPCOMING EVENTS */}
       <section className="events-section">

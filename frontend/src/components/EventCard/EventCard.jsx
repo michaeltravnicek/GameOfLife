@@ -2,20 +2,23 @@ import { memo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { fmtDate } from '../../utils/date';
 import { preloadEventDetail } from '../../services/routePreload';
+import DashedBorder from '../DashedBorder/DashedBorder';
 import './EventCard.css';
 
 function DarkCard({ event }) {
   return (
     <>
+      <DashedBorder className="evcard-dark-frame" baseColor="transparent" dashColor="#fff" radius={16} width={2.5} dash={7} gap={12} />
+
       <div className="evcard-dark-inner">
         <div className="evcard-title-wrap">
           <div className="evcard-brand">Game of Life</div>
           <div className="evcard-title">{event.name}</div>
         </div>
         <div className="evcard-meta">
-          <div className="ev-date">{fmtDate(event.date)}</div>
-          <div className="ev-place">{event.place}</div>
-          <div className="ev-pts-label">+{event.points} pts</div>
+          <div className="ev-date"><span className="ev-emoji">📅</span>{fmtDate(event.date)}</div>
+          <div className="ev-place"><span className="ev-emoji">📍</span>{event.place}</div>
+          <div className="ev-pts-label"><span className="ev-emoji">🏆</span>+{event.points} pts</div>
         </div>
       </div>
 
@@ -24,8 +27,8 @@ function DarkCard({ event }) {
         src={event.logo || '/img/GOL_C50_transparent.webp'}
         alt={event.name}
         loading="lazy"
-        width="110"
-        height="110"
+        width="150"
+        height="150"
       />
     </>
   );
@@ -76,7 +79,7 @@ function EventCard({ event, theme = 'dark' }) {
   const handlePreload = useCallback(() => preloadEventDetail(event.slug), [event.slug]);
   return (
     <Link
-      to={`/akce/${event.slug}`}
+      to={`/events/${event.slug}`}
       className={`evcard evcard-${theme}${theme === 'light' && event.is_past ? ' is-past' : ''}`}
       onMouseEnter={handlePreload}
       onFocus={handlePreload}

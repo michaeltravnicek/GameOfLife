@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  fetchHero, fetchStats, fetchCheckinEvents, fetchEvents, fetchLeaderboard,
+  fetchHero, fetchCheckinEvents, fetchEvents, fetchLeaderboard,
 } from '../../services/api';
 import { useCachedQuery } from '../../services/queryCache';
 import { CACHE_TTL, PAGE_SIZE_EVENTS } from '../../constants/config';
@@ -25,7 +25,6 @@ export default function HomePage() {
   // independent, individually-cached endpoints. They fetch in parallel (each
   // useCachedQuery fires its own request), so there's no waterfall.
   const { data: hero } = useCachedQuery('hero', fetchHero, { ttl: CACHE_TTL.HOME });
-  const { data: statsData } = useCachedQuery('stats', fetchStats, { ttl: CACHE_TTL.HOME });
   const { data: checkin } = useCachedQuery('checkin-events', fetchCheckinEvents, { ttl: CACHE_TTL.EVENT_DETAIL });
   const { data: upcomingData } = useCachedQuery(
     'events:upcoming|Vše|',
@@ -53,7 +52,6 @@ export default function HomePage() {
   const upcomingEvents = upcomingData?.events || EMPTY;
   const topPlayers = lbData?.entries || EMPTY;
   const checkinEvents = checkin?.events || EMPTY;
-  const stats = statsData || {};
 
   // Stable references across renders — only recomputed when API data changes.
   const heroSlides = useMemo(
@@ -80,11 +78,11 @@ export default function HomePage() {
 
       <CheckinBanner events={checkinEvents} />
 
-      <Hero slides={heroSlides} ctaTo="/akce" ctaLabel="Zobrazit akce" />
+      <Hero slides={heroSlides} ctaTo="/events" ctaLabel="Zobrazit akce" />
 
       {/* UPCOMING EVENTS */}
       <section className="events-section">
-        <h2 ref={evTitleRef} className={`sec-title reveal${evTitleIn ? ' in' : ''}`}><span className="star">✦</span> Nadcházející akce <span className="star">✦</span></h2>
+        <h2 ref={evTitleRef} className={`sec-title reveal${evTitleIn ? ' in' : ''}`}><span className="star sparkle">✨</span> Nadcházející akce <span className="star sparkle">✨</span></h2>
         <div ref={evGridRef} className={`events-grid reveal-stagger${evGridIn ? ' in' : ''}`}>
           {upcomingEvents.length === 0 && (
             <p className="events-empty">Žádné nadcházející akce. Sleduj nás na sítích!</p>
@@ -100,7 +98,7 @@ export default function HomePage() {
         <div className="lb-bg" />
         <div className="lb-tint" />
         <div className="lb-inner">
-          <h2 ref={lbTitleRef} className={`lb-title reveal${lbTitleIn ? ' in' : ''}`}><span className="star">✦</span> Top hráči <span className="star">✦</span></h2>
+          <h2 ref={lbTitleRef} className={`lb-title reveal${lbTitleIn ? ' in' : ''}`}><span className="lb-trophy">🏆</span> Top 10 hráčů <span className="lb-trophy">🏆</span></h2>
           <div ref={lbCardRef} className={`lb-card reveal-stagger${lbCardIn ? ' in' : ''}`}>
             <div className="lb-head"><div>#</div><div>hráč</div><div className="lb-head-pts">pts</div></div>
             {topPlayers.map((p) => (
@@ -132,12 +130,9 @@ export default function HomePage() {
               vzpomínky a odvahu vyzkoušet něco nového.
             </p>
             <div className="stats-row">
-              <div className="stat-item"><div className="stat-num">{stats.players ?? '—'}</div><div className="stat-label">Hráčů</div></div>
-              <div className="stat-item"><div className="stat-num">{stats.events ?? '—'}</div><div className="stat-label">Events</div></div>
-              <div className="stat-item"><div className="stat-num">{stats.points ?? '—'}</div><div className="stat-label">Bodů</div></div>
-            </div>
-            <div className="about-cta">
-              <Button as="link" to="/historie" size="lg">Číst historii <span className="arr" /></Button>
+              <div className="stat-item"><div className="stat-num">300+</div><div className="stat-label">Hráčů</div></div>
+              <div className="stat-item"><div className="stat-num">70+</div><div className="stat-label">Eventů</div></div>
+              <div className="stat-item"><div className="stat-num">40000+</div><div className="stat-label">Bodů</div></div>
             </div>
           </div>
         </div>

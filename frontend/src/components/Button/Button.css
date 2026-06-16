@@ -1,4 +1,4 @@
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;cursor:pointer;border-radius:var(--radius-pill);transition:transform .18s,background .18s,border-color .18s,color .18s;text-decoration:none;font-family:var(--font-hv);font-weight:700;letter-spacing:.04em;line-height:1;white-space:nowrap}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;cursor:pointer;border-radius:var(--radius-pill);transition:transform .12s,background .18s,border-color .18s,box-shadow .12s,color .18s;text-decoration:none;font-family:var(--font-hv);font-weight:700;letter-spacing:.04em;line-height:1;white-space:nowrap}
 .btn:disabled,.btn[aria-disabled="true"]{opacity:.55;cursor:not-allowed;transform:none !important;pointer-events:none}
 
 /* Variants — two roles plus a quiet sibling:
@@ -6,8 +6,13 @@
             For links/CTAs that take you somewhere.
    action → round filled pill, uppercase. For doing something (submit, RSVP, share).
    ghost  → round outline. For secondary / back / cancel. */
-.btn-nav{background:var(--color-pink);color:#fff;border:2px solid #504d4d;border-bottom:5px solid #504d4d;border-radius:16px;box-shadow:0 6px 22px rgba(225,84,99,.4)}
-.btn-nav:hover:not(:disabled){background:#cf4453;transform:translateY(-2px)}
+/* The chunky bottom "ledge" is a box-shadow (not a border) so the press effect
+   below never changes the box height — nothing around the button reflows. */
+.btn-nav{background:var(--color-pink);color:#fff;border:2px solid #504d4d;border-radius:16px;box-shadow:0 4px 0 0 #504d4d,0 8px 22px rgba(225,84,99,.4)}
+/* Press: face sinks down by the ledge height while the ledge collapses to 0, so
+   the base stays put and the button reads as physically pressed. */
+.btn-nav:hover:not(:disabled){background:#cf4453;transform:translateY(4px);box-shadow:0 0 0 0 #504d4d,0 4px 16px rgba(225,84,99,.35)}
+.btn-nav:active:not(:disabled){transform:translateY(4px);box-shadow:0 0 0 0 #504d4d,0 3px 12px rgba(225,84,99,.3)}
 .btn-action{background:var(--color-pink);color:#fff;text-transform:uppercase;letter-spacing:.05em;box-shadow:0 6px 22px rgba(225,84,99,.4)}
 .btn-action:hover:not(:disabled){background:#cf4453;transform:translateY(-1px)}
 .btn-action.joined{background:#4a8a5e;box-shadow:0 6px 22px rgba(74,138,94,.35)}
@@ -15,9 +20,9 @@
 .btn-ghost{background:transparent;color:var(--color-cream-light);border:1.5px solid rgba(255,241,212,.4)}
 .btn-ghost:hover:not(:disabled){border-color:var(--color-pink);color:var(--color-pink)}
 
-/* Arrow affordance: "Číst historii →". Inherits the button's text color. */
-.btn .arr::before{content:'';display:inline-block;width:26px;height:1.5px;background:currentColor;vertical-align:middle;margin-right:4px;border-radius:2px}
-.btn .arr::after{content:'➤';font-size:11px}
+/* Arrow affordance: a single connected arrow (shaft + head as one stroke).
+   Drawn as an SVG mask so it inherits the button's text color via currentColor. */
+.btn .arr{display:inline-block;width:30px;height:14px;vertical-align:middle;background-color:currentColor;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='14' viewBox='0 0 30 14'%3E%3Cpath d='M2 7H26M20 2l7 5-7 5' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='14' viewBox='0 0 30 14'%3E%3Cpath d='M2 7H26M20 2l7 5-7 5' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat}
 
 /* Sizes */
 .btn-sm{font-size:11px;padding:7px 16px}

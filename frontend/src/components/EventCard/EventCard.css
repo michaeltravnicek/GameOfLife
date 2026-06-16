@@ -2,15 +2,18 @@
 .evcard{position:relative;display:block;border-radius:14px;text-decoration:none;transition:transform .2s ease,border-color .2s ease,background-color .2s ease;box-sizing:border-box}
 
 /* ── Dark theme (Home — fluid width, dark bg) ── */
-.evcard-dark{width:100%;min-height:166px;padding:4px;overflow:visible;border:1.5px dashed rgba(255,255,255,1)}
-.evcard-dark:hover{transform:translateY(-6px);border-color:#e15463}
-.evcard-dark-inner{width:100%;min-height:158px;padding:16px 16px 12px;background:rgba(0,0,0,.20);border-radius:12px;box-sizing:border-box;display:flex;flex-direction:column;gap:10px}
-.evcard-dark .evcard-title{color:#fff;font-size:clamp(22px,5vw,30px);font-family:var(--font-display);font-weight:400;text-transform:uppercase;line-height:1;letter-spacing:.015em;margin:0}
-.evcard-dark .evcard-meta{display:flex;flex-direction:column;gap:3px;font-family:var(--font-hv);font-size:11px;font-weight:300;color:rgba(255,255,255,.85);line-height:1.55}
-.evcard-dark .ev-date::before,.evcard-dark .ev-place::before,.evcard-dark .ev-pts-label::before{content:'◆';display:inline-block;margin-right:5px;font-size:5px;vertical-align:middle;color:var(--color-pink)}
-.evcard-dark .evcard-title-wrap{padding-right:72px;display:flex;flex-direction:column;gap:2px}
-.evcard-dark .evcard-brand{color:#fff;font-size:clamp(22px,5vw,30px);font-family:var(--font-display);font-weight:400;text-transform:uppercase;line-height:1;letter-spacing:.015em}
-.evcard-dark .evcard-badge{position:absolute;width:110px;height:110px;top:-14px;right:8px;transform:rotate(14deg);object-fit:contain;pointer-events:none;filter:drop-shadow(0px 4px 10px rgba(0,0,0,.35))}
+.evcard-dark{width:100%;min-height:166px;padding:8px;overflow:visible}
+.evcard-dark:hover{transform:translateY(-6px)}
+.evcard-dark:hover .evcard-dark-frame rect{stroke:var(--color-pink)}
+.evcard-dark .evcard-dark-frame{inset:1px;width:calc(100% - 2px);height:calc(100% - 2px)}
+.evcard-dark-inner{width:100%;min-height:150px;padding:18px 18px 14px;background:rgba(0,0,0,.20);border-radius:11px;box-sizing:border-box;display:flex;flex-direction:column;gap:10px}
+.evcard-dark .evcard-title{color:var(--color-cream-light);font-size:clamp(22px,5vw,30px);font-family:var(--font-event-name);font-weight:400;text-transform:uppercase;line-height:1;letter-spacing:.015em;margin:0}
+.evcard-dark .evcard-meta{display:flex;flex-direction:column;gap:5px;font-family:'Courier Prime',var(--font-mono),monospace;font-style:italic;font-size:13px;font-weight:400;color:rgba(255,255,255,.92);line-height:1.5}
+.evcard-dark .evcard-meta>div{display:flex;align-items:center}
+.evcard-dark .ev-emoji{font-style:normal}
+.evcard-dark .evcard-title-wrap{padding-right:96px;display:flex;flex-direction:column;gap:2px}
+.evcard-dark .evcard-brand{color:var(--color-cream-light);font-size:clamp(22px,5vw,30px);font-family:var(--font-event-name);font-weight:400;text-transform:uppercase;line-height:1;letter-spacing:.015em}
+.evcard-dark .evcard-badge{position:absolute;width:150px;height:150px;top:-50px;right:-45px;transform:rotate(12deg);object-fit:contain;pointer-events:none;filter:drop-shadow(0px 5px 12px rgba(0,0,0,.4));z-index:4}
 
 /* ── Light theme (Events list — ticket frame: solid black outer ring + inset dashed inner) ── */
 .evcard-light{height:240px;border-radius:16px;background-color:#fff1d4;background-image:url('/img/Grain_texture_light.webp');background-size:var(--tex-size) var(--tex-size);background-repeat:repeat;box-shadow:0 12px 28px rgba(0,0,0,.22),0 0 0 1.5px rgba(26,26,26,.92)}
@@ -44,15 +47,15 @@
 @media(max-width:480px){
   .evcard-dark{max-width:100%;min-height:130px}
   .evcard-dark-inner{min-height:122px}
-  .evcard-dark .evcard-badge{width:80px;height:80px;top:-8px;right:6px}
+  .evcard-dark .evcard-badge{width:118px;height:118px;top:-18px;right:-12px}
   .evcard-light{height:auto;min-height:240px}
   .evcard-light .evcard-title{font-size:clamp(26px,7vw,34px);padding-right:72px}
   .evcard-light .evcard-content{padding:32px 18px 18px}
   .evcard-light .evcard-badge{width:100px;height:100px;top:-20px;right:-8px}
 }
 @media(max-width:360px){
-  .evcard-dark .evcard-title-wrap{padding-right:48px}
-  .evcard-dark .evcard-badge{width:60px;height:60px;top:-4px;right:4px}
+  .evcard-dark .evcard-title-wrap{padding-right:78px}
+  .evcard-dark .evcard-badge{width:96px;height:96px;top:-14px;right:-8px}
   .evcard-light .evcard-badge{width:80px;height:80px;top:-14px;right:-6px}
   .evcard-light .evcard-title{padding-right:60px}
 }

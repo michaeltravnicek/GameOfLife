@@ -1,0 +1,18 @@
+{
+  "appId": "com.gameofyolo.app",
+  "appName": "Game of Life",
+  "webDir": "dist",
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 2000,
+      "launchAutoHide": false,
+      "backgroundColor": "#0a0604",
+      "androidScaleType": "CENTER_INSIDE",
+      "showSpinner": false
+    },
+    "StatusBar": {
+      "overlaysWebView": true,
+      "style": "DARK"
+    }
+  }
+}

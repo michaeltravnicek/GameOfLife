@@ -9,6 +9,7 @@ from django.shortcuts import get_object_or_404
 logger = logging.getLogger(__name__)
 
 from rest_framework import status
+from rest_framework.authtoken.models import Token
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -58,13 +59,23 @@ def login_api(request):
     # "Remember me" → 30-day session; otherwise expire on browser close.
     remember = bool(request.data.get("remember", False))
     request.session.set_expiry(60 * 60 * 24 * 30 if remember else 0)
-    return Response({"user": serialize_user(user, request)}, status=status.HTTP_200_OK)
+
+    payload = {"user": serialize_user(user, request)}
+    # Native app can't rely on webview cookies; it authenticates with a DRF token.
+    if request.data.get("client") == "mobile":
+        with transaction.atomic():
+            token, _ = Token.objects.get_or_create(user=user)
+        payload["token"] = token.key
+    return Response(payload, status=status.HTTP_200_OK)
 
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def logout_api(request):
-    """Log out the current session."""
+    """Log out the current session. Revokes the mobile token when used."""
+    if isinstance(request.auth, Token):
+        with transaction.atomic():
+            request.auth.delete()
     logout(request)
     return Response({"ok": True}, status=status.HTTP_200_OK)
 
@@ -122,7 +133,11 @@ def register_api(request):
         return Response({"errors": form.errors}, status=status.HTTP_400_BAD_REQUEST)
     user = form.save()
     login(request, user)
-    return Response({"user": serialize_user(user, request)}, status=status.HTTP_201_CREATED)
+    payload = {"user": serialize_user(user, request)}
+    if request.data.get("client") == "mobile":
+        token, _ = Token.objects.get_or_create(user=user)
+        payload["token"] = token.key
+    return Response(payload, status=status.HTTP_201_CREATED)
 
 
 @api_view(["GET"])

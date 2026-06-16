@@ -21,11 +21,11 @@ import {
   fetchProfile,
 } from './api';
 
-// Static paths only — dynamic params like `/akce/:slug` are preloaded ad-hoc
+// Static paths only — dynamic params like `/events/:slug` are preloaded ad-hoc
 // at the call site if we want them (e.g. on EventCard hover).
 const importers = {
   '/': () => import('../pages/Home/HomePage'),
-  '/akce': () => import('../pages/Events/EventsPage'),
+  '/events': () => import('../pages/Events/EventsPage'),
   '/galerie': () => import('../pages/Gallery/GalleryPage'),
   '/leaderboard': () => import('../pages/Leaderboard/LeaderboardPage'),
   '/profil': () => import('../pages/Profile/ProfilePage'),
@@ -52,7 +52,7 @@ const dataWarmers = {
   // Must mirror EventsPage's first cacheKey exactly (`events:${city}|${season}|${q}`)
   // or the warm-up writes a key the page never reads. Defaults: city=Vše,
   // season=all, empty query.
-  '/akce': () => prefetchQuery(
+  '/events': () => prefetchQuery(
     'events:Vše|all|',
     () => fetchEvents({ limit: PAGE_SIZE_EVENTS, offset: 0 }),
   ),

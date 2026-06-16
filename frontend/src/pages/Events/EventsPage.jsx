@@ -214,7 +214,7 @@ export default function EventsPage() {
 
       {isAdmin && (
         <section className="admin-row">
-          <Link to="/akce/vytvorit" className="admin-btn create-btn">+ Vytvořit akci</Link>
+          <Link to="/events/vytvorit" className="admin-btn create-btn">+ Vytvořit akci</Link>
           <Link to="/sprava/zpetna-vazba" className="admin-btn">Zpětná vazba</Link>
         </section>
       )}

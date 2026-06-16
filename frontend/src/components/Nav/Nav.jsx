@@ -10,7 +10,7 @@ const initials = (s) =>
 
 function activeKey(pathname) {
   if (pathname === '/') return 'home';
-  if (pathname.startsWith('/akce')) return 'events';
+  if (pathname.startsWith('/events')) return 'events';
   if (pathname.startsWith('/galerie')) return 'gallery';
   if (pathname.startsWith('/leaderboard')) return 'leaderboard';
   if (pathname.startsWith('/profil')) return 'profile';
@@ -130,7 +130,7 @@ export default function Nav() {
           aria-expanded={menuOpen}
         >☰</button>
         {navItem('/', 'Domů', 'home')}
-        {navItem('/akce', 'Akce', 'events')}
+        {navItem('/events', 'Eventy', 'events')}
         {navItem('/galerie', 'Galerie', 'gallery')}
       </div>
       <Link to="/" className="nav-logo" aria-label="Game of Life">
@@ -171,7 +171,7 @@ export default function Nav() {
       <div className={`nav-drop${menuOpen ? ' open' : ''}`} role="menu">
         {user && <div className="nav-drop-name">{displayName}</div>}
         {dropItem('/', 'Domů', 'home')}
-        {dropItem('/akce', 'Akce', 'events')}
+        {dropItem('/events', 'Eventy', 'events')}
         {dropItem('/galerie', 'Galerie', 'gallery')}
         {dropItem('/leaderboard', 'Leaderboard', 'leaderboard')}
         {dropItem('/historie', 'Historie', 'historie')}

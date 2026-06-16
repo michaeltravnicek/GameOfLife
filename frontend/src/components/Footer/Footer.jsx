@@ -8,7 +8,7 @@ export default function Footer() {
         <div className="ft-menu">
           <div className="ft-label">Menu</div>
           <Link className="ft-link" to="/">Domů</Link>
-          <Link className="ft-link" to="/akce">Kalendář</Link>
+          <Link className="ft-link" to="/events">Kalendář</Link>
           <Link className="ft-link" to="/galerie">Galerie</Link>
           <Link className="ft-link" to="/leaderboard">Leaderboard</Link>
           <a className="ft-link" style={{ marginTop: 14 }} href="#">Instagram</a>
@@ -24,10 +24,7 @@ export default function Footer() {
           <div className="ft-contact">Vojta Toman<br />+420 731 005 976</div>
           <div className="ft-credit">
             Tyhle krásný stránky vytvořil Michael Trávníček.
-            <div className="ft-credit">
-              Podílel se Lukáš Müller.
-              <br />Game of Life © 2026
-            </div>
+            <br />Game of Life © 2026
           </div>
         </div>
       </div>

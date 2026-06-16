@@ -1,6 +1,6 @@
 .lb-overlay{position:fixed;inset:0;z-index:400;background:rgba(0,0,0,.94);display:flex;align-items:center;justify-content:center;padding:40px;box-sizing:border-box}
 .lb-overlay img{max-width:90vw;max-height:78vh;border:5px solid var(--color-cream-light);border-radius:3px;box-shadow:0 24px 80px rgba(0,0,0,.7);display:block;object-fit:contain}
-.lb-close{position:absolute;top:18px;right:26px;background:transparent;border:0;color:#fff;font-size:38px;cursor:pointer;line-height:1;opacity:.7;transition:opacity .15s;z-index:1;padding:4px 8px}
+.lb-close{position:absolute;top:calc(18px + env(safe-area-inset-top,0px));right:26px;background:transparent;border:0;color:#fff;font-size:38px;cursor:pointer;line-height:1;opacity:.7;transition:opacity .15s;z-index:1;padding:4px 8px}
 .lb-close:hover{opacity:1}
 .lb-nav-btn{position:absolute;top:50%;transform:translateY(-50%);width:50px;height:50px;border-radius:50%;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.3);color:#fff;font-size:26px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .18s;z-index:1;padding:0}
 .lb-nav-btn:hover{background:rgba(255,255,255,.24)}

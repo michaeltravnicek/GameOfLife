@@ -386,7 +386,7 @@ export default function GalleryPage() {
       )}
 
       <div className="gallery-footer">
-        <Button as="link" to="/akce" size="lg">Zobrazit nadcházející akce <span className="arr" /></Button>
+        <Button as="link" to="/events" size="lg">Zobrazit nadcházející akce <span className="arr" /></Button>
       </div>
 
       {lbOpen && (

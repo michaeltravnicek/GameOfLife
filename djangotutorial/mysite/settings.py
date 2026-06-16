@@ -80,6 +80,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'background_task',
     'rest_framework',
+    'rest_framework.authtoken',
     'drf_spectacular',
     'corsheaders',
     'leaderboard',
@@ -112,6 +113,14 @@ CORS_ALLOWED_ORIGINS = [
 CORS_ALLOW_CREDENTIALS = True
 CSRF_TRUSTED_ORIGINS += ["http://localhost:5173", "http://127.0.0.1:5173"]
 
+# Native mobile app (Capacitor webview): capacitor://localhost on iOS,
+# https://localhost on Android. Token-authenticated, so no CSRF entry needed.
+CORS_ALLOWED_ORIGINS += [
+    o.strip()
+    for o in os.getenv("CORS_EXTRA_ORIGINS", "capacitor://localhost,https://localhost").split(",")
+    if o.strip()
+]
+
 ROOT_URLCONF = 'mysite.urls'
 
 TEMPLATES = [
@@ -133,6 +142,7 @@ TEMPLATES = [
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.TokenAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.AllowAny',

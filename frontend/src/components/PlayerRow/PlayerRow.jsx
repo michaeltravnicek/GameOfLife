@@ -6,15 +6,18 @@ export function playerLink(p) {
   return p.profile_username ? `/profil/${p.profile_username}` : `/hrac/${p.id}`;
 }
 
+const TROPHIES = ['🏆', '🥈', '🥉'];
+
 export default function PlayerRow({ player }) {
+  const medal = player.rank <= 3 ? TROPHIES[player.rank - 1] : null;
   return (
     <Link to={playerLink(player)} className="player-row">
-      <div className="pr-rk">{player.rank}.</div>
+      <div className={`pr-rk${medal ? ' pr-rk-medal' : ''}`}>{medal || `${player.rank}.`}</div>
       <div className="pr-nm">
         <Avatar name={player.name} photo={player.photo} size="xs" />
         <span className="pr-txt">{player.name}</span>
       </div>
-      <div className="pr-pt">{player.total_points}<span className="pr-u">pts</span></div>
+      <div className="pr-pt">{player.total_points}</div>
     </Link>
   );
 }

@@ -283,8 +283,8 @@
   --tex-blue:     url('/img/Grain_texture_blue.webp');
   --tex-light:    url('/img/Grain_texture_light.webp');
 
-  --tex-size:    400px;
-  --grain-opacity: 0.25;
+  --tex-size:   240px;  /* = seamless mirror-tile; displays 1:1 (crisp) */
+  --grain-opacity: 0.15;
 }
 
 h1,h2,h3,h4{font-weight:400}

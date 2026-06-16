@@ -1,6 +1,6 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { fmtDate } from '../../utils/date';
+import Button from '../Button/Button';
 import { HERO_AUTO_CYCLE_MS } from '../../constants/config';
 import { useParallax } from '../../hooks/useParallax';
 import { isMobileViewport } from '../../utils/img';
@@ -49,7 +49,7 @@ const cancelIdle = (id) =>
  */
 export default function Hero({
   slides = [],
-  ctaTo = '/akce',
+  ctaTo = '/events',
   ctaLabel = 'Zobrazit akce',
   eyebrow = '— Sezóna 2026 —',
   fallbackTitle = 'Game of Life',
@@ -126,9 +126,11 @@ export default function Hero({
         {slide?.date && <p className="gol-hero__date">{fmtDate(slide.date)}</p>}
       </div>
 
-      <Link to={ctaTo} className="gol-hero__cta">
-        {ctaLabel} <span className="gol-hero__cta-arrow" aria-hidden="true" />
-      </Link>
+      <div className="gol-hero__cta-wrap">
+        <Button as="link" to={ctaTo} size="lg">
+          {ctaLabel} <span className="arr" aria-hidden="true" />
+        </Button>
+      </div>
 
       <HeroDots count={slides.length} current={current} onChange={goTo} />
     </section>

@@ -1,4 +1,6 @@
 import axios from 'axios';
+import { isNative } from './platform';
+import { getToken, clearToken } from './authToken';
 
 function readCookie(name) {
   const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
@@ -7,17 +9,24 @@ function readCookie(name) {
 
 // Default to the same-origin '/api' (how production serves it, and how the Vite
 // dev server proxies it). Override with VITE_API_URL when running the SPA against
-// a separately-hosted backend.
+// a separately-hosted backend. The native app (Capacitor) authenticates with a
+// DRF token instead of session cookies — webview cookies against a remote API
+// are unreliable (WKWebView eviction, CSRF Origin checks).
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || '/api',
-  withCredentials: true,
+  withCredentials: !isNative,
   xsrfCookieName: 'csrftoken',
   xsrfHeaderName: 'X-CSRFToken',
 });
 
-// Make sure the CSRF token is sent on every unsafe request, even when axios's
-// xsrfCookieName fallback isn't enough (e.g., cross-origin in dev).
 api.interceptors.request.use((config) => {
+  if (isNative) {
+    const token = getToken();
+    if (token) config.headers.Authorization = `Token ${token}`;
+    return config;
+  }
+  // Web: make sure the CSRF token is sent on every unsafe request, even when
+  // axios's xsrfCookieName fallback isn't enough (e.g., cross-origin in dev).
   const method = (config.method || 'get').toLowerCase();
   if (['post', 'put', 'patch', 'delete'].includes(method)) {
     const token = readCookie('csrftoken');
@@ -41,7 +50,14 @@ api.interceptors.response.use(
     const onAuthPage = /\/(prihlasit|registrace)/.test(window.location.pathname);
     if (status === 401 && !isProbe && !onAuthPage) {
       const from = window.location.pathname + window.location.search;
-      window.location.assign(`/prihlasit?from=${encodeURIComponent(from)}`);
+      if (isNative) {
+        // Token was revoked/invalid: drop it so login is a clean slate.
+        clearToken().finally(() =>
+          window.location.assign(`/prihlasit?from=${encodeURIComponent(from)}`),
+        );
+      } else {
+        window.location.assign(`/prihlasit?from=${encodeURIComponent(from)}`);
+      }
     }
     return Promise.reject(error);
   },
@@ -55,10 +71,19 @@ const MULTIPART = { headers: { 'Content-Type': 'multipart/form-data' } };
 // --- Auth ---
 export const fetchMe = () => api.get('/auth/me/').then((r) => r.data);
 export const apiLogin = (identifier, password, remember = false) =>
-  api.post('/auth/login/', { identifier, password, remember }).then((r) => r.data);
+  api
+    .post('/auth/login/', {
+      identifier,
+      password,
+      remember,
+      ...(isNative ? { client: 'mobile' } : {}),
+    })
+    .then((r) => r.data);
 export const apiLogout = () => api.post('/auth/logout/').then((r) => r.data);
 export const apiRegister = (payload) =>
-  api.post('/auth/register/', payload).then((r) => r.data);
+  api
+    .post('/auth/register/', { ...payload, ...(isNative ? { client: 'mobile' } : {}) })
+    .then((r) => r.data);
 export const apiPasswordReset = (email) =>
   api.post('/auth/password-reset/', { email }).then((r) => r.data);
 export const apiPasswordResetConfirm = (uid, token, newPassword) =>

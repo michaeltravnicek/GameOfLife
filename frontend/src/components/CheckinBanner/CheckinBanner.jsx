@@ -4,6 +4,7 @@ import { apiCheckin } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../Toast/ToastProvider';
 import { invalidateQuery } from '../../services/queryCache';
+import { getPosition, GEO_ERROR_MESSAGES } from '../../utils/geolocation';
 import './CheckinBanner.css';
 
 /**
@@ -29,51 +30,45 @@ export default function CheckinBanner({ events = [] }) {
     setStatuses((prev) => ({ ...prev, [slug]: status }));
   }, []);
 
-  const handleCheckin = useCallback((event) => {
+  const handleCheckin = useCallback(async (event) => {
     if (!user) {
       navigate('/prihlasit', { state: { from: location.pathname } });
       return;
     }
     const { slug, name, points } = event;
-    if (!navigator.geolocation) {
-      toast.error('Tvůj prohlížeč nepodporuje geolokaci.', { title: 'Check-in selhal' });
-      return;
-    }
     setStatus(slug, 'locating');
 
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        setStatus(slug, 'submitting');
-        try {
-          const res = await apiCheckin(slug, pos.coords.latitude, pos.coords.longitude);
-          if (res.already_had) {
-            toast.info(`Body za "${name}" už máš.`, { title: 'Check-in OK' });
-          } else {
-            toast.success(`Připsáno +${res.points || points} bodů za "${name}"!`, {
-              title: 'Check-in OK',
-              duration: 6500,
-            });
-          }
-          setStatus(slug, 'done');
-          // Refresh home (banner list) + leaderboard.
-          invalidateQuery('home');
-          invalidateQuery((k) => k.startsWith('leaderboard:'));
-        } catch (err) {
-          const msg = err.response?.data?.error || 'Check-in se nepodařil.';
-          toast.error(msg, { title: 'Check-in selhal' });
-          setStatus(slug, 'error');
-        }
-      },
-      (err) => {
-        let msg = 'Nelze zjistit polohu.';
-        if (err.code === 1) msg = 'Přístup k poloze zamítnut — povol ho v prohlížeči.';
-        else if (err.code === 2) msg = 'Poloha není dostupná.';
-        else if (err.code === 3) msg = 'Časový limit vypršel.';
-        toast.error(msg, { title: 'Check-in selhal' });
-        setStatus(slug, 'error');
-      },
-      { enableHighAccuracy: true, timeout: 10_000, maximumAge: 0 },
-    );
+    let coords;
+    try {
+      coords = await getPosition();
+    } catch (err) {
+      toast.error(GEO_ERROR_MESSAGES[err.code] || 'Nelze zjistit polohu.', {
+        title: 'Check-in selhal',
+      });
+      setStatus(slug, 'error');
+      return;
+    }
+
+    setStatus(slug, 'submitting');
+    try {
+      const res = await apiCheckin(slug, coords.latitude, coords.longitude);
+      if (res.already_had) {
+        toast.info(`Body za "${name}" už máš.`, { title: 'Check-in OK' });
+      } else {
+        toast.success(`Připsáno +${res.points || points} bodů za "${name}"!`, {
+          title: 'Check-in OK',
+          duration: 6500,
+        });
+      }
+      setStatus(slug, 'done');
+      // Refresh home (banner list) + leaderboard.
+      invalidateQuery('home');
+      invalidateQuery((k) => k.startsWith('leaderboard:'));
+    } catch (err) {
+      const msg = err.response?.data?.error || 'Check-in se nepodařil.';
+      toast.error(msg, { title: 'Check-in selhal' });
+      setStatus(slug, 'error');
+    }
   }, [toast, setStatus, user, navigate, location.pathname]);
 
   if (!events.length) return null;

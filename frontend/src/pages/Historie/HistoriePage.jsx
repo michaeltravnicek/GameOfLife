@@ -179,7 +179,7 @@ export default function HistoriePage() {
 
       <section className="cta-foot">
         <div className="label">— A teď je řada na tobě —</div>
-        <Button as="link" to="/akce" size="lg">Zobrazit nadcházející akce <span className="arr" /></Button>
+        <Button as="link" to="/events" size="lg">Zobrazit nadcházející akce <span className="arr" /></Button>
       </section>
     </div>
   );

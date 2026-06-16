@@ -139,7 +139,7 @@ export default function OBodechPage() {
         <div className="label">— Body se nesbírají od stolu —</div>
         <div className="cta-row">
           <Button as="link" to="/leaderboard" variant="ghost" size="lg">← Zpět na leaderboard</Button>
-          <Button as="link" to="/akce" size="lg">Zobrazit akce <span className="arr" /></Button>
+          <Button as="link" to="/events" size="lg">Zobrazit akce <span className="arr" /></Button>
         </div>
       </section>
     </div>

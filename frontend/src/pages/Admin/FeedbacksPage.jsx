@@ -103,7 +103,7 @@ export default function FeedbacksPage() {
           groups.map((g) => (
             <section className="fb-group" key={g.event.slug}>
               <div className="fb-event-head">
-                <Link to={`/akce/${g.event.slug}`} className="fb-event-name">{g.event.name}</Link>
+                <Link to={`/events/${g.event.slug}`} className="fb-event-name">{g.event.name}</Link>
                 <div className="fb-event-date">{fmtDate(g.event.date) || '—'}</div>
               </div>
               <StatList

@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import Nav from './components/Nav/Nav';
 import Footer from './components/Footer/Footer';
+import NativeBridge from './components/NativeBridge/NativeBridge';
 
 // Eager: only the home page. Everything else is split into its own chunk
 // and downloaded on-demand the first time the route is visited.
@@ -54,15 +55,16 @@ function RouteFallback() {
 export default function App() {
   return (
     <>
+      <NativeBridge />
       <ScrollToTop />
       <Suspense fallback={<RouteFallback />}>
         <Routes>
           <Route path="/" element={<Layout><HomePage /></Layout>} />
           <Route path="/alt" element={<Layout><HomePageAlt /></Layout>} />
-          <Route path="/akce" element={<Layout><EventsPage /></Layout>} />
-          <Route path="/akce/:slug/upravit" element={<Layout><EditEventPage /></Layout>} />
-          <Route path="/akce/vytvorit" element={<Layout><CreateEventPage /></Layout>} />
-          <Route path="/akce/:slug" element={<Layout><EventDetailPage /></Layout>} />
+          <Route path="/events" element={<Layout><EventsPage /></Layout>} />
+          <Route path="/events/:slug/upravit" element={<Layout><EditEventPage /></Layout>} />
+          <Route path="/events/vytvorit" element={<Layout><CreateEventPage /></Layout>} />
+          <Route path="/events/:slug" element={<Layout><EventDetailPage /></Layout>} />
           <Route path="/galerie" element={<Layout><GalleryPage /></Layout>} />
           <Route path="/leaderboard" element={<Layout><LeaderboardPage /></Layout>} />
           <Route path="/profil" element={<Layout><ProfilePage /></Layout>} />

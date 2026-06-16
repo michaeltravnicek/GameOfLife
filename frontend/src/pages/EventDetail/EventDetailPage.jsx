@@ -11,6 +11,9 @@ import EventLocationMap from '../../components/EventLocationMap/EventLocationMap
 import Modal from '../../components/Modal/Modal';
 import { fmtDateShort, fmtTime, dayName } from '../../utils/date';
 import { isMobileViewport } from '../../utils/img';
+import { shareLink } from '../../utils/shareUrl';
+import { addEventToCalendar } from '../../utils/calendar';
+import { toast } from '../../components/Toast/ToastProvider';
 import './EventDetailPage.css';
 
 // Lightbox is only needed once the user clicks on an image — pull it off the
@@ -78,7 +81,7 @@ export default function EventDetailPage() {
         <main className="detail-main">
           <p style={{ textAlign: 'center', padding: '60px 20px' }}>{error}</p>
           <div style={{ textAlign: 'center' }}>
-            <Link className="back-link" to="/akce">← Zpět na všechny akce</Link>
+            <Link className="back-link" to="/events">← Zpět na všechny akce</Link>
           </div>
         </main>
       </div>
@@ -365,27 +368,32 @@ export default function EventDetailPage() {
       {/* BACK STRIP */}
       <div className="back-strip">
         <div className="back-strip-inner">
-          <Link className="back-link" to="/akce">← Zpět na všechny akce</Link>
+          <Link className="back-link" to="/events">← Zpět na všechny akce</Link>
           <div className="back-strip-actions">
             {isAdmin && (
-              <Link className="back-link" to={`/akce/${slug}/upravit`}>
+              <Link className="back-link" to={`/events/${slug}/upravit`}>
                 ✏️ Upravit akci
               </Link>
             )}
-            <Button
-              variant="ghost"
-              onClick={() => {
-                const url = window.location.href;
-                if (navigator.share) {
-                  // Intentional silent swallow: navigator.share throws
-                  // AbortError when the user dismisses the share sheet. That's
-                  // not an error from the user's POV, so don't toast it.
-                  navigator.share({ title: event.name, url }).catch(() => {});
-                } else {
-                  navigator.clipboard?.writeText(url);
-                }
-              }}
-            >
+            {!event.is_past && (
+              <Button
+                variant="ghost"
+                onClick={async () => {
+                  try {
+                    await addEventToCalendar(event);
+                  } catch {
+                    // Cancelled prompt isn't an error; real failures (e.g.
+                    // calendar access denied) get one generic toast.
+                    toast.error('Akci se nepodařilo přidat do kalendáře.', {
+                      title: 'Kalendář',
+                    });
+                  }
+                }}
+              >
+                📅 Přidat do kalendáře
+              </Button>
+            )}
+            <Button variant="ghost" onClick={() => shareLink(event.name)}>
               Sdílet kámošům
             </Button>
           </div>

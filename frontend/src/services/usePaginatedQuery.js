@@ -5,7 +5,7 @@ import { reportError } from './errors';
 /**
  * Cached, paginated data hook.
  *
- * Both `/akce` and `/galerie` follow the same shape:
+ * Both `/events` and `/galerie` follow the same shape:
  *   - The FIRST page lives in the shared cache (so navigation back is instant).
  *   - Pages loaded via "Načíst další" are appended locally — they don't get
  *     cached separately, because users rarely revisit the same offset twice.

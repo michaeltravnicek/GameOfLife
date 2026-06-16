@@ -116,7 +116,7 @@ export default function EditEventPage() {
       });
 
       await updateEvent(slug, formData);
-      navigate(`/akce/${slug}`);
+      navigate(`/events/${slug}`);
     } catch (err) {
       setSaveError(extractApiError(err, 'Chyba při aktualizaci akce.'));
     } finally {
@@ -138,7 +138,7 @@ export default function EditEventPage() {
       <div className="ev-grain" aria-hidden="true" />
 
       <section className="ev-head">
-        <div className="ev-crumb">— <Link to={`/akce/${slug}`}>{form.name}</Link> · Upravit —</div>
+        <div className="ev-crumb">— <Link to={`/events/${slug}`}>{form.name}</Link> · Upravit —</div>
         <div className="ev-eyebrow">Úprava akce</div>
         <h1>Upravit akci</h1>
         <p className="ev-lede">Změň detaily akce — název, popis, čas, body, nebo vizuál.</p>
@@ -324,7 +324,7 @@ export default function EditEventPage() {
         <div className="ev-commit-label">— Hotovo? —</div>
         <h2>Uložit změny</h2>
         <div className="ev-commit-row">
-          <Link className="ev-btn ghost" to={`/akce/${slug}`}>Zrušit</Link>
+          <Link className="ev-btn ghost" to={`/events/${slug}`}>Zrušit</Link>
           <button type="button" className="ev-btn primary lg" onClick={handleSave} disabled={saving}>{saving ? 'Ukládám…' : 'Uložit akci'}</button>
         </div>
         <div className="ev-commit-note">{saveError ? `— Chyba: ${saveError} —` : (dirty ? '— Neuložené změny —' : '— Vše uloženo —')}</div>

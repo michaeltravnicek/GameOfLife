@@ -66,18 +66,95 @@ async function processGallery(dir) {
   }
 }
 
-// Textures tile at --tex-size (400px), so 800px is plenty even on retina.
+// The grain is featureless stationary noise. We sample a small native square and
+// make it seamless with the OFFSET method (diagonal half-roll, then heal the
+// resulting centre cross by blending the un-rolled sample over it). Unlike mirror
+// tiling this leaves NO symmetry/kaleidoscope — just organic noise that wraps.
+// Then we magnify it (nearest = crisp specks) and tile it at 1:1 (--tex-size = TILE).
+//
+// ── GRAIN KNOBS — tweak, then: rm public/img/Grain_texture_*.webp && npm run images
+//   GRAIN_SCALE   grain size in px. Native specks are magnified by this factor.
+//                 Higher = bigger/chunkier grain.
+//   GRAIN_BLUR    softness. 0 = crisp specks; ~0.8 lightly soft; ~2 clearly fuzzy.
+//   SAMPLE        native px sampled = the repeat period (= TILE / GRAIN_SCALE).
+//                 Bigger = less visible repetition, larger file.
+// On-screen speck size ≈ GRAIN_SCALE px. Changing GRAIN_SCALE or SAMPLE changes the
+// tile size — set --tex-size to the px the script logs below.
+const GRAIN_SCALE = 3;
+const GRAIN_BLUR = 0;
+const SAMPLE = 300;
+const TILE = SAMPLE * GRAIN_SCALE; // seamless (no mirror), display at 1:1
+
+// Diagonal half-roll: moves the wrap discontinuity from the tile edges to the
+// centre, so the new edges are continuous (= seamless), leaving a centre cross.
+async function rollDiag(buf, S) {
+  const k = Math.floor(S / 2);
+  const [hl, hr] = await Promise.all([
+    sharp(buf).extract({ left: k, top: 0, width: S - k, height: S }).toBuffer(),
+    sharp(buf).extract({ left: 0, top: 0, width: k, height: S }).toBuffer(),
+  ]);
+  const rx = await sharp({ create: { width: S, height: S, channels: 3, background: '#000' } })
+    .composite([{ input: hl, left: 0, top: 0 }, { input: hr, left: S - k, top: 0 }])
+    .png().toBuffer();
+  const [vt, vb] = await Promise.all([
+    sharp(rx).extract({ left: 0, top: k, width: S, height: S - k }).toBuffer(),
+    sharp(rx).extract({ left: 0, top: 0, width: S, height: k }).toBuffer(),
+  ]);
+  return sharp({ create: { width: S, height: S, channels: 3, background: '#000' } })
+    .composite([{ input: vt, left: 0, top: 0 }, { input: vb, left: 0, top: S - k }])
+    .png().toBuffer();
+}
+
+// Feathered cross mask: opaque along the centre lines (where rollDiag's seam is),
+// transparent at the edges (where we must keep the seamless rolled pixels).
+function crossMask(S) {
+  const c = S / 2, two = 2 * (S / 9) ** 2;
+  const m = Buffer.alloc(S * S);
+  for (let y = 0; y < S; y++) {
+    for (let x = 0; x < S; x++) {
+      const v = Math.max(Math.exp(-((x - c) ** 2) / two), Math.exp(-((y - c) ** 2) / two));
+      m[y * S + x] = Math.round(v * 255);
+    }
+  }
+  return m;
+}
+
+// Stable per-file 0/90/180/270 rotation so the colour variants don't share an
+// orientation (and rebuilds stay deterministic).
+function rot90(name) {
+  let h = 0;
+  for (const ch of name) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return (h % 4) * 90;
+}
+
 async function processTextures(dir) {
   const files = (await readdir(dir)).filter((f) => /\.png$/i.test(f));
+  const S = SAMPLE;
+  const mask = crossMask(S);
   for (const f of files) {
     const src = path.join(dir, f);
     const out = path.join(OUT, `${f.replace(/\.png$/i, '')}.webp`);
-    const made = await emit(src, out, () =>
-      sharp(src)
-        .resize({ width: 800, withoutEnlargement: true })
-        .webp({ quality: 82 }) // keeps alpha automatically
-        .toFile(out));
-    if (made) console.log('  img/%s.webp (texture)', f.replace(/\.png$/i, ''));
+    const made = await emit(src, out, async () => {
+      const sample = await sharp(src)
+        .extract({ left: 200, top: 200, width: S, height: S })
+        .removeAlpha()
+        .png().toBuffer();
+      // make seamless: heal the rolled centre cross with the un-rolled sample
+      const rolled = await rollDiag(sample, S);
+      const patch = await sharp(sample)
+        .joinChannel(mask, { raw: { width: S, height: S, channels: 1 } })
+        .png().toBuffer();
+      const seamless = await sharp(rolled)
+        .composite([{ input: patch, left: 0, top: 0 }])
+        .png().toBuffer();
+      // magnify (crisp specks) → soften → per-file rotate (still seamless)
+      let pipe = sharp(seamless).resize({ width: TILE, height: TILE, kernel: 'nearest' });
+      if (GRAIN_BLUR > 0) pipe = pipe.blur(GRAIN_BLUR);
+      const rot = rot90(f);
+      if (rot) pipe = pipe.rotate(rot);
+      await pipe.webp({ quality: 72 }).toFile(out);
+    });
+    if (made) console.log('  img/%s.webp (seamless %dpx tile)', f.replace(/\.png$/i, ''), TILE);
   }
 }
 

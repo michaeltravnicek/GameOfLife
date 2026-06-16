@@ -91,7 +91,7 @@ export default function CreateEventPage() {
       });
 
       const event = await createEvent(formData);
-      navigate(`/akce/${event.slug}`);
+      navigate(`/events/${event.slug}`);
     } catch (err) {
       setSaveError(extractApiError(err, 'Chyba při vytváření akce.'));
     } finally {
@@ -113,7 +113,7 @@ export default function CreateEventPage() {
       <div className="ev-grain" aria-hidden="true" />
 
       <section className="ev-head">
-        <div className="ev-crumb">— <Link to="/akce">Akce</Link> · Vytvořit —</div>
+        <div className="ev-crumb">— <Link to="/events">Akce</Link> · Vytvořit —</div>
         <div className="ev-eyebrow">Nová akce</div>
         <h1>Vytvořit akci</h1>
         <p className="ev-lede">Vytvoř novou akci a zapoj komunitu. Nastav kdy, kde a za kolik bodů se bude hrát.</p>
@@ -299,7 +299,7 @@ export default function CreateEventPage() {
         <div className="ev-commit-label">— Hotovo? —</div>
         <h2>Vytvořit akci</h2>
         <div className="ev-commit-row">
-          <Link className="ev-btn ghost" to="/akce">Zrušit</Link>
+          <Link className="ev-btn ghost" to="/events">Zrušit</Link>
           <button type="button" className="ev-btn primary lg" onClick={handleSave} disabled={saving}>{saving ? 'Vytvářím…' : 'Vytvořit akci'}</button>
         </div>
         <div className="ev-commit-note">{saveError ? `— Chyba: ${saveError} —` : (dirty ? '— Neuložené změny —' : '— Připraveno —')}</div>

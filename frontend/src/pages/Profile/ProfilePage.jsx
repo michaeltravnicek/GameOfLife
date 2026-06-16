@@ -9,6 +9,7 @@ import { fetchProfile, fetchProfileSeason } from '../../services/api';
 import { useCachedQuery } from '../../services/queryCache';
 import { useAuth } from '../../context/AuthContext';
 import { CACHE_TTL } from '../../constants/config';
+import { shareLink } from '../../utils/shareUrl';
 import './ProfilePage.css';
 
 const TODAY = new Date();
@@ -128,11 +129,7 @@ export default function ProfilePage() {
   const allTotal = profile.total_points || 0;
   const initials = profile.full_name.split(/\s+/).slice(0, 2).map((w) => w[0]).join('').toUpperCase() || 'GO';
 
-  const handleShare = () => {
-    const url = window.location.href;
-    if (navigator.share) navigator.share({ title: `${profile.full_name} — Game of Life`, url }).catch(() => {});
-    else navigator.clipboard?.writeText(url);
-  };
+  const handleShare = () => shareLink(`${profile.full_name} — Game of Life`);
 
   const seasonTabs = profile.seasons?.map((s) => ({ key: s.id, label: s.label })) || [];
   const viewTabs = [
@@ -260,7 +257,7 @@ export default function ProfilePage() {
                       columns={EVENT_COLUMNS}
                       rows={upcoming}
                       rowKey={(e) => e.slug}
-                      rowLink={(e) => `/akce/${e.slug}`}
+                      rowLink={(e) => `/events/${e.slug}`}
                       rowClass={() => 'future'}
                     />
                   </div>
@@ -275,7 +272,7 @@ export default function ProfilePage() {
                     columns={EVENT_COLUMNS}
                     rows={past}
                     rowKey={(e) => e.slug}
-                    rowLink={(e) => `/akce/${e.slug}`}
+                    rowLink={(e) => `/events/${e.slug}`}
                     rowClass={() => 'past'}
                     emptyText="Zatím žádné absolvované akce v této sezóně."
                   />
