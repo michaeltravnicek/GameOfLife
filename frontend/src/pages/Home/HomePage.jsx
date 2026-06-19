@@ -122,11 +122,11 @@ export default function HomePage() {
             <h3 className="about-heading">Komunita, která hraje život naplno</h3>
             <p className="about-body">
               <strong>Game of Life</strong> je celoroční komunitní hra plná zábavy, výzev a nezapomenutelných
-              zážitků. Vzešla z přesvědčení, že nejlepší okamžiky nevznikají samy — ale když se správní
-              lidé potkají ve správný čas.
+              zážitků. Vzešla z přesvědčení, že život není jen o přežívání, ale o prožívání a je potřeba si ho
+              užít naplno. A to my přesně v naši komunitě JoyMaxxeru děláme. 
             </p>
             <p className="about-body">
-              Každý event je bodovaný. Každá výzva tě posune dál. Nejde jen o body — jde o přátelství,
+              Každý event je bodovaný. Každá výzva tě posune dál. Pojď hrát život jako hru, sbírej
               vzpomínky a odvahu vyzkoušet něco nového.
             </p>
             <div className="stats-row">
@@ -141,7 +141,7 @@ export default function HomePage() {
       {/* GALLERY */}
       <section className="gallery-section">
         <div ref={galHeadRef} className={`gal-header reveal${galHeadIn ? ' in' : ''}`}>
-          <h2 className="gal-title"><span className="gal-star">✦</span> Galerie <span className="gal-star">✦</span></h2>
+          <h2 className="gal-title"><span className="gal-cam">📷</span> Galerie <span className="gal-cam">📷</span></h2>
         </div>
         <div ref={galRef} className={`gal-container reveal${galIn ? ' in' : ''}`}>
           <button

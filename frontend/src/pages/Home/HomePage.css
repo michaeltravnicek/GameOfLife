@@ -21,8 +21,8 @@
 .home-page .lb-title{font-family:var(--font-leaderboard);font-size:clamp(44px,3.4vw,44px);letter-spacing:.05em;text-align:center;color:var(--color-cream-light);text-transform:uppercase;margin-bottom:22px;display:flex;justify-content:center;align-items:center;gap:14px}
 .home-page .lb-title .star{color:var(--color-pink);font-size:.7em}
 .home-page .lb-title .lb-trophy{font-size:.78em;line-height:1}
-.home-page .lb-card{background:#1a0f0a var(--tex-blue) 0 0/var(--tex-size) var(--tex-size) repeat;border:2px solid #1a1a1a;border-bottom:8px solid #1a1a1a;border-radius:14px;overflow:hidden;box-shadow:0 16px 40px rgba(0,0,0,.5)}
-.home-page .lb-head{display:grid;grid-template-columns:52px 1fr 120px;align-items:center;gap:14px;padding:9px 18px;font-family:var(--font-body);font-style:italic;font-weight:600;font-size:16px;letter-spacing:.02em;text-transform:none;background-color:var(--color-cream-light);color:#1a1a1a;border-bottom:2px solid #1a1a1a}
+.home-page .lb-card{background:#1a0f0a var(--tex-blue) 0 0/var(--tex-size) var(--tex-size) repeat;border:2px solid #1a1a1a;border-bottom:8px solid #1a1a1a;border-radius:14px;overflow:hidden;padding-bottom:12px;box-shadow:0 16px 40px rgba(0,0,0,.5)}
+.home-page .lb-head{display:grid;grid-template-columns:52px 1fr 120px;align-items:center;gap:14px;padding:9px 18px 9px 24px;font-family:var(--font-body);font-style:italic;font-weight:600;font-size:18px;letter-spacing:.02em;text-transform:none;background-color:var(--color-cream-light);color:#1a1a1a;border-bottom:2px solid #1a1a1a}
 .home-page .lb-head>div:first-child{text-align:center}
 .home-page .lb-head>div:nth-child(2){padding-left:16px}
 .home-page .lb-head-pts{text-align:center}
@@ -51,8 +51,8 @@
 .home-page .gallery-section::before{content:'';position:absolute;inset:0;background:url('/img/home-galeriebg.webp') center/cover;filter:blur(4px) brightness(.42) saturate(.65);transform:scale(1.05);z-index:0}
 .home-page .gallery-section > *{position:relative;z-index:1}
 .home-page .gal-header{text-align:center;padding:44px 0 0}
-.home-page .gal-title{font-family:var(--font-leaderboard);font-size:clamp(44px,3.4vw,44px);letter-spacing:.05em;text-transform:uppercase;color:var(--color-cream-light);display:flex;align-items:center;justify-content:center;gap:18px}
-.home-page .gal-star{color:var(--color-pink);font-size:.75em}
+.home-page .gal-title{font-family:var(--font-leaderboard);font-size:clamp(48px,5vw,72px);letter-spacing:.05em;text-transform:uppercase;color:var(--color-cream-light);display:flex;align-items:center;justify-content:center;gap:16px}
+.home-page .gal-cam{font-size:.82em;line-height:1}
 .home-page .gal-container{display:flex;align-items:center;justify-content:center;gap:10px;height:72vh;width:100vw;padding:44px 0 0;overflow:hidden}
 .home-page .gal-side{width:222px;height:90%;flex-shrink:0;background-size:cover;background-position:center;border:5px solid var(--color-cream-light);opacity:.55;cursor:pointer;transition:opacity .3s;padding:0;background-color:transparent;min-width:44px}
 .home-page .gal-side:focus-visible{outline:2px solid var(--color-pink);outline-offset:3px;opacity:.9}

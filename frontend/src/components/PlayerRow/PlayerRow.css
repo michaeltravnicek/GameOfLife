@@ -1,6 +1,6 @@
-.player-row{position:relative;display:grid;grid-template-columns:52px 1fr 120px;align-items:center;gap:14px;padding:14px 18px;transition:background .18s,transform .18s;text-decoration:none;color:inherit;cursor:pointer}
+.player-row{position:relative;display:grid;grid-template-columns:52px 1fr 120px;align-items:center;gap:14px;padding:10px 18px 10px 24px;transition:background .18s,transform .18s;text-decoration:none;color:inherit;cursor:pointer}
 /* Rounded ("oblouky") dashes: 14px dash + 12px gap, round caps, via repeated SVG */
-.player-row::after{content:'';position:absolute;left:18px;right:18px;bottom:0;height:3px;background:left bottom/16px 3px repeat-x url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='3'%3E%3Cline x1='1.5' y1='1.5' x2='7.5' y2='1.5' stroke='%23fff1d4' stroke-opacity='0.3' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E")}
+.player-row::after{content:'';position:absolute;left:24px;right:24px;bottom:0;height:3px;background:left bottom/16px 3px repeat-x url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='3'%3E%3Cline x1='1.5' y1='1.5' x2='7.5' y2='1.5' stroke='%23fff1d4' stroke-opacity='0.3' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E")}
 .player-row:last-child::after{display:none}
 .player-row:hover{background:rgba(255,241,212,.05);transform:translateX(2px)}
 .player-row .pr-rk{text-align:center;font-family:var(--font-display);font-size:24px;letter-spacing:.03em;color:rgba(255,241,212,.60);line-height:1}
