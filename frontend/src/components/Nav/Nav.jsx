@@ -29,12 +29,16 @@ export default function Nav() {
   const upRef = useRef(0);
   const navRef = useRef(null);
   const userRef = useRef(null);
+  const menuOpenRef = useRef(false);
 
   const closeMenu = () => setMenuOpen(false);
 
   useEffect(() => {
     const onScroll = () => {
       const y = window.pageYOffset;
+      // While the mobile menu is open, never hide the nav (it would yank the
+      // open dropdown up with it). Keep lastY current so closing doesn't jump.
+      if (menuOpenRef.current) { lastY.current = y <= 0 ? 0 : y; return; }
       if (y > lastY.current) {
         upRef.current = 0;
         setHidden(true);
@@ -61,6 +65,13 @@ export default function Nav() {
     upRef.current = 0;
   }, [location.pathname]);
 
+  // Keep the scroll handler's ref in sync; opening the menu also forces the nav
+  // visible so it can't be left hidden underneath the open dropdown.
+  useEffect(() => {
+    menuOpenRef.current = menuOpen;
+    if (menuOpen) setHidden(false);
+  }, [menuOpen]);
+
   // Close on Escape
   useEffect(() => {
     const onKey = (e) => { if (e.key === 'Escape') { setMenuOpen(false); setUserMenuOpen(false); } };
@@ -78,14 +89,18 @@ export default function Nav() {
     return () => document.removeEventListener('mousedown', onClick);
   }, [userMenuOpen]);
 
-  // Close the mobile dropdown when tapping anywhere outside the nav.
+  // Close the mobile dropdown when tapping anywhere outside the nav. Uses `click`
+  // (not `mousedown`) on purpose: `mousedown` fires the instant a touch lands —
+  // even when that touch is the start of a scroll — which would close the menu
+  // and let the nav hide on the scroll. `click` only fires on a real tap, so
+  // scrolling leaves the menu open and the nav stays put.
   useEffect(() => {
     if (!menuOpen) return undefined;
     const onClick = (e) => {
       if (navRef.current && !navRef.current.contains(e.target)) setMenuOpen(false);
     };
-    document.addEventListener('mousedown', onClick);
-    return () => document.removeEventListener('mousedown', onClick);
+    document.addEventListener('click', onClick);
+    return () => document.removeEventListener('click', onClick);
   }, [menuOpen]);
 
   // Preload chunk + data when the user signals intent (hover / keyboard focus).
@@ -190,7 +205,7 @@ export default function Nav() {
         ) : (
           <>
             <Link className="nav-drop-item" role="menuitem" to="/prihlasit" onClick={closeMenu}>Přihlásit se</Link>
-            <Link className="nav-drop-item nav-drop-start" role="menuitem" to="/registrace" onClick={closeMenu}>Start Playing ➤</Link>
+            <Link className="nav-drop-item nav-drop-start" role="menuitem" to="/registrace" onClick={closeMenu}>Přidej se ➤</Link>
           </>
         )}
       </div>

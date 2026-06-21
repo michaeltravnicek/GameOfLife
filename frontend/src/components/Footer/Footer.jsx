@@ -12,11 +12,11 @@ export default function Footer() {
           <Link className="ft-link" to="/galerie">Galerie</Link>
           <Link className="ft-link" to="/leaderboard">Leaderboard</Link>
           <a className="ft-link" style={{ marginTop: 14 }} href="#">Instagram</a>
-          <a className="ft-link" href="#">Facebook</a>
-          <a className="ft-link" href="#">TikTok</a>
+          <a className="ft-link" href="https://www.facebook.com/profile.php?id=61576755543429&sk=followers&locale=cs_CZ" target="_blank" rel="noopener noreferrer">Facebook</a>
+          <a className="ft-link" href="https://www.tiktok.com/@gameofyolo" target="_blank" rel="noopener noreferrer">TikTok</a>
         </div>
         <div className="ft-right">
-          <div className="ft-logo"><span className="sp">✦</span> GAME OF LIFE</div>
+          <div className="ft-logo"><img className="ft-logo-img" src="/assets/gameoflive-onrender-com-english-us-by-html-to-design-free-version-0905-gol-logo-bw-1.svg" alt="" aria-hidden="true" /> GAME OF LIFE</div>
           <p className="ft-desc">
             Game of Life sdružuje ty, co chtějí z každodenního stereotypu vytřískat maximum
             a nebojí se u toho jít do extrému i do hloubky. Jsme tvůj protijed na moderní izolaci.
