@@ -86,6 +86,9 @@
   .home-page .about-inner{max-width:100%}
   .home-page .about-body{max-width:100%}
   .home-page .gal-container{height:56vw}
+  /* On mobile, swap the blurred photo backdrop for the blue grain texture
+     (matches the leaderboard card on this page) — lighter + no blur cost. */
+  /* .home-page .gallery-section::before{background:var(--tex-blue-2) 0 0/var(--tex-size) var(--tex-size) repeat;filter:none;transform:none} */
 }
 
 /* 640px — slim gallery sides */

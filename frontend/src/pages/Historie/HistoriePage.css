@@ -1,11 +1,11 @@
 /* All selectors scoped under .historie-page to prevent cross-page leaks. */
 .historie-page{min-height:100vh;color:var(--color-cream-light);overflow-x:hidden;background:#1a0f0a}
 
-.historie-page .stage{position:fixed;inset:0;z-index:0;background:url('/img/gal7.webp') center 30%/cover no-repeat;filter:saturate(.78) contrast(1.02);transform:scale(1.06)}
+.historie-page .stage{position:fixed;inset:0;bottom:auto;height:100vh;height:100lvh;z-index:0;background:url('/img/gal7.webp') center 30%/cover no-repeat;filter:saturate(.78) contrast(1.02);transform:scale(1.06)}
 .historie-page .stage::after{content:'';position:absolute;inset:0;background:
   radial-gradient(ellipse at 50% 0%, rgba(45,42,142,.25) 0%, transparent 38%),
   linear-gradient(180deg, rgba(26,15,10,.55) 0%, rgba(26,15,10,.78) 38%, rgba(26,15,10,.94) 100%)}
-.historie-page .grain{position:fixed;inset:0;z-index:0;pointer-events:none;background:url('/img/Grain_texture_brown.webp') 0 0/var(--tex-size) var(--tex-size) repeat;opacity:var(--grain-opacity);mix-blend-mode:overlay}
+.historie-page .grain{position:fixed;inset:0;bottom:auto;height:100vh;height:100lvh;z-index:0;pointer-events:none;background:url('/img/Grain_texture_brown.webp') 0 0/var(--tex-size) var(--tex-size) repeat;opacity:var(--grain-opacity);mix-blend-mode:overlay}
 
 
 .historie-page .credits{position:relative;z-index:2;max-width:980px;margin:36px auto 0;padding:34px 24px 0;display:flex;justify-content:center;align-items:flex-start;gap:0}

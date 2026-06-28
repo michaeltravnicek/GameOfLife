@@ -3,9 +3,9 @@
    re-textured to "blue 2". */
 .player-page{min-height:100vh;color:var(--color-cream-light);overflow-x:hidden;padding:172px 20px 80px;max-width:900px;margin:0 auto}
 
-.player-page .stage{position:fixed;inset:0;z-index:-2;background:url('/img/gal4.webp') center 28%/cover no-repeat;filter:saturate(.7) contrast(1.02);transform:scale(1.05)}
+.player-page .stage{position:fixed;inset:0;bottom:auto;height:100vh;height:100lvh;z-index:-2;background:url('/img/gal4.webp') center 28%/cover no-repeat;filter:saturate(.7) contrast(1.02);transform:scale(1.05)}
 .player-page .stage::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 15%,rgba(45,42,142,.12) 0%,transparent 55%),linear-gradient(180deg,rgba(45,42,142,.10) 0%,rgba(26,15,10,.62) 50%,rgba(26,15,10,.84) 100%)}
-.player-page .grain{position:fixed;inset:0;z-index:-1;pointer-events:none;background:url('/img/Grain_texture_blue2.webp') 0 0/var(--tex-size) var(--tex-size) repeat;opacity:var(--grain-opacity);mix-blend-mode:overlay}
+.player-page .grain{position:fixed;inset:0;bottom:auto;height:100vh;height:100lvh;z-index:-1;pointer-events:none;background:url('/img/Grain_texture_blue2.webp') 0 0/var(--tex-size) var(--tex-size) repeat;opacity:var(--grain-opacity);mix-blend-mode:overlay}
 
 .player-page .player-status{text-align:center;padding:80px 20px;color:var(--alpha-cream-55);font-family:var(--font-mono);font-style:italic}
 
