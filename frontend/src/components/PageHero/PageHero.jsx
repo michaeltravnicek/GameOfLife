@@ -24,7 +24,6 @@ export default function PageHero({
       {eyebrow && <div className="page-hero-eyebrow">{eyebrow}</div>}
       {title && <h1 className="page-hero-title">{title}</h1>}
       {tagline && <p className="page-hero-tagline">{tagline}</p>}
-      {divider && <div className="page-hero-divider" />}
     </header>
   );
 }

@@ -138,9 +138,8 @@ export default function HistoriePage() {
       <div className="grain" aria-hidden="true" />
 
       <PageHero
-        eyebrow="Co se stalo"
+        eyebrow="Nostalgické momenty"
         title="Historie"
-        tagline="Každý táborák, každá míle, každý společný večer. Tady je naše paměť — kronika všeho, co se nedá smazat."
       />
 
       <Reveal as="section" stagger className="credits" aria-label="Souhrn">

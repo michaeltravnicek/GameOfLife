@@ -19,6 +19,11 @@
 .btn-action.joined:hover:not(:disabled){background:#3d7a52}
 .btn-ghost{background:transparent;color:var(--color-cream-light);border:1.5px solid rgba(255,241,212,.4)}
 .btn-ghost:hover:not(:disabled){border-color:var(--color-pink);color:var(--color-pink)}
+/* frost → same chunky 3D shape as nav, but a frosted translucent-black surface.
+   Pairs next to the pink nav button as a darker, secondary CTA. */
+.btn-frost{background:rgba(20,13,9,.5);color:var(--color-cream-light);border:2px solid #504d4d;border-radius:16px;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);box-shadow:0 4px 0 0 #504d4d,0 8px 22px rgba(0,0,0,.45)}
+.btn-frost:hover:not(:disabled){background:rgba(20,13,9,.68);color:var(--color-pink);transform:translateY(4px);box-shadow:0 0 0 0 #504d4d,0 4px 16px rgba(0,0,0,.4)}
+.btn-frost:active:not(:disabled){transform:translateY(4px);box-shadow:0 0 0 0 #504d4d,0 3px 12px rgba(0,0,0,.35)}
 
 /* Arrow affordance: a single connected arrow (shaft + head as one stroke).
    Drawn as an SVG mask so it inherits the button's text color via currentColor. */

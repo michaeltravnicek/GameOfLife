@@ -22,7 +22,7 @@ const examples = [
 const rewards = [
   { ico: '★', title: 'Úrovně podle leaderboardu', text: 'Bronz · Stříbro · Zlato · Legenda. Každá úroveň otevírá vlastní okruh akcí, čepic a vnitřních vtipů, kterým venku nikdo nerozumí.' },
   { ico: '%', title: 'Slevy na vstupné', text: 'Body půjde uplatnit jako slevu na vstupné na placené akce. Čím víc hraješ, tím levnější další hra. Logické.' },
-  { ico: '+', title: 'Další výhody', text: 'Přednostní registrace na vyprodané akce, merch zdarma za milníky, pozvánky na uzavřené nočky. Detaily upřesníme.' },
+  { ico: '+', title: 'Další výhody', text: 'Přednostní registrace na vyprodané akce, merch se slevou, pozvánky na uzavřené nočky. Detaily upřesníme.' },
 ];
 
 export default function OBodechPage() {
@@ -34,7 +34,7 @@ export default function OBodechPage() {
       <PageHero
         eyebrow="Systém bodů"
         title={<>O bodech<br />a cenách</>}
-        tagline="Body jsou měřítkem tvého zapojení. Odměňují odvahu vyjít z komfortní zóny, ne výhru. Tohle je kompletní pravidelník — od toho, jak se rozdávají, až po to, co za ně jednou bude."
+        divider={false}
       />
 
       <Reveal as="section" stagger className="credits" aria-label="Rozsah bodů">
@@ -54,61 +54,20 @@ export default function OBodechPage() {
         <Reveal as="section" className="section">
           <div className="sec-eyebrow">Co jsou body</div>
           <h2 className="sec-heading">Měřítko <span className="pink">zapojení</span>, ne výhry</h2>
-          <p className="intro-quote">Body měří, kolik jsi do hry vložil. Jsou odměnou za účast, za odvahu jít mimo komfortní zónu a za to, že jsi prostě přišel. Neměří, kdo doběhl první — měří, kdo se nepostavil mimo hru.</p>
-          <div className="intro-meta">
-            <span>★ Určují tvoji pozici na leaderboardu</span>
-            <span className="dot" />
-            <span>★ Ovlivňují tvůj status v komunitě</span>
-            <span className="dot" />
-            <span>★ Otevírají budoucí odměny</span>
-          </div>
-        </Reveal>
-
-        <Reveal as="section" className="section">
-          <div className="sec-eyebrow">Jak sbírat body</div>
-          <h2 className="sec-heading">Tři zdroje, <span className="pink">žádné zkratky</span></h2>
-          <div className="sources">
-            {sources.map((s) => (
-              <article key={s.num} className="source">
-                <span className="source-pts">{s.pts}</span>
-                <div className="source-num">{s.num}</div>
-                <div className="source-tag">{s.tag}</div>
-                <h3 className="source-title">{s.title}</h3>
-                <p className="source-text">{s.text}</p>
-              </article>
-            ))}
-          </div>
+          <p className="intro-quote">Body měří, kolik jsi do hry vložil. Jsou odměnou za účast, za odvahu jít mimo komfortní zónu a za to, že jsi prostě přišel.</p>
         </Reveal>
 
         <Reveal as="section" className="section">
           <div className="sec-eyebrow">Příklady</div>
           <h2 className="sec-heading">Kolik za <span className="pink">co</span></h2>
-          <p className="intro-quote" style={{ marginBottom: 28 }}>Žádný kalkulátor, žádný vzorec. Pořadatel přiřkne akci hodnotu předem podle toho, jak je dlouhá, náročná a kolik k ní bude potřeba odvahy. Pár příkladů, abys měl představu.</p>
+          <p className="intro-quote" style={{ marginBottom: 28 }}>Žádný kalkulátor, žádný vzorec. Vojta přiřkne akci hodnotu předem podle toho, jak je dlouhá, náročná a kolik k ní bude potřeba odvahy. Nové typy akcí mají často vyšší ohodnocení.</p>
 
-          <div className="examples" aria-label="Příklady">
-            <div className="examples-inner">
-              <div className="ex-head">
-                <div>Akce</div>
-                <div className="col-type">Typ</div>
-                <div className="col-diff">Obtížnost</div>
-                <div style={{ textAlign: 'right' }}>pts</div>
-              </div>
-              {examples.map((e) => (
-                <div className="ex-row" key={e.name}>
-                  <div className="ex-name">{e.name}<span className="s">{e.sub}</span></div>
-                  <span className={`ex-pill t-${e.type}`}>{e.typeLabel}</span>
-                  <span className="ex-diff">{e.diff}</span>
-                  <span className="ex-pts">{e.pts}<span className="u">pts</span></span>
-                </div>
-              ))}
-            </div>
-          </div>
         </Reveal>
 
         <Reveal as="section" className="section">
           <div className="sec-eyebrow">Odměny a výhody</div>
           <h2 className="sec-heading">Co za to <span className="pink">jednou bude</span></h2>
-          <p className="intro-quote" style={{ marginBottom: 30 }}>Reward systém se teď peče. Body si zatím šetříš na něco, co ještě neexistuje — a to je vlastně docela hezké. Tady je, co plánujeme.</p>
+          <p className="intro-quote" style={{ marginBottom: 30 }}>Reward systém se teď peče. Kromě hřejivého pocitu žádnou fyzickou odměnu zatím nedostaneš. Tady je ale, co plánujeme a na co se můžeš těšit.</p>
 
           <div className="rewards">
             {rewards.map((r) => (
@@ -129,16 +88,12 @@ export default function OBodechPage() {
           <span className="obo-cta-stamp-arrow">→</span>
         </div>
         <p className="obo-cta-text">Sleduj naše sociální sítě a web, ať ti neunikly nové informace o odměnách a benefitech.</p>
-        <div className="obo-cta-links">
-          <Button as="a" href="https://www.instagram.com/gameofyolo" target="_blank" rel="noopener noreferrer">Instagram</Button>
-          <Button as="a" href="https://www.facebook.com/gameofyolo" target="_blank" rel="noopener noreferrer">Facebook</Button>
-        </div>
       </section>
 
       <section className="cta-foot">
         <div className="label">— Body se nesbírají od stolu —</div>
         <div className="cta-row">
-          <Button as="link" to="/leaderboard" variant="ghost" size="lg">← Zpět na leaderboard</Button>
+          <Button as="link" to="/leaderboard" variant="frost" size="lg">← Zpět na leaderboard</Button>
           <Button as="link" to="/events" size="lg">Zobrazit akce <span className="arr" /></Button>
         </div>
       </section>

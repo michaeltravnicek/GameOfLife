@@ -4,10 +4,11 @@ import './Button.css';
 /**
  * Unified button — renders as <button>, <a>, or <Link> depending on `as`.
  *
- * variant : 'nav' | 'action' | 'ghost'   (default: 'nav')
+ * variant : 'nav' | 'action' | 'ghost' | 'frost'   (default: 'nav')
  *   nav    — home-page 3D filled button, for links that navigate somewhere
  *   action — round filled pill, for performing an action (submit, RSVP, share)
  *   ghost  — round outline, for secondary / back / cancel
+ *   frost  — nav's 3D shape with a frosted translucent-black surface (dark CTA)
  * size    : 'sm' | 'md' | 'lg'            (default: 'md')
  * as      : 'button' | 'a' | 'link'       (default: 'button')
  */

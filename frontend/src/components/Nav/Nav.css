@@ -51,7 +51,11 @@ nav.top.hidden{transform:translateY(calc(-120px - env(safe-area-inset-top,0px)))
 
 /* 900px — switch to hamburger; below this, the 5 nav items + centered logo + avatar can no longer coexist without overlap */
 @media(max-width:900px){
-  nav.top{left:14px;right:14px;top:calc(16px + env(safe-area-inset-top,0px));padding:0 14px}
+  /* In hamburger mode the side links are hidden, so the pill no longer needs the
+     tight 14px gutter that desktop used to fit them — keep the 24px inset from the
+     1100px breakpoint so the nav matches the page content gutter and doesn't hug
+     the screen edge. */
+  nav.top{left:24px;right:24px;top:calc(16px + env(safe-area-inset-top,0px));padding:0 14px}
   /* Hide text links on both sides; the hamburger (left) opens the full menu. */
   .nav-left .nav-item,.nav-right .nav-item{display:none}
   .nav-right .start-playing-btn{display:none}
@@ -65,7 +69,7 @@ nav.top.hidden{transform:translateY(calc(-120px - env(safe-area-inset-top,0px)))
 }
 
 @media(max-width:480px){
-  nav.top{left:12px;right:12px;top:calc(12px + env(safe-area-inset-top,0px));padding:0 16px}
+  nav.top{left:16px;right:16px;top:calc(12px + env(safe-area-inset-top,0px));padding:0 16px}
   /* The avatar is a big filled circle; nudge it in a touch so its visual gap to
      the edge matches the thin hamburger on the left (optical balance). */
   .nav-right{margin-right:2px}

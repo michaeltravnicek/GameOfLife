@@ -97,7 +97,7 @@ export default function EventsPage() {
     + (city !== 'Vše' ? 1 : 0)
     + (debouncedQuery.trim() ? 1 : 0);
 
-  const [filtersOpen, setFiltersOpen] = useState(true);
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const handleResetFilters = useCallback(() => {
     setSeason('all');
@@ -142,9 +142,8 @@ export default function EventsPage() {
       <div className="grain" />
 
       <PageHero
-        eyebrow="Kalendář · Sezóna 2025/26"
+        eyebrow={`Kalendář`}
         title="Events"
-        tagline="Kompletní seznam akcí. Od karaoke přes nahou míli, deskovky až po bruslení. Sbírej body, hraj život."
       />
 
       <section className="filterbar">

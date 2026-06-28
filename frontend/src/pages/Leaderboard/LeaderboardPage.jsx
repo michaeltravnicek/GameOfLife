@@ -75,7 +75,7 @@ export default function LeaderboardPage() {
           placeholder="Vyhledat hráče…"
           className="lb-search"
         />
-        <Link to="/o-bodech" className="lb-help-link">Co jsou to body?</Link>
+        <Link to="/o-bodech" className="lb-help-link">Co jsou body?</Link>
       </section>
 
       <main className="lb-main">
@@ -97,8 +97,7 @@ export default function LeaderboardPage() {
                   <Link
                     key={p.id}
                     to={playerLink(p)}
-                    className={`pod ${cls} clickable`}
-                    style={dim ? { opacity: 0.22 } : undefined}
+                    className={`pod ${cls} clickable${dim ? ' dim' : ''}`}
                   >
                     <div className="trophy">{TROPHIES[idx]}</div>
                     <Avatar name={p.name} photo={p.photo} size={idx === 0 ? 'xl' : 'lg'} rank={idx === 0 ? 'gold' : idx === 1 ? 'silver' : 'bronze'} className="ava" />
@@ -109,7 +108,6 @@ export default function LeaderboardPage() {
                 );
               })}
             </div>
-            <div className="stage-floor" />
           </div>
         )}
 

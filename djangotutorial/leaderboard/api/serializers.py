@@ -12,6 +12,7 @@ class CategorySerializer(serializers.ModelSerializer):
 
 class EventListSerializer(serializers.ModelSerializer):
     image = serializers.SerializerMethodField()
+    logo = serializers.SerializerMethodField()
     is_past = serializers.SerializerMethodField()
     category = CategorySerializer(read_only=True)
 
@@ -19,7 +20,7 @@ class EventListSerializer(serializers.ModelSerializer):
         model = Event
         fields = [
             "id", "slug", "name", "description", "place",
-            "date", "points", "image", "capacity", "is_past", "category",
+            "date", "points", "image", "logo", "capacity", "is_past", "category",
             "visible_to_users", "visible_to_close",
         ]
 
@@ -28,6 +29,13 @@ class EventListSerializer(serializers.ModelSerializer):
             return None
         request = self.context.get("request")
         url = obj.image.url
+        return request.build_absolute_uri(url) if request else url
+
+    def get_logo(self, obj):
+        if not obj.logo:
+            return None
+        request = self.context.get("request")
+        url = obj.logo.url
         return request.build_absolute_uri(url) if request else url
 
     def get_is_past(self, obj):

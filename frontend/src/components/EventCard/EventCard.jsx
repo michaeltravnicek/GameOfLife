@@ -41,10 +41,6 @@ function LightCard({ event }) {
     <>
       <span className="ticket-frame" aria-hidden="true" />
 
-      <span className={`evcard-status${event.is_past ? ' done' : ''}`}>
-        {event.is_past ? 'Proběhlo' : 'Akce'}
-      </span>
-
       <img
         className="evcard-badge"
         src={event.logo || '/img/GOL_main_logo_pink.webp'}
@@ -61,7 +57,13 @@ function LightCard({ event }) {
           <div className="ev-place"><span className="ev-emoji">📍</span>{event.place}</div>
         </div>
         <div className="evcard-footer">
-          <span className="evcard-pts"><span className="ev-emoji">🏆</span>+{event.points} pts</span>
+          <div className="evcard-foot-tags">
+            <span className="evcard-pts"><span className="ev-emoji">🏆</span>+{event.points} pts</span>
+            {event.category?.name && <span className="evcard-cat">{event.category.name}</span>}
+            <span className={`evcard-status${event.is_past ? ' done' : ''}`}>
+              {event.is_past ? 'Proběhlo' : 'Akce'}
+            </span>
+          </div>
           <span className="evcard-detail">Detail →</span>
         </div>
       </div>

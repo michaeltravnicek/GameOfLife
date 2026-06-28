@@ -79,8 +79,46 @@ class EventsListPaginationTests(TestCase):
         resp = self.client.get(self.url, {"limit": 5, "offset": 0})
         for ev in resp.json()["events"]:
             for key in ("id", "slug", "name", "description", "place",
-                        "date", "points", "image", "capacity", "is_past"):
+                        "date", "points", "image", "logo", "capacity", "is_past"):
                 self.assertIn(key, ev)
+
+
+class EventsListLogoTests(TestCase):
+    """The list endpoint must surface each event's own logo so the homepage
+    cards stop falling back to the generic C50 badge."""
+
+    def setUp(self):
+        self.client = APIClient()
+        self.url = reverse("api-events-list")
+
+    def test_logo_present_in_list_payload(self):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+
+        # 1x1 transparent GIF — enough for an ImageField to accept it.
+        gif = (
+            b"GIF89a\x01\x00\x01\x00\x80\x00\x00\x00\x00\x00\xff\xff\xff!"
+            b"\xf9\x04\x01\x00\x00\x00\x00,\x00\x00\x00\x00\x01\x00\x01\x00"
+            b"\x00\x02\x02D\x01\x00;"
+        )
+        Event.objects.create(
+            name="With Logo", place="Brno", points=10,
+            date=timezone.now() + timedelta(days=1),
+            logo=SimpleUploadedFile("logo.gif", gif, content_type="image/gif"),
+        )
+        events = self.client.get(self.url).json()["events"]
+        self.assertEqual(len(events), 1)
+        ev = events[0]
+        self.assertIn("logo", ev)
+        self.assertTrue(ev["logo"], "logo URL should be a non-empty absolute URL")
+        self.assertIn("event_logos/", ev["logo"])
+
+    def test_logo_is_null_when_unset(self):
+        Event.objects.create(
+            name="No Logo", place="Brno", points=10,
+            date=timezone.now() + timedelta(days=1),
+        )
+        ev = self.client.get(self.url).json()["events"][0]
+        self.assertIsNone(ev["logo"])
 
 
 class EventsSeasonFilterTests(TestCase):

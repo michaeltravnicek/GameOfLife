@@ -8,7 +8,7 @@ from leaderboard.models import Event, ImageToEvent
 # Columns the events list / home cards actually serialize.
 EVENTS_LIST_FIELDS = (
     "id", "slug", "name", "description", "place",
-    "date", "points", "image", "capacity", "category_id",
+    "date", "points", "image", "logo", "capacity", "category_id",
     "visible_to_users", "visible_to_close",
 )
 
