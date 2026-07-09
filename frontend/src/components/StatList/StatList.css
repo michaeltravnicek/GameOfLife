@@ -12,9 +12,13 @@
 
 .stat-list-empty{text-align:center;padding:44px 20px;font-family:var(--font-serif);font-style:italic;color:rgba(255,241,212,.55);font-size:14px}
 
-/* Frosted-glass skin — alternative to the blue grain box, shared by the
-   profile + player event lists. */
-.stat-list.frosted{background-color:rgba(255,241,212,.05);background-image:none;backdrop-filter:blur(18px) saturate(1.1);-webkit-backdrop-filter:blur(18px) saturate(1.1);border:1.5px solid rgba(255,255,255,.10);box-shadow:0 20px 44px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.06)}
+/* Ticket skin — the list becomes the dark panel of an evcard-dark-style
+   "ticket": brown2 grain on a base a step below the page bg, no box chrome of
+   its own. The white dashed SVG frame is supplied by the consumer, which wraps
+   the list in a positioned container with a <DashedBorder> sibling (see the
+   profile's .ticket-list). */
+.stat-list.ticket{background:#150c08 var(--tex-brown-2) 0 0/var(--tex-size) var(--tex-size) repeat;border:none;border-radius:11px;box-shadow:none}
+.stat-list.ticket::before{content:none}
 
 /* Shared event-row arrangement: rank · category · name/place · date · points. */
 .stat-list.ev-grid .stat-row{grid-template-columns:52px 90px 1fr 110px 90px}
@@ -47,6 +51,3 @@
 .stat-list .stat-row:nth-child(6){animation-delay:.34s}
 .stat-list .stat-row:nth-child(7){animation-delay:.40s}
 .stat-list .stat-row:nth-child(8){animation-delay:.46s}
-
-/* Mobile: lighten the frosted glass (smaller blur, no saturate) — far cheaper to repaint. */
-@media (max-width:768px){.stat-list.frosted{backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}}

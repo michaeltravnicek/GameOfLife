@@ -25,5 +25,6 @@ export const EVENT_COLUMNS = [
   { key: 'pts', className: 'ev-pt', render: (e) => <>+{e.pts ?? e.points}<span className="u">pts</span></> },
 ];
 
-// Frosted-glass skin + the shared event grid template.
-export const EVENT_LIST_CLASS = 'frosted ev-grid';
+// Ticket skin (dark brown2 panel; consumer supplies the dashed frame) + the
+// shared event grid template.
+export const EVENT_LIST_CLASS = 'ticket ev-grid';

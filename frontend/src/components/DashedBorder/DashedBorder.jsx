@@ -52,3 +52,10 @@ export default function DashedBorder({
     </svg>
   );
 }
+
+/* The "ticket" frame preset — the white dashed frame from the homepage
+   evcard-dark cards, reused by the profile info panels and the auth cards.
+   Pair with a dark inner panel floating ~7px inside (radius 11). */
+export const TicketFrame = () => (
+  <DashedBorder baseColor="transparent" dashColor="#fff" radius={16} width={2.5} dash={7} gap={12} />
+);

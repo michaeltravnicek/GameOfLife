@@ -8,7 +8,6 @@ import NativeBridge from './components/NativeBridge/NativeBridge';
 // and downloaded on-demand the first time the route is visited.
 import HomePage from './pages/Home/HomePage';
 
-const HomePageAlt = lazy(() => import('./pages/Home/HomePageAlt'));
 const EventsPage = lazy(() => import('./pages/Events/EventsPage'));
 const EventDetailPage = lazy(() => import('./pages/EventDetail/EventDetailPage'));
 const CreateEventPage = lazy(() => import('./pages/Events/CreateEventPage'));
@@ -60,7 +59,6 @@ export default function App() {
       <Suspense fallback={<RouteFallback />}>
         <Routes>
           <Route path="/" element={<Layout><HomePage /></Layout>} />
-          <Route path="/alt" element={<Layout><HomePageAlt /></Layout>} />
           <Route path="/events" element={<Layout><EventsPage /></Layout>} />
           <Route path="/events/:slug/upravit" element={<Layout><EditEventPage /></Layout>} />
           <Route path="/events/vytvorit" element={<Layout><CreateEventPage /></Layout>} />

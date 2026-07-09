@@ -31,10 +31,12 @@ class CheckinEventsApiTests(TestCase):
             latitude=BRNO_LAT, longitude=BRNO_LON, checkin_radius=500,
         )
 
-    def test_anonymous_user_sees_no_active_events(self):
+    def test_anonymous_user_sees_active_events(self):
+        # Guests see active events; the frontend prompts login on check-in tap.
         resp = self.client.get(self.url)
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(resp.json()["events"], [])
+        slugs = [e["slug"] for e in resp.json()["events"]]
+        self.assertIn(self.active.slug, slugs)
 
     def test_authenticated_user_sees_active_event(self):
         self.client.force_authenticate(user=self.user)
@@ -57,13 +59,15 @@ class CheckinEventsApiTests(TestCase):
         resp = self.client.get(self.url)
         self.assertEqual(resp.json()["events"], [])
 
-    def test_user_without_profile_link_sees_nothing(self):
+    def test_user_without_profile_link_sees_active_events(self):
+        # Same as guests: unlinked accounts see events; check-in itself is gated.
         profile = Profile.objects.get(user=self.user)
         profile.leaderboard_user = None
         profile.save()
         self.client.force_authenticate(user=self.user)
         resp = self.client.get(self.url)
-        self.assertEqual(resp.json()["events"], [])
+        slugs = [e["slug"] for e in resp.json()["events"]]
+        self.assertIn(self.active.slug, slugs)
 
 
 class StatsApiTests(TestCase):

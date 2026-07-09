@@ -3,8 +3,20 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import FormInput from '../../components/FormInput/FormInput';
 import Button from '../../components/Button/Button';
+import PillTabs from '../../components/PillTabs/PillTabs';
+import { TicketFrame } from '../../components/DashedBorder/DashedBorder';
 import { extractApiError } from '../../services/errors';
 import '../Login/AuthPage.css';
+import './RegisterVariants.css';
+
+// TEMPORARY — page design exploration (see RegisterVariants.css). Fold the
+// winner into AuthPage.css and delete the switcher + variants file.
+// ?v=frost|lb|plakat preselects a design for sharing previews.
+const REG_VARIANTS = [
+  { key: 'frost', label: 'Frost' },
+  { key: 'lb', label: 'Leaderboard' },
+  { key: 'plakat', label: 'Plakát' },
+];
 
 export default function RegisterPage() {
   const { register } = useAuth();
@@ -18,6 +30,10 @@ export default function RegisterPage() {
   const [pw2, setPw2] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [variant, setVariant] = useState(() => {
+    const q = new URLSearchParams(window.location.search).get('v');
+    return REG_VARIANTS.some((v) => v.key === q) ? q : 'frost';
+  });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -45,9 +61,16 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="auth-page">
+    <div className={`auth-page reg-v-${variant}`}>
       <div className="stage register-bg" />
       <div className="grain" />
+
+      {/* TEMPORARY — page design switcher (remove after picking a winner) */}
+      <section className="reg-variant-row" aria-label="Náhled designu registrace">
+        <span className="rv-label">Design stránky</span>
+        <PillTabs tabs={REG_VARIANTS} active={variant} onChange={setVariant} />
+      </section>
+
       <section className="hero-section">
         <div className="hero-inner">
           <div className="hero-eyebrow">Game of Life · Sezóna 2025/26</div>
@@ -58,7 +81,8 @@ export default function RegisterPage() {
 
       <section className="auth-container">
         <div className="auth-card wide">
-          <div className="auth-card-bg" />
+          {variant === 'plakat' && <TicketFrame />}
+          {variant === 'plakat' && <img className="reg-badge" src="/img/GOL_C50_transparent.webp" alt="" width="126" height="126" />}
           <div className="auth-card-inner">
             <div className="auth-card-tag">Game of Life</div>
             <h2 className="auth-card-title">Registrace</h2>

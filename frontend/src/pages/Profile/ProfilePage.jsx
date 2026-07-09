@@ -4,6 +4,7 @@ import PillTabs from '../../components/PillTabs/PillTabs';
 import StatList from '../../components/StatList/StatList';
 import { EVENT_COLUMNS, EVENT_LIST_CLASS } from '../../components/StatList/eventColumns';
 import Button from '../../components/Button/Button';
+import { TicketFrame } from '../../components/DashedBorder/DashedBorder';
 import PointsChart from './PointsChart';
 import { fetchProfile, fetchProfileSeason } from '../../services/api';
 import { useCachedQuery } from '../../services/queryCache';
@@ -126,7 +127,6 @@ export default function ProfilePage() {
   if (!profile || !st) return <div className="profile-page"><div style={{ padding: '2rem', textAlign: 'center' }}>Profil nenalezen</div></div>;
 
   const avg = st.evs.length ? Math.round(st.totalPts / st.evs.length) : 0;
-  const allTotal = profile.total_points || 0;
   const initials = profile.full_name.split(/\s+/).slice(0, 2).map((w) => w[0]).join('').toUpperCase() || 'GO';
 
   const handleShare = () => shareLink(`${profile.full_name} — Game of Life`);
@@ -200,11 +200,11 @@ export default function ProfilePage() {
                     <span>Připojil se {profile.since}</span>
                   </div>
 
-                  <div className="factgrid">
-                    {profile.city && <div className="fact"><div className="l">Domácí město</div><div className="v">{profile.city.split(',')[0]}</div><div className="s">Kde se nejvíc pohybuje</div></div>}
-                    <div className="fact"><div className="l">Hraje od</div><div className="v">{profile.since}</div><div className="s">{profile.seasons?.length || 0} sezóny</div></div>
-                    <div className="fact"><div className="l">Celkem bodů</div><div className="v">{allTotal}</div><div className="s">napříč všemi sezónami</div></div>
-                  </div>
+                  {profile.city && (
+                    <div className="factgrid">
+                      <div className="fact"><TicketFrame /><div className="fact-in"><div className="l">Domácí město</div><div className="v">{profile.city.split(',')[0]}</div><div className="s">Kde se nejvíc pohybuje</div></div></div>
+                    </div>
+                  )}
 
                   {(profile.instagram || profile.strava || profile.spotify || profile.tiktok) && (
                     <div className="socials">
@@ -212,30 +212,42 @@ export default function ProfilePage() {
                       <div className="socials-grid">
                         {profile.instagram && (
                           <a className="social" href={`https://instagram.com/${profile.instagram}`} target="_blank" rel="noopener noreferrer">
-                            <span className="ico">IG</span>
-                            <span className="lbl"><span className="p">Instagram</span><span className="h">@{profile.instagram}</span></span>
-                            <span className="arr">↗</span>
+                            <TicketFrame />
+                            <span className="social-in">
+                              <span className="ico">IG</span>
+                              <span className="lbl"><span className="p">Instagram</span><span className="h">@{profile.instagram}</span></span>
+                              <span className="arr">↗</span>
+                            </span>
                           </a>
                         )}
                         {profile.strava && (
                           <a className="social" href={`https://strava.com/athletes/${profile.strava}`} target="_blank" rel="noopener noreferrer">
-                            <span className="ico">ST</span>
-                            <span className="lbl"><span className="p">Strava</span><span className="h">{profile.strava}</span></span>
-                            <span className="arr">↗</span>
+                            <TicketFrame />
+                            <span className="social-in">
+                              <span className="ico">ST</span>
+                              <span className="lbl"><span className="p">Strava</span><span className="h">{profile.strava}</span></span>
+                              <span className="arr">↗</span>
+                            </span>
                           </a>
                         )}
                         {profile.spotify && (
                           <a className="social" href={`https://spotify.com/user/${profile.spotify}`} target="_blank" rel="noopener noreferrer">
-                            <span className="ico">SP</span>
-                            <span className="lbl"><span className="p">Spotify</span><span className="h">{profile.spotify}</span></span>
-                            <span className="arr">↗</span>
+                            <TicketFrame />
+                            <span className="social-in">
+                              <span className="ico">SP</span>
+                              <span className="lbl"><span className="p">Spotify</span><span className="h">{profile.spotify}</span></span>
+                              <span className="arr">↗</span>
+                            </span>
                           </a>
                         )}
                         {profile.tiktok && (
                           <a className="social" href={`https://tiktok.com/@${profile.tiktok}`} target="_blank" rel="noopener noreferrer">
-                            <span className="ico">TT</span>
-                            <span className="lbl"><span className="p">TikTok</span><span className="h">@{profile.tiktok}</span></span>
-                            <span className="arr">↗</span>
+                            <TicketFrame />
+                            <span className="social-in">
+                              <span className="ico">TT</span>
+                              <span className="lbl"><span className="p">TikTok</span><span className="h">@{profile.tiktok}</span></span>
+                              <span className="arr">↗</span>
+                            </span>
                           </a>
                         )}
                       </div>
@@ -252,14 +264,17 @@ export default function ProfilePage() {
                     <div className="sec-rule" />
                     <div className="sec-eyebrow"><span>— 03 · Nadcházející —</span><span className="meta">+{st.futurePts} pts na cestě</span></div>
                     <h2 className="sec-heading">Co ho <span className="pink">čeká.</span></h2>
-                    <StatList
-                      className={EVENT_LIST_CLASS}
-                      columns={EVENT_COLUMNS}
-                      rows={upcoming}
-                      rowKey={(e) => e.slug}
-                      rowLink={(e) => `/events/${e.slug}`}
-                      rowClass={() => 'future'}
-                    />
+                    <div className="ticket-list">
+                      <TicketFrame />
+                      <StatList
+                        className={EVENT_LIST_CLASS}
+                        columns={EVENT_COLUMNS}
+                        rows={upcoming}
+                        rowKey={(e) => e.slug}
+                        rowLink={(e) => `/events/${e.slug}`}
+                        rowClass={() => 'future'}
+                      />
+                    </div>
                   </div>
                 )}
 
@@ -267,15 +282,18 @@ export default function ProfilePage() {
                   <div className="sec-rule" />
                   <div className="sec-eyebrow"><span>— 04 · Absolvované —</span><span className="meta">+{st.pastPts} pts zatím</span></div>
                   <h2 className="sec-heading">Co má <span className="pink">za sebou.</span></h2>
-                  <StatList
-                    className={EVENT_LIST_CLASS}
-                    columns={EVENT_COLUMNS}
-                    rows={past}
-                    rowKey={(e) => e.slug}
-                    rowLink={(e) => `/events/${e.slug}`}
-                    rowClass={() => 'past'}
-                    emptyText="Zatím žádné absolvované akce v této sezóně."
-                  />
+                  <div className="ticket-list">
+                    <TicketFrame />
+                    <StatList
+                      className={EVENT_LIST_CLASS}
+                      columns={EVENT_COLUMNS}
+                      rows={past}
+                      rowKey={(e) => e.slug}
+                      rowLink={(e) => `/events/${e.slug}`}
+                      rowClass={() => 'past'}
+                      emptyText="Zatím žádné absolvované akce v této sezóně."
+                    />
+                  </div>
                 </div>
               </>
             )}
@@ -288,6 +306,8 @@ export default function ProfilePage() {
                   <h2 className="sec-heading">Křivka <span className="pink">sezóny.</span></h2>
 
                   <div className="chart-card">
+                    <TicketFrame />
+                    <div className="chart-in">
                     <div className="chart-meta">
                       <div>
                         <div className="l">Celkem v sezóně</div>
@@ -305,6 +325,7 @@ export default function ProfilePage() {
                       <div className="mini"><div className="l">Nadcházející</div><div className="v">{st.futurePts}</div><div className="s">bodů na cestě</div></div>
                       <div className="mini"><div className="l">Nejlepší akce</div><div className="v yellow">{best ? `+${best.pts}` : '—'}</div><div className="s">{best ? best.name : 'zatím nic'}</div></div>
                       <div className="mini"><div className="l">Průměr / akce</div><div className="v">{avg}</div><div className="s">bodů</div></div>
+                    </div>
                     </div>
                   </div>
                 </div>

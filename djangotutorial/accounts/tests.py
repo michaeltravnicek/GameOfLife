@@ -96,3 +96,80 @@ class ProfilePhotoUploadApiTests(TestCase):
         bad = SimpleUploadedFile("x.txt", b"nope", content_type="text/plain")
         resp = self.client.post(self.url, {"photo": bad}, format="multipart")
         self.assertEqual(resp.status_code, 400)
+
+
+class RegisterApiTests(TestCase):
+    """POST /api/auth/register/ — account creation + leaderboard linking."""
+
+    def setUp(self):
+        self.client = APIClient()
+        self.url = reverse("api-register")
+        self.payload = {
+            "username": "novacek",
+            "first_name": "Nova",
+            "email": "novacek@example.com",
+            "phone": "731 005 976",
+            "password1": "bezpecneheslo1",
+            "password2": "bezpecneheslo1",
+        }
+
+    def test_register_creates_user_and_logs_in(self):
+        resp = self.client.post(self.url, self.payload, format="json")
+        self.assertEqual(resp.status_code, 201)
+        self.assertEqual(resp.json()["user"]["username"], "novacek")
+        # Session cookie should already be authenticated (auto-login).
+        me = self.client.get(reverse("api-me"))
+        self.assertEqual(me.json()["user"]["username"], "novacek")
+
+    def test_register_links_existing_leaderboard_user_by_phone(self):
+        # A player already synced from Sheets (identified by phone number)
+        # claims their points when registering with the same phone.
+        lb = LeaderboardUser.objects.create(number=731005976, name="Nova ze Sheetu")
+        resp = self.client.post(self.url, self.payload, format="json")
+        self.assertEqual(resp.status_code, 201)
+        profile = Profile.objects.get(user__username="novacek")
+        self.assertEqual(profile.leaderboard_user_id, lb.id)
+
+    def test_register_creates_leaderboard_user_when_phone_unknown(self):
+        self.client.post(self.url, self.payload, format="json")
+        profile = Profile.objects.get(user__username="novacek")
+        self.assertIsNotNone(profile.leaderboard_user)
+        self.assertEqual(profile.leaderboard_user.number, 731005976)
+
+    def test_duplicate_username_case_insensitive_rejected(self):
+        AuthUser.objects.create_user(username="NOVACEK", password="x")
+        resp = self.client.post(self.url, self.payload, format="json")
+        self.assertEqual(resp.status_code, 400)
+        self.assertIn("username", resp.json()["errors"])
+
+    def test_duplicate_email_rejected(self):
+        AuthUser.objects.create_user(username="jiny", password="x", email="novacek@example.com")
+        resp = self.client.post(self.url, self.payload, format="json")
+        self.assertEqual(resp.status_code, 400)
+        self.assertIn("email", resp.json()["errors"])
+
+    def test_claimed_phone_rejected(self):
+        lb = LeaderboardUser.objects.create(number=731005976, name="Obsazeno")
+        other = AuthUser.objects.create_user(username="drzitel", password="x")
+        Profile.objects.create(user=other, leaderboard_user=lb)
+        resp = self.client.post(self.url, self.payload, format="json")
+        self.assertEqual(resp.status_code, 400)
+
+    def test_invalid_phone_rejected(self):
+        self.payload["phone"] = "12345"
+        resp = self.client.post(self.url, self.payload, format="json")
+        self.assertEqual(resp.status_code, 400)
+        self.assertIn("phone", resp.json()["errors"])
+
+    def test_password_mismatch_rejected(self):
+        self.payload["password2"] = "jineheslo"
+        resp = self.client.post(self.url, self.payload, format="json")
+        self.assertEqual(resp.status_code, 400)
+        self.assertIn("password2", resp.json()["errors"])
+
+    def test_phone_with_country_code_normalized(self):
+        self.payload["phone"] = "+420 731 005 976"
+        resp = self.client.post(self.url, self.payload, format="json")
+        self.assertEqual(resp.status_code, 201)
+        profile = Profile.objects.get(user__username="novacek")
+        self.assertEqual(profile.leaderboard_user.number, 731005976)

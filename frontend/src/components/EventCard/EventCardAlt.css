@@ -1,0 +1,170 @@
+/* ============================================================
+   Event card — design alternatives (frost / stub / poster).
+   All variants share the events grid slot (~200px tall) and the
+   dark photo/grain page backdrop of EventsPage.
+   ============================================================ */
+
+/* ── Shared base ── */
+.evalt{position:relative;display:flex;flex-direction:column;min-height:200px;border-radius:16px;text-decoration:none;box-sizing:border-box;transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease}
+.evalt .evalt-ico{margin-right:6px;flex:none;opacity:.85}
+.evalt .evalt-meta{display:flex;flex-direction:column;gap:6px;font-family:'Courier Prime',var(--font-mono),monospace;font-style:italic;font-size:13px;line-height:1.5}
+.evalt .evalt-meta>div{display:flex;align-items:center}
+.evalt .evalt-title{font-family:var(--font-display);font-weight:400;text-transform:uppercase;letter-spacing:.013em;line-height:.98;margin:0;display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word}
+.evalt .evalt-footer{margin-top:auto;padding-top:11px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.evalt .evalt-foot-tags{display:flex;align-items:center;gap:7px;flex-wrap:wrap;min-width:0}
+.evalt .evalt-pts{display:inline-flex;align-items:center;font-family:var(--font-hv);font-size:12px;font-weight:500;letter-spacing:.06em;padding:4px 12px;border-radius:9999px;line-height:1.6;white-space:nowrap}
+.evalt .evalt-cat{font-family:var(--font-hv);font-weight:600;font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;padding:4px 10px;border-radius:9999px;white-space:nowrap}
+.evalt .evalt-status{font-family:'Courier Prime',var(--font-mono),monospace;font-style:italic;font-size:9.5px;letter-spacing:1.2px;text-transform:uppercase;padding:4px 9px;border-radius:9999px;line-height:1.5;white-space:nowrap}
+.evalt .evalt-detail{font-family:var(--font-hv);font-size:12px;font-weight:700;font-style:italic;padding-bottom:1px;transition:color .2s,border-color .2s;line-height:1.6;white-space:nowrap}
+
+/* ════ Variant A: FROSTED GLASS ════
+   Translucent dark panel + backdrop blur over the photo backdrop.
+   1px light border + top sheen sell the glass edge. */
+.evalt-frost{padding:18px 20px 16px;background:rgba(26,15,10,.38);border:1px solid var(--alpha-cream-22);backdrop-filter:blur(14px) saturate(1.15);-webkit-backdrop-filter:blur(14px) saturate(1.15);box-shadow:inset 0 1px 0 rgba(255,241,212,.14),0 12px 32px rgba(0,0,0,.35);overflow:visible}
+/* light reflection sweeping from the top-left corner */
+.evalt-frost::before{content:'';position:absolute;inset:0;border-radius:inherit;background:linear-gradient(115deg,rgba(255,241,212,.10) 0%,transparent 42%);pointer-events:none}
+.evalt-frost:hover{transform:translateY(-4px);border-color:var(--alpha-pink-45);box-shadow:inset 0 1px 0 rgba(255,241,212,.18),0 18px 44px rgba(0,0,0,.45),0 0 24px var(--alpha-pink-18)}
+.evalt-frost:hover .evalt-detail{color:var(--color-pink);border-bottom-color:var(--color-pink)}
+.evalt-frost .evalt-badge{position:absolute;top:-46px;right:-25px;width:126px;height:126px;transform:rotate(12deg);object-fit:contain;pointer-events:none;filter:drop-shadow(0px 4px 10px rgba(0,0,0,.35));z-index:4}
+.evalt-frost .evalt-title{color:var(--color-cream-light);font-size:clamp(26px,2.8vw,34px);padding-right:80px;margin-top:5px}
+.evalt-frost .evalt-meta{margin-top:auto;padding-top:12px;color:var(--alpha-cream-78)}
+.evalt-frost .evalt-footer{border-top:1px dashed var(--alpha-cream-18)}
+.evalt-frost .evalt-pts{background:var(--alpha-gold-16);border:1px solid var(--alpha-gold-40);color:var(--color-gold)}
+.evalt-frost .evalt-cat{background:var(--alpha-cream-10);border:1px dashed var(--alpha-cream-32);color:var(--alpha-cream-78)}
+.evalt-frost .evalt-status{background:var(--alpha-cream-10);border:1px dashed var(--alpha-cream-32);color:var(--alpha-cream-78)}
+.evalt-frost .evalt-status.done{background:rgba(0,0,0,.35);color:var(--alpha-cream-55);border-color:var(--alpha-cream-18)}
+.evalt-frost .evalt-detail{color:var(--color-cream-light);border-bottom:1px dashed var(--alpha-cream-45)}
+.evalt-frost.is-past{background:rgba(26,15,10,.55)}
+.evalt-frost.is-past .evalt-title{color:var(--alpha-cream-70)}
+.evalt-frost.is-past .evalt-badge{filter:drop-shadow(0px 4px 10px rgba(0,0,0,.35)) saturate(.4);opacity:.75}
+
+/* ════ Variant B: TICKET STUB ════
+   Cream ticket, tear-off date block on the left. Notches are punched
+   with a CSS mask on the inner layer (outer link keeps the drop shadow);
+   browsers without mask-composite just render without the punch holes. */
+.evalt-stub{box-shadow:0 12px 28px rgba(0,0,0,.22)}
+.evalt-stub:hover{transform:translateY(-4px);box-shadow:0 18px 36px rgba(0,0,0,.30)}
+.evalt-stub:hover .stub-inner{border-color:var(--color-pink)}
+.evalt-stub:hover .evalt-detail{color:var(--color-pink);border-bottom-color:var(--color-pink)}
+.evalt-stub .stub-inner{--nx:96px;flex:1;display:flex;min-height:inherit;border-radius:inherit;box-sizing:border-box;border:1.5px solid rgba(26,26,26,.92);background-color:#fff1d4;background-image:var(--tex-light);background-size:var(--tex-size) var(--tex-size);background-repeat:repeat;transition:border-color .2s ease;
+  -webkit-mask-image:radial-gradient(circle 9px at var(--nx) 0,transparent 8.5px,#000 9.5px),radial-gradient(circle 9px at var(--nx) 100%,transparent 8.5px,#000 9.5px);
+  -webkit-mask-composite:source-in;
+  mask-image:radial-gradient(circle 9px at var(--nx) 0,transparent 8.5px,#000 9.5px),radial-gradient(circle 9px at var(--nx) 100%,transparent 8.5px,#000 9.5px);
+  mask-composite:intersect}
+.evalt-stub .stub-date{flex:none;width:96px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border-right:2px dashed rgba(26,26,26,.38);padding:14px 6px}
+.evalt-stub .stub-day{font-family:var(--font-display);font-size:44px;line-height:1;color:#1a1a1a}
+.evalt-stub .stub-month{font-family:'Courier Prime',var(--font-mono),monospace;font-style:italic;font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--color-pink)}
+.evalt-stub .stub-year{font-family:'Courier Prime',var(--font-mono),monospace;font-style:italic;font-size:11px;color:rgba(26,26,26,.55)}
+.evalt-stub .stub-main{flex:1;min-width:0;display:flex;flex-direction:column;padding:14px 18px 14px 16px}
+.evalt-stub .stub-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.evalt-stub .stub-brand{font-family:'Courier Prime',var(--font-mono),monospace;font-style:italic;font-size:10px;letter-spacing:.26em;text-transform:uppercase;color:rgba(26,26,26,.5)}
+.evalt-stub .evalt-title{color:#1a1a1a;font-size:clamp(24px,2.4vw,30px);margin-top:4px}
+.evalt-stub .evalt-meta{margin-top:auto;padding-top:10px;color:rgba(26,26,26,.78);font-family:var(--font-hv);font-style:normal;font-weight:500;font-size:12px}
+.evalt-stub .evalt-footer{border-top:1px dashed rgba(26,26,26,.25)}
+.evalt-stub .evalt-pts{background:var(--color-pink);color:#fff;box-shadow:0 4px 7px var(--alpha-pink-40)}
+.evalt-stub .evalt-status{background:rgba(255,241,212,.85);color:#1a1a1a;border:1px dashed var(--alpha-ink-35)}
+.evalt-stub .evalt-status.done{background:rgba(26,26,26,.55);color:rgba(255,241,212,.85);border-color:var(--alpha-cream-22)}
+.evalt-stub .evalt-detail{color:#1a1a1a;border-bottom:1px dashed rgba(26,26,26,.45)}
+.evalt-stub.is-past .stub-inner{background-color:#e6d2a8}
+
+/* ════ Variant C: POSTER family ════
+   Shared chassis: grain block, 2px ink border, hard offset shadow that
+   presses in on hover. Four color rotations of the same print idea:
+   A purple/pink · B paper/purple · C blue gig-date/gold · D pink marquee/cream. */
+.evalt-poster,.evalt-poster-b,.evalt-poster-c,.evalt-poster-d{border-radius:12px;background-size:var(--tex-size) var(--tex-size);background-repeat:repeat;border:2px solid rgba(26,26,26,.9);transition:transform .15s ease,box-shadow .15s ease;overflow:visible}
+.evalt-poster:hover,.evalt-poster-b:hover,.evalt-poster-c:hover,.evalt-poster-d:hover{transform:translate(3px,3px)}
+.evalt-poster:hover .poster-pts,.evalt-poster-b:hover .poster-pts{transform:rotate(0deg)}
+.evalt-poster .poster-pts,.evalt-poster-b .poster-pts{position:absolute;top:-15px;right:14px;transform:rotate(6deg);transform-origin:center;font-family:var(--font-display);font-size:16px;letter-spacing:.04em;padding:7px 13px;border:2px solid rgba(26,26,26,.9);border-radius:10px;box-shadow:3px 3px 0 rgba(0,0,0,.35);transition:transform .15s ease;z-index:4}
+.evalt-poster .poster-eyebrow,.evalt-poster-b .poster-eyebrow,.evalt-poster-c .poster-eyebrow{font-family:'Courier Prime',var(--font-mono),monospace;font-style:italic;font-size:10px;letter-spacing:.3em;text-transform:uppercase}
+
+/* ── A: purple / pink shadow / gold sticker ── */
+.evalt-poster{padding:20px 22px 16px;background-color:var(--color-purple);background-image:var(--tex-purple);box-shadow:7px 7px 0 var(--color-pink)}
+.evalt-poster:hover{box-shadow:4px 4px 0 var(--color-pink)}
+.evalt-poster:hover .evalt-detail{color:var(--color-gold);border-bottom-color:var(--color-gold)}
+.evalt-poster .poster-pts{background:var(--color-gold);color:#1a1a1a}
+.evalt-poster .poster-eyebrow{color:var(--alpha-cream-65)}
+.evalt-poster .evalt-title{color:var(--color-cream-light);font-size:clamp(26px,3vw,36px);margin-top:8px;padding-right:56px}
+.evalt-poster .evalt-meta{margin-top:auto;padding-top:12px;color:var(--alpha-cream-94)}
+.evalt-poster .evalt-footer{border-top:1px dashed var(--alpha-cream-22)}
+.evalt-poster .evalt-cat{background:var(--alpha-cream-10);border:1px dashed var(--alpha-cream-32);color:var(--alpha-cream-78)}
+.evalt-poster .evalt-detail{color:var(--color-cream-light);border-bottom:1px dashed var(--alpha-cream-45)}
+.evalt-poster.is-past{filter:saturate(.55) brightness(.92);box-shadow:7px 7px 0 var(--color-pink-dark)}
+.evalt-poster.is-past:hover{box-shadow:4px 4px 0 var(--color-pink-dark)}
+
+/* ── B: paper print — cream / purple shadow / pink sticker ── */
+.evalt-poster-b{padding:20px 22px 16px;background-color:var(--color-cream-light);background-image:var(--tex-light);box-shadow:7px 7px 0 var(--color-purple)}
+.evalt-poster-b:hover{box-shadow:4px 4px 0 var(--color-purple)}
+.evalt-poster-b:hover .evalt-detail{color:var(--color-pink);border-bottom-color:var(--color-pink)}
+.evalt-poster-b .poster-pts{background:var(--color-pink);color:#fff;transform:rotate(-5deg)}
+.evalt-poster-b .poster-eyebrow{color:rgba(26,26,26,.55)}
+.evalt-poster-b .evalt-title{color:#1a1a1a;font-size:clamp(26px,3vw,36px);margin-top:8px;padding-right:56px}
+.evalt-poster-b .evalt-meta{margin-top:auto;padding-top:12px;color:rgba(26,26,26,.78)}
+.evalt-poster-b .evalt-footer{border-top:1px dashed rgba(26,26,26,.3)}
+.evalt-poster-b .evalt-cat{background:rgba(26,26,26,.05);border:1px dashed rgba(26,26,26,.35);color:rgba(26,26,26,.72)}
+.evalt-poster-b .evalt-detail{color:#1a1a1a;border-bottom:1px dashed rgba(26,26,26,.45)}
+.evalt-poster-b.is-past{background-color:#e6d2a8;box-shadow:7px 7px 0 var(--alpha-purple-35)}
+.evalt-poster-b.is-past:hover{box-shadow:4px 4px 0 var(--alpha-purple-35)}
+
+/* ── C: gig poster — blue / gold shadow / huge date column ──
+   tex-blue is an opaque dark image, so tint the light grain instead:
+   cream grain × blue (multiply) = light blue paper. */
+.evalt-poster-c{background-color:var(--color-blue);background-image:var(--tex-light);background-blend-mode:multiply;box-shadow:7px 7px 0 var(--color-gold)}
+.evalt-poster-c:hover{box-shadow:4px 4px 0 var(--color-gold)}
+.evalt-poster-c:hover .evalt-detail{color:var(--color-purple);border-bottom-color:var(--color-purple)}
+.evalt-poster-c .posterc-row{flex:1;display:flex;min-height:inherit}
+.evalt-poster-c .posterc-main{flex:1;min-width:0;display:flex;flex-direction:column;padding:18px 16px 14px 22px}
+.evalt-poster-c .posterc-date{flex:none;width:104px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border-left:2px dashed rgba(26,26,26,.45);padding:14px 8px;text-align:center}
+.evalt-poster-c .pc-day{font-family:var(--font-display);font-size:56px;line-height:1;color:var(--color-purple)}
+.evalt-poster-c .pc-month{font-family:'Courier Prime',var(--font-mono),monospace;font-style:italic;font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--color-pink-dark)}
+.evalt-poster-c .pc-year{font-family:'Courier Prime',var(--font-mono),monospace;font-style:italic;font-size:11px;color:rgba(26,26,26,.6)}
+.evalt-poster-c .poster-eyebrow{color:rgba(26,26,26,.55);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.evalt-poster-c .evalt-title{color:#1a1a1a;font-size:clamp(24px,2.6vw,32px);margin-top:8px}
+.evalt-poster-c .evalt-meta{margin-top:auto;padding-top:12px;color:rgba(26,26,26,.78)}
+.evalt-poster-c .evalt-footer{border-top:1px dashed rgba(26,26,26,.35)}
+.evalt-poster-c .evalt-pts{background:var(--color-pink);color:#fff;box-shadow:0 4px 7px var(--alpha-pink-40)}
+.evalt-poster-c .evalt-detail{color:#1a1a1a;border-bottom:1px dashed rgba(26,26,26,.45)}
+.evalt-poster-c.is-past{filter:saturate(.5) brightness(.96);box-shadow:7px 7px 0 var(--color-tan)}
+.evalt-poster-c.is-past:hover{box-shadow:4px 4px 0 var(--color-tan)}
+
+/* ── D: marquee — pink / cream shadow / centered, stamped points label ── */
+.evalt-poster-d{padding:16px 20px 14px;background-color:var(--color-pink);background-image:var(--tex-brown);background-blend-mode:soft-light;box-shadow:7px 7px 0 var(--color-cream-light);align-items:center;text-align:center}
+.evalt-poster-d:hover{box-shadow:4px 4px 0 var(--color-cream-light)}
+.evalt-poster-d:hover .evalt-detail{color:var(--color-gold);border-bottom-color:var(--color-gold)}
+.evalt-poster-d .posterd-marquee{width:100%;padding-bottom:9px;border-bottom:1px dashed rgba(255,241,212,.4);font-family:'Courier Prime',var(--font-mono),monospace;font-style:italic;font-size:10px;letter-spacing:.28em;text-transform:uppercase;color:rgba(255,241,212,.9);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.evalt-poster-d .evalt-title{color:var(--color-cream-light);font-size:clamp(26px,3vw,36px);margin-top:12px}
+.evalt-poster-d .posterd-meta{margin-top:10px;font-family:'Courier Prime',var(--font-mono),monospace;font-style:italic;font-size:13px;color:rgba(255,241,212,.95);line-height:1.5}
+.evalt-poster-d .posterd-bar{margin-top:auto;width:100%;padding-top:10px;border-top:1px dashed rgba(255,241,212,.4);display:flex;align-items:center;justify-content:space-between;gap:8px}
+.evalt-poster-d .posterd-pts{display:inline-flex;align-items:center;background:rgba(26,26,26,.9);color:var(--color-gold);font-family:var(--font-display);font-size:15px;letter-spacing:.06em;padding:4px 12px;border-radius:8px;line-height:1.5;white-space:nowrap;transform:rotate(-2deg)}
+.evalt-poster-d .evalt-detail{color:var(--color-cream-light);border-bottom:1px dashed rgba(255,241,212,.5)}
+.evalt-poster-d.is-past{filter:saturate(.6) brightness(.94);box-shadow:7px 7px 0 var(--color-tan)}
+.evalt-poster-d.is-past:hover{box-shadow:4px 4px 0 var(--color-tan)}
+
+/* ── Responsive (synced with the events grid: 1 column ≤640px) ── */
+@media(max-width:1024px){
+  .evalt-frost .evalt-title{font-size:clamp(26px,3.6vw,34px)}
+  .evalt-stub .evalt-title{font-size:clamp(22px,3vw,28px)}
+  .evalt-poster .evalt-title,.evalt-poster-b .evalt-title,.evalt-poster-d .evalt-title{font-size:clamp(26px,3.6vw,34px)}
+  .evalt-poster-c .evalt-title{font-size:clamp(22px,3vw,28px)}
+}
+@media(max-width:640px){
+  .evalt{min-height:170px}
+  .evalt-frost .evalt-title{font-size:clamp(24px,5.6vw,32px);padding-right:clamp(74px,23vw,96px)}
+  .evalt-stub .evalt-title{font-size:clamp(22px,5vw,28px)}
+  .evalt-poster .evalt-title,.evalt-poster-b .evalt-title,.evalt-poster-d .evalt-title{font-size:clamp(24px,5.6vw,32px)}
+  .evalt-poster-c .evalt-title{font-size:clamp(22px,5vw,28px)}
+}
+@media(max-width:480px){
+  .evalt-frost{padding:16px 18px 14px}
+  .evalt-frost .evalt-badge{width:clamp(96px,26vw,118px);height:clamp(96px,26vw,118px);top:clamp(-40px,-9vw,-30px);right:clamp(-18px,-4.5vw,-14px)}
+  .evalt-stub .stub-inner{--nx:80px}
+  .evalt-stub .stub-date{width:80px}
+  .evalt-stub .stub-day{font-size:36px}
+  .evalt-stub .stub-main{padding:12px 14px 12px 13px}
+  .evalt-poster,.evalt-poster-b{padding:18px 18px 14px}
+  .evalt-poster .poster-pts,.evalt-poster-b .poster-pts{font-size:14px;padding:6px 11px;top:-13px}
+  .evalt-poster-c .posterc-main{padding:16px 12px 12px 18px}
+  .evalt-poster-c .posterc-date{width:88px}
+  .evalt-poster-c .pc-day{font-size:44px}
+  .evalt-poster-d{padding:14px 16px 12px}
+  .evalt .evalt-status{font-size:12px;letter-spacing:1px;padding:5px 12px}
+}

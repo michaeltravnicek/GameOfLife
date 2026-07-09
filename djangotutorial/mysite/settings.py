@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 import os
+import sys
 import dj_database_url
 from pathlib import Path
 
@@ -204,6 +205,16 @@ CACHES = {
         }
     }
 }
+
+# Tests share Redis with the running dev server, so cached responses written
+# by test fixtures (stats, hero, events list) would be served live for up to
+# their TTL. Use an in-process cache when running under `manage.py test`.
+if "test" in sys.argv:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        }
+    }
 
 
 # Static files (CSS, JavaScript, Images)

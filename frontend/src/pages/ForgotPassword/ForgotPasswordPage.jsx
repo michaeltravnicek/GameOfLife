@@ -4,6 +4,7 @@ import { apiPasswordReset } from '../../services/api';
 import { useToast } from '../../components/Toast/ToastProvider';
 import FormInput from '../../components/FormInput/FormInput';
 import Button from '../../components/Button/Button';
+import { TicketFrame } from '../../components/DashedBorder/DashedBorder';
 import '../Login/AuthPage.css';
 
 export default function ForgotPasswordPage() {
@@ -51,7 +52,7 @@ export default function ForgotPasswordPage() {
 
       <section className="auth-container">
         <div className="auth-card">
-          <div className="auth-card-bg" />
+          <TicketFrame />
           <div className="auth-card-inner">
             <div className="auth-card-tag">Game of Life</div>
             <h2 className="auth-card-title">Reset hesla</h2>
