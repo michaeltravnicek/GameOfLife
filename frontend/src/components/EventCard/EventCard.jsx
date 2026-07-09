@@ -34,13 +34,11 @@ function DarkCard({ event }) {
   );
 }
 
-/* Light theme: solid black outer ring (via box-shadow) + inset dashed frame.
-   Cream + grain background, emoji-prefixed meta. */
+/* Light theme = the poster skin (events page): opaque blue grain, solid black
+   border, 3D ledge that presses down on hover, logo badge top right. */
 function LightCard({ event }) {
   return (
     <>
-      <span className="ticket-frame" aria-hidden="true" />
-
       <img
         className="evcard-badge"
         src={event.logo || '/img/GOL_main_logo_pink.webp'}

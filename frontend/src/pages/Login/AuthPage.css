@@ -1,27 +1,56 @@
-/* All selectors scoped under .auth-page to prevent cross-page leaks. */
-.auth-page{min-height:100vh;color:var(--color-cream-light);overflow-x:hidden}
-
-/* ── FULL-PAGE BACKGROUND (same pattern as events/leaderboard) ── */
-.auth-page .stage{position:fixed;inset:0;bottom:auto;height:100vh;height:100lvh;z-index:-2;background:url('/img/gal1.webp') center 50%/cover no-repeat;filter:saturate(.7) contrast(1.02);transform:scale(1.05)}
-.auth-page .stage::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 8%,rgba(45,42,142,.20) 0%,transparent 25%),linear-gradient(180deg,rgba(45,42,142,.15) 0%,rgba(26,15,10,.60) 50%,rgba(26,15,10,.92) 100%)}
-.auth-page .stage.register-bg{background-image:url('/img/gal0.webp')}
-.auth-page .grain{position:fixed;inset:0;bottom:auto;height:100vh;height:100lvh;z-index:-1;pointer-events:none;background:var(--tex-brown) 0 0/var(--tex-size) var(--tex-size) repeat;opacity:var(--grain-opacity);mix-blend-mode:overlay}
+/* All selectors scoped under .auth-page to prevent cross-page leaks.
+   Poster look ("plakát"): brown grain page — same family as the homepage
+   sections — with the site-wide ticket card. No photo stage. */
+.auth-page{min-height:100vh;color:var(--color-cream-light);overflow-x:hidden;background:var(--color-brown);background-image:var(--tex-brown);background-size:var(--tex-size) var(--tex-size);background-repeat:repeat}
 
 /* ── HERO (compact — applies identically to Login, Register, Forgot password) ── */
 .auth-page .hero-section{position:relative;z-index:2;display:flex;align-items:center;justify-content:center;text-align:center;padding:108px 24px 22px;min-height:auto}
 .auth-page .hero-inner{position:relative;z-index:2;max-width:600px}
-.auth-page .hero-eyebrow{font-family:var(--font-mono);font-style:italic;font-size:12px;letter-spacing:.3em;text-transform:uppercase;color:var(--color-pink);margin-bottom:10px;display:inline-flex;align-items:center;gap:10px}
+.auth-page .hero-eyebrow{font-family:var(--font-mono);font-style:italic;font-size:12px;letter-spacing:.3em;text-transform:uppercase;color:var(--color-gold);margin-bottom:10px;display:inline-flex;align-items:center;gap:10px}
 .auth-page .hero-eyebrow::before,.auth-page .hero-eyebrow::after{content:'✦';font-size:11px;opacity:.9}
-.auth-page .hero-title{font-family:var(--font-display);font-size:clamp(40px,6.5vw,72px);line-height:.96;letter-spacing:.02em;color:var(--color-cream-light);text-transform:uppercase;text-shadow:0 4px 32px rgba(0,0,0,.55);margin-bottom:8px;font-weight:400}
+.auth-page .hero-title{font-family:var(--font-display);font-size:clamp(40px,6.5vw,72px);line-height:.96;letter-spacing:.02em;color:var(--color-cream-light);text-transform:uppercase;text-shadow:0 4px 24px rgba(0,0,0,.35);margin-bottom:8px;font-weight:400}
 .auth-page .hero-sub{font-size:13.5px;line-height:1.5;color:rgba(255,255,255,.74);max-width:420px;margin:0 auto;font-style:italic}
 
-/* ── AUTH CARD — unified width across all auth pages. Ticket skin: white
-   dashed SVG frame (TicketFrame) + dark brown2 panel floating 7px inside,
-   same as the homepage event cards and the profile info panels. ── */
+/* ── AUTH CARD — unified across all auth pages. The homepage evcard-dark
+   ticket: white dashed SVG frame (TicketFrame) + translucent dark panel
+   floating 7px inside (brown page shows through), rotated corner badge. ── */
 .auth-page .auth-container{position:relative;z-index:2;display:flex;align-items:center;justify-content:center;padding:0 24px 64px}
 .auth-page .auth-card{width:100%;max-width:560px;border-radius:16px;position:relative;padding:7px}
 .auth-page .auth-card.wide{max-width:560px}  /* legacy modifier kept as no-op */
-.auth-page .auth-card-inner{position:relative;z-index:2;padding:36px 40px 38px;background:#150c08 var(--tex-brown-2) 0 0/var(--tex-size) var(--tex-size) repeat;border-radius:11px;box-shadow:0 32px 100px rgba(0,0,0,.55)}
+.auth-page .auth-card-inner{position:relative;z-index:2;padding:36px 40px 38px;background:rgba(0,0,0,.20);border-radius:11px}
+.auth-page .auth-badge{position:absolute;top:-46px;right:-25px;width:126px;height:126px;transform:rotate(12deg);object-fit:contain;pointer-events:none;filter:drop-shadow(0 5px 12px rgba(0,0,0,.4));z-index:4}
+@media(max-width:480px){.auth-page .auth-badge{width:clamp(96px,26vw,118px);height:clamp(96px,26vw,118px);top:clamp(-40px,-9vw,-30px);right:clamp(-18px,-4.5vw,-14px)}}
+
+/* ── REG-POSTER — alternative look, /registrace only (root gets .reg-poster).
+   Photo background (alive, light homepage tint), one opaque poster card
+   holding the page name, and inputs as mini homepage-event-card tickets:
+   white dashed frame around a small dark panel. ── */
+/* Transparent root — the base .auth-page texture would paint OVER the
+   negative-z fixed stage and hide the photo.
+   --frame-gap = distance between an input's dashed frame and the dark panel
+   inside it; tune it here for the whole page. */
+.auth-page.reg-poster{background:none;--frame-gap:2px}
+.auth-page.reg-poster .stage{position:fixed;inset:0;bottom:auto;height:100vh;height:100lvh;z-index:-2;background:url('/img/gal0.webp') center 30%/cover no-repeat;filter:saturate(.8)}
+.auth-page.reg-poster .stage::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(45,42,142,.12) 0%,rgba(26,15,10,.48) 100%)}
+.auth-page.reg-poster .auth-container{padding:140px 24px 72px}
+/* Poster card — homepage lb-card material: opaque blue grain, solid black
+   border, fat bottom edge. Replaces the ticket frame on this page. */
+.auth-page.reg-poster .auth-card{padding:0;border-radius:14px;background:#1a0f0a var(--tex-blue) 0 0/var(--tex-size) var(--tex-size) repeat;border:2px solid #1a1a1a;border-bottom:8px solid #1a1a1a;box-shadow:0 16px 40px rgba(0,0,0,.5)}
+.auth-page.reg-poster .auth-card-inner{background:none;border-radius:0;padding:38px 40px 40px}
+.auth-page.reg-poster .auth-card-title{font-size:clamp(44px,7vw,68px);margin-bottom:8px}
+/* Inputs as mini tickets: the wrap is the white dashed frame, the input the
+   dark panel floating inside it (evcard-dark, shrunk to form scale). */
+.auth-page.reg-poster .form-field-input-wrap{border:2px dashed rgba(255,255,255,.85);border-radius:14px;padding:var(--frame-gap);transition:border-color .2s}
+.auth-page.reg-poster .form-field-input-wrap:focus-within{border-color:var(--color-pink)}
+/* Typed text: pale blue instead of plain white — sits with the blue grain. */
+.auth-page.reg-poster .form-field-input{background:rgba(0,0,0,.28);border-color:transparent;border-radius:9px;padding:13px 16px;color:#d7deff}
+.auth-page.reg-poster .form-field-input:focus{background:rgba(0,0,0,.4);border-color:transparent;box-shadow:none}
+.auth-page.reg-poster .form-field-input.has-error{border-color:rgba(225,84,99,.95)}
+.auth-page.reg-poster .form-field-pw-toggle{right:10px}
+@media(max-width:480px){
+  .auth-page.reg-poster .auth-container{padding:118px 12px 52px}
+  .auth-page.reg-poster .auth-card-inner{padding:28px 20px 30px}
+}
 .auth-page .auth-card-tag{font-family:var(--font-mono);font-size:11.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--color-pink);margin-bottom:8px;font-style:italic}
 .auth-page .auth-card-title{font-family:var(--font-display);font-size:clamp(30px,5.4vw,44px);letter-spacing:.04em;text-transform:uppercase;color:var(--color-cream-light);line-height:1;margin-bottom:6px;font-weight:400}
 .auth-page .auth-card-sub{font-family:var(--font-mono);font-size:13px;color:rgba(255,241,212,.55);margin-bottom:22px;line-height:1.5}

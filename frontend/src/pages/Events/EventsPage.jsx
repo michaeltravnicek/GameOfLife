@@ -6,24 +6,11 @@ import { useCachedQuery } from '../../services/queryCache';
 import { useAuth } from '../../context/AuthContext';
 import { CACHE_TTL, PAGE_SIZE_EVENTS, SEARCH_DEBOUNCE_MS } from '../../constants/config';
 import EventCard from '../../components/EventCard/EventCard';
-import EventCardAlt from '../../components/EventCard/EventCardAlt';
 import PillTabs from '../../components/PillTabs/PillTabs';
 import SearchInput from '../../components/SearchInput/SearchInput';
 import PageHero from '../../components/PageHero/PageHero';
 import { useReveal } from '../../hooks/useReveal';
 import './EventsPage.css';
-
-// TEMPORARY — card design exploration. Remove (along with EventCardAlt)
-// once a winner is picked and folded into EventCard.
-const CARD_VARIANTS = [
-  { key: 'classic', label: 'Původní' },
-  { key: 'frost', label: 'Frosted' },
-  { key: 'stub', label: 'Ticket' },
-  { key: 'poster', label: 'Poster A' },
-  { key: 'poster-b', label: 'Poster B' },
-  { key: 'poster-c', label: 'Poster C' },
-  { key: 'poster-d', label: 'Poster D' },
-];
 
 // Server response → local fields. Used by the pagination hook.
 const extractEvents = (r) => r.events || [];
@@ -111,18 +98,6 @@ export default function EventsPage() {
     + (debouncedQuery.trim() ? 1 : 0);
 
   const [filtersOpen, setFiltersOpen] = useState(false);
-  // ?cards=frost|stub|poster preselects a design — handy for sharing previews.
-  const [cardVariant, setCardVariant] = useState(() => {
-    const q = new URLSearchParams(window.location.search).get('cards');
-    return CARD_VARIANTS.some((v) => v.key === q) ? q : 'classic';
-  });
-
-  // TEMPORARY — renders the selected card design (see CARD_VARIANTS above).
-  const renderCard = useCallback((ev) => (
-    cardVariant === 'classic'
-      ? <EventCard event={ev} theme="light" />
-      : <EventCardAlt event={ev} variant={cardVariant} />
-  ), [cardVariant]);
 
   const handleResetFilters = useCallback(() => {
     setSeason('all');
@@ -236,12 +211,6 @@ export default function EventsPage() {
         </section>
       )}
 
-      {/* TEMPORARY — card design switcher (remove after picking a winner) */}
-      <section className="card-variant-row" aria-label="Náhled designu karet">
-        <span className="cv-label">Design karet</span>
-        <PillTabs tabs={CARD_VARIANTS} active={cardVariant} onChange={setCardVariant} />
-      </section>
-
       {isAdmin && (
         <section className="admin-row">
           <Link to="/events/vytvorit" className="admin-btn create-btn">+ Vytvořit akci</Link>
@@ -267,7 +236,7 @@ export default function EventsPage() {
             <div ref={upRef} className={`events-grid reveal-stagger${upIn ? ' in' : ''}`}>
               {upcoming.map((ev) => (
                 <div key={ev.id} className={`ev-wrap${isAdmin && !ev.visible_to_users ? ' ev-hidden' : ''}`}>
-                  {renderCard(ev)}
+                  <EventCard event={ev} theme="light" />
                   {isAdmin && !ev.visible_to_users && <span className="ev-hidden-badge">Skryto</span>}
                 </div>
               ))}
@@ -280,7 +249,7 @@ export default function EventsPage() {
             <div ref={pastRef} className={`events-grid reveal-stagger${pastIn ? ' in' : ''}`}>
               {past.map((ev) => (
                 <div key={ev.id} className={`ev-wrap${isAdmin && !ev.visible_to_users ? ' ev-hidden' : ''}`}>
-                  {renderCard(ev)}
+                  <EventCard event={ev} theme="light" />
                   {isAdmin && !ev.visible_to_users && <span className="ev-hidden-badge">Skryto</span>}
                 </div>
               ))}

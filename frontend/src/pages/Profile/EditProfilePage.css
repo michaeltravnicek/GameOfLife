@@ -1,9 +1,13 @@
-.editprofile-page{position:relative;padding-bottom:96px}
+/* Poster form page (register-poster family): dim photo stage stays, cards are
+   opaque posters, inputs are mini tickets. --frame-gap = distance between an
+   input's dashed frame (outline) and its dark panel. */
+.editprofile-page{position:relative;padding-bottom:96px;--frame-gap:2px}
 
 .editprofile-page .ep-stage{position:fixed;inset:0;z-index:-2;background:url('/img/gal3.webp') center 30%/cover no-repeat;filter:saturate(.7) contrast(1.02);transform:scale(1.06)}
+/* Light tint — the cards are opaque posters, the photo can stay alive. */
 .editprofile-page .ep-stage::after{content:'';position:absolute;inset:0;background:
   radial-gradient(ellipse at 50% 0%, var(--alpha-purple-22) 0%, transparent 38%),
-  linear-gradient(180deg, var(--alpha-dark-55) 0%, var(--alpha-dark-80) 32%, var(--alpha-dark-95) 100%)}
+  linear-gradient(180deg, rgba(26,15,10,.35) 0%, rgba(26,15,10,.50) 32%, rgba(26,15,10,.68) 100%)}
 .editprofile-page .ep-grain{position:fixed;inset:0;z-index:-1;pointer-events:none;background:url('/img/Grain_texture_brown.webp') 0 0/var(--tex-size) var(--tex-size) repeat;opacity:var(--grain-opacity);mix-blend-mode:overlay}
 
 .editprofile-page .ep-head{position:relative;z-index:2;padding:120px 24px 28px;text-align:center;max-width:1040px;margin:0 auto}
@@ -22,12 +26,12 @@
 .editprofile-page .ep-section:last-child{margin-bottom:0}
 .editprofile-page .ep-sec-rule{height:1px;background:repeating-linear-gradient(90deg,var(--alpha-cream-45) 0 6px,transparent 6px 12px);margin-bottom:14px}
 .editprofile-page .ep-sec-eyebrow{font-family:var(--font-mono);font-style:italic;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--color-pink);margin-bottom:8px;display:flex;align-items:center;gap:10px}
-.editprofile-page .ep-sec-heading{font-family:var(--font-display);font-size:clamp(34px,3.8vw,44px);letter-spacing:.04em;color:var(--color-white);text-transform:uppercase;line-height:.95;margin-bottom:6px}
+.editprofile-page .ep-sec-heading{font-family:var(--font-display);font-size:clamp(34px,3.8vw,44px);letter-spacing:.04em;color:var(--color-white);text-transform:uppercase;line-height:.95;margin-bottom:6px;text-shadow:0 2px 18px rgba(0,0,0,.55)}
 .editprofile-page .ep-sec-heading .pink{color:var(--color-pink)}
-.editprofile-page .ep-sec-sub{font-family:var(--font-body);font-style:italic;font-size:14px;color:var(--alpha-cream-65);margin-bottom:22px;line-height:1.5;max-width:62ch}
+.editprofile-page .ep-sec-sub{font-family:var(--font-body);font-style:italic;font-size:14px;color:var(--alpha-cream-78);margin-bottom:22px;line-height:1.5;max-width:62ch;text-shadow:0 2px 10px rgba(0,0,0,.55)}
 
-.editprofile-page .ep-card{position:relative;background:var(--alpha-dark-62);backdrop-filter:blur(14px) saturate(1.1);-webkit-backdrop-filter:blur(14px) saturate(1.1);border:1.5px dashed var(--alpha-cream-22);border-radius:14px;padding:26px;overflow:hidden;box-shadow:0 14px 36px var(--alpha-black-45)}
-.editprofile-page .ep-card::after{content:'';position:absolute;inset:0;background:url('/img/Grain_texture_brown.webp') 0 0/var(--tex-size) var(--tex-size) repeat;opacity:var(--grain-opacity);mix-blend-mode:soft-light;pointer-events:none}
+/* Poster card — homepage lb-card material (photo page → opaque poster). */
+.editprofile-page .ep-card{position:relative;background:#1a0f0a var(--tex-blue) 0 0/var(--tex-size) var(--tex-size) repeat;border:2px solid #1a1a1a;border-bottom:8px solid #1a1a1a;border-radius:14px;padding:26px;overflow:hidden;box-shadow:0 16px 40px rgba(0,0,0,.5)}
 .editprofile-page .ep-card > *{position:relative;z-index:1}
 
 .editprofile-page .ep-avatar-card{display:grid;grid-template-columns:auto 1fr;gap:28px;align-items:center}
@@ -52,9 +56,12 @@
 .editprofile-page .ep-field.ep-full{grid-column:1 / -1}
 .editprofile-page .ep-field label{font-family:var(--font-mono);font-style:italic;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--alpha-cream-65);display:flex;align-items:center;justify-content:space-between;gap:10px}
 .editprofile-page .ep-hint{font-family:var(--font-body);font-style:italic;font-size:11px;letter-spacing:.04em;text-transform:none;color:var(--alpha-cream-45)}
-.editprofile-page .ep-input,.editprofile-page .ep-textarea{width:100%;background:var(--alpha-black-50);border:1.5px dashed var(--alpha-cream-22);border-radius:10px;padding:13px 16px;font-family:var(--font-body);font-size:15px;color:var(--color-white);outline:none;transition:.18s;letter-spacing:.01em}
-.editprofile-page .ep-input:hover,.editprofile-page .ep-textarea:hover{border-color:var(--alpha-cream-45)}
-.editprofile-page .ep-input:focus,.editprofile-page .ep-textarea:focus{border-color:var(--color-pink);border-style:solid;background:var(--alpha-black-60)}
+/* Mini-ticket inputs (register-poster recipe): dark panel + white dashed
+   frame floating --frame-gap outside it, drawn as an outline so no wrapper
+   element is needed. Focus turns the frame pink. */
+.editprofile-page .ep-input,.editprofile-page .ep-textarea{width:100%;background:rgba(0,0,0,.28);border:none;border-radius:9px;padding:13px 16px;font-family:var(--font-body);font-size:15px;color:var(--color-white);outline:2px dashed rgba(255,255,255,.85);outline-offset:var(--frame-gap);transition:outline-color .18s,background .18s;letter-spacing:.01em}
+.editprofile-page .ep-input:hover,.editprofile-page .ep-textarea:hover{outline-color:#fff}
+.editprofile-page .ep-input:focus,.editprofile-page .ep-textarea:focus{outline-color:var(--color-pink);background:rgba(0,0,0,.4)}
 .editprofile-page .ep-input::placeholder,.editprofile-page .ep-textarea::placeholder{color:var(--alpha-cream-45);font-style:italic}
 .editprofile-page .ep-textarea{min-height:130px;resize:vertical;line-height:1.55;font-style:italic}
 .editprofile-page .ep-input-prefix{position:relative}
@@ -66,12 +73,12 @@
 .editprofile-page .ep-social-row{display:grid;grid-template-columns:44px 1fr;gap:14px;align-items:center}
 .editprofile-page .ep-social-row .ep-ico{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--alpha-pink-16);border:1.5px dashed var(--alpha-pink-45);color:var(--color-pink);font-family:var(--font-mono);font-style:italic;font-weight:700;font-size:13px;letter-spacing:.02em;flex-shrink:0}
 .editprofile-page .ep-social-row.filled .ep-ico{background:var(--color-pink);color:var(--color-white);border-color:transparent;border-style:solid}
-.editprofile-page .ep-combo{display:flex;align-items:stretch;background:var(--alpha-black-50);border:1.5px dashed var(--alpha-cream-22);border-radius:10px;overflow:hidden;transition:.18s;min-width:0}
-.editprofile-page .ep-combo:hover{border-color:var(--alpha-cream-45)}
-.editprofile-page .ep-combo:focus-within{border-color:var(--color-pink);border-style:solid;background:var(--alpha-black-60)}
+.editprofile-page .ep-combo{display:flex;align-items:stretch;background:rgba(0,0,0,.28);border:none;border-radius:9px;overflow:hidden;outline:2px dashed rgba(255,255,255,.85);outline-offset:var(--frame-gap);transition:outline-color .18s,background .18s;min-width:0}
+.editprofile-page .ep-combo:hover{outline-color:#fff}
+.editprofile-page .ep-combo:focus-within{outline-color:var(--color-pink);background:rgba(0,0,0,.4)}
 .editprofile-page .ep-combo .ep-pre{display:flex;align-items:center;padding:0 4px 0 14px;font-family:var(--font-mono);font-style:italic;font-size:13px;color:var(--alpha-cream-55);letter-spacing:.04em;white-space:nowrap;flex-shrink:0;user-select:none}
-.editprofile-page .ep-combo .ep-input{flex:1;min-width:0;background:transparent;border:0;border-radius:0;padding:13px 14px 13px 4px}
-.editprofile-page .ep-combo .ep-input:hover,.editprofile-page .ep-combo .ep-input:focus{background:transparent;border:0}
+.editprofile-page .ep-combo .ep-input{flex:1;min-width:0;background:transparent;border:0;border-radius:0;padding:13px 14px 13px 4px;outline:none}
+.editprofile-page .ep-combo .ep-input:hover,.editprofile-page .ep-combo .ep-input:focus{background:transparent;border:0;outline:none}
 
 .editprofile-page .ep-toggle-row{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;padding:16px 0;border-bottom:1px dashed var(--alpha-cream-10)}
 .editprofile-page .ep-toggle-row:last-child{border-bottom:0}
@@ -111,7 +118,8 @@
   .editprofile-page .ep-savebar-inner{flex-direction:column;gap:10px;padding:14px 18px}
 }
 
-/* Mobile: lighten the frosted card + save bar (smaller blur, no saturate). */
+/* Mobile: lighten the save bar's blur (smaller blur, no saturate) — the cards
+   are opaque posters now, so only this chrome still blurs. */
 @media (max-width:768px){
-  .editprofile-page .ep-card,.editprofile-page .ep-savebar{backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+  .editprofile-page .ep-savebar{backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
 }

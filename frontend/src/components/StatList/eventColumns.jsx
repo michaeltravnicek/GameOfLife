@@ -25,6 +25,5 @@ export const EVENT_COLUMNS = [
   { key: 'pts', className: 'ev-pt', render: (e) => <>+{e.pts ?? e.points}<span className="u">pts</span></> },
 ];
 
-// Ticket skin (dark brown2 panel; consumer supplies the dashed frame) + the
-// shared event grid template.
-export const EVENT_LIST_CLASS = 'ticket ev-grid';
+// The shared event grid template (the ticket-panel skin is StatList's base).
+export const EVENT_LIST_CLASS = 'ev-grid';

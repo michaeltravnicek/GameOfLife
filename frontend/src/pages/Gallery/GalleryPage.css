@@ -4,7 +4,9 @@
 .gallery-page .gal-upload-btn{display:inline-block;cursor:pointer;padding:10px 20px;border-radius:var(--radius-pill);border:1px dashed var(--alpha-pink-45);color:var(--color-pink);font-family:var(--font-mono);font-size:var(--text-sm);letter-spacing:.04em;transition:background .15s}
 .gallery-page .gal-upload-btn:hover{background:var(--alpha-pink-12)}
 .gallery-page .bg-texture{position:fixed;inset:0;z-index:0;background:url('/img/gal2.webp') center 30%/cover no-repeat;filter:saturate(.78) contrast(1.02);transform:scale(1.06)}
-.gallery-page .bg-texture::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(45,42,142,.25) 0%,transparent 38%),linear-gradient(180deg,rgba(26,15,10,.68) 0%,rgba(26,15,10,.86) 38%,rgba(26,15,10,.96) 100%)}
+/* Light tint — photos in the grid still need to win, so this floor stays a
+   touch darker than history/edit-profile. */
+.gallery-page .bg-texture::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(45,42,142,.18) 0%,transparent 38%),linear-gradient(180deg,rgba(26,15,10,.42) 0%,rgba(26,15,10,.58) 38%,rgba(26,15,10,.74) 100%)}
 
 .gallery-page .view-toggle{position:relative;z-index:2;display:flex;align-items:center;justify-content:center;gap:6px;margin:28px auto 0;padding:5px;background:rgba(26,15,10,.50);border:1.5px dashed rgba(255,241,212,.28);border-radius:9999px;backdrop-filter:blur(8px);width:fit-content;isolation:isolate}
 .gallery-page .view-toggle::before{content:'';position:absolute;top:5px;bottom:5px;left:var(--pill-left,5px);width:var(--pill-w,0);background:var(--color-pink);border-radius:9999px;box-shadow:0 4px 14px rgba(225,84,99,.45);transition:left .42s cubic-bezier(.4,0,.2,1),width .42s cubic-bezier(.4,0,.2,1),opacity .2s;z-index:-1;opacity:0}
@@ -45,7 +47,7 @@
 .gallery-page .sf-chip.on{background:var(--color-pink);color:#fff;border-color:transparent;box-shadow:0 4px 14px rgba(225,84,99,.42)}
 
 .gallery-page .season-section{margin-bottom:52px}
-.gallery-page .season-heading{font-family:var(--font-display);font-size:clamp(32px,4vw,52px);letter-spacing:.06em;text-transform:uppercase;color:var(--color-cream-light);margin-bottom:6px;display:flex;align-items:center;gap:16px}
+.gallery-page .season-heading{font-family:var(--font-display);font-size:clamp(32px,4vw,52px);letter-spacing:.06em;text-transform:uppercase;color:var(--color-cream-light);margin-bottom:6px;display:flex;align-items:center;gap:16px;text-shadow:0 2px 18px rgba(0,0,0,.55)}
 .gallery-page .season-heading::after{content:'';flex:1;height:1px;background:repeating-linear-gradient(90deg,rgba(255,241,212,.32) 0 6px,transparent 6px 12px)}
 .gallery-page .season-count{font-family:var(--font-mono);font-style:italic;font-size:13px;color:rgba(255,241,212,.45);letter-spacing:.1em;margin-bottom:20px}
 

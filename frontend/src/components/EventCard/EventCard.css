@@ -15,16 +15,15 @@
 .evcard-dark .evcard-brand{color:var(--color-cream-light);font-size:clamp(22px,5vw,30px);font-family:var(--font-event-name);font-weight:400;text-transform:uppercase;line-height:1;letter-spacing:.015em}
 .evcard-dark .evcard-badge{position:absolute;width:126px;height:126px;top:-46px;right:-30px;transform:rotate(12deg);object-fit:contain;pointer-events:none;filter:drop-shadow(0px 5px 12px rgba(0,0,0,.4));z-index:4}
 
-/* ── Light theme (Events list — ticket frame: solid black outer ring + inset dashed inner) ── */
-.evcard-light{height:200px;border-radius:11px;background-color:#fff1d4;background-image:url('/img/Grain_texture_light.webp');background-size:var(--tex-size) var(--tex-size);background-repeat:repeat;box-shadow:0 12px 28px rgba(0,0,0,.22),0 0 0 1.5px rgba(26,26,26,.92)}
-.evcard-light::after{content:'';position:absolute;inset:0;background:rgba(255,253,253,.20);pointer-events:none;border-radius:8px;z-index:0}
-.evcard-light:hover{transform:translateY(-4px);box-shadow:0 18px 36px rgba(0,0,0,.30),0 0 0 1.5px var(--color-pink)}
-.evcard-light:hover .ticket-frame{border-color:var(--color-pink)}
-.evcard-light:hover .evcard-detail{color:#e15463;border-bottom-color:#e15463}
-.evcard-light.is-past{background-color:#e6d2a8}
-.evcard-light.is-past::after{background:rgba(26,15,10,.08)}
-
-.evcard-light .ticket-frame{position:absolute;inset:6px;border:1.5px dashed rgba(26,26,26,.42);border-radius:8px;pointer-events:none;z-index:2;transition:border-color .2s ease}
+/* ── Light theme (Events list — POSTER skin on the LIGHT texture: cream
+   grain, solid black border, 3D ledge drawn as box-shadow so pressing never
+   reflows the grid; hover presses the card down like a button (.btn-nav) ── */
+.evcard-light{height:200px;border-radius:14px;background:#fff1d4 var(--tex-light) 0 0/var(--tex-size) var(--tex-size) repeat;border:2px solid #1a1a1a;box-shadow:0 6px 0 0 #1a1a1a,0 14px 28px rgba(0,0,0,.35);transition:transform .13s ease,border-color .2s ease,box-shadow .13s ease}
+/* Cream lift over the grain — keeps the poster face bright. */
+.evcard-light::after{content:'';position:absolute;inset:0;background:rgba(255,253,253,.20);pointer-events:none;border-radius:12px;z-index:0}
+.evcard-light:hover{transform:translateY(6px);border-color:var(--color-pink);box-shadow:0 0 0 0 #1a1a1a,0 6px 14px rgba(0,0,0,.35)}
+.evcard-light:hover .evcard-detail{color:var(--color-pink);border-bottom-color:var(--color-pink)}
+.evcard-light.is-past{filter:brightness(.88) saturate(.85)}
 
 .evcard-light .evcard-status{font-family:'Courier Prime',var(--font-mono),monospace;font-style:italic;font-size:9.5px;letter-spacing:1.2px;text-transform:uppercase;padding:4px 9px;border-radius:9999px;background:rgba(255,241,212,.85);color:#1a1a1a;border:1px dashed rgba(26,26,26,.35);line-height:1.5;white-space:nowrap}
 .evcard-light .evcard-status.done{background:rgba(26,26,26,.55);color:rgba(255,241,212,.85);border-color:rgba(255,241,212,.25)}

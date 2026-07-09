@@ -36,10 +36,6 @@
 .events-page .fp-reset:hover{opacity:.75}
 .events-page .fp-result{font-family:var(--font-mono);font-style:italic;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,241,212,.65)}
 
-/* TEMPORARY — card design switcher row (design exploration). */
-.events-page .card-variant-row{position:relative;z-index:2;max-width:1100px;margin:14px auto 0;padding:0 24px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-.events-page .cv-label{font-family:var(--font-mono);font-style:italic;font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--color-pink)}
-
 /* Admin actions: separate row beneath the filter UI so they don't crowd it. */
 .events-page .admin-row{position:relative;z-index:2;max-width:1100px;margin:14px auto 0;padding:0 24px;display:flex;gap:10px;flex-wrap:wrap}
 
@@ -70,7 +66,6 @@
   .events-page .filterbar{padding:0 16px;gap:10px}
   .events-page .filter-panel{margin-top:14px;border-radius:14px;padding:18px 16px}
   .events-page .admin-row{padding:0 16px}
-  .events-page .card-variant-row{padding:0 16px}
   .events-page .fp-search .search-wrap{max-width:100%}
   .events-page .events-main{padding:30px 16px 64px}
 }

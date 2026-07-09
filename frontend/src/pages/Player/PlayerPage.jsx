@@ -112,7 +112,7 @@ export default function PlayerPage() {
         )}
         <div className="player-list-label">Absolvované akce</div>
         <StatList
-          className="ev-grid"
+          className="poster ev-grid"
           columns={EVENT_COLUMNS}
           rows={events}
           rowKey={(e) => e.slug}

@@ -33,8 +33,6 @@ export default function LoginPage() {
 
   return (
     <div className="auth-page">
-      <div className="stage" />
-      <div className="grain" />
       <section className="hero-section">
         <div className="hero-inner">
           <div className="hero-eyebrow">Game of Life · Sezóna 2025/26</div>
@@ -46,6 +44,7 @@ export default function LoginPage() {
       <section className="auth-container">
         <div className="auth-card">
           <TicketFrame />
+          <img className="auth-badge" src="/img/GOL_C50_transparent.webp" alt="" width="126" height="126" />
           <div className="auth-card-inner">
             <div className="auth-card-tag">Game of Life</div>
             <h2 className="auth-card-title">Přihlášení</h2>

@@ -1,0 +1,103 @@
+/* PREVIEW — poster-wall redesign of /o-bodech (print rule set). Scoped under
+   .obodechalt-page. Reading page → warm brown texture wall, no photo backdrop;
+   the page's one photo moment is the hard-edged .poster-band. Cards are print
+   artifacts: cream tickets (sources), dark tickets (table, rewards). */
+.obodechalt-page{min-height:100vh;color:var(--color-cream-light);overflow-x:hidden;background:var(--color-brown);background-image:var(--tex-brown);background-size:var(--tex-size) var(--tex-size);background-repeat:repeat}
+.obodechalt-page .page-hero-eyebrow{color:var(--color-gold)}
+
+/* ── Od/Do credits ── */
+.obodechalt-page .credits{position:relative;z-index:2;max-width:980px;margin:36px auto 0;padding:34px 24px 0;display:flex;justify-content:center;align-items:flex-start;gap:0}
+.obodechalt-page .credits::before{content:'';position:absolute;left:50%;transform:translateX(-50%);top:0;width:min(820px,calc(100% - 48px));height:1px;background:repeating-linear-gradient(90deg,var(--alpha-cream-45) 0 6px,transparent 6px 12px)}
+.obodechalt-page .credit{flex:1;max-width:240px;padding:0 18px;text-align:center}
+.obodechalt-page .credit + .credit{border-left:1px solid var(--alpha-cream-20)}
+.obodechalt-page .credit-label{font-family:var(--font-mono);font-style:italic;font-size:17px;letter-spacing:.28em;text-transform:uppercase;color:var(--color-gold);margin-bottom:10px}
+.obodechalt-page .credit-value{font-family:var(--font-display);font-size:clamp(38px,5vw,64px);letter-spacing:.04em;line-height:.95;color:var(--color-white)}
+.obodechalt-page .credit-sub{font-family:var(--font-body);font-style:italic;font-size:13px;color:var(--alpha-cream-78);margin-top:8px;line-height:1.4}
+
+/* ── Sections ── */
+.obodechalt-page main.body{position:relative;z-index:2;max-width:1040px;margin:0 auto;padding:60px 24px}
+.obodechalt-page .section{margin-bottom:64px}
+.obodechalt-page .section:last-child{margin-bottom:0}
+.obodechalt-page .sec-eyebrow{font-family:var(--font-mono);font-style:italic;font-size:16px;letter-spacing:.26em;text-transform:uppercase;color:var(--color-pink);margin-bottom:10px;display:flex;align-items:center;gap:14px}
+.obodechalt-page .sec-eyebrow::before{content:'';width:32px;height:1px;background:repeating-linear-gradient(90deg,var(--color-pink) 0 5px,transparent 5px 10px)}
+.obodechalt-page .sec-heading{font-family:var(--font-display);font-weight:400;font-size:clamp(38px,5vw,62px);letter-spacing:.03em;line-height:.95;color:var(--color-cream-light);text-transform:uppercase;margin-bottom:24px}
+.obodechalt-page .sec-heading .pink{color:var(--color-pink)}
+.obodechalt-page .intro-quote{font-family:var(--font-body);font-style:italic;font-size:clamp(20px,2.2vw,26px);line-height:1.5;color:var(--alpha-cream-94);max-width:62ch;position:relative;padding-left:24px;border-left:2px dashed var(--alpha-pink-45);margin-bottom:28px}
+.obodechalt-page .intro-quote::before{content:'"';position:absolute;left:-2px;top:-22px;font-family:var(--font-display);font-size:80px;line-height:1;color:var(--alpha-pink-35)}
+.obodechalt-page .section .intro-quote:last-child{margin-bottom:0}
+
+/* ── Sources — cream event-ticket cards (evcard-light recipe) ── */
+.obodechalt-page .sources{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.obodechalt-page .source{position:relative;background:#fff1d4 var(--tex-light) 0 0/var(--tex-size) var(--tex-size) repeat;color:var(--color-dark-brown);border-radius:16px;padding:26px 24px 24px;box-shadow:0 12px 28px rgba(0,0,0,.22),0 0 0 1.5px rgba(26,26,26,.92);transition:transform .25s}
+.obodechalt-page .source::before{content:'';position:absolute;inset:6px;border:1.5px dashed rgba(26,26,26,.42);border-radius:11px;pointer-events:none;z-index:2}
+.obodechalt-page .source::after{content:'';position:absolute;inset:0;background:rgba(255,253,253,.22);border-radius:16px;pointer-events:none;z-index:0}
+.obodechalt-page .source:hover{transform:translateY(-3px)}
+.obodechalt-page .source>*{position:relative;z-index:1}
+.obodechalt-page .source-num{font-family:var(--font-display);font-size:80px;line-height:.85;color:var(--color-pink);letter-spacing:.02em;margin-bottom:14px;opacity:.85}
+.obodechalt-page .source-tag{font-family:var(--font-mono);font-style:italic;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--color-pink-dark);margin-bottom:6px}
+.obodechalt-page .source-title{font-family:var(--font-display);font-size:26px;letter-spacing:.02em;line-height:.95;text-transform:uppercase;color:var(--color-black);margin-bottom:12px}
+.obodechalt-page .source-text{font-family:var(--font-body);font-size:13.5px;line-height:1.6;color:var(--alpha-dark-text-78)}
+.obodechalt-page .source-pts{position:absolute;top:16px;right:14px;font-family:var(--font-display);font-size:18px;letter-spacing:.04em;padding:6px 14px 3px;background:var(--color-pink);color:var(--color-white);border-radius:var(--radius-pill);box-shadow:0 4px 12px var(--alpha-pink-45);transform:rotate(4deg);z-index:3}
+
+/* ── Examples table — dark ticket (frame + brown2 panel) ── */
+.obodechalt-page .ticket-list{position:relative;padding:7px;border-radius:16px}
+.obodechalt-page .examples{position:relative;background:#150c08 var(--tex-brown-2) 0 0/var(--tex-size) var(--tex-size) repeat;border-radius:11px;padding:10px}
+.obodechalt-page .examples-inner{position:relative;z-index:1;padding:8px 6px}
+.obodechalt-page .ex-head,.obodechalt-page .ex-row{display:grid;grid-template-columns:1fr 90px 110px 110px;align-items:center;gap:14px;padding:13px 18px}
+.obodechalt-page .ex-head{font-family:var(--font-mono);font-style:italic;font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--alpha-cream-55);border-bottom:1px dashed var(--alpha-cream-22)}
+.obodechalt-page .ex-head .col-pts{text-align:right}
+.obodechalt-page .ex-row{border-bottom:1px dashed var(--alpha-cream-10);transition:background .18s,transform .18s;cursor:default}
+.obodechalt-page .ex-row:last-child{border-bottom:0}
+.obodechalt-page .ex-row:hover{background:var(--alpha-cream-05);transform:translateX(2px)}
+.obodechalt-page .ex-name{font-family:var(--font-body);font-weight:500;font-size:15px;color:var(--color-white);letter-spacing:.01em;min-width:0}
+.obodechalt-page .ex-name .s{display:block;font-family:var(--font-body);font-weight:400;font-style:italic;font-size:12px;color:var(--alpha-cream-55);margin-top:3px;letter-spacing:0}
+.obodechalt-page .ex-pill{font-family:var(--font-mono);font-style:italic;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;padding:4px 10px;border-radius:var(--radius-pill);text-align:center;justify-self:start}
+.obodechalt-page .ex-pill.t-sport{background:var(--alpha-pink-18);color:var(--color-pink-light);border:1px dashed var(--alpha-pink-40)}
+.obodechalt-page .ex-pill.t-body{background:var(--alpha-gold-16);color:var(--color-gold);border:1px dashed var(--alpha-gold-40)}
+.obodechalt-page .ex-pill.t-mind{background:var(--alpha-blue-16);color:var(--color-blue);border:1px dashed var(--alpha-blue-40)}
+.obodechalt-page .ex-pill.t-game{background:var(--alpha-green-14);color:var(--color-green);border:1px dashed var(--alpha-green-40)}
+.obodechalt-page .ex-diff{font-family:var(--font-mono);font-style:italic;font-size:12px;color:var(--alpha-cream-70);letter-spacing:.06em}
+.obodechalt-page .ex-pts{text-align:right;font-family:var(--font-display);font-size:24px;letter-spacing:.03em;color:var(--color-gold);line-height:1;white-space:nowrap}
+.obodechalt-page .ex-pts .u{font-family:var(--font-mono);font-style:italic;font-size:10px;color:var(--alpha-cream-55);letter-spacing:.16em;margin-left:5px}
+
+/* ── Poster band — the page's single photo section, hard cuts, photo alive ── */
+.obodechalt-page .poster-band{position:relative;padding:104px 24px;overflow:hidden;text-align:center}
+.obodechalt-page .pb-bg{position:absolute;inset:0;background:url('/img/gal2.webp') center 40%/cover no-repeat;filter:saturate(.8)}
+.obodechalt-page .pb-tint{position:absolute;inset:0;background:linear-gradient(180deg,rgba(45,42,142,.12) 0%,rgba(26,15,10,.48) 100%)}
+.obodechalt-page .pb-inner{position:relative;z-index:2;max-width:900px;margin:0 auto}
+.obodechalt-page .pb-eyebrow{font-family:var(--font-mono);font-style:italic;font-size:12px;letter-spacing:.3em;text-transform:uppercase;color:var(--color-gold);margin-bottom:14px;text-shadow:0 2px 10px rgba(0,0,0,.6)}
+.obodechalt-page .pb-line{font-family:var(--font-display);font-weight:400;font-size:clamp(40px,6vw,76px);letter-spacing:.03em;line-height:.95;color:#fff;text-transform:uppercase;text-shadow:0 6px 32px rgba(0,0,0,.55)}
+
+/* ── Rewards — dark ticket cards ── */
+.obodechalt-page .rewards{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.obodechalt-page .reward{position:relative;padding:7px;border-radius:16px;transition:transform .25s;display:flex}
+.obodechalt-page .reward-in{position:relative;flex:1;background:#150c08 var(--tex-brown-2) 0 0/var(--tex-size) var(--tex-size) repeat;border-radius:11px;padding:24px 22px 22px}
+.obodechalt-page .reward:hover{transform:translateY(-3px)}
+.obodechalt-page .reward:hover .dashed-border rect{stroke:var(--color-pink)}
+.obodechalt-page .soon-stamp{position:absolute;top:12px;right:12px;font-family:var(--font-display);font-size:14px;letter-spacing:.18em;padding:5px 12px 2px;background:var(--color-gold);color:var(--color-dark-brown);border:2px dashed var(--color-dark-brown);border-radius:6px;text-transform:uppercase;transform:rotate(4deg);box-shadow:0 4px 10px var(--alpha-black-35);z-index:4}
+.obodechalt-page .reward-ico{width:56px;height:56px;border-radius:50%;background:var(--alpha-pink-16);border:2px dashed var(--alpha-pink-45);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:26px;color:var(--color-pink);margin-bottom:18px}
+.obodechalt-page .reward-title{font-family:var(--font-display);font-size:24px;letter-spacing:.02em;text-transform:uppercase;color:var(--color-white);line-height:.95;margin-bottom:10px;padding-right:60px}
+.obodechalt-page .reward-text{font-family:var(--font-body);font-size:13.5px;line-height:1.6;color:var(--alpha-cream-78)}
+
+/* ── CTA ── */
+.obodechalt-page .obo-cta{position:relative;z-index:2;max-width:720px;margin:24px auto 0;padding:48px 24px 40px;text-align:center}
+.obodechalt-page .obo-cta-stamp{display:inline-flex;align-items:center;gap:14px;padding:14px 26px;border:2.5px solid var(--color-pink);border-radius:4px;font-family:var(--font-display);font-size:28px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-pink);transform:rotate(-3.5deg);background:var(--alpha-pink-12);margin-bottom:28px;box-shadow:inset 0 0 0 1px var(--alpha-pink-22),0 6px 18px var(--alpha-black-35)}
+.obodechalt-page .obo-cta-stamp-arrow{font-family:var(--font-body);font-style:italic;font-weight:300;font-size:32px;line-height:.8}
+.obodechalt-page .obo-cta-text{font-family:var(--font-body);font-style:italic;font-size:17px;line-height:1.55;color:var(--alpha-cream-78);max-width:42ch;margin:0 auto}
+.obodechalt-page .cta-foot{position:relative;z-index:2;max-width:780px;margin:24px auto 0;padding:0 24px 20px;text-align:center}
+.obodechalt-page .cta-row{display:inline-flex;gap:12px;flex-wrap:wrap;justify-content:center}
+
+@media(max-width:820px){
+  .obodechalt-page .credits{gap:0;padding-top:24px}
+  .obodechalt-page .credit{flex:1;max-width:none;padding:0 12px}
+  .obodechalt-page .credit-label{font-size:12px;letter-spacing:.2em;margin-bottom:6px}
+  .obodechalt-page .credit-value{font-size:clamp(30px,11vw,48px)}
+  .obodechalt-page .credit-sub{font-size:11px}
+  .obodechalt-page .sources,.obodechalt-page .rewards{grid-template-columns:1fr}
+  .obodechalt-page .ex-head,.obodechalt-page .ex-row{grid-template-columns:1fr 90px;gap:8px}
+  .obodechalt-page .ex-head .col-diff,.obodechalt-page .ex-row .ex-diff{display:none}
+  .obodechalt-page .ex-head .col-type,.obodechalt-page .ex-row .ex-pill{display:none}
+  .obodechalt-page .poster-band{padding:72px 18px}
+  .obodechalt-page .cta-row{flex-wrap:nowrap;gap:8px;width:100%}
+  .obodechalt-page .cta-row .btn{flex:1;min-width:0;padding-left:12px;padding-right:12px;font-size:11px}
+}

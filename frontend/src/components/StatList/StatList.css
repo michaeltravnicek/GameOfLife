@@ -1,9 +1,13 @@
-/* Leaderboard-style list — kept structurally identical to `.leaderboard-page .list`
-   so every page using <StatList> matches the leaderboard exactly. Cell styling
-   (the inner .stat-cell contents) is left to each page. */
-.stat-list{position:relative;padding:10px;background-color:#1a0f0a;background-image:url('/img/Grain_texture_blue.webp');background-repeat:repeat;background-size:var(--tex-size) var(--tex-size);border:1.5px solid rgba(255,255,255,.08);border-radius:14px;box-shadow:0 20px 44px rgba(0,0,0,.5)}
-.stat-list::before{content:'';position:absolute;inset:6px;border:1.5px dashed rgba(255,241,212,.22);border-radius:10px;pointer-events:none}
+/* Two skins, one per background material (see the homepage for both):
+   — base (ticket): dark brown2 panel for TEXTURE pages; the consumer wraps the
+     list in a positioned .ticket-list container with a <TicketFrame> sibling.
+   — .poster: the homepage .lb-card for PHOTO pages — opaque blue grain, solid
+     black border with a fat bottom edge. No frame, no blur.
+   Cell styling (the inner .stat-cell contents) is left to each page. */
+.stat-list{position:relative;padding:10px;background:#150c08 var(--tex-brown-2) 0 0/var(--tex-size) var(--tex-size) repeat;border-radius:11px}
 .stat-list-inner{position:relative;z-index:1;padding:8px 6px}
+.stat-list.poster{padding:0;background:#1a0f0a var(--tex-blue) 0 0/var(--tex-size) var(--tex-size) repeat;border:2px solid #1a1a1a;border-bottom:8px solid #1a1a1a;border-radius:14px;overflow:hidden;box-shadow:0 16px 40px rgba(0,0,0,.5)}
+.stat-list.poster .stat-list-inner{padding:10px 8px 14px}
 
 .stat-list .stat-row{display:grid;align-items:center;gap:14px;padding:13px 18px;border-bottom:1px dashed rgba(255,241,212,.10);transition:background .18s,transform .18s;text-decoration:none;color:inherit}
 .stat-list .stat-row:last-child{border-bottom:0}
@@ -11,14 +15,6 @@
 .stat-list .stat-row.clickable:hover{background:rgba(255,241,212,.05);transform:translateX(2px)}
 
 .stat-list-empty{text-align:center;padding:44px 20px;font-family:var(--font-serif);font-style:italic;color:rgba(255,241,212,.55);font-size:14px}
-
-/* Ticket skin — the list becomes the dark panel of an evcard-dark-style
-   "ticket": brown2 grain on a base a step below the page bg, no box chrome of
-   its own. The white dashed SVG frame is supplied by the consumer, which wraps
-   the list in a positioned container with a <DashedBorder> sibling (see the
-   profile's .ticket-list). */
-.stat-list.ticket{background:#150c08 var(--tex-brown-2) 0 0/var(--tex-size) var(--tex-size) repeat;border:none;border-radius:11px;box-shadow:none}
-.stat-list.ticket::before{content:none}
 
 /* Shared event-row arrangement: rank · category · name/place · date · points. */
 .stat-list.ev-grid .stat-row{grid-template-columns:52px 90px 1fr 110px 90px}
