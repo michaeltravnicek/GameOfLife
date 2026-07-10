@@ -107,6 +107,7 @@ export default function FeedbacksPage() {
                 <div className="fb-event-date">{fmtDate(g.event.date) || '—'}</div>
               </div>
               <StatList
+                className="poster"
                 columns={COLUMNS}
                 rows={g.items}
                 gridTemplate={FB_GRID}

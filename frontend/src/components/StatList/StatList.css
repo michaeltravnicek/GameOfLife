@@ -14,7 +14,7 @@
 .stat-list .stat-row.clickable{cursor:pointer}
 .stat-list .stat-row.clickable:hover{background:rgba(255,241,212,.05);transform:translateX(2px)}
 
-.stat-list-empty{text-align:center;padding:44px 20px;font-family:var(--font-serif);font-style:italic;color:rgba(255,241,212,.55);font-size:14px}
+.stat-list-empty{text-align:center;padding:44px 20px;font-family:var(--font-body);font-style:italic;color:rgba(255,241,212,.55);font-size:14px}
 
 /* Shared event-row arrangement: rank · category · name/place · date · points. */
 .stat-list.ev-grid .stat-row{grid-template-columns:52px 90px 1fr 110px 90px}

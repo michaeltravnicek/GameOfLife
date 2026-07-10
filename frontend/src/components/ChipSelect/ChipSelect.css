@@ -3,3 +3,4 @@
 .chips .chip:hover{border-color:var(--alpha-cream-45);color:var(--color-white)}
 .chips .chip.on{background:var(--color-pink);color:var(--color-white);border-color:transparent;border-style:solid;box-shadow:0 4px 12px var(--alpha-pink-40)}
 .chips .chip.on::before{content:'✓';font-style:normal;font-weight:700;font-size:10px}
+.chips-empty{font-family:var(--font-body);font-style:italic;font-size:13px;color:var(--alpha-cream-55);padding:2px 0}

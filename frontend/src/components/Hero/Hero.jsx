@@ -85,6 +85,21 @@ export default function Hero({
     setCurrent(to);
   }, [markLoaded]);
 
+  // The first slide is a CSS background, which browsers discover late and
+  // can't prioritize. Preload it with high priority the moment its URL is
+  // known so it wins the bandwidth race against everything below the fold.
+  const firstUrl = slideUrl(slides[0]);
+  useEffect(() => {
+    if (!firstUrl) return undefined;
+    const link = document.createElement('link');
+    link.rel = 'preload';
+    link.as = 'image';
+    link.href = firstUrl;
+    link.fetchPriority = 'high';
+    document.head.appendChild(link);
+    return () => { document.head.removeChild(link); };
+  }, [firstUrl]);
+
   // Opt-in scroll parallax: background lags, copy fades/lifts. Off by default so
   // the live homepage's hero stays flat.
   const slidesRef = useParallax({ speed: 0.14, disabled: !parallax });

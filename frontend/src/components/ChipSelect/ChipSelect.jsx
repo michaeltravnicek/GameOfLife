@@ -7,8 +7,9 @@ import './ChipSelect.css';
  * selected : Array<string>      — currently selected values
  * onChange : (next: string[]) => void
  * max      : number             — optional cap; adding past it is ignored
+ * emptyText: string             — note shown instead of an empty chip group
  */
-export default function ChipSelect({ options, selected, onChange, max, className = '' }) {
+export default function ChipSelect({ options, selected, onChange, max, className = '', emptyText = 'Zatím není z čeho vybírat.' }) {
   const toggle = (val) => {
     if (selected.includes(val)) {
       onChange(selected.filter((s) => s !== val));
@@ -17,6 +18,10 @@ export default function ChipSelect({ options, selected, onChange, max, className
       onChange([...selected, val]);
     }
   };
+
+  if (!options || options.length === 0) {
+    return <div className="chips-empty">{emptyText}</div>;
+  }
 
   return (
     <div className={`chips${className ? ' ' + className : ''}`}>

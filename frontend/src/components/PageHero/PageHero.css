@@ -7,7 +7,7 @@
 
 .page-hero-title{font-family:var(--font-display);font-weight:400;font-size:clamp(70px,10vw,140px);line-height:.92;color:var(--color-cream-light);text-transform:uppercase;letter-spacing:.03em;text-shadow:0 6px 34px var(--alpha-black-60)}
 
-.page-hero-tagline{font-family:var(--font-serif);font-weight:300;font-style:italic;font-size:14px;color:var(--alpha-cream-70);max-width:580px;margin:12px auto 0;line-height:1.5}
+.page-hero-tagline{font-family:var(--font-body);font-weight:300;font-style:italic;font-size:14px;color:var(--alpha-cream-70);max-width:580px;margin:12px auto 0;line-height:1.5}
 
 .page-hero-divider{width:120px;height:1px;margin:26px auto 0;background:repeating-linear-gradient(90deg,var(--alpha-cream-45) 0 5px,transparent 5px 10px)}
 

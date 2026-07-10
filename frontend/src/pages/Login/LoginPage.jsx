@@ -3,7 +3,6 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import FormInput from '../../components/FormInput/FormInput';
 import Button from '../../components/Button/Button';
-import { TicketFrame } from '../../components/DashedBorder/DashedBorder';
 import { extractApiError } from '../../services/errors';
 import './AuthPage.css';
 
@@ -32,21 +31,13 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="auth-page">
-      <section className="hero-section">
-        <div className="hero-inner">
-          <div className="hero-eyebrow">Game of Life · Sezóna 2025/26</div>
-          <h1 className="hero-title">Dobrodružství čeká!</h1>
-          <p className="hero-sub">Pokračuj tam, kde jsi skončil.</p>
-        </div>
-      </section>
+    <div className="auth-page auth-poster">
+      <div className="stage" aria-hidden="true" />
 
       <section className="auth-container">
         <div className="auth-card">
-          <TicketFrame />
-          <img className="auth-badge" src="/img/GOL_C50_transparent.webp" alt="" width="126" height="126" />
           <div className="auth-card-inner">
-            <div className="auth-card-tag">Game of Life</div>
+            <div className="auth-card-tag">Game of Life · Sezóna 2025/26</div>
             <h2 className="auth-card-title">Přihlášení</h2>
             <div className="auth-card-sub">Hráč · zadej svoje údaje</div>
             <div className="auth-divider" />

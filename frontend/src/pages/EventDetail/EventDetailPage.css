@@ -94,7 +94,8 @@
 
 @media(max-width:720px){
   .event-detail-page .poster-top{padding:110px 18px 24px}
-  .event-detail-page .credits{flex-direction:column;gap:18px;padding:22px 24px 44px}
+  /* align-items:stretch — the desktop flex-end would hug the column right. */
+  .event-detail-page .credits{flex-direction:column;align-items:stretch;gap:18px;padding:22px 24px 44px}
   .event-detail-page .credits-rule{display:none}
   .event-detail-page .credit{max-width:none;padding:0}
   .event-detail-page .credit + .credit{border-left:0;border-top:1px dashed rgba(255,241,212,.25);padding-top:18px}

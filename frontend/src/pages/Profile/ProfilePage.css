@@ -154,7 +154,8 @@
 @media(max-width:720px){
   .profile-page .poster-top{padding:110px 18px 18px}
   .profile-page .poster-avatar{width:118px;height:118px;font-size:38px;margin-bottom:18px}
-  .profile-page .credits{flex-direction:column;gap:18px;padding:24px 24px 44px}
+  /* align-items:stretch — the desktop flex-end would hug the column right. */
+  .profile-page .credits{flex-direction:column;align-items:stretch;gap:18px;padding:24px 24px 44px}
   .profile-page .credit{max-width:none;padding:0}
   .profile-page .credit + .credit{border-left:0;border-top:1px solid rgba(255,241,212,.2);padding-top:18px}
   .profile-page .action-inner{flex-direction:column;align-items:stretch;gap:14px}

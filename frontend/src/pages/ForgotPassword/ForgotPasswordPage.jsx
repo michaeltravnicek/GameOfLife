@@ -4,7 +4,6 @@ import { apiPasswordReset } from '../../services/api';
 import { useToast } from '../../components/Toast/ToastProvider';
 import FormInput from '../../components/FormInput/FormInput';
 import Button from '../../components/Button/Button';
-import { TicketFrame } from '../../components/DashedBorder/DashedBorder';
 import '../Login/AuthPage.css';
 
 export default function ForgotPasswordPage() {
@@ -39,21 +38,13 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="auth-page">
-      <section className="hero-section">
-        <div className="hero-inner">
-          <div className="hero-eyebrow">Game of Life · Sezóna 2025/26</div>
-          <h1 className="hero-title">Zapomenuté heslo</h1>
-          <p className="hero-sub">Pošleme ti odkaz na nastavení nového.</p>
-        </div>
-      </section>
+    <div className="auth-page auth-poster">
+      <div className="stage" aria-hidden="true" />
 
       <section className="auth-container">
         <div className="auth-card">
-          <TicketFrame />
-          <img className="auth-badge" src="/img/GOL_C50_transparent.webp" alt="" width="126" height="126" />
           <div className="auth-card-inner">
-            <div className="auth-card-tag">Game of Life</div>
+            <div className="auth-card-tag">Game of Life · Sezóna 2025/26</div>
             <h2 className="auth-card-title">Reset hesla</h2>
             <div className="auth-card-sub">
               {sent
@@ -67,9 +58,9 @@ export default function ForgotPasswordPage() {
                 <div className="auth-success">
                   Pokud k <strong>{email}</strong> existuje účet, dorazí ti e-mail s odkazem na obnovení hesla.
                 </div>
-                <p className="auth-foot">
-                  <Link to="/prihlasit">← Zpět na přihlášení</Link>
-                </p>
+                <Button as="link" to="/prihlasit" variant="frost" size="lg" busy={busy} className="pts-btn-wrap">
+                  ← Zpět na přihlášení
+                </Button>
               </>
             ) : (
               <form onSubmit={handleSubmit} noValidate>
@@ -84,7 +75,7 @@ export default function ForgotPasswordPage() {
                   required
                 />
                 {error && <div className="auth-error">{error}</div>}
-                <Button type="submit" variant="action" size="lg" busy={busy} className="pts-btn-wrap">
+                <Button type="submit" variant="nav" size="lg" busy={busy} className="pts-btn-wrap">
                   {busy ? 'Odesílám…' : 'Poslat odkaz →'}
                 </Button>
                 <p className="auth-foot">

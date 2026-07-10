@@ -178,7 +178,7 @@ export default function EventDetailPage() {
           className="poster-img"
           src={posterSrc}
           alt={event.name}
-          fetchpriority="high"
+          fetchPriority="high"
           onError={(e) => {
             // If the chosen image fails to load (e.g. a missing upload), fall
             // back to the default so the poster never shows a broken image.

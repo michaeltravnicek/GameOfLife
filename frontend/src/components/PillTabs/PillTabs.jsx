@@ -30,6 +30,9 @@ export default function PillTabs({ tabs, active, onChange, className = '' }) {
     return () => window.removeEventListener('resize', measure);
   }, [active, tabs]);
 
+  // After the hooks so the hook order stays stable across renders.
+  if (!tabs || tabs.length === 0) return null;
+
   return (
     <div
       ref={groupRef}

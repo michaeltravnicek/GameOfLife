@@ -4,8 +4,8 @@
    cards being opaque print artifacts (lb-card style), never from blur or from
    darkening the photo into a fade. */
 .leaderboard-page{min-height:100vh;color:var(--color-cream-light);overflow-x:hidden}
-.leaderboard-page .stage{position:fixed;inset:0;bottom:auto;height:100vh;height:100lvh;z-index:-2;background:url('/img/gal1.webp') center 28%/cover no-repeat;filter:saturate(.8)}
-.leaderboard-page .stage::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(45,42,142,.12) 0%,rgba(26,15,10,.48) 100%)}
+.leaderboard-page .stage{position:fixed;inset:0;bottom:auto;height:100vh;height:100lvh;z-index:-2;background:url('/img/gal1.webp') center 15%/cover no-repeat;filter:saturate(.8)}
+.leaderboard-page .stage::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(45,42,142,.12) 0%,rgba(26,15,10,.78) 100%)}
 .leaderboard-page .grain{position:fixed;inset:0;bottom:auto;height:100vh;height:100lvh;z-index:-1;pointer-events:none;background:url('/img/Grain_texture_blue.webp') 0 0/var(--tex-size) var(--tex-size) repeat;opacity:var(--grain-opacity);mix-blend-mode:overlay}
 
 /* Hero eyebrow sits on the photo stage here — add a shadow so it stays legible. */
@@ -75,7 +75,7 @@
    black border with a fat bottom edge, pinned onto the living photo. */
 .leaderboard-page .list{position:relative;background:#1a0f0a var(--tex-blue) 0 0/var(--tex-size) var(--tex-size) repeat;border:2px solid #1a1a1a;border-bottom:8px solid #1a1a1a;border-radius:14px;overflow:hidden;box-shadow:0 16px 40px rgba(0,0,0,.5)}
 .leaderboard-page .list-inner{position:relative;z-index:1;padding:10px 8px 14px}
-.leaderboard-page .empty{text-align:center;padding:44px 20px;font-family:var(--font-serif);font-style:italic;color:rgba(255,241,212,.55);font-size:14px}
+.leaderboard-page .empty{text-align:center;padding:44px 20px;font-family:var(--font-body);font-style:italic;color:rgba(255,241,212,.55);font-size:14px}
 
 /* ── Animations ── (heroFade keyframe is defined in PageHero.css) */
 .leaderboard-page .controls{animation:heroFade .5s ease both .56s}

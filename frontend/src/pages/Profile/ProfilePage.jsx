@@ -15,6 +15,9 @@ import './ProfilePage.css';
 
 const TODAY = new Date();
 
+// Users often save handles with the "@" — strip it so we don't render "@@".
+const handle = (h) => (h || '').replace(/^@+/, '');
+
 function seasonStats(season, today) {
   // `season` may be a lightweight summary (no events, just season_pts) or the
   // full detail (with events). When events are present we derive everything from
@@ -211,11 +214,11 @@ export default function ProfilePage() {
                       <div className="socials-label">— Najdeš ho na —</div>
                       <div className="socials-grid">
                         {profile.instagram && (
-                          <a className="social" href={`https://instagram.com/${profile.instagram}`} target="_blank" rel="noopener noreferrer">
+                          <a className="social" href={`https://instagram.com/${handle(profile.instagram)}`} target="_blank" rel="noopener noreferrer">
                             <TicketFrame />
                             <span className="social-in">
                               <span className="ico">IG</span>
-                              <span className="lbl"><span className="p">Instagram</span><span className="h">@{profile.instagram}</span></span>
+                              <span className="lbl"><span className="p">Instagram</span><span className="h">@{handle(profile.instagram)}</span></span>
                               <span className="arr">↗</span>
                             </span>
                           </a>
@@ -241,11 +244,11 @@ export default function ProfilePage() {
                           </a>
                         )}
                         {profile.tiktok && (
-                          <a className="social" href={`https://tiktok.com/@${profile.tiktok}`} target="_blank" rel="noopener noreferrer">
+                          <a className="social" href={`https://tiktok.com/@${handle(profile.tiktok)}`} target="_blank" rel="noopener noreferrer">
                             <TicketFrame />
                             <span className="social-in">
                               <span className="ico">TT</span>
-                              <span className="lbl"><span className="p">TikTok</span><span className="h">@{profile.tiktok}</span></span>
+                              <span className="lbl"><span className="p">TikTok</span><span className="h">@{handle(profile.tiktok)}</span></span>
                               <span className="arr">↗</span>
                             </span>
                           </a>

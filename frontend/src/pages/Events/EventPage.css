@@ -1,9 +1,11 @@
-.event-page{position:relative;padding-bottom:96px}
+/* Poster form page — mirrors EditProfilePage: dim photo stage, opaque poster
+   cards, mini-ticket inputs. --frame-gap = dashed-frame-to-panel distance. */
+.event-page{position:relative;padding-bottom:96px;--frame-gap:2px}
 
 .event-page .ev-stage{position:fixed;inset:0;z-index:-2;background:url('/img/gal2.webp') center 30%/cover no-repeat;filter:saturate(.7) contrast(1.02);transform:scale(1.06)}
 .event-page .ev-stage::after{content:'';position:absolute;inset:0;background:
   radial-gradient(ellipse at 50% 0%, var(--alpha-purple-22) 0%, transparent 38%),
-  linear-gradient(180deg, var(--alpha-dark-55) 0%, var(--alpha-dark-80) 32%, var(--alpha-dark-95) 100%)}
+  linear-gradient(180deg, var(--alpha-dark-55) 0%, var(--alpha-dark-80) 32%, var(--alpha-dark-95) 60%)}
 .event-page .ev-grain{position:fixed;inset:0;z-index:-1;pointer-events:none;background:url('/img/Grain_texture_brown.webp') 0 0/var(--tex-size) var(--tex-size) repeat;opacity:var(--grain-opacity);mix-blend-mode:overlay}
 
 .event-page .ev-head{position:relative;z-index:2;padding:120px 24px 28px;text-align:center;max-width:1040px;margin:0 auto}
@@ -26,9 +28,8 @@
 .event-page .ev-sec-heading .pink{color:var(--color-pink)}
 .event-page .ev-sec-sub{font-family:var(--font-body);font-style:italic;font-size:14px;color:var(--alpha-cream-65);margin-bottom:22px;line-height:1.5;max-width:62ch}
 
-.event-page .ev-card{position:relative;background:var(--alpha-dark-62);backdrop-filter:blur(14px) saturate(1.1);-webkit-backdrop-filter:blur(14px) saturate(1.1);border:1.5px dashed var(--alpha-cream-22);border-radius:14px;padding:26px;overflow:hidden;box-shadow:0 14px 36px var(--alpha-black-45)}
-.event-page .ev-card::after{content:'';position:absolute;inset:0;background:url('/img/Grain_texture_brown.webp') 0 0/var(--tex-size) var(--tex-size) repeat;opacity:var(--grain-opacity);mix-blend-mode:soft-light;pointer-events:none}
-.event-page .ev-card > *{position:relative;z-index:1}
+/* Poster card — homepage lb-card material (photo page → opaque poster). */
+.event-page .ev-card{position:relative;background:#1a0f0a var(--tex-blue) 0 0/var(--tex-size) var(--tex-size) repeat;border:2px solid #1a1a1a;border-bottom:8px solid #1a1a1a;border-radius:14px;padding:26px;overflow:hidden;box-shadow:0 16px 40px rgba(0,0,0,.5)}
 
 .event-page .ev-image-pair{display:grid;grid-template-columns:1fr 1fr;gap:28px}
 .event-page .ev-img-section{display:flex;flex-direction:column;gap:14px}
@@ -48,13 +49,19 @@
 .event-page .ev-btn.lg{padding:15px 32px;font-size:14px;letter-spacing:.16em}
 
 .event-page .ev-grid-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+/* Fields stacked directly in a card (no grid) need the same 18px gap, or the
+   previous input's dashed outline (drawn outside the box) crosses the label. */
+.event-page .ev-card > .ev-field + .ev-field{margin-top:18px}
 .event-page .ev-field{display:flex;flex-direction:column;gap:8px}
 .event-page .ev-field.ev-full{grid-column:1 / -1}
 .event-page .ev-field label{font-family:var(--font-mono);font-style:italic;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--alpha-cream-65);display:flex;align-items:center;justify-content:space-between;gap:10px}
 .event-page .ev-hint{font-family:var(--font-body);font-style:italic;font-size:11px;letter-spacing:.04em;text-transform:none;color:var(--alpha-cream-45)}
-.event-page .ev-input,.event-page .ev-textarea{width:100%;background:var(--alpha-black-50);border:1.5px dashed var(--alpha-cream-22);border-radius:10px;padding:13px 16px;font-family:var(--font-body);font-size:15px;color:var(--color-white);outline:none;transition:.18s;letter-spacing:.01em}
-.event-page .ev-input:hover,.event-page .ev-textarea:hover{border-color:var(--alpha-cream-45)}
-.event-page .ev-input:focus,.event-page .ev-textarea:focus{border-color:var(--color-pink);border-style:solid;background:var(--alpha-black-60)}
+/* Mini-ticket inputs (EditProfile recipe): dark panel + white dashed frame
+   floating --frame-gap outside it, drawn as an outline so no wrapper element
+   is needed. Focus turns the frame pink. */
+.event-page .ev-input,.event-page .ev-textarea{width:100%;background:rgba(0,0,0,.28);border:none;border-radius:9px;padding:13px 16px;font-family:var(--font-body);font-size:15px;color:var(--color-white);outline:2px dashed rgba(255,255,255,.85);outline-offset:var(--frame-gap);transition:outline-color .18s,background .18s;letter-spacing:.01em}
+.event-page .ev-input:hover,.event-page .ev-textarea:hover{outline-color:#fff}
+.event-page .ev-input:focus,.event-page .ev-textarea:focus{outline-color:var(--color-pink);background:rgba(0,0,0,.4)}
 .event-page .ev-input::placeholder,.event-page .ev-textarea::placeholder{color:var(--alpha-cream-45);font-style:italic}
 .event-page .ev-textarea{min-height:130px;resize:vertical;line-height:1.55;font-style:italic}
 
@@ -86,7 +93,18 @@
   .event-page .ev-commit-zone h2{font-size:30px}
 }
 
-/* Mobile: lighten the frosted event card (smaller blur, no saturate). */
+/* ── Save bar — slides up when there are unsaved changes (EditProfile's
+   ep-savebar, mirrored). Frost is fine here: it's chrome over scrolling content. */
+.event-page .ev-savebar{position:fixed;left:0;right:0;bottom:0;z-index:50;background:var(--alpha-dark-95);backdrop-filter:blur(16px) saturate(1.15);-webkit-backdrop-filter:blur(16px) saturate(1.15);border-top:1px dashed var(--alpha-cream-22);transform:translateY(110%);transition:transform .28s cubic-bezier(.2,.7,.2,1);box-shadow:0 -14px 36px var(--alpha-black-50)}
+.event-page .ev-savebar.visible{transform:translateY(0)}
+.event-page .ev-savebar-inner{max-width:1040px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 24px;flex-wrap:wrap}
+.event-page .ev-status{font-family:var(--font-mono);font-style:italic;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--alpha-cream-65);display:inline-flex;align-items:center;gap:10px}
+.event-page .ev-status .ev-pulse{width:8px;height:8px;border-radius:50%;background:var(--color-gold);display:inline-block;box-shadow:0 0 10px var(--alpha-gold-60)}
+.event-page .ev-savebar-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+@media(max-width:720px){
+  .event-page .ev-savebar-inner{flex-direction:column;gap:10px;padding:14px 18px}
+}
+/* Mobile: lighten the save bar's blur — the cards are opaque posters now. */
 @media (max-width:768px){
-  .event-page .ev-card{backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+  .event-page .ev-savebar{backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
 }

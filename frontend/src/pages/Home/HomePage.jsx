@@ -1,5 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   fetchHero, fetchCheckinEvents, fetchEvents, fetchLeaderboard,
 } from '../../services/api';
@@ -38,6 +37,19 @@ export default function HomePage() {
   );
 
   const [galCur, setGalCur] = useState(0);
+
+  // Below-the-fold background images (leaderboard section photo, gallery
+  // strip) hold off until the browser is idle, so the first hero image never
+  // shares bandwidth with them on initial load. The hero cycle gives the rest
+  // seconds of headroom anyway.
+  const [bgReady, setBgReady] = useState(false);
+  useEffect(() => {
+    const w = window;
+    const id = w.requestIdleCallback
+      ? w.requestIdleCallback(() => setBgReady(true), { timeout: 2500 })
+      : setTimeout(() => setBgReady(true), 1200);
+    return () => (w.cancelIdleCallback ? w.cancelIdleCallback(id) : clearTimeout(id));
+  }, []);
 
   // Scroll-reveal refs — each section fades/staggers in as it enters view.
   const [evTitleRef, evTitleIn] = useReveal();
@@ -95,7 +107,7 @@ export default function HomePage() {
 
       {/* LEADERBOARD */}
       <section className="lb-section">
-        <div className="lb-bg" />
+        <div className={`lb-bg${bgReady ? ' ready' : ''}`} />
         <div className="lb-tint" />
         <div className="lb-inner">
           <h2 ref={lbTitleRef} className={`lb-title reveal${lbTitleIn ? ' in' : ''}`}><span className="lb-trophy">🏆</span> Top 10 hráčů <span className="lb-trophy">🏆</span></h2>
@@ -149,15 +161,15 @@ export default function HomePage() {
             className="gal-side"
             onClick={galPrev}
             aria-label="Předchozí fotka"
-            style={{ backgroundImage: `url('${galImages[(galCur - 1 + galN) % galN]}')` }}
+            style={bgReady ? { backgroundImage: `url('${galImages[(galCur - 1 + galN) % galN]}')` } : undefined}
           />
-          <div className="gal-main" style={{ backgroundImage: `url('${galImages[galCur]}')` }} />
+          <div className="gal-main" style={bgReady ? { backgroundImage: `url('${galImages[galCur]}')` } : undefined} />
           <button
             type="button"
             className="gal-side"
             onClick={galNext}
             aria-label="Další fotka"
-            style={{ backgroundImage: `url('${galImages[(galCur + 1) % galN]}')` }}
+            style={bgReady ? { backgroundImage: `url('${galImages[(galCur + 1) % galN]}')` } : undefined}
           />
         </div>
         <div className="gal-footer">

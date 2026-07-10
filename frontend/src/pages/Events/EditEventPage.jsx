@@ -329,6 +329,17 @@ export default function EditEventPage() {
         </div>
         <div className="ev-commit-note">{saveError ? `— Chyba: ${saveError} —` : (dirty ? '— Neuložené změny —' : '— Vše uloženo —')}</div>
       </section>
+
+      {/* Slides up as soon as anything changes — mirrors EditProfile's save bar. */}
+      <div className={`ev-savebar${dirty ? ' visible' : ''}`}>
+        <div className="ev-savebar-inner">
+          <div className="ev-status"><span className="ev-pulse" />{saveError || 'Neuložené změny'}</div>
+          <div className="ev-savebar-actions">
+            <Link className="ev-btn ghost" to={`/events/${slug}`}>Zrušit</Link>
+            <button type="button" className="ev-btn primary" onClick={handleSave} disabled={saving}>{saving ? 'Ukládám…' : 'Uložit změny'}</button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

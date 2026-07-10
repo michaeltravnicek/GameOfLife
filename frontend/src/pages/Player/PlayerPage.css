@@ -39,7 +39,8 @@
 
 @media(max-width:560px){
   .player-page{padding:140px 14px 60px}
-  .player-page .player-credits{flex-direction:column;gap:18px;padding-top:24px;max-width:320px}
+  /* align-items:stretch — the desktop flex-end would hug the column right. */
+  .player-page .player-credits{flex-direction:column;align-items:stretch;gap:18px;padding-top:24px;max-width:320px}
   .player-page .player-credit{max-width:none;padding:0}
   .player-page .player-credit + .player-credit{border-left:0;border-top:1px solid rgba(255,241,212,.2);padding-top:18px}
 }

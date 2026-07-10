@@ -4,7 +4,6 @@ import { apiPasswordResetConfirm } from '../../services/api';
 import { useToast } from '../../components/Toast/ToastProvider';
 import FormInput from '../../components/FormInput/FormInput';
 import Button from '../../components/Button/Button';
-import { TicketFrame } from '../../components/DashedBorder/DashedBorder';
 import '../Login/AuthPage.css';
 
 const MIN_LEN = 8;
@@ -47,21 +46,14 @@ export default function ResetPasswordPage() {
   };
 
   return (
-    <div className="auth-page">
-      <section className="hero-section">
-        <div className="hero-inner">
-          <div className="hero-eyebrow">Game of Life · Sezóna 2025/26</div>
-          <h1 className="hero-title">Nové heslo</h1>
-          <p className="hero-sub">Zvol si nové heslo a jsi zpátky ve hře.</p>
-        </div>
-      </section>
+    <div className="auth-page auth-poster">
+      <div className="stage" aria-hidden="true" />
 
       <section className="auth-container">
         <div className="auth-card">
-          <TicketFrame />
           <img className="auth-badge" src="/img/GOL_C50_transparent.webp" alt="" width="126" height="126" />
           <div className="auth-card-inner">
-            <div className="auth-card-tag">Game of Life</div>
+            <div className="auth-card-tag">Game of Life · Sezóna 2025/26</div>
             <h2 className="auth-card-title">Nastavit nové heslo</h2>
             <div className="auth-card-sub">Zadej nové heslo dvakrát pro kontrolu.</div>
             <div className="auth-divider" />

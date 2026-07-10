@@ -282,6 +282,7 @@
   --tex-brown-2:  url('/img/Grain_texture_brown2.webp');
   --tex-blue:     url('/img/Grain_texture_blue.webp');
   --tex-light:    url('/img/Grain_texture_light.webp');
+  --tex-light-2:  url('/img/Grain_texture_light2.webp');
 
   --tex-size:   240px;  /* = seamless mirror-tile; displays 1:1 (crisp) */
   --grain-opacity: 0.15;

@@ -45,15 +45,14 @@ export default function RegisterPage() {
   };
 
   return (
-    // reg-poster — ALTERNATIVE look for /registrace only (other auth pages
-    // keep the brown ticket): photo bg + one opaque poster card holding the
-    // page name; inputs are mini homepage-event-card tickets (AuthPage.css).
-    <div className="auth-page reg-poster">
+    // auth-poster — shared look of all auth pages: photo bg + one opaque
+    // poster card holding the page name; inputs are mini homepage-event-card
+    // tickets (AuthPage.css).
+    <div className="auth-page auth-poster">
       <div className="stage" aria-hidden="true" />
 
       <section className="auth-container">
         <div className="auth-card wide">
-          <img className="auth-badge" src="/img/GOL_C50_transparent.webp" alt="" width="126" height="126" />
           <div className="auth-card-inner">
             <div className="auth-card-tag">Game of Life · Sezóna 2025/26</div>
             <h2 className="auth-card-title">Registrace</h2>
