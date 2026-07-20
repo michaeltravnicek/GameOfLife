@@ -6,10 +6,12 @@ import { useAuth } from '../../context/AuthContext';
 import { reportError } from '../../services/errors';
 import { CACHE_TTL, GALLERY_PREFETCH_TAIL, PAGE_SIZE_GALLERY } from '../../constants/config';
 import PageHero from '../../components/PageHero/PageHero';
+import LazyImg from '../../components/LazyImg/LazyImg';
 import Reveal from '../../components/Reveal/Reveal';
 import Button from '../../components/Button/Button';
 import Modal from '../../components/Modal/Modal';
 import { fmtDateShort } from '../../utils/date';
+import { isMobileViewport } from '../../utils/img';
 import './GalleryPage.css';
 
 // Lightbox loaded only when user opens a fullscreen photo.
@@ -216,6 +218,11 @@ export default function GalleryPage() {
   const prevPhoto = photos[(cur - 1 + n) % n] || {};
   const nextPhoto = photos[(cur + 1) % n] || {};
 
+  // The narrow side strips (≤220px) never need the full-size original, and on
+  // phones neither does the main slide. Full quality stays in the lightbox.
+  const sideSrc = (p) => p.url_mobile || p.url;
+  const mainSrc = isMobileViewport() ? (slidePhoto.url_mobile || slidePhoto.url) : slidePhoto.url;
+
   const onTouchStart = (e) => { tx.current = e.touches[0].clientX; };
   const onTouchEnd = (e) => {
     const dx = e.changedTouches[0].clientX - tx.current;
@@ -231,9 +238,8 @@ export default function GalleryPage() {
       <div className="bg-texture" />
 
       <PageHero
-        eyebrow="Game of Life"
+        eyebrow="Vzpomínky, zážitky a okamžiky"
         title="Galerie"
-        tagline="Vzpomínky, zážitky a okamžiky, které stojí za to si připomenout."
       />
 
       {canUpload && (
@@ -275,12 +281,12 @@ export default function GalleryPage() {
           <div className="gal-container">
             <div
               className="gal-side"
-              style={{ background: `url('${prevPhoto.url}') center/cover no-repeat` }}
+              style={{ background: `url('${sideSrc(prevPhoto)}') center/cover no-repeat` }}
               onClick={() => goSlide(cur - 1)}
             />
             <div
               className="gal-main"
-              style={{ background: `url('${slidePhoto.url}') center/cover no-repeat` }}
+              style={{ background: `url('${mainSrc}') center/cover no-repeat` }}
               onClick={(e) => { if (!e.target.closest('.gal-zone')) openLb(photos, cur); }}
               onTouchStart={onTouchStart}
               onTouchEnd={onTouchEnd}
@@ -312,7 +318,7 @@ export default function GalleryPage() {
             </div>
             <div
               className="gal-side"
-              style={{ background: `url('${nextPhoto.url}') center/cover no-repeat` }}
+              style={{ background: `url('${sideSrc(nextPhoto)}') center/cover no-repeat` }}
               onClick={() => goSlide(cur + 1)}
             />
           </div>
@@ -356,10 +362,10 @@ export default function GalleryPage() {
               <Reveal stagger className="photo-grid">
                 {monthPhotos.map((p, i) => (
                   <div key={i} className="photo-item" onClick={() => openLb(monthPhotos, i)}>
-                    <picture>
-                      {p.url_mobile && <source media="(max-width: 768px)" srcSet={p.url_mobile} />}
-                      <img src={p.url} alt={p.event_name} loading="lazy" />
-                    </picture>
+                    {/* Grid tiles are ~330px wide — the 768px variant is enough
+                        on every viewport; the lightbox opens the original.
+                        LazyImg fetches only on-screen tiles + ~one row ahead. */}
+                    <LazyImg src={p.url_mobile || p.url} alt={p.event_name} />
                     <div className="photo-item-caption">
                       <div className="photo-item-label">{p.is_user_photo ? 'Komunita' : 'Akce'}</div>
                       <div className="photo-item-title">{p.event_name}</div>
@@ -451,8 +457,8 @@ export default function GalleryPage() {
         </div>
 
         <div className="gal-upload-buttons">
-          <Button variant="nav" onClick={handleUploadCancel} disabled={uploading}>Zrušit</Button>
-          <Button variant="nav" onClick={handleUploadSubmit} busy={uploading} disabled={!uploadFile || uploading}>
+          <Button variant="frost" onClick={handleUploadCancel} disabled={uploading}>Zrušit</Button>
+          <Button variant="action" onClick={handleUploadSubmit} busy={uploading} disabled={!uploadFile || uploading}>
             {uploading ? 'Nahrávám…' : 'Nahrát'}
           </Button>
         </div>

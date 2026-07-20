@@ -45,7 +45,9 @@ def validate_and_record_checkin(event, auth_user, latitude, longitude) -> Checki
     Used by the API endpoint. The function knows nothing about HTTP — it just
     returns a CheckinResult that the caller maps to a response.
     """
-    if event.latitude is None or event.longitude is None:
+    # No coordinates or no date → no check-in window can exist (date became
+    # nullable in migration 0016).
+    if event.latitude is None or event.longitude is None or event.date is None:
         return CheckinResult(ok=False, status=400, error="Tato akce nemá aktivní check-in.")
 
     now = timezone.now()

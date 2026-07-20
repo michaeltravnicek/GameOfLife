@@ -6,6 +6,7 @@ import './FormInput.css';
  *
  * rightSlot : node — optional element rendered top-right of the label (e.g. a "Forgot password?" link)
  * error     : bool — applies error border styling
+ * errorText : string — message shown under the input; implies error styling
  *
  * When `type="password"`, the input grows a built-in show/hide toggle button
  * on the trailing edge that swaps the type between password / text.
@@ -18,6 +19,7 @@ export default function FormInput({
   onChange,
   placeholder,
   error = false,
+  errorText,
   required = false,
   autoComplete,
   rightSlot,
@@ -26,6 +28,7 @@ export default function FormInput({
   const [revealed, setRevealed] = useState(false);
   const isPassword = type === 'password';
   const inputType = isPassword && revealed ? 'text' : type;
+  const hasError = error || !!errorText;
 
   return (
     <div className={`form-field${className ? ' ' + className : ''}`}>
@@ -41,12 +44,14 @@ export default function FormInput({
         <input
           id={id}
           type={inputType}
-          className={`form-field-input${error ? ' has-error' : ''}`}
+          className={`form-field-input${hasError ? ' has-error' : ''}`}
           value={value}
           onChange={onChange}
           placeholder={placeholder}
           required={required}
           autoComplete={autoComplete}
+          aria-invalid={hasError || undefined}
+          aria-describedby={errorText ? `${id}-error` : undefined}
         />
         {isPassword && (
           <button
@@ -73,6 +78,7 @@ export default function FormInput({
           </button>
         )}
       </div>
+      {errorText && <div id={`${id}-error`} className="form-field-error">{errorText}</div>}
     </div>
   );
 }

@@ -43,11 +43,11 @@ def gallery_page(offset, limit, request, season=None):
 
     official = (
         ImageToEvent.objects
-        .select_related("event_id")
+        .select_related("event")
         .exclude(image="")
         .filter(image__isnull=False)
-        .only("image", "event_id__name", "event_id__slug", "event_id__date")
-        .order_by("-event_id__date")
+        .only("image", "event__name", "event__slug", "event__date")
+        .order_by("-event__date")
     )
     user_photos = (
         UserPhoto.objects
@@ -61,8 +61,8 @@ def gallery_page(offset, limit, request, season=None):
 
     if season is not None:
         official = official.filter(
-            event_id__date__date__gte=season.start_date,
-            event_id__date__date__lte=season.end_date,
+            event__date__date__gte=season.start_date,
+            event__date__date__lte=season.end_date,
         )
         user_photos = user_photos.filter(
             event__date__date__gte=season.start_date,
@@ -76,9 +76,9 @@ def gallery_page(offset, limit, request, season=None):
         photos.append({
             "url": request.build_absolute_uri(img.image.url),
             "url_mobile": variant_url(img.image, request),
-            "event_name": img.event_id.name if img.event_id else "",
-            "event_slug": img.event_id.slug if img.event_id else "",
-            "event_date": img.event_id.date if img.event_id else None,
+            "event_name": img.event.name if img.event else "",
+            "event_slug": img.event.slug if img.event else "",
+            "event_date": img.event.date if img.event else None,
             "is_user_photo": False,
             "uploaded_by": "",
         })

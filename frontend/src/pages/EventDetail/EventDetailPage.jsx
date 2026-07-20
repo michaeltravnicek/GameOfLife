@@ -1,6 +1,16 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
-import { fetchEventDetail, toggleRsvp, submitFeedback, uploadEventImages } from '../../services/api';
+import {
+  fetchEventAttendees,
+  fetchEventDetail,
+  fetchEventRsvps,
+  fetchLeaderboard,
+  removeEventAttendee,
+  setEventAttendeePoints,
+  setRsvp,
+  submitFeedback,
+  uploadEventImages,
+} from '../../services/api';
 import { useCachedQuery, invalidateQuery } from '../../services/queryCache';
 import { reportError } from '../../services/errors';
 import { CACHE_TTL } from '../../constants/config';
@@ -9,6 +19,10 @@ import Button from '../../components/Button/Button';
 import SectionHeader from '../../components/SectionHeader/SectionHeader';
 import EventLocationMap from '../../components/EventLocationMap/EventLocationMap';
 import Modal from '../../components/Modal/Modal';
+import PillTabs from '../../components/PillTabs/PillTabs';
+import TicketList from '../../components/StatList/TicketList';
+import { eventList, EVENT_LIST_CLASS } from '../../components/StatList/eventColumns';
+import SearchInput from '../../components/SearchInput/SearchInput';
 import { fmtDateShort, fmtTime, dayName } from '../../utils/date';
 import { isMobileViewport } from '../../utils/img';
 import { shareLink } from '../../utils/shareUrl';
@@ -19,6 +33,53 @@ import './EventDetailPage.css';
 // Lightbox is only needed once the user clicks on an image — pull it off the
 // critical bundle and load it on demand.
 const Lightbox = lazy(() => import('../../components/Lightbox/Lightbox'));
+
+// Usernames are sometimes e-mail addresses, and "@michael@seznam.cz" reads as
+// a typo. Only handle-style usernames get the @ prefix.
+const handle = (username) => (username?.includes('@') ? username : `@${username}`);
+
+/**
+ * One attendee's points cell. Owns its own draft so typing in one row never
+ * re-renders the whole roster, and a rejected edit rolls that row back on
+ * its own without touching its neighbours.
+ */
+function AttendancePointsInput({ attendee, onSave, busy }) {
+  const [value, setValue] = useState(String(attendee.points));
+
+  // The roster reloads after every save; adopt the server's number so a
+  // rejected edit doesn't leave a stale draft in the input.
+  useEffect(() => { setValue(String(attendee.points)); }, [attendee.points]);
+
+  const commit = () => {
+    const points = Number(value);
+    if (!Number.isInteger(points) || points < 0) {
+      setValue(String(attendee.points));
+      toast.error('Body musí být celé číslo, nula nebo víc.');
+      return;
+    }
+    if (points !== attendee.points) onSave(attendee.user_id, points);
+  };
+
+  return (
+    <>
+      <input
+        type="number"
+        min="0"
+        className="att-pts-input"
+        value={value}
+        disabled={busy}
+        aria-label={`Body pro ${attendee.name}`}
+        onChange={(e) => setValue(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') { e.preventDefault(); e.currentTarget.blur(); }
+          if (e.key === 'Escape') setValue(String(attendee.points));
+        }}
+      />
+      <span className="u">pts</span>
+    </>
+  );
+}
 
 export default function EventDetailPage() {
   const { slug } = useParams();
@@ -36,6 +97,20 @@ export default function EventDetailPage() {
   const [uploading, setUploading] = useState(false);
   const [surveyOpen, setSurveyOpen] = useState(false);
 
+  // Admin-only "Popis" / "Účast a body" toggle — same page, same URL, just a
+  // different body section, exactly like the profile page's season/view tabs.
+  const [adminView, setAdminView] = useState('popis');
+  const [attendees, setAttendees] = useState([]);
+  const [rsvps, setRsvps] = useState([]);
+  const [attLoading, setAttLoading] = useState(false);
+  const [attLoaded, setAttLoaded] = useState(false);
+  const [busyId, setBusyId] = useState(null);
+  // One search box, two modes: 'find' narrows the roster already in the table,
+  // 'add' searches every leaderboard player so one can be added to it.
+  const [attQuery, setAttQuery] = useState('');
+  const [attMode, setAttMode] = useState('find');
+  const [pool, setPool] = useState(null);          // all leaderboard players, loaded once
+
   const { data: event, error: queryError, refetch: refetchEvent } = useCachedQuery(
     `event:${slug}`,
     () => fetchEventDetail(slug),
@@ -46,6 +121,55 @@ export default function EventDetailPage() {
   useEffect(() => {
     if (event?.feedback_given && !fbEditing) setFbDone(true);
   }, [event?.feedback_given, fbEditing]);
+
+  const loadAttendance = async () => {
+    setAttLoading(true);
+    try {
+      const [a, r] = await Promise.all([fetchEventAttendees(slug), fetchEventRsvps(slug)]);
+      setAttendees(a.attendees || []);
+      setRsvps(r.rsvps || []);
+      setAttLoaded(true);
+    } catch (err) {
+      reportError('Nepodařilo se načíst účast.', err);
+    } finally {
+      setAttLoading(false);
+    }
+  };
+
+  // Lazy: only admins ever open this tab, so nobody else pays for the fetch.
+  // Loads once when the tab is first opened for this event.
+  useEffect(() => {
+    if (isAdmin && adminView === 'ucast' && !attLoaded) loadAttendance();
+  }, [isAdmin, adminView, attLoaded]);
+
+  // A route-param change (navigating between events) doesn't remount this
+  // component, so stale attendance from the last event has to be dropped
+  // explicitly.
+  useEffect(() => {
+    setAttLoaded(false);
+    setAttendees([]);
+    setRsvps([]);
+    setAdminView('popis');
+  }, [slug]);
+
+  const attendingIds = useMemo(() => new Set(attendees.map((a) => a.user_id)), [attendees]);
+  // 'find' mode narrows the table in place; 'add' mode leaves it untouched so
+  // the roster stays readable while you search for someone to add.
+  const shownAttendees = useMemo(() => {
+    const q = attQuery.trim().toLowerCase();
+    if (attMode !== 'find' || !q) return attendees;
+    return attendees.filter((a) => a.name.toLowerCase().includes(q));
+  }, [attendees, attQuery, attMode]);
+
+  // Attendance can only be given to an existing leaderboard user, so the whole
+  // board is the pool the add-picker searches.
+  const attMatches = useMemo(() => {
+    const q = attQuery.trim().toLowerCase();
+    if (attMode !== 'add' || !q || !pool) return [];
+    return pool
+      .filter((p) => !attendingIds.has(p.id) && p.name.toLowerCase().includes(q))
+      .slice(0, 6);
+  }, [attQuery, attMode, pool, attendingIds]);
 
   const error = queryError
     ? (queryError.response?.status === 404 ? 'Akce nenalezena.' : 'Nepodařilo se načíst akci.')
@@ -81,7 +205,7 @@ export default function EventDetailPage() {
         <main className="detail-main">
           <p style={{ textAlign: 'center', padding: '60px 20px' }}>{error}</p>
           <div style={{ textAlign: 'center' }}>
-            <Link className="back-link" to="/events">← Zpět na všechny akce</Link>
+            <Button as="link" to="/events" variant="frost">← Zpět na všechny akce</Button>
           </div>
         </main>
       </div>
@@ -104,7 +228,7 @@ export default function EventDetailPage() {
     const wasJoined = !!event.has_rsvp;
     setBusy(true);
     try {
-      await toggleRsvp(slug);
+      await setRsvp(slug, !wasJoined);
       // RSVP changed: refresh this event's cache + drop any events list pages
       // (rsvp_count on cards there may now be stale).
       invalidateQuery((k) => k.startsWith('events:'));
@@ -124,7 +248,7 @@ export default function EventDetailPage() {
     setSurveyOpen(false);
     setBusy(true);
     try {
-      await toggleRsvp(slug);
+      await setRsvp(slug, false);
       invalidateQuery((k) => k.startsWith('events:'));
       await refetchEvent();
     } catch (err) {
@@ -161,6 +285,69 @@ export default function EventDetailPage() {
     } finally {
       setUploading(false);
       e.target.value = '';
+    }
+  };
+
+  const totalAttendancePoints = attendees.reduce((sum, a) => sum + a.points, 0);
+
+  // Every attendance write moves the leaderboard and this event's own
+  // attendee_count. refetchEvent() updates the rsvp bar in place; deliberately
+  // NOT invalidateQuery(`event:${slug}`) — that blanks the cached value and
+  // would unmount this whole page mid-edit.
+  const afterAttendanceChange = async () => {
+    invalidateQuery((k) => k.startsWith('leaderboard:'));
+    invalidateQuery((k) => k.startsWith('events:'));
+    await Promise.all([loadAttendance(), refetchEvent()]);
+  };
+
+  const saveAttendancePoints = async (userId, points) => {
+    setBusyId(userId);
+    try {
+      await setEventAttendeePoints(slug, userId, points);
+      await afterAttendanceChange();
+    } catch (err) {
+      reportError('Body se nepodařilo uložit.', err);
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const removeAttendee = async (attendee) => {
+    if (!window.confirm(`Odebrat ${attendee.name} z účasti? Přijde o body za tuto akci.`)) return;
+    setBusyId(attendee.user_id);
+    try {
+      await removeEventAttendee(slug, attendee.user_id);
+      await afterAttendanceChange();
+      toast.success(`${attendee.name} odebrán/a z účasti.`);
+    } catch (err) {
+      reportError('Odebrání se nepodařilo.', err);
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const ensurePlayerPool = async () => {
+    if (pool) return;
+    try {
+      const data = await fetchLeaderboard('all');
+      setPool(data.entries || []);
+    } catch (err) {
+      reportError('Nepodařilo se načíst seznam hráčů.', err);
+      setPool([]);
+    }
+  };
+
+  const addAttendee = async (player) => {
+    setBusyId(player.id);
+    try {
+      await setEventAttendeePoints(slug, player.id, event.points);
+      setAttQuery('');
+      await afterAttendanceChange();
+      toast.success(`${player.name} započítán/a s ${event.points} pts.`);
+    } catch (err) {
+      reportError('Přidání se nepodařilo.', err);
+    } finally {
+      setBusyId(null);
     }
   };
 
@@ -213,7 +400,7 @@ export default function EventDetailPage() {
           </div>
           <div className="credit">
             <div className="credit-label">— Místo —</div>
-            <div className="credit-value">{event.place}</div>
+            <div className={`credit-value${(event.place || '').length > 12 ? ' xlong' : (event.place || '').length > 8 ? ' long' : ''}`}>{event.place}</div>
             <div className="credit-sub">&nbsp;</div>
           </div>
         </div>
@@ -229,22 +416,61 @@ export default function EventDetailPage() {
                 {event.capacity != null && (
                   <span className="cap-tag">{event.rsvp_count} / {event.capacity} přihlášených</span>
                 )}
+                {/* Check-in runs during the event, so attendance climbs while
+                    the event is still "upcoming". Show it only once someone is
+                    actually counted — a standing "0 dorazilo" reads as failure. */}
+                {event.attendee_count > 0 && (
+                  <span className="cap-tag">{event.attendee_count} dorazilo</span>
+                )}
               </div>
-              <Button
-                variant="action"
-                className={event.has_rsvp ? 'joined' : ''}
-                onClick={handleRsvp}
-                disabled={event.is_full && !event.has_rsvp}
-                busy={busy}
-              >
-                {event.has_rsvp ? '✓ Jsi přihlášen/a' : event.is_full ? 'Plně obsazeno' : 'Přihlásit se ➤'}
-              </Button>
+              <div className="rsvp-actions">
+                {/* Same page, same URL — only the body section below swaps.
+                    Lives right beside the RSVP button, not a separate bar. */}
+                {isAdmin && (
+                  <PillTabs
+                    className="admin-view-tabs"
+                    tabs={[
+                      { key: 'popis', label: 'Popis' },
+                      { key: 'ucast', label: 'Účast', badge: attLoaded ? attendees.length : undefined },
+                    ]}
+                    active={adminView}
+                    onChange={setAdminView}
+                  />
+                )}
+                <Button
+                  variant="action"
+                  className={event.has_rsvp ? 'joined' : ''}
+                  onClick={handleRsvp}
+                  disabled={event.is_full && !event.has_rsvp}
+                  busy={busy}
+                >
+                  {event.has_rsvp ? '✓ Jsi přihlášen/a' : event.is_full ? 'Plně obsazeno' : 'Přihlásit se ➤'}
+                </Button>
+              </div>
             </>
           ) : (
-            <div className="rsvp-recap">
-              <span className="recap-eyebrow">— Proběhlo —</span>
-              <span className="recap-text">{event.rsvp_count ?? 0} účastníků · +{event.points} pts</span>
-            </div>
+            <>
+              {/* Sibling of the tabs (not their parent) so the bar's
+                  space-between puts them side by side, like the profile
+                  page's action bar. */}
+              <div className={`rsvp-recap${isAdmin ? ' with-tabs' : ''}`}>
+                <span className="recap-eyebrow">— Proběhlo —</span>
+                {/* Real attendance, not sign-ups: after the event only the people
+                    who were actually counted (and scored) are worth reporting. */}
+                <span className="recap-text">{event.attendee_count ?? 0} dorazilo · +{event.points} pts</span>
+              </div>
+              {isAdmin && (
+                <PillTabs
+                  className="admin-view-tabs"
+                  tabs={[
+                    { key: 'popis', label: 'Popis' },
+                    { key: 'ucast', label: 'Účast a body', badge: attLoaded ? attendees.length : undefined },
+                  ]}
+                  active={adminView}
+                  onChange={setAdminView}
+                />
+              )}
+            </>
           )}
         </div>
       </div>
@@ -252,16 +478,29 @@ export default function EventDetailPage() {
       {/* BODY */}
       <div className="body-wrap">
         <main className="detail-main">
+          {(!isAdmin || adminView === 'popis') && (
+          <>
           {event.description && (
             <section className="section">
-              <SectionHeader eyebrow="— 01 · Popis —" heading={event.name} />
+              <SectionHeader eyebrow="— Popis —" heading={event.name} />
               <p className="desc-text">{event.description}</p>
+            </section>
+          )}
+
+          {event.latitude != null && event.longitude != null && (
+            <section className="section">
+              <SectionHeader eyebrow="— Místo —" heading="Kde nás najdeš" />
+              <EventLocationMap
+                latitude={event.latitude}
+                longitude={event.longitude}
+                popupLabel={event.place}
+              />
             </section>
           )}
 
           {rules.length > 0 && (
             <section className="section">
-              <SectionHeader eyebrow="— 02 · Pravidla —" heading="Hraje se férově." />
+              <SectionHeader eyebrow="— Pravidla —" heading="Hrajme férově" />
               <ol className="rules">
                 {rules.map((r, i) => (
                   <li key={i}><span>{r}</span></li>
@@ -272,7 +511,7 @@ export default function EventDetailPage() {
 
           {(displayImages.length > 0 || canUpload) && (
             <section className="section">
-              <SectionHeader eyebrow="— Galerie —" heading="Z této akce." />
+              <SectionHeader eyebrow="— Galerie —" heading="Z této akce" />
               {displayImages.length > 0 && (
                 <div className="collage" data-count={imgCount}>
                   {displayImages.map((src, i) => (
@@ -290,17 +529,6 @@ export default function EventDetailPage() {
                   </label>
                 </div>
               )}
-            </section>
-          )}
-
-          {event.latitude != null && event.longitude != null && (
-            <section className="section">
-              <SectionHeader eyebrow="— Mapa —" heading="Kde se to děje." />
-              <EventLocationMap
-                latitude={event.latitude}
-                longitude={event.longitude}
-                popupLabel={event.place}
-              />
             </section>
           )}
 
@@ -329,17 +557,21 @@ export default function EventDetailPage() {
                 </div>
               ) : (
                 <form className="fb-form" onSubmit={async (e) => { await handleFeedback(e); setFbEditing(false); }}>
-                  <div className="fb-stars" role="radiogroup" aria-label="Hodnocení 1 až 5">
-                    {[1, 2, 3, 4, 5].map((n) => (
+                  <div className="fb-scale" role="radiogroup" aria-label="Hodnocení 1 až 10">
+                    {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
                       <button
                         type="button"
                         key={n}
-                        className={`fb-star${n <= rating ? ' on' : ''}`}
-                        aria-label={`${n} z 5`}
+                        className={`fb-score${n === rating ? ' on' : ''}`}
+                        aria-label={`${n} z 10`}
                         aria-pressed={n === rating}
                         onClick={() => setRating(n)}
-                      >★</button>
+                      >{n}</button>
                     ))}
+                  </div>
+                  <div className="fb-scale-hint" aria-hidden="true">
+                    <span>Nic moc</span>
+                    <span>Super</span>
                   </div>
                   <textarea
                     className="fb-comment"
@@ -362,18 +594,185 @@ export default function EventDetailPage() {
               )}
             </section>
           )}
+          </>
+          )}
+
+          {/* Attendance is only meaningful once the event has happened; before
+              that the only real list is who signed up. Showing both would put
+              an empty table on every page. */}
+          {isAdmin && adminView === 'ucast' && event.is_past && (
+            <>
+              <section className="section">
+                <SectionHeader
+                  eyebrow={`— Účast — ${attendees.length} hráčů `}
+                  heading="Kdo dorazil."
+                />
+
+                {/* One name box, switched between the two things you can do
+                    with a name here: find someone already counted, or add
+                    someone who isn't. The typed name carries across the switch,
+                    so "not in the list → add them" is one tap. */}
+                <div className="att-add">
+                  <div className="att-search-row">
+                    <SearchInput
+                      className="att-search-input"
+                      value={attQuery}
+                      onChange={(e) => setAttQuery(e.target.value)}
+                      placeholder={attMode === 'add'
+                        ? 'Jméno hráče, kterého chceš přidat…'
+                        : `Najít mezi ${attendees.length} účastníky…`}
+                    />
+                    <PillTabs
+                      className="att-mode-tabs"
+                      tabs={[
+                        { key: 'find', label: 'Najít' },
+                        { key: 'add', label: 'Přidat' },
+                      ]}
+                      active={attMode}
+                      onChange={(key) => {
+                        setAttMode(key);
+                        // The whole board is only needed once you switch to adding.
+                        if (key === 'add') ensurePlayerPool();
+                      }}
+                    />
+                  </div>
+
+                  {attMode === 'add' && attQuery.trim() && (
+                    <div className="att-results">
+                      {attMatches.length === 0 ? (
+                        <p className="att-note">
+                          {pool ? 'Nikdo takový. Hráč už musí být v žebříčku.' : 'Hledám…'}
+                        </p>
+                      ) : attMatches.map((p) => (
+                        <button
+                          type="button"
+                          key={p.id}
+                          className="att-result"
+                          disabled={busyId === p.id}
+                          onClick={() => addAttendee(p)}
+                        >
+                          <span>{p.name}</span>
+                          <span className="att-result-add">+{event.points} pts</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {attLoading && !attLoaded ? (
+                  <p className="att-note">Načítám účast…</p>
+                ) : (
+                  <TicketList
+                    // Same ticket list as the profile page's "Akce" table —
+                    // rank / name / points, with the name and points cells
+                    // rendering a player instead of an event, plus a remove
+                    // action appended.
+                    {...eventList({
+                      include: ['rk', 'info', 'pts'],
+                      width: { pts: '130px' },
+                      render: {
+                        info: (a) => (
+                          <>
+                            <div className="nm">
+                              {/* A linked account gets its public profile;
+                                  everyone else has a leaderboard player page. */}
+                              <Link
+                                className="att-name-link"
+                                to={a.profile_username ? `/profil/${a.profile_username}` : `/hrac/${a.user_id}`}
+                              >{a.name}</Link>
+                            </div>
+                            <div className="loc">
+                              {a.profile_username ? handle(a.profile_username) : 'bez propojeného účtu'}
+                            </div>
+                          </>
+                        ),
+                        pts: (a) => (
+                          <AttendancePointsInput
+                            attendee={a}
+                            onSave={saveAttendancePoints}
+                            busy={busyId === a.user_id}
+                          />
+                        ),
+                      },
+                      extra: [{
+                        key: 'act',
+                        className: 'att-act',
+                        width: '92px',
+                        render: (a) => (
+                          <button
+                            type="button"
+                            className="att-remove"
+                            disabled={busyId === a.user_id}
+                            aria-label={`Odebrat ${a.name} z účasti`}
+                            onClick={() => removeAttendee(a)}
+                          >Odebrat</button>
+                        ),
+                      }],
+                    })}
+                    // after the spread: keeps ev-grid, adds the hook the
+                    // mobile column rules below target
+                    className={`${EVENT_LIST_CLASS} att-grid`}
+                    rows={shownAttendees}
+                    rowKey={(a) => a.user_id}
+                    emptyText={attMode === 'find' && attQuery.trim()
+                      ? 'Nikdo takový mezi účastníky. Přepni na Přidat a započítej ho.'
+                      : 'Zatím nikdo. Přidej hráče výš.'}
+                  />
+                )}
+              </section>
+            </>
+          )}
+
+          {isAdmin && adminView === 'ucast' && !event.is_past && (
+            <section className="section">
+              <SectionHeader
+                eyebrow={`— Přihlášení — ${rsvps.length}`}
+                heading="Kdo se hlásil."
+              />
+              {attLoading && !attLoaded ? (
+                <p className="att-note">Načítám přihlášené…</p>
+              ) : (
+                <TicketList
+                  // Rank / name / signed-up date — the same ticket list, with
+                  // the date column showing when they signed up.
+                  {...eventList({
+                    include: ['rk', 'info', 'dt'],
+                    width: { dt: '130px' },
+                    render: {
+                      info: (r) => (
+                        <>
+                          <div className="nm">
+                            <Link className="att-name-link" to={`/profil/${r.username}`}>
+                              {r.name || r.username}
+                            </Link>
+                          </div>
+                          <div className="loc">{handle(r.username)}</div>
+                        </>
+                      ),
+                      dt: (r) => fmtDateShort(r.created_at),
+                    },
+                  })}
+                  className={`${EVENT_LIST_CLASS} rsvp-grid`}
+                  rows={rsvps}
+                  rowKey={(r) => r.auth_user_id}
+                  emptyText="Nikdo se nepřihlásil."
+                />
+              )}
+            </section>
+          )}
         </main>
       </div>
 
       {/* BACK STRIP */}
       <div className="back-strip">
         <div className="back-strip-inner">
-          <Link className="back-link" to="/events">← Zpět na všechny akce</Link>
+          {/* Navigation = 3D buttons (frost for "back"); round pills = in-place actions. */}
+          <Button as="link" to="/events" variant="frost">← Zpět na všechny akce</Button>
           <div className="back-strip-actions">
             {isAdmin && (
-              <Link className="back-link" to={`/events/${slug}/upravit`}>
+              <Button as="link" to={`/events/${slug}/upravit`}>
                 ✏️ Upravit akci
-              </Link>
+              </Button>
             )}
             {!event.is_past && (
               <Button
@@ -430,8 +829,8 @@ export default function EventDetailPage() {
           Otevřít formulář ↗
         </a>
         <div className="survey-modal-buttons">
-          <Button variant="nav" onClick={handleSurveyCancel} disabled={busy}>Zrušit účast</Button>
-          <Button variant="nav" onClick={handleSurveyDone} disabled={busy}>Hotovo</Button>
+          <Button variant="frost" onClick={handleSurveyCancel} disabled={busy}>Zrušit účast</Button>
+          <Button variant="action" onClick={handleSurveyDone} disabled={busy}>Hotovo</Button>
         </div>
       </Modal>
     </div>

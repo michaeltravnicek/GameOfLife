@@ -22,9 +22,11 @@ function DarkCard({ event }) {
         </div>
       </div>
 
+      {/* The event's own logo; the neutral GOL mark when none is set (C50 is
+          one specific event's brand, not a generic fallback). */}
       <img
         className="evcard-badge"
-        src={event.logo || '/img/GOL_C50_transparent.webp'}
+        src={event.logo || '/img/GOL_main_logo_pink.webp'}
         alt={event.name}
         loading="lazy"
         width="150"

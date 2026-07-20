@@ -19,10 +19,12 @@ from . import views as react_views
 urlpatterns = [
     path("admin/", admin.site.urls),
 
-    # JSON API for the React frontend
-    path("api/", include("leaderboard.api.urls")),
-    path("api/auth/", include("accounts.api.urls")),
-    path("api/profiles/", include("accounts.api.profiles_urls")),
+    # JSON API for the React frontend. Versioned so installed mobile app
+    # builds can keep calling v1 after the contract changes (a future v2
+    # mounts alongside; v1 routes stay until no clients use them).
+    path("api/v1/", include("leaderboard.api.urls")),
+    path("api/v1/auth/", include("accounts.api.urls")),
+    path("api/v1/profiles/", include("accounts.api.profiles_urls")),
 ]
 
 # Serve user-uploaded media (event images, profile photos, gallery uploads).

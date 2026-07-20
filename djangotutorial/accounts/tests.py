@@ -16,7 +16,7 @@ from leaderboard.models import Event, Season, User as LeaderboardUser, UserToEve
 class ProfileApiTests(TestCase):
     def setUp(self):
         self.client = APIClient()
-        self.lb_user = LeaderboardUser.objects.create(number=5, name="Pat")
+        self.lb_user = LeaderboardUser.objects.create(number=700000005, name="Pat")
         self.auth = AuthUser.objects.create_user(username="pat", password="x", first_name="Pat")
         Profile.objects.create(user=self.auth, leaderboard_user=self.lb_user)
         self.season = Season.objects.create(

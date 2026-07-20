@@ -1,0 +1,7 @@
+/* Placeholder box keeps the grid slot while the photo is off-screen/loading;
+   the image fades in on arrival. aspect-ratio comes inline from the component
+   and is dropped once the real image dictates its own height. */
+.lazyimg{display:block;width:100%;background:rgba(26,15,10,.45)}
+.lazyimg img{width:100%;display:block;opacity:0;transition:opacity .3s ease}
+.lazyimg.is-loaded{background:none}
+.lazyimg.is-loaded img{opacity:1}

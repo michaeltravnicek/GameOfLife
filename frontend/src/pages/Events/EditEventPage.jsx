@@ -3,7 +3,11 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import Switch from '../../components/Switch/Switch';
 import ChipSelect from '../../components/ChipSelect/ChipSelect';
 import EventLocationMap from '../../components/EventLocationMap/EventLocationMap';
-import { fetchEventDetail, updateEvent, fetchCategories } from '../../services/api';
+import Modal from '../../components/Modal/Modal';
+import Button from '../../components/Button/Button';
+import { useToast } from '../../components/Toast/ToastProvider';
+import { fetchEventDetail, updateEvent, deleteEvent, fetchCategories } from '../../services/api';
+import { invalidateQuery } from '../../services/queryCache';
 import { useImagePreview } from '../../hooks/useImagePreview';
 import { useBeforeUnload } from '../../hooks/useBeforeUnload';
 import { extractApiError } from '../../services/errors';
@@ -12,7 +16,10 @@ import './EventPage.css';
 export default function EditEventPage() {
   const { slug } = useParams();
   const navigate = useNavigate();
+  const toast = useToast();
   const [loading, setLoading] = useState(true);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [allCategories, setAllCategories] = useState([]);
   const [form, setForm] = useState({
     name: '',
@@ -124,6 +131,23 @@ export default function EditEventPage() {
     }
   };
 
+  const confirmDelete = async () => {
+    setDeleting(true);
+    try {
+      await deleteEvent(slug);
+      // Deleting cascades to points/RSVPs — drop everything derived from them.
+      invalidateQuery((k) => k.startsWith('events:') || k.startsWith('leaderboard:')
+        || k.startsWith('gallery') || k === 'home' || k.startsWith('profile:') || k.startsWith('player:'));
+      toast.success(`Akce „${form.name}“ byla smazána.`, { title: 'Smazáno' });
+      navigate('/events');
+    } catch (err) {
+      setDeleteOpen(false);
+      toast.error(extractApiError(err, 'Akci se nepodařilo smazat.'), { title: 'Chyba' });
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   const handleCategories = (next) => { setCategories(next); markDirty(); };
 
   useBeforeUnload(dirty);
@@ -141,18 +165,18 @@ export default function EditEventPage() {
         <div className="ev-crumb">— <Link to={`/events/${slug}`}>{form.name}</Link> · Upravit —</div>
         <div className="ev-eyebrow">Úprava akce</div>
         <h1>Upravit akci</h1>
-        <p className="ev-lede">Změň detaily akce — název, popis, čas, body, nebo vizuál.</p>
-        <div className="ev-divider" />
       </section>
 
       <main className="ev-main">
         {/* 01 · Základy */}
         <section className="ev-section">
           <div className="ev-sec-rule" />
-          <div className="ev-sec-eyebrow">— 01 · Základy —</div>
-          <h2 className="ev-sec-heading">Jak se <span className="pink">jmenuje.</span></h2>
-          <p className="ev-sec-sub">Základní informace o akci — název, popis a kde se to bude dít.</p>
           <div className="ev-card">
+            <div className="ev-card-head">
+              <div className="ev-sec-eyebrow">— 01 · Základy —</div>
+              <h2 className="ev-sec-heading">Jak se <span className="pink">jmenuje.</span></h2>
+              <p className="ev-sec-sub">Základní informace o akci — název, popis a kde se to bude dít.</p>
+            </div>
             <div className="ev-grid-2">
               <div className="ev-field">
                 <label htmlFor="f-name">Název akce</label>
@@ -173,10 +197,12 @@ export default function EditEventPage() {
         {/* 02 · Čas a body */}
         <section className="ev-section">
           <div className="ev-sec-rule" />
-          <div className="ev-sec-eyebrow">— 02 · Čas a body —</div>
-          <h2 className="ev-sec-heading">Kdy a za <span className="pink">kolik.</span></h2>
-          <p className="ev-sec-sub">Nastav datum, čas (lze nechat prázdné) a počet bodů za účast.</p>
           <div className="ev-card">
+            <div className="ev-card-head">
+              <div className="ev-sec-eyebrow">— 02 · Čas a body —</div>
+              <h2 className="ev-sec-heading">Kdy a za <span className="pink">kolik.</span></h2>
+              <p className="ev-sec-sub">Nastav datum, čas (lze nechat prázdné) a počet bodů za účast.</p>
+            </div>
             <div className="ev-grid-2">
               <div className="ev-field">
                 <label htmlFor="f-date">Začátek akce <span className="ev-hint">nepovinné</span></label>
@@ -202,13 +228,49 @@ export default function EditEventPage() {
           </div>
         </section>
 
-        {/* 03 · Obrázky */}
+        {/* 03 · Poloha */}
         <section className="ev-section">
           <div className="ev-sec-rule" />
-          <div className="ev-sec-eyebrow">— 03 · Vizuál —</div>
-          <h2 className="ev-sec-heading">Jak <span className="pink">vypadá.</span></h2>
-          <p className="ev-sec-sub">Nahraj plakát a logo akce. PNG nebo JPG, alespoň 400×400 px.</p>
           <div className="ev-card">
+            <div className="ev-card-head">
+              <div className="ev-sec-eyebrow">— 03 · Poloha na mapě —</div>
+              <h2 className="ev-sec-heading">Kde se to <span className="pink">děje.</span></h2>
+              <p className="ev-sec-sub">Klikni na mapu pro výběr místa. Tažením kolíku ho doladíš.</p>
+            </div>
+            <EventLocationMap
+              interactive
+              latitude={form.latitude}
+              longitude={form.longitude}
+              radius={Number(form.checkin_radius) || 0}
+              onChange={({ latitude, longitude }) => {
+                setForm((f) => ({ ...f, latitude, longitude }));
+                markDirty();
+              }}
+            />
+            {form.latitude !== '' && form.longitude !== '' && (
+              <div className="ev-map-meta">
+                <span>{Number(form.latitude).toFixed(5)}, {Number(form.longitude).toFixed(5)}</span>
+                <button
+                  type="button"
+                  className="ev-map-clear"
+                  onClick={() => { setForm((f) => ({ ...f, latitude: '', longitude: '' })); markDirty(); }}
+                >
+                  Vymazat polohu
+                </button>
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* 04 · Obrázky */}
+        <section className="ev-section">
+          <div className="ev-sec-rule" />
+          <div className="ev-card">
+            <div className="ev-card-head">
+              <div className="ev-sec-eyebrow">— 04 · Vizuál —</div>
+              <h2 className="ev-sec-heading">Jak <span className="pink">vypadá.</span></h2>
+              <p className="ev-sec-sub">Nahraj plakát a logo akce. PNG nebo JPG, alespoň 400×400 px.</p>
+            </div>
             <div className="ev-image-pair">
               <div className="ev-img-section">
                 <div className="ev-img-label">Plakát</div>
@@ -240,24 +302,28 @@ export default function EditEventPage() {
           </div>
         </section>
 
-        {/* 04 · Kategorie */}
+        {/* 05 · Kategorie */}
         <section className="ev-section">
           <div className="ev-sec-rule" />
-          <div className="ev-sec-eyebrow">— 04 · Kategorie —</div>
-          <h2 className="ev-sec-heading">V jaké <span className="pink">kategorii.</span></h2>
-          <p className="ev-sec-sub">Vyber jednu nebo více kategorií, do kterých akce patří.</p>
           <div className="ev-card">
+            <div className="ev-card-head">
+              <div className="ev-sec-eyebrow">— 05 · Kategorie —</div>
+              <h2 className="ev-sec-heading">V jaké <span className="pink">kategorii.</span></h2>
+              <p className="ev-sec-sub">Vyber jednu nebo více kategorií, do kterých akce patří.</p>
+            </div>
             <ChipSelect options={allCategories.map((c) => c.name)} selected={categories} onChange={handleCategories} max={1} />
           </div>
         </section>
 
-        {/* 05 · Pravidla a formulář */}
+        {/* 06 · Pravidla a formulář */}
         <section className="ev-section">
           <div className="ev-sec-rule" />
-          <div className="ev-sec-eyebrow">— 05 · Obsah —</div>
-          <h2 className="ev-sec-heading">Jaká <span className="pink">pravidla.</span></h2>
-          <p className="ev-sec-sub">Postup, řád, instrukce… a odkaz na dotazník (Google Forms).</p>
           <div className="ev-card">
+            <div className="ev-card-head">
+              <div className="ev-sec-eyebrow">— 06 · Obsah —</div>
+              <h2 className="ev-sec-heading">Jaká <span className="pink">pravidla.</span></h2>
+              <p className="ev-sec-sub">Postup, řád, instrukce… a odkaz na dotazník (Google Forms).</p>
+            </div>
             <div className="ev-field ev-full">
               <label htmlFor="f-rules">Pravidla</label>
               <textarea className="ev-textarea" id="f-rules" value={form.rules} onChange={setField('rules')} />
@@ -269,45 +335,16 @@ export default function EditEventPage() {
           </div>
         </section>
 
-        {/* 06 · Poloha */}
-        <section className="ev-section">
-          <div className="ev-sec-rule" />
-          <div className="ev-sec-eyebrow">— 06 · Poloha na mapě —</div>
-          <h2 className="ev-sec-heading">Kde se to <span className="pink">děje.</span></h2>
-          <p className="ev-sec-sub">Klikni na mapu pro výběr místa. Tažením kolíku ho doladíš.</p>
-          <div className="ev-card">
-            <EventLocationMap
-              interactive
-              latitude={form.latitude}
-              longitude={form.longitude}
-              radius={Number(form.checkin_radius) || 0}
-              onChange={({ latitude, longitude }) => {
-                setForm((f) => ({ ...f, latitude, longitude }));
-                markDirty();
-              }}
-            />
-            {form.latitude !== '' && form.longitude !== '' && (
-              <div className="ev-map-meta">
-                <span>{Number(form.latitude).toFixed(5)}, {Number(form.longitude).toFixed(5)}</span>
-                <button
-                  type="button"
-                  className="ev-map-clear"
-                  onClick={() => { setForm((f) => ({ ...f, latitude: '', longitude: '' })); markDirty(); }}
-                >
-                  Vymazat polohu
-                </button>
-              </div>
-            )}
-          </div>
-        </section>
 
         {/* 07 · Viditelnost */}
         <section className="ev-section">
           <div className="ev-sec-rule" />
-          <div className="ev-sec-eyebrow">— 07 · Viditelnost —</div>
-          <h2 className="ev-sec-heading">Kdo <span className="pink">uvidí.</span></h2>
-          <p className="ev-sec-sub">Postav si, zda je akce viditelná pro běžné uživatele.</p>
           <div className="ev-card">
+            <div className="ev-card-head">
+              <div className="ev-sec-eyebrow">— 07 · Viditelnost —</div>
+              <h2 className="ev-sec-heading">Kdo <span className="pink">uvidí.</span></h2>
+              <p className="ev-sec-sub">Postav si, zda je akce viditelná pro běžné uživatele.</p>
+            </div>
             <div className="ev-toggle-row">
               <div className="ev-txt"><h4>Viditelná pro uživatele</h4><p>Pokud vypnuto, akce se zobrazí jen v adminu.</p></div>
               <Switch checked={form.visible_to_users} onChange={(val) => { setForm((f) => ({ ...f, visible_to_users: val })); markDirty(); }} ariaLabel="Viditelná pro uživatele" />
@@ -318,7 +355,33 @@ export default function EditEventPage() {
             </div>
           </div>
         </section>
+
+        {/* 08 · Konec akce */}
+        <section className="ev-section">
+          <div className="ev-sec-rule" />
+          <div className="ev-card ev-danger-card">
+            <div className="ev-card-head">
+              <div className="ev-sec-eyebrow">— 08 · Konec akce —</div>
+              <h2 className="ev-sec-heading">Smazat <span className="pink">akci.</span></h2>
+              <p className="ev-sec-sub">Nevratné. S akcí zmizí i všechny udělené body, RSVP a fotky.</p>
+            </div>
+            <div className="ev-toggle-row">
+              <div className="ev-txt"><h4>Smazat akci</h4><p>Hráčům se odečtou body získané na této akci.</p></div>
+              <button type="button" className="ev-btn danger" onClick={() => setDeleteOpen(true)}>Smazat akci</button>
+            </div>
+          </div>
+        </section>
       </main>
+
+      <Modal open={deleteOpen} onClose={deleting ? undefined : () => setDeleteOpen(false)} labelledBy="ev-delete-title" width={480}>
+        <div className="ev-modal-eyebrow">— Konec akce —</div>
+        <h3 id="ev-delete-title" className="ev-modal-title">Smazat akci <span className="pink">natrvalo?</span></h3>
+        <p className="ev-modal-text">„{form.name}“ zmizí i se všemi udělenými body, RSVP a fotkami. Tohle vzít zpět nejde.</p>
+        <div className="ev-modal-buttons">
+          <Button variant="frost" onClick={() => setDeleteOpen(false)} disabled={deleting}>Zpět</Button>
+          <Button variant="action" onClick={confirmDelete} busy={deleting}>Smazat natrvalo</Button>
+        </div>
+      </Modal>
 
       <section className="ev-commit-zone">
         <div className="ev-commit-label">— Hotovo? —</div>

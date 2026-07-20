@@ -116,18 +116,18 @@ export default function CreateEventPage() {
         <div className="ev-crumb">— <Link to="/events">Akce</Link> · Vytvořit —</div>
         <div className="ev-eyebrow">Nová akce</div>
         <h1>Vytvořit akci</h1>
-        <p className="ev-lede">Vytvoř novou akci a zapoj komunitu. Nastav kdy, kde a za kolik bodů se bude hrát.</p>
-        <div className="ev-divider" />
       </section>
 
       <main className="ev-main">
         {/* 01 · Základy */}
         <section className="ev-section">
           <div className="ev-sec-rule" />
-          <div className="ev-sec-eyebrow">— 01 · Základy —</div>
-          <h2 className="ev-sec-heading">Jak se <span className="pink">jmenuje.</span></h2>
-          <p className="ev-sec-sub">Základní informace o akci — název, popis a kde se to bude dít.</p>
           <div className="ev-card">
+            <div className="ev-card-head">
+              <div className="ev-sec-eyebrow">— 01 · Základy —</div>
+              <h2 className="ev-sec-heading">Jak se <span className="pink">jmenuje.</span></h2>
+              <p className="ev-sec-sub">Základní informace o akci — název, popis a kde se to bude dít.</p>
+            </div>
             <div className="ev-grid-2">
               <div className="ev-field">
                 <label htmlFor="f-name">Název akce</label>
@@ -148,10 +148,12 @@ export default function CreateEventPage() {
         {/* 02 · Čas a body */}
         <section className="ev-section">
           <div className="ev-sec-rule" />
-          <div className="ev-sec-eyebrow">— 02 · Čas a body —</div>
-          <h2 className="ev-sec-heading">Kdy a za <span className="pink">kolik.</span></h2>
-          <p className="ev-sec-sub">Nastav datum, čas (lze nechat prázdné) a počet bodů za účast.</p>
           <div className="ev-card">
+            <div className="ev-card-head">
+              <div className="ev-sec-eyebrow">— 02 · Čas a body —</div>
+              <h2 className="ev-sec-heading">Kdy a za <span className="pink">kolik.</span></h2>
+              <p className="ev-sec-sub">Nastav datum, čas (lze nechat prázdné) a počet bodů za účast.</p>
+            </div>
             <div className="ev-grid-2">
               <div className="ev-field">
                 <label htmlFor="f-date">Začátek akce <span className="ev-hint">nepovinné</span></label>
@@ -177,13 +179,49 @@ export default function CreateEventPage() {
           </div>
         </section>
 
-        {/* 03 · Obrázky */}
+        {/* 03 · Poloha */}
         <section className="ev-section">
           <div className="ev-sec-rule" />
-          <div className="ev-sec-eyebrow">— 03 · Vizuál —</div>
-          <h2 className="ev-sec-heading">Jak <span className="pink">vypadá.</span></h2>
-          <p className="ev-sec-sub">Nahraj plakát a logo akce. PNG nebo JPG, alespoň 400×400 px.</p>
           <div className="ev-card">
+            <div className="ev-card-head">
+              <div className="ev-sec-eyebrow">— 03 · Poloha na mapě —</div>
+              <h2 className="ev-sec-heading">Kde se to <span className="pink">děje.</span></h2>
+              <p className="ev-sec-sub">Klikni na mapu pro výběr místa. Tažením kolíku ho doladíš.</p>
+            </div>
+            <EventLocationMap
+              interactive
+              latitude={form.latitude}
+              longitude={form.longitude}
+              radius={Number(form.checkin_radius) || 0}
+              onChange={({ latitude, longitude }) => {
+                setForm((f) => ({ ...f, latitude, longitude }));
+                markDirty();
+              }}
+            />
+            {form.latitude !== '' && form.longitude !== '' && (
+              <div className="ev-map-meta">
+                <span>{Number(form.latitude).toFixed(5)}, {Number(form.longitude).toFixed(5)}</span>
+                <button
+                  type="button"
+                  className="ev-map-clear"
+                  onClick={() => { setForm((f) => ({ ...f, latitude: '', longitude: '' })); markDirty(); }}
+                >
+                  Vymazat polohu
+                </button>
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* 04 · Obrázky */}
+        <section className="ev-section">
+          <div className="ev-sec-rule" />
+          <div className="ev-card">
+            <div className="ev-card-head">
+              <div className="ev-sec-eyebrow">— 04 · Vizuál —</div>
+              <h2 className="ev-sec-heading">Jak <span className="pink">vypadá.</span></h2>
+              <p className="ev-sec-sub">Nahraj plakát a logo akce. PNG nebo JPG, alespoň 400×400 px.</p>
+            </div>
             <div className="ev-image-pair">
               <div className="ev-img-section">
                 <div className="ev-img-label">Plakát</div>
@@ -215,24 +253,28 @@ export default function CreateEventPage() {
           </div>
         </section>
 
-        {/* 04 · Kategorie */}
+        {/* 05 · Kategorie */}
         <section className="ev-section">
           <div className="ev-sec-rule" />
-          <div className="ev-sec-eyebrow">— 04 · Kategorie —</div>
-          <h2 className="ev-sec-heading">V jaké <span className="pink">kategorii.</span></h2>
-          <p className="ev-sec-sub">Vyber jednu nebo více kategorií, do kterých akce patří.</p>
           <div className="ev-card">
+            <div className="ev-card-head">
+              <div className="ev-sec-eyebrow">— 05 · Kategorie —</div>
+              <h2 className="ev-sec-heading">V jaké <span className="pink">kategorii.</span></h2>
+              <p className="ev-sec-sub">Vyber jednu nebo více kategorií, do kterých akce patří.</p>
+            </div>
             <ChipSelect options={allCategories.map((c) => c.name)} selected={categories} onChange={handleCategories} max={1} />
           </div>
         </section>
 
-        {/* 05 · Pravidla a formulář */}
+        {/* 06 · Pravidla a formulář */}
         <section className="ev-section">
           <div className="ev-sec-rule" />
-          <div className="ev-sec-eyebrow">— 05 · Obsah —</div>
-          <h2 className="ev-sec-heading">Jaká <span className="pink">pravidla.</span></h2>
-          <p className="ev-sec-sub">Postup, řád, instrukce… a odkaz na dotazník (Google Forms).</p>
           <div className="ev-card">
+            <div className="ev-card-head">
+              <div className="ev-sec-eyebrow">— 06 · Obsah —</div>
+              <h2 className="ev-sec-heading">Jaká <span className="pink">pravidla.</span></h2>
+              <p className="ev-sec-sub">Postup, řád, instrukce… a odkaz na dotazník (Google Forms).</p>
+            </div>
             <div className="ev-field ev-full">
               <label htmlFor="f-rules">Pravidla</label>
               <textarea className="ev-textarea" id="f-rules" placeholder="Každé pravidlo na nový řádek…" value={form.rules} onChange={setField('rules')} />
@@ -244,45 +286,16 @@ export default function CreateEventPage() {
           </div>
         </section>
 
-        {/* 06 · Poloha */}
-        <section className="ev-section">
-          <div className="ev-sec-rule" />
-          <div className="ev-sec-eyebrow">— 06 · Poloha na mapě —</div>
-          <h2 className="ev-sec-heading">Kde se to <span className="pink">děje.</span></h2>
-          <p className="ev-sec-sub">Klikni na mapu pro výběr místa. Tažením kolíku ho doladíš.</p>
-          <div className="ev-card">
-            <EventLocationMap
-              interactive
-              latitude={form.latitude}
-              longitude={form.longitude}
-              radius={Number(form.checkin_radius) || 0}
-              onChange={({ latitude, longitude }) => {
-                setForm((f) => ({ ...f, latitude, longitude }));
-                markDirty();
-              }}
-            />
-            {form.latitude !== '' && form.longitude !== '' && (
-              <div className="ev-map-meta">
-                <span>{Number(form.latitude).toFixed(5)}, {Number(form.longitude).toFixed(5)}</span>
-                <button
-                  type="button"
-                  className="ev-map-clear"
-                  onClick={() => { setForm((f) => ({ ...f, latitude: '', longitude: '' })); markDirty(); }}
-                >
-                  Vymazat polohu
-                </button>
-              </div>
-            )}
-          </div>
-        </section>
 
         {/* 07 · Viditelnost */}
         <section className="ev-section">
           <div className="ev-sec-rule" />
-          <div className="ev-sec-eyebrow">— 07 · Viditelnost —</div>
-          <h2 className="ev-sec-heading">Kdo <span className="pink">uvidí.</span></h2>
-          <p className="ev-sec-sub">Postav si, zda je akce viditelná pro běžné uživatele.</p>
           <div className="ev-card">
+            <div className="ev-card-head">
+              <div className="ev-sec-eyebrow">— 07 · Viditelnost —</div>
+              <h2 className="ev-sec-heading">Kdo <span className="pink">uvidí.</span></h2>
+              <p className="ev-sec-sub">Postav si, zda je akce viditelná pro běžné uživatele.</p>
+            </div>
             <div className="ev-toggle-row">
               <div className="ev-txt"><h4>Viditelná pro uživatele</h4><p>Pokud vypnuto, akce se zobrazí jen v adminu.</p></div>
               <Switch checked={form.visible_to_users} onChange={(val) => { setForm((f) => ({ ...f, visible_to_users: val })); markDirty(); }} ariaLabel="Viditelná pro uživatele" />

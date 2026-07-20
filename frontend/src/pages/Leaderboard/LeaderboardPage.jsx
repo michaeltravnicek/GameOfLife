@@ -11,11 +11,17 @@ import PlayerRow, { playerLink } from '../../components/PlayerRow/PlayerRow';
 import './LeaderboardPage.css';
 
 const TROPHIES = ['🏆', '🥈', '🥉'];
+// Rows shown under the podium before "Načíst další" (same pattern as events).
+const REST_PAGE_SIZE = 50;
 
 export default function LeaderboardPage() {
   // `seasonId` is what we send the API: 'active' (default), 'all', or a season id.
   const [seasonId, setSeasonId] = useState('active');
   const [query, setQuery] = useState('');
+  // Visible-row cap per season tab (keyed so switching tabs starts fresh
+  // without an effect-driven reset).
+  const [restCounts, setRestCounts] = useState({});
+  const restVisible = restCounts[seasonId] ?? REST_PAGE_SIZE;
 
   const { data: seasonsData } = useCachedQuery('seasons', fetchSeasons, { ttl: CACHE_TTL.LEADERBOARD });
   const seasons = seasonsData?.seasons || [];
@@ -48,10 +54,13 @@ export default function LeaderboardPage() {
   // Derive `rest` inside the memo from `entries` (a stable cache reference).
   // The outer `rest` above is a fresh array every render, so depending on it
   // made this memo recompute every render and re-filter even while typing.
-  const visibleRest = useMemo(() => {
+  // Search looks through EVERY player (cap ignored); otherwise the list is
+  // capped and grown by the "Načíst další" button below.
+  const { visibleRest, remaining } = useMemo(() => {
     const r = entries.slice(3);
-    return q ? r.filter((p) => p.name.toLowerCase().includes(q)) : r;
-  }, [entries, q]);
+    if (q) return { visibleRest: r.filter((p) => p.name.toLowerCase().includes(q)), remaining: 0 };
+    return { visibleRest: r.slice(0, restVisible), remaining: Math.max(r.length - restVisible, 0) };
+  }, [entries, q, restVisible]);
 
   return (
     <div className="leaderboard-page">
@@ -125,6 +134,17 @@ export default function LeaderboardPage() {
                 )}
               </div>
             </div>
+            {remaining > 0 && (
+              <div className="load-more-row">
+                <button
+                  type="button"
+                  className="loc"
+                  onClick={() => setRestCounts((c) => ({ ...c, [seasonId]: restVisible + REST_PAGE_SIZE }))}
+                >
+                  Načíst další ({remaining})
+                </button>
+              </div>
+            )}
           </>
         )}
       </main>

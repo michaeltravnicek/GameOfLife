@@ -166,3 +166,8 @@
 @media(max-width:320px){
   .leaderboard-page .pod .nm{font-size:8px;max-width:56px}
 }
+
+/* "Načíst další" — same dashed-pill load-more as the events page. */
+.leaderboard-page .load-more-row{display:flex;justify-content:center;margin-top:26px}
+.leaderboard-page .loc{display:inline-flex;align-items:center;gap:7px;font-family:var(--font-hv);font-weight:300;font-style:italic;font-size:12.5px;letter-spacing:.04em;padding:7px 14px;min-height:30px;border-radius:9999px;cursor:pointer;background:rgba(26,15,10,.45);border:1.5px dashed rgba(255,241,212,.28);color:rgba(255,241,212,.78);transition:all .18s;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.leaderboard-page .loc:hover{color:#fff;border-color:rgba(255,241,212,.55)}

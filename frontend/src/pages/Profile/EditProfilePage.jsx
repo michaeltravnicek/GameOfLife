@@ -2,6 +2,9 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Switch from '../../components/Switch/Switch';
 import ChipSelect from '../../components/ChipSelect/ChipSelect';
+import Modal from '../../components/Modal/Modal';
+import Button from '../../components/Button/Button';
+import { useToast } from '../../components/Toast/ToastProvider';
 import { fetchMe, fetchProfile, updateProfile, fetchCategories } from '../../services/api';
 import './EditProfilePage.css';
 
@@ -15,6 +18,8 @@ const SOCIALS = [
 ];
 
 export default function EditProfilePage() {
+  const toast = useToast();
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [allCategories, setAllCategories] = useState([]);
   const [form, setForm] = useState({
@@ -151,10 +156,10 @@ export default function EditProfilePage() {
 
   const handleCategories = (next) => { setCategories(next); markDirty(); };
 
-  const handleDelete = () => {
-    if (window.confirm('Smazat účet NATRVALO? Tato akce je nevratná.')) {
-      window.alert('… kdyby to bylo opravdu napojený, teď by ses smazal.');
-    }
+  const confirmDelete = () => {
+    setDeleteOpen(false);
+    // Deletion isn't wired to the API yet — surface that honestly, in-system.
+    toast.info('Mazání účtu zatím není napojené — kdyby bylo, teď by ses smazal.', { title: 'Smazání účtu' });
   };
 
   useEffect(() => {
@@ -192,18 +197,18 @@ export default function EditProfilePage() {
         <div className="ep-crumb">— <Link to={`/profil/${form.username}`}>Profil</Link> · Upravit —</div>
         <div className="ep-eyebrow">Tvůj kus stránky</div>
         <h1>Upravit profil</h1>
-        <p className="ep-lede">Tady si nastav, jak tě uvidí ostatní hráči — od jména po playlist, kterým je rozsekáš na karaoke.</p>
-        <div className="ep-divider" />
       </section>
 
       <main className="ep-main">
         {/* 01 · Základy */}
         <section className="ep-section">
           <div className="ep-sec-rule" />
-          <div className="ep-sec-eyebrow">— 01 · Základy —</div>
-          <h2 className="ep-sec-heading">Kdo <span className="pink">jsi.</span></h2>
-          <p className="ep-sec-sub">Tyhle údaje uvidí každý, kdo otevře tvůj profil. E-mail jsou jen pro organizátory.</p>
           <div className="ep-card">
+            <div className="ep-card-head">
+              <div className="ep-sec-eyebrow">— 01 · Základy —</div>
+              <h2 className="ep-sec-heading">Kdo <span className="pink">jsi.</span></h2>
+              <p className="ep-sec-sub">Tyhle údaje uvidí každý, kdo otevře tvůj profil. E-mail jsou jen pro organizátory.</p>
+            </div>
             <div className="ep-grid-2">
               <div className="ep-field">
                 <label htmlFor="f-name">Jméno</label>
@@ -232,10 +237,12 @@ export default function EditProfilePage() {
         {/* 02 · Avatar */}
         <section className="ep-section">
           <div className="ep-sec-rule" />
-          <div className="ep-sec-eyebrow">— 02 · Avatar &amp; identita —</div>
-          <h2 className="ep-sec-heading">Jak <span className="pink">vypadáš.</span></h2>
-          <p className="ep-sec-sub">Tvoje fotka se objeví u tvého jména v leaderboardu, v galerii akcí a vedle každé tvojí RSVP.</p>
           <div className="ep-card ep-avatar-card">
+            <div className="ep-card-head">
+              <div className="ep-sec-eyebrow">— 02 · Avatar &amp; identita —</div>
+              <h2 className="ep-sec-heading">Jak <span className="pink">vypadáš.</span></h2>
+              <p className="ep-sec-sub">Tvoje fotka se objeví u tvého jména v leaderboardu, v galerii akcí a vedle každé tvojí RSVP.</p>
+            </div>
             <div
               className={`ep-avatar-big${avatar ? ' has-img' : ''}`}
               style={avatar ? { backgroundImage: `url(${avatar})` } : undefined}
@@ -259,10 +266,12 @@ export default function EditProfilePage() {
         {/* 03 · Bio */}
         <section className="ep-section">
           <div className="ep-sec-rule" />
-          <div className="ep-sec-eyebrow">— 03 · O mně —</div>
-          <h2 className="ep-sec-heading">Co o sobě <span className="pink">povíš.</span></h2>
-          <p className="ep-sec-sub">Krátký vzkaz, který se objeví v záhlaví tvého profilu. Drž to v jednom dechu — nejvíc 220 znaků.</p>
           <div className="ep-card">
+            <div className="ep-card-head">
+              <div className="ep-sec-eyebrow">— 03 · O mně —</div>
+              <h2 className="ep-sec-heading">Co o sobě <span className="pink">povíš.</span></h2>
+              <p className="ep-sec-sub">Krátký vzkaz, který se objeví v záhlaví tvého profilu. Drž to v jednom dechu — nejvíc 220 znaků.</p>
+            </div>
             <div className="ep-field ep-full">
               <label htmlFor="f-bio">Bio</label>
               <textarea
@@ -278,24 +287,30 @@ export default function EditProfilePage() {
           </div>
         </section>
 
-        {/* 04 · Kategorie */}
-        <section className="ep-section">
-          <div className="ep-sec-rule" />
-          <div className="ep-sec-eyebrow">— 04 · Oblíbené kategorie —</div>
-          <h2 className="ep-sec-heading">V čem <span className="pink">jedeš.</span></h2>
-          <p className="ep-sec-sub">Vyber 1–4 kategorie, ve kterých se nejvíc realizuješ. Pomůže nám doporučit ti akce na míru.</p>
-          <div className="ep-card">
-            <ChipSelect options={allCategories.map((c) => c.name)} selected={categories} onChange={handleCategories} max={3} />
-          </div>
-        </section>
+        {/* 04 · Kategorie — hidden entirely when no categories exist to pick */}
+        {allCategories.length > 0 && (
+          <section className="ep-section">
+            <div className="ep-sec-rule" />
+            <div className="ep-card">
+              <div className="ep-card-head">
+                <div className="ep-sec-eyebrow">— 04 · Oblíbené kategorie —</div>
+                <h2 className="ep-sec-heading">V čem <span className="pink">jedeš.</span></h2>
+                <p className="ep-sec-sub">Vyber 1–4 kategorie, ve kterých se nejvíc realizuješ. Pomůže nám doporučit ti akce na míru.</p>
+              </div>
+              <ChipSelect options={allCategories.map((c) => c.name)} selected={categories} onChange={handleCategories} max={3} />
+            </div>
+          </section>
+        )}
 
         {/* 05 · Sociální sítě */}
         <section className="ep-section">
           <div className="ep-sec-rule" />
-          <div className="ep-sec-eyebrow">— 05 · Sociální sítě —</div>
-          <h2 className="ep-sec-heading">Kde tě <span className="pink">najdou.</span></h2>
-          <p className="ep-sec-sub">Tyhle odkazy se objeví v sekci „O mně“ na tvém profilu. Nech prázdné, co nechceš sdílet.</p>
           <div className="ep-card">
+            <div className="ep-card-head">
+              <div className="ep-sec-eyebrow">— 05 · Sociální sítě —</div>
+              <h2 className="ep-sec-heading">Kde tě <span className="pink">najdou.</span></h2>
+              <p className="ep-sec-sub">Tyhle odkazy se objeví v sekci „O mně“ na tvém profilu. Nech prázdné, co nechceš sdílet.</p>
+            </div>
             <div className="ep-social-rows">
               {SOCIALS.map((s) => (
                 <div key={s.key} className={`ep-social-row${socials[s.key].trim() ? ' filled' : ''}`}>
@@ -313,10 +328,12 @@ export default function EditProfilePage() {
         {/* 06 · Soukromí */}
         <section className="ep-section">
           <div className="ep-sec-rule" />
-          <div className="ep-sec-eyebrow">— 06 · Soukromí —</div>
-          <h2 className="ep-sec-heading">Kdo tě <span className="pink">uvidí.</span></h2>
-          <p className="ep-sec-sub">Profil je veřejný, ale tyhle detaily můžeš zamknout.</p>
           <div className="ep-card">
+            <div className="ep-card-head">
+              <div className="ep-sec-eyebrow">— 06 · Soukromí —</div>
+              <h2 className="ep-sec-heading">Kdo tě <span className="pink">uvidí.</span></h2>
+              <p className="ep-sec-sub">Profil je veřejný, ale tyhle detaily můžeš zamknout.</p>
+            </div>
             <div className="ep-toggle-row">
               <div className="ep-txt"><h4>Skrýt seznam absolvovaných akcí</h4><p>Tvůj profil ukáže jen highlighty.</p></div>
               <Switch checked={privacy.hide_events} onChange={togglePrivacy('hide_events')} ariaLabel="Skrýt seznam akcí" />
@@ -331,13 +348,15 @@ export default function EditProfilePage() {
         {/* 07 · Danger */}
         <section className="ep-section">
           <div className="ep-sec-rule" />
-          <div className="ep-sec-eyebrow danger">— 07 · Konec hry —</div>
-          <h2 className="ep-sec-heading">Něco <span className="pink">extrémního.</span></h2>
-          <p className="ep-sec-sub">Tyhle akce jsou nevratné. Body, akce, fotky — všechno zmizí. Mysli si dvakrát.</p>
           <div className="ep-card ep-danger-card">
+            <div className="ep-card-head">
+              <div className="ep-sec-eyebrow danger">— 07 · Konec hry —</div>
+              <h2 className="ep-sec-heading">Něco <span className="pink">extrémního.</span></h2>
+              <p className="ep-sec-sub">Tyhle akce jsou nevratné. Body, akce, fotky — všechno zmizí. Mysli si dvakrát.</p>
+            </div>
             <div className="ep-toggle-row">
               <div className="ep-txt"><h4>Smazat účet</h4><p>Trvalé. Všechny tvoje akce, body i fotky budou ztraceny v čase, jako slzy v dešti.</p></div>
-              <button type="button" className="ep-btn danger" onClick={handleDelete}>Smazat účet</button>
+              <button type="button" className="ep-btn danger" onClick={() => setDeleteOpen(true)}>Smazat účet</button>
             </div>
           </div>
         </section>
@@ -347,8 +366,9 @@ export default function EditProfilePage() {
         <div className="ep-commit-label">— Hotovo? —</div>
         <h2>Uložit změny</h2>
         <div className="ep-commit-row">
-          <Link className="ep-btn ghost" to={`/profil/${form.username}`}>Zrušit</Link>
-          <button type="button" className="ep-btn primary lg" onClick={handleSave} disabled={saving}>{btnSaved ? '✓ Uloženo' : 'Uložit profil'}</button>
+          {/* Cancel navigates back → 3D frost; save is an in-place action → round pill. */}
+          <Button as="link" to={`/profil/${form.username}`} variant="frost">Zrušit</Button>
+          <Button variant="action" size="lg" onClick={handleSave} busy={saving}>{btnSaved ? '✓ Uloženo' : 'Uložit profil'}</Button>
         </div>
         <div className="ep-commit-note">{saveError ? `— Chyba: ${saveError} —` : (dirty ? '— Neuložené změny —' : '— Vše uloženo —')}</div>
       </section>
@@ -357,11 +377,21 @@ export default function EditProfilePage() {
         <div className="ep-savebar-inner">
           <div className={`ep-status${saved ? ' saved' : ''}${saveError ? ' error' : ''}`}><span className="ep-pulse" />{saveError ? saveError : (saved ? 'Vše uloženo' : 'Neuložené změny')}</div>
           <div className="ep-savebar-actions">
-            <Link className="ep-btn ghost" to={`/profil/${form.username}`}>Zrušit</Link>
-            <button type="button" className="ep-btn primary" onClick={handleSave} disabled={saving}>{btnSaved ? '✓ Uloženo' : 'Uložit změny'}</button>
+            <Button as="link" to={`/profil/${form.username}`} variant="frost" size="sm">Zrušit</Button>
+            <Button variant="action" onClick={handleSave} busy={saving}>{btnSaved ? '✓ Uloženo' : 'Uložit změny'}</Button>
           </div>
         </div>
       </div>
+
+      <Modal open={deleteOpen} onClose={() => setDeleteOpen(false)} labelledBy="ep-delete-title" width={480}>
+        <div className="ep-modal-eyebrow">— Konec hry —</div>
+        <h3 id="ep-delete-title" className="ep-modal-title">Smazat účet <span className="pink">natrvalo?</span></h3>
+        <p className="ep-modal-text">Tato akce je nevratná. Všechny tvoje akce, body i fotky budou ztraceny v čase, jako slzy v dešti.</p>
+        <div className="ep-modal-buttons">
+          <Button variant="frost" onClick={() => setDeleteOpen(false)}>Zpět</Button>
+          <Button variant="action" onClick={confirmDelete}>Smazat natrvalo</Button>
+        </div>
+      </Modal>
     </div>
   );
 }

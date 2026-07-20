@@ -13,10 +13,9 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        from datetime import timedelta
         from leaderboard.models import LastUpdate
-        from datetime import datetime
-        from django.utils.timezone import utc
+        from datetime import datetime, timezone as dt_timezone
+        from django.utils import timezone
 
         force_all = options["force_all"]
         now = timezone.now()
@@ -24,7 +23,7 @@ class Command(BaseCommand):
         last_update_obj, _ = LastUpdate.objects.get_or_create(
             pk=1,
             defaults={
-                "last_update": datetime.fromtimestamp(0, tz=utc),
+                "last_update": datetime.fromtimestamp(0, tz=dt_timezone.utc),
                 "last_complete_update": None,
             },
         )

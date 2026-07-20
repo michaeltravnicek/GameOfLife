@@ -105,11 +105,20 @@ export default function Hero({
   const slidesRef = useParallax({ speed: 0.14, disabled: !parallax });
   const innerRef = useParallax({ apply: fadeHeroInner, disabled: !parallax });
 
+  // Manual navigation restarts the auto-cycle countdown (cycleEpoch re-runs the
+  // interval effect) — otherwise a dot click near the end of the interval gets
+  // overridden by an auto-advance a moment later.
+  const [cycleEpoch, setCycleEpoch] = useState(0);
+  const goToManual = useCallback((to) => {
+    goTo(to);
+    setCycleEpoch((e) => e + 1);
+  }, [goTo]);
+
   useEffect(() => {
     if (n < 2) return undefined;
     const t = setInterval(() => goTo((currentRef.current + 1) % n), autoCycleMs);
     return () => clearInterval(t);
-  }, [n, autoCycleMs, goTo]);
+  }, [n, autoCycleMs, goTo, cycleEpoch]);
 
   // Pre-warm the upcoming slide during idle time so its cross-fade is ready
   // without competing with the initial paint.
@@ -147,7 +156,7 @@ export default function Hero({
         </Button>
       </div>
 
-      <HeroDots count={slides.length} current={current} onChange={goTo} />
+      <HeroDots count={slides.length} current={current} onChange={goToManual} />
     </section>
   );
 }

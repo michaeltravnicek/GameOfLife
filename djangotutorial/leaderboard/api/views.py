@@ -1,9 +1,15 @@
-from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.shortcuts import get_object_or_404
-from django.utils import timezone
 from django.views.decorators.cache import cache_control
 
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import (
+    OpenApiExample,
+    OpenApiParameter,
+    extend_schema,
+    inline_serializer,
+)
+from rest_framework import serializers as drf_serializers
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -24,6 +30,8 @@ from leaderboard.services import (
     active_checkin_events,
     add_event_images,
     admin_feedback_list,
+    attendee_payload,
+    attendees_for_event,
     cached_leaderboard_entries,
     categories_cached,
     cities_cached,
@@ -33,19 +41,87 @@ from leaderboard.services import (
     list_events,
     pick_hero_events,
     player_payload,
+    remove_attendance,
     resolve_season,
     resolve_season_filter,
+    rsvps_for_event,
     season_payload,
     seasons_cached,
+    set_attendance,
 )
-from leaderboard.utils import parse_int_param, parse_iso_datetime
+from leaderboard.utils import parse_int_param
 
-from .serializers import EventDetailSerializer, EventListSerializer
+from accounts.api.serializers import SeasonDetailSerializer
+from .serializers import (
+    AdminFeedbacksResponseSerializer,
+    AttendeeSerializer,
+    AttendeesResponseSerializer,
+    AttendeeWriteSerializer,
+    CategoriesResponseSerializer,
+    CategorySerializer,
+    CheckinEventsResponseSerializer,
+    CheckinSerializer,
+    EventDetailSerializer,
+    EventListSerializer,
+    EventWriteSerializer,
+    FeedbackSerializer,
+    GalleryResponseSerializer,
+    HeroResponseSerializer,
+    LeaderboardResponseSerializer,
+    PhotoUploadSerializer,
+    PlayerDetailSerializer,
+    RsvpsResponseSerializer,
+    SeasonsResponseSerializer,
+    StatsResponseSerializer,
+)
 
 _SEASON_NOT_FOUND = {"error": "Sezóna nenalezena."}
 _SEASON_INVALID = {"error": "Neplatný parametr 'season_id'."}
 
 
+def _offset_param(default):
+    return OpenApiParameter("offset", int, description=f"Rows to skip (default {default}).")
+
+
+def _limit_param(default, maximum):
+    return OpenApiParameter(
+        "limit", int, description=f"Page size (default {default}, max {maximum}).")
+
+
+# season_id on list filters: an id, or "all"/blank for no filter.
+_SEASON_FILTER_PARAM = OpenApiParameter(
+    "season_id", str,
+    description='Season id to filter by, or "all"/omit for no season filter.')
+
+# season_id on the leaderboard: an id, "active" (default) or "all".
+_SEASON_BOARD_PARAM = OpenApiParameter(
+    "season_id", str,
+    description='Season id, "active" (default — the current season) or "all" for all-time.')
+
+
+@extend_schema(tags=['Events'],
+    operation_id="events_list",
+    parameters=[
+        OpenApiParameter("period", str, enum=["all", "upcoming", "past"],
+                         description='Time filter (default "all").'),
+        OpenApiParameter("city", str, description="Filter by place (exact, case-insensitive)."),
+        OpenApiParameter("category", int, description="Filter by category id."),
+        OpenApiParameter("q", str, description="Full-text search over name/description."),
+        _SEASON_FILTER_PARAM,
+        _offset_param(0),
+        _limit_param(30, 100),
+    ],
+    responses=inline_serializer("EventListResponse", {
+        "events": EventListSerializer(many=True),
+        "count": drf_serializers.IntegerField(),
+        "has_more": drf_serializers.BooleanField(),
+        "cities": inline_serializer("EventCity", {
+            "name": drf_serializers.CharField(),
+            "count": drf_serializers.IntegerField(),
+        }, many=True),
+        "categories": CategorySerializer(many=True),
+    }),
+)
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def events_list(request):
@@ -107,6 +183,7 @@ def events_list(request):
     }, status=status.HTTP_200_OK)
 
 
+@extend_schema(tags=['Events'], operation_id="event_detail", responses=EventDetailSerializer)
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def event_detail(request, slug):
@@ -124,47 +201,87 @@ def event_detail(request, slug):
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-@api_view(["POST"])
+@extend_schema(tags=['Events'],
+    request=None,
+    responses=inline_serializer("RsvpResponse", {
+        "rsvp": drf_serializers.BooleanField(),
+        "rsvp_count": drf_serializers.IntegerField(),
+    }),
+)
+@api_view(["PUT", "DELETE"])
 @permission_classes([IsAuthenticated])
 @transaction.atomic
-def event_rsvp_toggle(request, slug):
-    """Toggle the current user's RSVP for an event (respects capacity)."""
+def event_rsvp(request, slug):
+    """Set (PUT) or remove (DELETE) the current user's RSVP. Idempotent —
+    a retried request confirms the state instead of inverting it (mobile
+    clients retry after timeouts). PUT respects capacity (409 when full).
+    """
     # Lock the event row so the capacity check + create below are serialized:
     # without it two concurrent requests can both pass the count check and
     # oversell the event (TOCTOU).
     event = get_object_or_404(Event.objects.select_for_update(), slug=slug)
-    rsvp = EventRSVP.objects.filter(auth_user=request.user, event=event).first()
-    if rsvp:
-        rsvp.delete()
+
+    if request.method == "DELETE":
+        EventRSVP.objects.filter(auth_user=request.user, event=event).delete()
         return Response({"rsvp": False, "rsvp_count": event.rsvps.count()},
                         status=status.HTTP_200_OK)
 
+    if EventRSVP.objects.filter(auth_user=request.user, event=event).exists():
+        return Response({"rsvp": True, "rsvp_count": event.rsvps.count()},
+                        status=status.HTTP_200_OK)
     if event.capacity is not None and event.rsvps.count() >= event.capacity:
         return Response({"error": "Akce je plně obsazena."},
-                        status=status.HTTP_400_BAD_REQUEST)
+                        status=status.HTTP_409_CONFLICT)
     EventRSVP.objects.create(auth_user=request.user, event=event)
     return Response({"rsvp": True, "rsvp_count": event.rsvps.count()},
                     status=status.HTTP_201_CREATED)
 
 
+@extend_schema(tags=['Events'],
+    request=FeedbackSerializer,
+    responses={
+        200: inline_serializer("FeedbackUpdatedResponse", {"ok": drf_serializers.BooleanField()}),
+        201: inline_serializer("FeedbackCreatedResponse", {"ok": drf_serializers.BooleanField()}),
+    },
+    examples=[OpenApiExample("Rating with comment",
+        value={"rating": 5, "comment": "Skvělá akce!"}, request_only=True)],
+)
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 @transaction.atomic
 def event_feedback(request, slug):
-    """Create or update the current user's 1–5 rating + comment for an event."""
+    """Create or update the current user's 1–10 rating + comment for an event."""
     event = get_object_or_404(Event, slug=slug)
-    rating = parse_int_param(request.data.get("rating"), 0)
-    if rating < 1 or rating > 5:
-        return Response({"error": "Hodnocení musí být 1–5."}, status=status.HTTP_400_BAD_REQUEST)
+    serializer = FeedbackSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
 
-    comment = (request.data.get("comment") or "").strip()
-    EventFeedback.objects.update_or_create(
-        auth_user=request.user, event=event,
-        defaults={"rating": rating, "comment": comment},
+    # Feedback is keyed on the leaderboard user (form submissions have no auth
+    # account). An account with no linked leaderboard user has no attendance
+    # either, so it could not have reached this endpoint legitimately.
+    profile = getattr(request.user, "profile", None)
+    lb_user = profile.leaderboard_user if profile else None
+    if lb_user is None:
+        return Response({"error": "Účet není propojen s hráčem v žebříčku."},
+                        status=status.HTTP_400_BAD_REQUEST)
+
+    _, created = EventFeedback.objects.update_or_create(
+        user=lb_user, event=event,
+        defaults={**serializer.validated_data, "source": EventFeedback.SOURCE_WEB},
     )
-    return Response({"ok": True}, status=status.HTTP_200_OK)
+    return Response(
+        {"ok": True},
+        status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
+    )
 
 
+@extend_schema(
+    tags=["Leaderboard"],
+    parameters=[
+        _SEASON_BOARD_PARAM,
+        OpenApiParameter("limit", int, description="Top-N entries (default 0 = all, max 100)."),
+    ],
+    responses=LeaderboardResponseSerializer,
+)
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def leaderboard_view(request):
@@ -184,6 +301,7 @@ def leaderboard_view(request):
                     status=status.HTTP_200_OK)
 
 
+@extend_schema(tags=["Leaderboard"], responses=SeasonsResponseSerializer)
 @cache_control(public=True, max_age=3600)
 @api_view(["GET"])
 @permission_classes([AllowAny])
@@ -192,6 +310,7 @@ def seasons_list(request):
     return Response({"seasons": seasons_cached()}, status=status.HTTP_200_OK)
 
 
+@extend_schema(tags=["Leaderboard"], responses=PlayerDetailSerializer)
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def player_detail(request, user_id):
@@ -204,6 +323,7 @@ def player_detail(request, user_id):
     return Response(player_payload(lb_user), status=status.HTTP_200_OK)
 
 
+@extend_schema(tags=["Leaderboard"], responses=SeasonDetailSerializer)
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def player_season_detail(request, user_id, season_id):
@@ -218,6 +338,11 @@ def player_season_detail(request, user_id, season_id):
     return Response(season_detail(lb_user, season), status=status.HTTP_200_OK)
 
 
+@extend_schema(
+    tags=["Gallery"],
+    parameters=[_SEASON_FILTER_PARAM, _offset_param(0), _limit_param(60, 200)],
+    responses=GalleryResponseSerializer,
+)
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def gallery_view(request):
@@ -242,6 +367,7 @@ def gallery_view(request):
     }, status=status.HTTP_200_OK)
 
 
+@extend_schema(tags=["Home"], responses=StatsResponseSerializer)
 @cache_control(public=True, max_age=1800)
 @api_view(["GET"])
 @permission_classes([AllowAny])
@@ -250,6 +376,7 @@ def stats_view(request):
     return Response(home_stats(), status=status.HTTP_200_OK)
 
 
+@extend_schema(tags=["Home"], responses=HeroResponseSerializer)
 @cache_control(public=True, max_age=3600)
 @api_view(["GET"])
 @permission_classes([AllowAny])
@@ -264,6 +391,7 @@ def hero_view(request):
     return Response({"hero_events": hero_data}, status=status.HTTP_200_OK)
 
 
+@extend_schema(tags=["Events"], responses=CheckinEventsResponseSerializer)
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def checkin_events_view(request):
@@ -271,6 +399,18 @@ def checkin_events_view(request):
     return Response({"events": active_checkin_events(request.user)}, status=status.HTTP_200_OK)
 
 
+@extend_schema(tags=['Events'],
+    request=CheckinSerializer,
+    responses=inline_serializer("CheckinResponse", {
+        "ok": drf_serializers.BooleanField(),
+        "error": drf_serializers.CharField(required=False),
+        "distance_m": drf_serializers.IntegerField(required=False),
+        "points": drf_serializers.IntegerField(required=False),
+        "already_had": drf_serializers.BooleanField(required=False),
+    }),
+    examples=[OpenApiExample("Brno coordinates",
+        value={"latitude": 49.1951, "longitude": 16.6068}, request_only=True)],
+)
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 @transaction.atomic
@@ -283,9 +423,11 @@ def event_checkin(request, slug):
         ),
         slug=slug,
     )
+    serializer = CheckinSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
     result = validate_and_record_checkin(
         event, request.user,
-        request.data.get("latitude"), request.data.get("longitude"),
+        serializer.validated_data["latitude"], serializer.validated_data["longitude"],
     )
     payload = {"ok": result.ok}
     if result.error:
@@ -298,6 +440,7 @@ def event_checkin(request, slug):
     return Response(payload, status=result.status)
 
 
+@extend_schema(tags=["Events"], responses=CategoriesResponseSerializer)
 @cache_control(public=True, max_age=3600)
 @api_view(["GET"])
 @permission_classes([AllowAny])
@@ -306,6 +449,17 @@ def categories_list(request):
     return Response({"categories": categories_cached()}, status=status.HTTP_200_OK)
 
 
+@extend_schema(tags=['Gallery'],
+    request=PhotoUploadSerializer,
+    responses=inline_serializer("PhotoUploadResponse", {
+        "id": drf_serializers.IntegerField(),
+        "url": drf_serializers.URLField(),
+        "caption": drf_serializers.CharField(),
+        "event_slug": drf_serializers.CharField(),
+        "uploaded_by": drf_serializers.CharField(),
+        "created_at": drf_serializers.DateTimeField(),
+    }),
+)
 @api_view(["POST"])
 @permission_classes([IsAdminOrPhotographer])
 def photo_upload(request):
@@ -313,15 +467,15 @@ def photo_upload(request):
 
     Multipart body: `image` (required), `event` (optional event slug), `caption`.
     """
-    image = request.FILES.get("image")
-    if not image:
-        return Response({"error": "Nahraj prosím obrázek."}, status=status.HTTP_400_BAD_REQUEST)
+    serializer = PhotoUploadSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    data = serializer.validated_data
     try:
         with transaction.atomic():
             photo = create_user_photo(
-                request.user, image,
-                event_slug=request.data.get("event", ""),
-                caption=request.data.get("caption", ""),
+                request.user, data["image"],
+                event_slug=data["event"],
+                caption=data["caption"],
             )
             payload = {
                 "id": photo.id,
@@ -338,19 +492,41 @@ def photo_upload(request):
     return Response(payload, status=status.HTTP_201_CREATED)
 
 
-@api_view(["POST"])
+@extend_schema(tags=['Gallery'],
+    request=None,
+    responses=inline_serializer("PhotoLikeResponse", {
+        "liked": drf_serializers.BooleanField(),
+        "count": drf_serializers.IntegerField(),
+    }),
+)
+@api_view(["PUT", "DELETE"])
 @permission_classes([IsAuthenticated])
 @transaction.atomic
-def photo_like_toggle(request, photo_id):
-    """Toggle the current user's like on a community photo. Response: `{liked, count}`."""
+def photo_like(request, photo_id):
+    """Set (PUT) or remove (DELETE) the current user's like on a photo.
+
+    Idempotent, same reasoning as `event_rsvp`. Response: `{liked, count}`.
+    """
     photo = get_object_or_404(UserPhoto, id=photo_id)
-    like, created = PhotoLike.objects.get_or_create(photo=photo, user=request.user)
-    if not created:
-        like.delete()
-    return Response({"liked": created, "count": photo.likes.count()},
-                    status=status.HTTP_200_OK)
+    if request.method == "DELETE":
+        PhotoLike.objects.filter(photo=photo, auth_user=request.user).delete()
+        return Response({"liked": False, "count": photo.likes.count()},
+                        status=status.HTTP_200_OK)
+    _, created = PhotoLike.objects.get_or_create(photo=photo, auth_user=request.user)
+    return Response({"liked": True, "count": photo.likes.count()},
+                    status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
 
 
+@extend_schema(tags=['Events'],
+    request=inline_serializer("EventImagesRequest", {
+        "images": drf_serializers.ListField(child=drf_serializers.ImageField(), required=False),
+        "image": drf_serializers.ImageField(required=False),
+    }),
+    responses=inline_serializer("EventImagesResponse", {
+        "images": drf_serializers.ListField(child=drf_serializers.URLField()),
+        "count": drf_serializers.IntegerField(),
+    }),
+)
 @api_view(["POST"])
 @permission_classes([IsAdminOrPhotographer])
 def event_images_upload(request, slug):
@@ -376,6 +552,7 @@ def event_images_upload(request, slug):
     return Response(payload, status=status.HTTP_201_CREATED)
 
 
+@extend_schema(tags=["Admin"], responses=AdminFeedbacksResponseSerializer)
 @api_view(["GET"])
 @permission_classes([IsAdmin])
 def admin_feedbacks(request):
@@ -383,170 +560,105 @@ def admin_feedbacks(request):
     return Response({"feedbacks": admin_feedback_list()}, status=status.HTTP_200_OK)
 
 
+@extend_schema(tags=['Events'], request=EventWriteSerializer, responses=EventDetailSerializer)
 @api_view(["POST"])
 @permission_classes([IsAdmin])
 def event_create(request):
     """Create a new event (admin only). Multipart body with event fields."""
-    name = request.data.get('name', '').strip()
-    if not name:
-        return Response({"error": "Název akce je povinný."}, status=status.HTTP_400_BAD_REQUEST)
-
-    try:
-        date = parse_iso_datetime(request.data.get('date', ''))
-    except ValueError:
-        return Response({"error": "Neplatný formát data."}, status=status.HTTP_400_BAD_REQUEST)
-    try:
-        end_date = parse_iso_datetime(request.data.get('end_date', ''))
-    except ValueError:
-        return Response({"error": "Neplatný formát konce akce."}, status=status.HTTP_400_BAD_REQUEST)
-
-    place = request.data.get('place', '').strip()
-    points = parse_int_param(request.data.get('points'), 0, min_val=0)
-    capacity = (parse_int_param(request.data.get('capacity'), 0, min_val=0)
-                if request.data.get('capacity') else None)
-    description = request.data.get('description', '').strip()
-    rules = request.data.get('rules', '').strip()
-    survey_url = request.data.get('survey_url', '').strip()
-    visible_to_users = request.data.get('visible_to_users', '1') in ('1', 'true', 'True')
-    visible_to_close = request.data.get('visible_to_close', '0') in ('1', 'true', 'True')
-
-    latitude = request.data.get('latitude')
-    longitude = request.data.get('longitude')
-    try:
-        latitude = float(latitude) if latitude else None
-        longitude = float(longitude) if longitude else None
-    except (ValueError, TypeError):
-        latitude = longitude = None
-
-    checkin_radius = parse_int_param(request.data.get('checkin_radius'), 500, min_val=10, max_val=50000)
-    category_id = request.data.get('category')
-    category = None
-    if category_id:
-        from leaderboard.models import Category
-        try:
-            category = Category.objects.get(id=category_id)
-        except Category.DoesNotExist:
-            pass
-
-    event = Event(
-        name=name,
-        date=date,
-        end_date=end_date,
-        place=place,
-        points=points,
-        capacity=capacity,
-        description=description,
-        rules=rules,
-        survey_url=survey_url,
-        visible_to_users=visible_to_users,
-        visible_to_close=visible_to_close,
-        latitude=latitude,
-        longitude=longitude,
-        checkin_radius=checkin_radius,
-        category=category,
-    )
-    if 'image' in request.FILES:
-        event.image = request.FILES['image']
-    if 'logo' in request.FILES:
-        event.logo = request.FILES['logo']
-
-    # Model-level validation (lat/lng ranges + pairing, radius, URL, lengths).
-    # `date` is excluded: the model requires it but the UI treats it as optional.
-    try:
-        event.full_clean(exclude=['date', 'slug'])
-    except ValidationError as exc:
-        return Response({"error": "; ".join(exc.messages)}, status=status.HTTP_400_BAD_REQUEST)
-
+    serializer = EventWriteSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
     # Atomic: if response serialization raises, the half-created row rolls back.
     with transaction.atomic():
-        event.save()
+        event = serializer.save()
         payload = EventDetailSerializer(event, context={"request": request}).data
     return Response(payload, status=status.HTTP_201_CREATED)
 
 
+@extend_schema(tags=['Events'], request=EventWriteSerializer, responses=EventDetailSerializer)
 @api_view(["PATCH"])
 @permission_classes([IsAdmin])
 def event_update(request, slug):
-    """Update an event (admin only). Multipart body with event fields to update."""
+    """Update an event (admin only). Multipart body; absent fields stay unchanged."""
     event = get_object_or_404(Event, slug=slug)
+    serializer = EventWriteSerializer(event, data=request.data, partial=True)
+    serializer.is_valid(raise_exception=True)
+    with transaction.atomic():
+        event = serializer.save()
+        payload = EventDetailSerializer(event, context={"request": request}).data
+    return Response(payload, status=status.HTTP_200_OK)
 
-    date_provided = 'date' in request.data
-    new_date = None
-    if date_provided and request.data.get('date', ''):
-        try:
-            new_date = parse_iso_datetime(request.data['date'])
-        except ValueError:
-            return Response({"error": "Neplatný formát data."}, status=status.HTTP_400_BAD_REQUEST)
 
-    end_date_provided = 'end_date' in request.data
-    new_end_date = None
-    if end_date_provided and request.data.get('end_date', ''):
-        try:
-            new_end_date = parse_iso_datetime(request.data['end_date'])
-        except ValueError:
-            return Response({"error": "Neplatný formát konce akce."}, status=status.HTTP_400_BAD_REQUEST)
+@extend_schema(tags=['Events'], responses={204: None})
+@api_view(["DELETE"])
+@permission_classes([IsAdmin])
+def event_delete(request, slug):
+    """Delete an event (admin only).
 
-    try:
-        with transaction.atomic():
-            if 'name' in request.data:
-                event.name = request.data.get('name', '').strip()
-            if date_provided:
-                event.date = new_date
-            if end_date_provided:
-                event.end_date = new_end_date
-            if 'place' in request.data:
-                event.place = request.data.get('place', '').strip()
-            if 'points' in request.data:
-                event.points = parse_int_param(request.data.get('points'), 0, min_val=0)
-            if 'capacity' in request.data:
-                event.capacity = (parse_int_param(request.data.get('capacity'), 0, min_val=0)
-                                  if request.data.get('capacity') else None)
-            if 'description' in request.data:
-                event.description = request.data.get('description', '').strip()
-            if 'rules' in request.data:
-                event.rules = request.data.get('rules', '').strip()
-            if 'survey_url' in request.data:
-                event.survey_url = request.data.get('survey_url', '').strip()
-            if 'visible_to_users' in request.data:
-                event.visible_to_users = request.data.get('visible_to_users', '1') in ('1', 'true', 'True')
-            if 'visible_to_close' in request.data:
-                event.visible_to_close = request.data.get('visible_to_close', '0') in ('1', 'true', 'True')
+    Cascades to awarded points, RSVPs, feedback and photos — leaderboard
+    totals change, so the points-dependent caches are dropped.
+    """
+    event = get_object_or_404(Event, slug=slug)
+    with transaction.atomic():
+        event.delete()
+    from leaderboard.cache_config import invalidate_points_dependent_caches
+    invalidate_points_dependent_caches()
+    # 204: the resource is gone, there is nothing meaningful to return.
+    return Response(status=status.HTTP_204_NO_CONTENT)
 
-            if 'latitude' in request.data or 'longitude' in request.data:
-                try:
-                    lat = request.data.get('latitude')
-                    lon = request.data.get('longitude')
-                    event.latitude = float(lat) if lat else None
-                    event.longitude = float(lon) if lon else None
-                except (ValueError, TypeError):
-                    event.latitude = event.longitude = None
 
-            if 'checkin_radius' in request.data:
-                event.checkin_radius = parse_int_param(
-                    request.data.get('checkin_radius'), 500, min_val=10, max_val=50000)
+@extend_schema(tags=["Events"], responses=AttendeesResponseSerializer)
+@api_view(["GET"])
+@permission_classes([IsAdmin])
+def event_attendees(request, slug):
+    """Who actually attended this event and how many points they got (admin).
 
-            if 'category' in request.data:
-                category_id = request.data.get('category')
-                if category_id:
-                    from leaderboard.models import Category
-                    try:
-                        event.category = Category.objects.get(id=category_id)
-                    except Category.DoesNotExist:
-                        event.category = None
-                else:
-                    event.category = None
+    Attendance = UserToEvent rows (from check-in or the Sheets sync), which is
+    what feeds the leaderboard — distinct from RSVPs (see `event_rsvps`).
+    """
+    event = get_object_or_404(Event, slug=slug)
+    return Response({"attendees": attendees_for_event(event)}, status=status.HTTP_200_OK)
 
-            if 'image' in request.FILES:
-                event.image = request.FILES['image']
-            if 'logo' in request.FILES:
-                event.logo = request.FILES['logo']
 
-            # `date` excluded: required by the model but optional in the UI.
-            event.full_clean(exclude=['date', 'slug'])
-            event.save()
-            payload = EventDetailSerializer(event, context={"request": request}).data
-        return Response(payload, status=status.HTTP_200_OK)
-    except ValidationError as exc:
-        return Response({"error": "; ".join(exc.messages)}, status=status.HTTP_400_BAD_REQUEST)
-    except Exception as exc:
-        return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+@extend_schema(methods=["PUT"], tags=["Events"],
+               request=AttendeeWriteSerializer, responses=AttendeeSerializer)
+@extend_schema(methods=["DELETE"], tags=["Events"], request=None,
+               responses=inline_serializer("AttendeeDeleteResponse",
+                                           {"ok": drf_serializers.BooleanField()}))
+@api_view(["PUT", "DELETE"])
+@permission_classes([IsAdmin])
+@transaction.atomic
+def event_attendee_detail(request, slug, user_id):
+    """Set/add (PUT) or remove (DELETE) one leaderboard user's attendance (admin).
+
+    PUT body: `{points}`. Creates the attendance row if it doesn't exist (201)
+    or updates the points (200). DELETE removes it. Both change leaderboard
+    totals, so the points-dependent caches are dropped by the service layer.
+    `user_id` is a leaderboard-user id (the same id used by /players/<id>/).
+    """
+    event = get_object_or_404(Event, slug=slug)
+    lb_user = get_object_or_404(LeaderboardUser, id=user_id)
+
+    if request.method == "DELETE":
+        remove_attendance(event, lb_user)
+        return Response({"ok": True}, status=status.HTTP_200_OK)
+
+    serializer = AttendeeWriteSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    ute, created = set_attendance(event, lb_user, serializer.validated_data["points"])
+    return Response(
+        attendee_payload(lb_user, ute.points),
+        status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
+    )
+
+
+@extend_schema(tags=["Events"], responses=RsvpsResponseSerializer)
+@api_view(["GET"])
+@permission_classes([IsAdmin])
+def event_rsvps(request, slug):
+    """Everyone signed up (RSVP'd) for this event (admin).
+
+    RSVPs = intentions to attend (EventRSVP); distinct from actual attendance
+    with points (see `event_attendees`).
+    """
+    event = get_object_or_404(Event, slug=slug)
+    return Response({"rsvps": rsvps_for_event(event)}, status=status.HTTP_200_OK)

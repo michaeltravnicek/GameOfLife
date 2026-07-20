@@ -1,4 +1,8 @@
-.event-location-map{position:relative;width:100%;border-radius:8px;overflow:hidden;border:1px solid rgba(255,241,212,0.12);box-shadow:0 6px 24px rgba(0,0,0,0.25)}
+/* z-index:0 + isolation — Leaflet's internal panes go up to z-index 1000,
+   which would paint over the fixed nav (z-index 100) while scrolling; the
+   isolated stacking context keeps them contained inside the map box.
+   Cream photo border = the same frame treatment as gallery/lightbox photos. */
+.event-location-map{position:relative;z-index:0;isolation:isolate;width:100%;border-radius:3px;overflow:hidden;border:5px solid var(--color-cream-light);box-shadow:0 16px 40px rgba(0,0,0,0.45)}
 .event-location-map .elm-canvas{height:clamp(220px,30vw,360px);width:100%}
 .event-location-map.is-interactive .elm-canvas{cursor:crosshair}
 .event-location-map .elm-hint{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:500;pointer-events:none;background:rgba(26,15,10,0.78);color:#fff1d4;padding:8px 14px;border-radius:999px;font-family:'Courier Prime',monospace;font-style:italic;font-size:13px;letter-spacing:0.02em}

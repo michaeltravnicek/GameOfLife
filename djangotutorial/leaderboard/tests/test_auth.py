@@ -1,12 +1,17 @@
+from unittest import mock
+
 from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import default_token_generator
 from django.core import mail
+from django.core.cache import cache
 from django.test import TestCase
 from django.urls import reverse
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 
 from rest_framework.test import APIClient
+
+from accounts.api.throttles import LoginThrottle
 
 
 class PasswordResetApiTests(TestCase):
@@ -121,3 +126,58 @@ class LoginRememberTests(TestCase):
         resp = self._login()  # no `remember` key at all
         self.assertEqual(resp.status_code, 200)
         self.assertTrue(self.client.session.get_expire_at_browser_close())
+
+
+class LoginFailureTests(TestCase):
+    """Bad credentials → 401 with one generic message (no account enumeration)."""
+
+    def setUp(self):
+        self.client = APIClient()
+        self.url = reverse("api-login")
+        get_user_model().objects.create_user(username="realuser", password="rightpass")
+
+    def _login(self, identifier, password):
+        return self.client.post(
+            self.url, data={"identifier": identifier, "password": password}, format="json",
+        )
+
+    def test_unknown_identifier_returns_401(self):
+        resp = self._login("ghost", "whatever")
+        self.assertEqual(resp.status_code, 401)
+
+    def test_wrong_password_returns_401(self):
+        resp = self._login("realuser", "wrongpass")
+        self.assertEqual(resp.status_code, 401)
+
+    def test_unknown_and_wrong_are_indistinguishable(self):
+        # The whole point of the anti-enumeration change: an attacker must not
+        # be able to tell "no such user" from "wrong password".
+        unknown = self._login("ghost", "whatever")
+        wrong = self._login("realuser", "wrongpass")
+        self.assertEqual(unknown.status_code, wrong.status_code)
+        self.assertEqual(unknown.json(), wrong.json())
+
+    def test_missing_fields_returns_400(self):
+        # Empty input is a client error (400), distinct from bad creds (401).
+        resp = self._login("", "")
+        self.assertEqual(resp.status_code, 400)
+
+
+class AuthThrottleTests(TestCase):
+    """Throttling is disabled suite-wide; this opts one scope back in to prove it works."""
+
+    def setUp(self):
+        cache.clear()  # throttle counters live in the cache — start clean
+        self.client = APIClient()
+        self.url = reverse("api-login")
+
+    def test_login_throttled_after_limit(self):
+        # DRF binds THROTTLE_RATES to the settings dict at class-definition time,
+        # so override_settings won't reach it — patch the shared rate dict directly.
+        creds = {"identifier": "whoever", "password": "nope"}
+        with mock.patch.dict(LoginThrottle.THROTTLE_RATES, {"login": "3/min"}):
+            for _ in range(3):
+                resp = self.client.post(self.url, data=creds, format="json")
+                self.assertEqual(resp.status_code, 401)  # under the limit: normal auth failure
+            blocked = self.client.post(self.url, data=creds, format="json")
+            self.assertEqual(blocked.status_code, 429)  # 4th request in the window is throttled

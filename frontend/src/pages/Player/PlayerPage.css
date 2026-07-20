@@ -1,46 +1,18 @@
-/* All selectors scoped under .player-page. Mirrors the leaderboard look:
-   fixed photo background + blue grain overlay, with the shared <Table>
-   re-textured to "blue 2". */
-.player-page{min-height:100vh;color:var(--color-cream-light);overflow-x:hidden;padding:172px 20px 80px;max-width:900px;margin:0 auto}
+/* Anonymous player profile — the page reuses the full ProfilePage skin
+   (all layout/section styles live in ProfilePage.css under .profile-page);
+   this file only carries the "profil bez účtu" deviations. */
 
-.player-page .stage{position:fixed;inset:0;bottom:auto;height:100vh;height:100lvh;z-index:-2;background:url('/img/gal4.webp') center 28%/cover no-repeat;filter:saturate(.7) contrast(1.02);transform:scale(1.05)}
-.player-page .stage::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 15%,rgba(45,42,142,.12) 0%,transparent 55%),linear-gradient(180deg,rgba(45,42,142,.10) 0%,rgba(26,15,10,.62) 50%,rgba(26,15,10,.84) 100%)}
-.player-page .grain{position:fixed;inset:0;bottom:auto;height:100vh;height:100lvh;z-index:-1;pointer-events:none;background:url('/img/Grain_texture_blue2.webp') 0 0/var(--tex-size) var(--tex-size) repeat;opacity:var(--grain-opacity);mix-blend-mode:overlay}
+/* Keep the player page's own backdrop so public players stay visually
+   distinguishable from account profiles (which use gal6). */
+.profile-page.player-anon .poster-img{background:url('/img/gal11.webp') center 28%/cover no-repeat}
 
-.player-page .player-status{text-align:center;padding:80px 20px;color:var(--alpha-cream-55);font-family:var(--font-mono);font-style:italic}
+/* Unclaimed avatar: no pink glow, muted dashed ring — the outline of a
+   player who hasn't claimed their spot yet. */
+.profile-page.player-anon .poster-avatar{background:rgba(26,15,10,.6);border-color:rgba(255,241,212,.35);color:rgba(255,241,212,.7)}
 
-.player-page .player-hero{text-align:center;display:flex;flex-direction:column;align-items:center;gap:14px;margin-bottom:40px}
-.player-page .player-badges{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
-.player-page .player-pill{font-family:var(--font-mono);font-style:italic;font-size:11px;letter-spacing:.18em;text-transform:uppercase;padding:6px 14px;border-radius:9999px;background:rgba(26,15,10,.55);border:1.5px dashed rgba(255,241,212,.4);color:rgba(255,241,212,.92);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
-.player-page .player-pill.live{background:var(--color-pink);color:#fff;border-color:transparent;box-shadow:0 4px 14px rgba(225,84,99,.5)}
-.player-page .player-name{font-family:var(--font-display);font-size:clamp(44px,7vw,84px);line-height:.92;text-transform:uppercase;letter-spacing:.03em;color:#fff;text-shadow:0 6px 38px rgba(0,0,0,.7);margin:4px 0 0}
-.player-page .player-handle{font-family:var(--font-mono);font-style:italic;font-size:13px;color:rgba(255,241,212,.78);letter-spacing:.16em;text-shadow:0 2px 10px rgba(0,0,0,.5)}
+.profile-page.player-anon .claim-note{font-family:var(--font-body);font-style:italic;font-size:13px;color:rgba(255,241,212,.6);align-self:center}
 
-/* Stat "credits" over the background photo — mirrors the profile poster. */
-.player-page .player-credits{position:relative;margin-top:18px;padding-top:30px;display:flex;justify-content:center;align-items:flex-end;gap:0;width:100%;max-width:680px}
-.player-page .player-credits-rule{position:absolute;left:50%;transform:translateX(-50%);top:0;width:min(680px,calc(100% - 12px));height:1px;background:repeating-linear-gradient(90deg,rgba(255,241,212,.45) 0 6px,transparent 6px 12px)}
-.player-page .player-credit{flex:1;max-width:220px;padding:0 18px;text-align:center;color:var(--color-cream-light)}
-.player-page .player-credit + .player-credit{border-left:1px solid rgba(255,241,212,.20)}
-.player-page .player-credit-label{font-family:var(--font-mono);font-style:italic;font-size:10.5px;letter-spacing:.28em;text-transform:uppercase;color:var(--color-pink);margin-bottom:10px;text-shadow:0 2px 12px rgba(0,0,0,.7)}
-.player-page .player-credit-value{font-family:var(--font-display);font-size:clamp(38px,5vw,64px);letter-spacing:.04em;line-height:.95;color:#fff;text-shadow:0 4px 28px rgba(0,0,0,.75),0 1px 0 rgba(0,0,0,.4)}
-.player-page .player-credit-sub{font-family:var(--font-body);font-style:italic;font-size:12.5px;color:rgba(255,241,212,.78);margin-top:8px;text-shadow:0 2px 10px rgba(0,0,0,.6);line-height:1.4}
-.player-page .player-note{font-size:var(--text-sm);color:var(--alpha-cream-45);font-style:italic;margin:8px 0 0}
-
-.player-page .player-seasons{display:flex;justify-content:center;margin-bottom:20px}
-.player-page .player-list-label{font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.16em;font-size:var(--text-xs);color:var(--alpha-cream-55);margin:0 6px 14px;display:flex;align-items:center;gap:14px}
-.player-page .player-list-label::before,.player-page .player-list-label::after{content:'';flex:1;height:1px;background:repeating-linear-gradient(90deg,rgba(255,241,212,.3) 0 6px,transparent 6px 12px)}
-
-/* Event list uses the shared <StatList> poster skin (photo page); row/cell
-   styling lives in StatList.css. */
-
-.player-page .player-back{margin-top:36px;text-align:center}
-.player-page .player-back a{color:var(--color-pink);text-decoration:none;font-family:var(--font-mono);letter-spacing:.04em}
-.player-page .player-back a:hover{text-decoration:underline}
-
-@media(max-width:560px){
-  .player-page{padding:140px 14px 60px}
-  /* align-items:stretch — the desktop flex-end would hug the column right. */
-  .player-page .player-credits{flex-direction:column;align-items:stretch;gap:18px;padding-top:24px;max-width:320px}
-  .player-page .player-credit{max-width:none;padding:0}
-  .player-page .player-credit + .player-credit{border-left:0;border-top:1px solid rgba(255,241,212,.2);padding-top:18px}
+@media(max-width:720px){
+  .profile-page.player-anon .back-actions{justify-content:center}
+  .profile-page.player-anon .claim-note{width:100%;text-align:center}
 }

@@ -51,7 +51,7 @@ class EventCheckinApiTests(TestCase):
         self.client = APIClient()
         UserModel = get_user_model()
         self.user = UserModel.objects.create_user(username="tester", password="testpass")
-        self.lb_user = make_profile_for(self.user, number=42)
+        self.lb_user = make_profile_for(self.user, number=700000042)
 
         now = timezone.now()
         self.event = Event.objects.create(

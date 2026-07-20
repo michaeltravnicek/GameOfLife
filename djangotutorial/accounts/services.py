@@ -71,18 +71,41 @@ def serialize_user(user, request=None):
         photo_url = profile.photo.url
         if request is not None:
             photo_url = request.build_absolute_uri(photo_url)
+    # Same single-name rule as profile_payload: linked leaderboard row wins.
+    lb_name = ""
+    if profile is not None and profile.leaderboard_user_id:
+        lb_name = profile.leaderboard_user.name or ""
     return {
         "id": user.id,
         "username": user.username,
         "email": user.email,
         "first_name": user.first_name,
         "last_name": user.last_name,
-        "full_name": user.get_full_name() or user.username,
+        "full_name": lb_name or user.get_full_name() or user.username,
         "is_staff": user.is_staff,
         "role": profile.role if profile else "",
         "photo": photo_url,
         "instagram": profile.instagram if profile else "",
     }
+
+
+def _since(profile_user, lb_user):
+    """'Hraje od' month: the player's FIRST event, not the account signup.
+
+    Many players attended events (via the Google Sheets leaderboard) long
+    before registering on the web; falls back to date_joined for players
+    with no recorded events.
+    """
+    first_event_date = None
+    if lb_user:
+        first_event_date = (
+            UserToEvent.objects
+            .filter(user=lb_user)
+            .order_by("event__date")
+            .values_list("event__date", flat=True)
+            .first()
+        )
+    return (first_event_date or profile_user.date_joined).strftime("%Y-%m")
 
 
 def profile_payload(profile_user, request):
@@ -160,11 +183,14 @@ def profile_payload(profile_user, request):
     payload = {
         "username":   profile_user.username,
         "first_name": profile_user.first_name,
-        "full_name":  profile_user.get_full_name() or profile_user.username,
+        # Single display name: the leaderboard row is the source of truth for
+        # linked players (update_profile writes account name changes through).
+        "full_name":  (lb_user.name if lb_user and lb_user.name
+                       else (profile_user.get_full_name() or profile_user.username)),
         "photo":      photo_url,
         "bio":        profile.bio if profile else "",
         "city":       profile.city if profile else "",
-        "since":      profile_user.date_joined.strftime("%Y-%m"),
+        "since":      _since(profile_user, lb_user),
         "instagram":  profile.instagram if profile else "",
         "strava":     profile.strava if profile else "",
         "spotify":    profile.spotify if profile else "",
@@ -216,6 +242,17 @@ def update_profile(user, data, files):
             raise ValueError("Přezdívka je obsazena.")
         user.username = new_handle
     user.save()
+
+    # ONE display name: the linked leaderboard row mirrors the account name,
+    # so profile and leaderboard can never drift apart.
+    lb_user = profile.leaderboard_user
+    if lb_user is not None:
+        full_name = user.get_full_name().strip()
+        if full_name and lb_user.name != full_name:
+            lb_user.name = full_name
+            lb_user.save(update_fields=["name"])
+            from leaderboard.cache_config import invalidate_points_dependent_caches
+            invalidate_points_dependent_caches()
 
     for field in ("bio", "city", "instagram", "strava", "spotify", "tiktok"):
         if field in data:

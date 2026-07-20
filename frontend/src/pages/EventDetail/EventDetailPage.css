@@ -18,12 +18,17 @@
 .event-detail-page .credit{flex:1;max-width:280px;padding:0 18px;text-align:center;color:var(--color-cream-light);min-width:0}
 .event-detail-page .credit + .credit{border-left:1px solid rgba(255,241,212,.20)}
 .event-detail-page .credit-label{font-family:var(--font-mono);font-style:italic;font-size:10.5px;letter-spacing:.28em;text-transform:uppercase;color:var(--color-pink);margin-bottom:10px;text-shadow:0 2px 12px rgba(0,0,0,.7)}
-.event-detail-page .credit-value{font-family:var(--font-display);font-size:clamp(28px,4.4vw,54px);letter-spacing:.04em;line-height:.95;color:#fff;text-shadow:0 4px 28px rgba(0,0,0,.75),0 1px 0 rgba(0,0,0,.4);overflow-wrap:anywhere;hyphens:auto}
-.event-detail-page .credit-sub{font-family:var(--font-body);font-style:italic;font-size:13px;color:rgba(255,241,212,.78);margin-top:8px;text-shadow:0 2px 10px rgba(0,0,0,.6);line-height:1.4;overflow-wrap:anywhere}
+/* Single line, always — a wrapped value breaks the three-column baseline.
+   Long place names get .long/.xlong (set in JSX by length) to shrink instead
+   of wrapping; ellipsis is the last-resort guard. */
+.event-detail-page .credit-value{font-family:var(--font-display);font-size:clamp(28px,4.4vw,54px);letter-spacing:.04em;line-height:.95;color:#fff;text-shadow:0 4px 28px rgba(0,0,0,.75),0 1px 0 rgba(0,0,0,.4);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.event-detail-page .credit-value.long{font-size:clamp(24px,2.9vw,38px)}
+.event-detail-page .credit-value.xlong{font-size:clamp(19px,2.2vw,29px)}
+.event-detail-page .credit-sub{font-family:var(--font-body);font-style:italic;font-size:13px;color:rgba(255,241,212,.78);margin-top:8px;text-shadow:0 2px 10px rgba(0,0,0,.6);line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 /* ── RSVP BAR ── */
 .event-detail-page .rsvp-bar{background:rgba(26,15,10,.78);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px dashed rgba(255,241,212,.2);border-bottom:1px dashed rgba(255,241,212,.2);position:relative;z-index:2}
-.event-detail-page .rsvp-inner{max-width:980px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:18px;padding:18px 24px;flex-wrap:wrap}
+.event-detail-page .rsvp-inner{position:relative;max-width:980px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:18px;padding:18px 24px;flex-wrap:wrap}
 .event-detail-page .rsvp-info{display:flex;align-items:center;gap:16px;flex-wrap:wrap;font-family:var(--font-body);font-size:13.5px;color:rgba(255,241,212,.85)}
 .event-detail-page .pts-tag{background:var(--color-pink);color:#fff;font-family:var(--font-mono);font-weight:700;font-size:12px;letter-spacing:.06em;padding:6px 14px;border-radius:9999px;box-shadow:0 4px 14px rgba(225,84,99,.4)}
 .event-detail-page .cap-tag{font-family:var(--font-mono);font-style:italic;font-size:12px;color:rgba(255,241,212,.7)}
@@ -69,8 +74,7 @@
 .event-detail-page .back-strip{background:#1a0f0a;background-image:url('/img/Grain_texture_brown2.webp');background-size:var(--tex-size) var(--tex-size);background-repeat:repeat;background-position:0 0;padding:32px 24px 64px}
 .event-detail-page .back-strip-inner{max-width:780px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
 .event-detail-page .back-strip-actions{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
-.event-detail-page .back-link{font-family:var(--font-body);font-style:italic;font-size:14px;color:rgba(255,241,212,.75);display:inline-flex;align-items:center;gap:8px;border-bottom:1px dashed rgba(255,241,212,.35);padding-bottom:2px;transition:color .18s,border-color .18s;text-decoration:none}
-.event-detail-page .back-link:hover{color:var(--color-pink);border-color:var(--color-pink)}
+/* Back/edit links render through the shared <Button> (frost = back, nav = edit). */
 
 /* ── ADMIN BUTTONS ── */
 /* align-items:center keeps the inline-flex pill button (defined below) from
@@ -133,7 +137,6 @@
   .event-detail-page .rules li{grid-template-columns:36px 1fr;gap:14px;font-size:14.5px}
   .event-detail-page .rules li::before{font-size:28px}
   .event-detail-page .back-strip{padding:24px 16px 48px}
-  .event-detail-page .back-link{font-size:13px}
 }
 
 @media(max-width:375px){
@@ -148,7 +151,6 @@
   .event-detail-page .desc-text{font-size:14.5px}
   .event-detail-page .back-strip{padding:20px 12px 40px}
   .event-detail-page .back-strip-inner{flex-direction:column;align-items:stretch;text-align:center;gap:14px}
-  .event-detail-page .back-link{justify-content:center}
 }
 
 @media(max-width:320px){
@@ -170,16 +172,133 @@
 .event-detail-page .admin-btn:hover{background:var(--alpha-gold-40)}
 .event-detail-page .fb-admin-link{margin-bottom:16px}
 
+/* Admin Popis/Účast toggle — same PillTabs the profile page uses for its
+   season/view switcher, sitting right beside the RSVP button (or under the
+   recap, for a past event) instead of a bar of its own. */
+.event-detail-page .rsvp-actions{display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:flex-end}
+/* No padding override on .pilltabs — its sliding indicator is positioned with
+   a hard-coded 5px inset, so changing the padding desyncs the pill from the
+   button it is meant to sit behind. */
+/* "Proběhlo" stays optically centred in the bar whether or not the admin tabs
+   are there, so the bar doesn't visibly shift when an admin loads the page.
+   The recap keeps the full width and the tabs are lifted out of the flow to
+   the right edge. */
+.event-detail-page .rsvp-recap.with-tabs + .admin-view-tabs{position:absolute;right:24px;top:50%;transform:translateY(-50%)}
+
+/* Attendance / RSVP management (— Účast — tab). The list is the dark panel of
+   a ticket card; TicketFrame draws the white dashed frame around it — same
+   pattern as the profile page's event lists.
+   Panel fill is left to StatList's default (#150c08 + brown2 grain) so it is
+   pixel-identical to the profile page's lists — no wash, no override. */
+
+/* No inner scroll — the roster runs the full length of the page, exactly like
+   the profile page's "Co má za sebou" list. */
+
+/* Points match the profile list's .ev-pt exactly: display face, gold, no
+   underline or spinner chrome. Only the focus ring marks it as editable. */
+.event-detail-page .ev-pt{display:flex;align-items:baseline;justify-content:flex-end;gap:5px}
+.event-detail-page .att-pts-input{width:64px;background:transparent;border:0;color:var(--color-gold);font-family:var(--font-display);font-size:24px;line-height:1;letter-spacing:.03em;text-align:right;padding:2px 4px;border-radius:6px;transition:background .15s,color .15s}
+.event-detail-page .att-pts-input:hover:not(:disabled){background:rgba(255,241,212,.06)}
+.event-detail-page .att-pts-input:focus{outline:none;background:rgba(255,241,212,.10);color:#fff}
+.event-detail-page .att-pts-input:disabled{opacity:.45}
+.event-detail-page .att-pts-input::-webkit-outer-spin-button,
+.event-detail-page .att-pts-input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.event-detail-page .att-pts-input{-moz-appearance:textfield;appearance:textfield}
+
+/* Names link to the player's page. Only the name is a link, not the whole row —
+   the row also holds an editable points field and a remove button. */
+.event-detail-page .att-name-link{color:inherit;text-decoration:none;transition:color .15s}
+.event-detail-page .att-name-link:hover{color:var(--color-pink)}
+
+.event-detail-page .att-act{text-align:right}
+.event-detail-page .att-remove{background:none;border:0;padding:6px 2px;cursor:pointer;font-family:var(--font-mono);font-style:italic;font-size:11px;letter-spacing:.06em;color:rgba(255,241,212,.45);border-bottom:1px dashed transparent;transition:color .15s,border-color .15s}
+.event-detail-page .att-remove:hover:not(:disabled){color:var(--color-pink);border-color:var(--color-pink)}
+.event-detail-page .att-remove:disabled{opacity:.4;cursor:not-allowed}
+
+.event-detail-page .att-add{margin-bottom:14px}
+.event-detail-page .att-results{margin-top:8px;display:flex;flex-direction:column;gap:2px}
+.event-detail-page .att-result{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:12px 16px;background:#150c08 var(--tex-brown-2) 0 0/var(--tex-size) var(--tex-size) repeat;border:1px dashed rgba(255,241,212,.22);border-radius:11px;color:var(--color-cream-light);font-family:var(--font-body);font-size:14.5px;text-align:left;cursor:pointer;transition:border-color .15s,transform .15s}
+.event-detail-page .att-result:hover:not(:disabled){border-color:var(--color-pink);transform:translateX(2px)}
+.event-detail-page .att-result:disabled{opacity:.5;cursor:not-allowed}
+.event-detail-page .att-result-add{font-family:var(--font-mono);font-style:italic;font-size:11px;letter-spacing:.06em;color:var(--color-gold);white-space:nowrap}
+
+/* Name box + its mode switch. The switch sits on the right of the field and
+   never shrinks — the input takes whatever is left. */
+.event-detail-page .att-search-row{display:flex;align-items:center;gap:10px}
+.event-detail-page .att-search-input{flex:1;min-width:0}
+.event-detail-page .att-mode-tabs{flex-shrink:0}
+
+.event-detail-page .att-note{font-family:var(--font-body);font-style:italic;color:rgba(255,241,212,.55);font-size:14.5px;padding:20px 4px}
+
+@media (max-width:720px){
+  /* Phone layout for the bar. Side-by-side tabs + CTA leaves each of them a
+     ~150px sliver, so everything stacks full width instead: the toggle is a
+     two-up segmented control, the RSVP button its own full-width row. */
+  .event-detail-page .rsvp-actions{width:100%;flex-direction:column;align-items:stretch;justify-content:flex-start;gap:10px}
+  .event-detail-page .rsvp-actions .btn{width:100%}
+
+  /* Too narrow to float the tabs beside the centred recap without overlapping
+     it — put them back in the flow, full width.
+     `relative`, NOT `static`: .pilltabs is the containing block for its own
+     sliding indicator, so dropping position entirely makes the indicator size
+     itself against the whole rsvp bar and cover the recap text. */
+  .event-detail-page .rsvp-recap.with-tabs + .admin-view-tabs{position:relative;right:auto;top:auto;transform:none;margin:12px 0 0}
+
+  .event-detail-page .admin-view-tabs{display:flex;width:100%}
+  /* 44px minimum touch target — the desktop pill height is well under it. */
+  .event-detail-page .admin-view-tabs .pilltabs-btn{flex:1;justify-content:center;min-height:44px;padding:12px 10px}
+}
+
+@media (max-width:600px){
+  /* Three columns leave the name ~90px, which wraps every Czech full name onto
+     three lines. Give the name the full width and put points + action on a
+     second row underneath it. */
+  .event-detail-page .att-grid .ev-rk{display:none}
+  .event-detail-page .att-grid .stat-row{
+    grid-template-columns:1fr auto !important;
+    grid-template-areas:'info info' 'pts act';
+    row-gap:10px;
+  }
+  .event-detail-page .att-grid .ev-info{grid-area:info}
+  .event-detail-page .att-grid .ev-pt{grid-area:pts;justify-content:flex-start}
+  .event-detail-page .att-grid .att-act{grid-area:act}
+  /* 44px touch target for the remove action (24px as inline text). */
+  .event-detail-page .att-remove{min-height:44px;display:inline-flex;align-items:center;padding:6px 10px}
+  .event-detail-page .att-pts-input{padding:8px 4px}
+
+  /* Field over switch — side by side leaves the input too narrow to read a
+     name in. The switch stays full width so both modes keep a 44px target. */
+  .event-detail-page .att-search-row{flex-direction:column;align-items:stretch;gap:10px}
+  .event-detail-page .att-mode-tabs{display:flex}
+  .event-detail-page .att-mode-tabs .pilltabs-btn{flex:1;justify-content:center;min-height:44px}
+
+  /* The RSVP list is only name + date, which still fits one row. */
+  .event-detail-page .rsvp-grid .stat-row{grid-template-columns:1fr auto !important}
+  .event-detail-page .rsvp-grid .ev-rk{display:none}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .event-detail-page .att-result,
+  .event-detail-page .att-remove,
+  .event-detail-page .att-pts-input{transition:none}
+}
+
 /* Feedback section — centered */
+/* Body (gate text, stars, form) stays centered; the section header aligns
+   left like every other section on the page. */
 .event-detail-page .fb-section{text-align:center}
+.event-detail-page .fb-section .sec-hdr-eyebrow,.event-detail-page .fb-section .sec-hdr-heading{text-align:left}
 .event-detail-page .fb-gate{font-family:var(--font-body);font-style:italic;font-size:15px;color:rgba(255,241,212,.55);margin:0}
 .event-detail-page .fb-gate-link{color:var(--color-pink);border-bottom:1px dashed var(--color-pink);text-decoration:none;transition:opacity .15s}
 .event-detail-page .fb-gate-link:hover{opacity:.75}
 .event-detail-page .fb-form{display:flex;flex-direction:column;gap:16px;align-items:center;max-width:480px;margin:0 auto}
-.event-detail-page .fb-stars{display:flex;gap:10px;justify-content:center}
-.event-detail-page .fb-star{background:none;border:none;cursor:pointer;font-size:38px;line-height:1;color:var(--alpha-cream-22);padding:4px;transition:color .12s,transform .14s}
-.event-detail-page .fb-star:hover,.event-detail-page .fb-star:focus-visible{transform:scale(1.18);outline:none}
-.event-detail-page .fb-star.on{color:var(--color-gold)}
+/* 1-10 scale. Ten stars would be unreadable at phone widths, so the score is
+   a row of numbered chips that wraps to two rows on narrow screens. */
+.event-detail-page .fb-scale{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;max-width:420px}
+.event-detail-page .fb-score{width:38px;height:38px;flex:0 0 auto;background:var(--alpha-cream-04);border:1px solid var(--alpha-cream-22);border-radius:var(--radius-pill);color:var(--color-cream-light);font-family:var(--font-mono);font-size:14px;line-height:1;cursor:pointer;transition:background .12s,border-color .12s,color .12s,transform .14s}
+.event-detail-page .fb-score:hover,.event-detail-page .fb-score:focus-visible{border-color:var(--alpha-cream-55);transform:scale(1.08);outline:none}
+.event-detail-page .fb-score.on{background:var(--color-gold);border-color:var(--color-gold);color:var(--color-dark-brown);transform:scale(1.08)}
+.event-detail-page .fb-scale-hint{display:flex;justify-content:space-between;width:100%;max-width:420px;margin-top:-8px;font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;color:rgba(255,241,212,.45)}
 .event-detail-page .fb-comment{width:100%;background:var(--alpha-cream-04);border:1px solid var(--alpha-cream-18);border-radius:var(--radius-md);color:var(--color-cream-light);padding:12px 14px;font-family:var(--font-body);resize:vertical;text-align:left}
 .event-detail-page .fb-comment:focus{outline:none;border-color:var(--alpha-pink-45)}
 .event-detail-page .fb-actions{display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:center}

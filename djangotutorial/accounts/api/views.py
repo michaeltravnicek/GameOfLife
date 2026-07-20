@@ -8,11 +8,29 @@ from django.shortcuts import get_object_or_404
 
 logger = logging.getLogger(__name__)
 
+from drf_spectacular.utils import OpenApiExample, extend_schema
 from rest_framework import status
 from rest_framework.authtoken.models import Token
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, throttle_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+
+from .serializers import (
+    LoginRequestSerializer,
+    LoginResponseSerializer,
+    MeResponseSerializer,
+    MessageResponseSerializer,
+    OkResponseSerializer,
+    PasswordResetConfirmRequestSerializer,
+    PasswordResetRequestSerializer,
+    ProfileMutationResponseSerializer,
+    ProfilePhotoUploadRequestSerializer,
+    ProfileSerializer,
+    ProfileUpdateRequestSerializer,
+    RegisterRequestSerializer,
+    SeasonDetailSerializer,
+)
+from .throttles import LoginThrottle, PasswordResetThrottle, RegisterThrottle
 
 from leaderboard.models import Season
 
@@ -28,6 +46,7 @@ from accounts.services import (
 )
 
 
+@extend_schema(tags=["Auth"], responses=MeResponseSerializer)
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def me_view(request):
@@ -36,24 +55,45 @@ def me_view(request):
     return Response({"user": serialize_user(user, request)}, status=status.HTTP_200_OK)
 
 
+@extend_schema(
+    tags=["Auth"],
+    request=LoginRequestSerializer,
+    responses=LoginResponseSerializer,
+    examples=[
+        OpenApiExample(
+            "Web login",
+            value={"identifier": "jan.novak@example.com", "password": "s3cret", "remember": True},
+            request_only=True,
+        ),
+        OpenApiExample(
+            "Mobile login (returns a token)",
+            value={"identifier": "603123456", "password": "s3cret", "client": "mobile"},
+            request_only=True,
+        ),
+    ],
+)
 @api_view(["POST"])
 @permission_classes([AllowAny])
+@throttle_classes([LoginThrottle])
 def login_api(request):
-    """Log in via phone / username / email + password. Optional `remember`."""
+    """Log in via phone / username / email + password. Optional `remember`.
+
+    Bad credentials → one generic 401 for both unknown identifier and wrong
+    password: distinct messages would let anyone probe which phone numbers /
+    e-mails have an account (the password-reset endpoint hides this the same
+    way). ModelBackend already refuses inactive users inside authenticate().
+    """
     identifier = (request.data.get("identifier") or request.data.get("username") or "").strip()
     password = request.data.get("password") or ""
     if not identifier or not password:
         return Response({"error": "Vyplň přihlašovací údaje."}, status=status.HTTP_400_BAD_REQUEST)
 
     username = resolve_login_username(identifier)
-    if username is None:
-        return Response({"error": "Uživatel nenalezen."}, status=status.HTTP_400_BAD_REQUEST)
-
-    user = authenticate(request, username=username, password=password)
+    user = (authenticate(request, username=username, password=password)
+            if username is not None else None)
     if user is None:
-        return Response({"error": "Nesprávné heslo."}, status=status.HTTP_400_BAD_REQUEST)
-    if not user.is_active:
-        return Response({"error": "Účet je deaktivovaný."}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"error": "Nesprávné přihlašovací údaje."},
+                        status=status.HTTP_401_UNAUTHORIZED)
 
     login(request, user)
     # "Remember me" → 30-day session; otherwise expire on browser close.
@@ -69,6 +109,7 @@ def login_api(request):
     return Response(payload, status=status.HTTP_200_OK)
 
 
+@extend_schema(tags=["Auth"], request=None, responses=OkResponseSerializer)
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def logout_api(request):
@@ -80,8 +121,14 @@ def logout_api(request):
     return Response({"ok": True}, status=status.HTTP_200_OK)
 
 
+@extend_schema(
+    tags=["Auth"],
+    request=PasswordResetRequestSerializer,
+    responses=MessageResponseSerializer,
+)
 @api_view(["POST"])
 @permission_classes([AllowAny])
+@throttle_classes([PasswordResetThrottle])
 def password_reset_api(request):
     """Trigger Django's password-reset email. Generic 200 (no account enumeration)."""
     email = (request.data.get("email") or "").strip()
@@ -105,8 +152,14 @@ def password_reset_api(request):
     }, status=status.HTTP_200_OK)
 
 
+@extend_schema(
+    tags=["Auth"],
+    request=PasswordResetConfirmRequestSerializer,
+    responses=OkResponseSerializer,
+)
 @api_view(["POST"])
 @permission_classes([AllowAny])
+@throttle_classes([PasswordResetThrottle])
 @transaction.atomic
 def password_reset_confirm_api(request):
     """Set a new password from the email's uid+token. Body: {uid, token, new_password}.
@@ -123,8 +176,25 @@ def password_reset_confirm_api(request):
     return Response({"ok": True}, status=status.HTTP_200_OK)
 
 
+@extend_schema(
+    tags=["Auth"],
+    request=RegisterRequestSerializer,
+    responses=LoginResponseSerializer,
+    examples=[
+        OpenApiExample(
+            "New account",
+            value={
+                "first_name": "Jan", "username": "jannovak",
+                "email": "jan.novak@example.com", "phone": "603123456",
+                "password1": "s3cret-pass", "password2": "s3cret-pass",
+            },
+            request_only=True,
+        ),
+    ],
+)
 @api_view(["POST"])
 @permission_classes([AllowAny])
+@throttle_classes([RegisterThrottle])
 @transaction.atomic
 def register_api(request):
     """Create an account (links to a leaderboard user by phone) and log in."""
@@ -140,6 +210,7 @@ def register_api(request):
     return Response(payload, status=status.HTTP_201_CREATED)
 
 
+@extend_schema(tags=["Profile"], responses=ProfileSerializer)
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def profile_view(request, username):
@@ -151,6 +222,7 @@ def profile_view(request, username):
     return Response(profile_payload(profile_user, request), status=status.HTTP_200_OK)
 
 
+@extend_schema(tags=["Profile"], responses=SeasonDetailSerializer)
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def profile_season_view(request, username, season_id):
@@ -162,6 +234,11 @@ def profile_season_view(request, username, season_id):
     return Response(season_detail(lb_user, season), status=status.HTTP_200_OK)
 
 
+@extend_schema(
+    tags=["Profile"],
+    request=ProfilePhotoUploadRequestSerializer,
+    responses=ProfileMutationResponseSerializer,
+)
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def profile_photo_upload(request):
@@ -178,6 +255,11 @@ def profile_photo_upload(request):
     return Response(payload, status=status.HTTP_200_OK)
 
 
+@extend_schema(
+    tags=["Profile"],
+    request=ProfileUpdateRequestSerializer,
+    responses=ProfileMutationResponseSerializer,
+)
 @api_view(["PATCH", "POST"])
 @permission_classes([IsAuthenticated])
 def profile_update(request):

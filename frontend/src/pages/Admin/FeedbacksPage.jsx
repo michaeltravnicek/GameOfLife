@@ -8,19 +8,25 @@ import StatList from '../../components/StatList/StatList';
 import { fmtDate } from '../../utils/date';
 import './FeedbacksPage.css';
 
-const STARS = (n) => '★'.repeat(n) + '☆'.repeat(Math.max(0, 5 - n));
+// Ratings are 1-10; ten glyphs don't fit the column, so show the number with a
+// single star as the unit marker.
+const SOURCE_LABEL = { web: 'web', form: 'formulář' };
 
 // Per-event feedback table: player · rating · comment (leaderboard structure).
 const COLUMNS = [
   {
     key: 'user',
     className: 'fb-player',
-    render: (f) => <span title={`${f.user.attended_events} absolvovaných akcí`}>{f.user.name}</span>,
+    render: (f) => (
+      <span title={`${f.user.attended_events} absolvovaných akcí · zdroj: ${SOURCE_LABEL[f.source] ?? f.source}`}>
+        {f.user.name}
+      </span>
+    ),
   },
   {
     key: 'rating',
     className: 'fb-stars',
-    render: (f) => <span aria-label={`${f.rating} z 5`}>{STARS(f.rating)}</span>,
+    render: (f) => <span aria-label={`${f.rating} z 10`}>★ {f.rating}/10</span>,
   },
   { key: 'comment', className: 'fb-comment', render: (f) => f.comment || <span className="fb-muted">—</span> },
 ];
@@ -81,11 +87,6 @@ export default function FeedbacksPage() {
       <header className="fb-head">
         <div className="fb-eyebrow">— Admin —</div>
         <h1>Zpětná vazba{eventName ? ` · ${eventName}` : ''}</h1>
-        <p className="fb-sub">
-          {eventSlug
-            ? <>Hodnocení této akce. <Link to="/sprava/zpetna-vazba" className="fb-event-link">Zobrazit vše →</Link></>
-            : 'Hodnocení a komentáře k akcím od hráčů.'}
-        </p>
       </header>
 
       <main className="fb-main">

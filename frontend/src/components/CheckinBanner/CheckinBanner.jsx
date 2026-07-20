@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import Button from '../Button/Button';
 import { apiCheckin } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../Toast/ToastProvider';
@@ -7,8 +8,16 @@ import { invalidateQuery } from '../../services/queryCache';
 import { getPosition, GEO_ERROR_MESSAGES } from '../../utils/geolocation';
 import './CheckinBanner.css';
 
+// Dismissals live in sessionStorage: hidden for the rest of the visit, back
+// next session (check-ins are time-limited, so re-surfacing is desirable).
+const DISMISSED_KEY = 'gol_checkin_dismissed';
+const readDismissed = () => {
+  try { return JSON.parse(sessionStorage.getItem(DISMISSED_KEY)) || []; } catch { return []; }
+};
+
 /**
- * Banner shown on the home page when there's an event the user can check
+ * Floating check-in notice over the home hero — an overlay, so it never
+ * shifts the page layout. Shown when there's an event the user can check
  * into right now (event is happening + user hasn't yet claimed points).
  *
  * The "are you nearby?" check happens client-side via the Geolocation API
@@ -25,9 +34,18 @@ export default function CheckinBanner({ events = [] }) {
   const { user } = useAuth();
   // Per-slug status. Each entry: 'idle' | 'locating' | 'submitting' | 'done' | 'error'
   const [statuses, setStatuses] = useState({});
+  const [dismissed, setDismissed] = useState(readDismissed);
 
   const setStatus = useCallback((slug, status) => {
     setStatuses((prev) => ({ ...prev, [slug]: status }));
+  }, []);
+
+  const dismiss = useCallback((slug) => {
+    setDismissed((prev) => {
+      const next = [...prev, slug];
+      try { sessionStorage.setItem(DISMISSED_KEY, JSON.stringify(next)); } catch { /* private mode */ }
+      return next;
+    });
   }, []);
 
   const handleCheckin = useCallback(async (event) => {
@@ -71,11 +89,12 @@ export default function CheckinBanner({ events = [] }) {
     }
   }, [toast, setStatus, user, navigate, location.pathname]);
 
-  if (!events.length) return null;
+  const visible = events.filter((ev) => !dismissed.includes(ev.slug));
+  if (!visible.length) return null;
 
   return (
     <div className="checkin-banners">
-      {events.map((ev) => {
+      {visible.map((ev) => {
         const st = statuses[ev.slug] || 'idle';
         const isBusy = st === 'locating' || st === 'submitting';
         const isDone = st === 'done';
@@ -88,19 +107,28 @@ export default function CheckinBanner({ events = [] }) {
         else if (st === 'error') btnLabel = 'Zkusit znovu';
 
         return (
-          <div key={ev.slug} className="checkin-banner">
+          <div key={ev.slug} className="checkin-banner" role="status">
             <div className="checkin-banner-icon" aria-hidden="true">📍</div>
             <div className="checkin-banner-text">
-              <strong>{ev.name}</strong>
-              <span>Právě probíhá! Check-in ti přinese <strong>+{ev.points}&nbsp;bodů</strong>.</span>
+              <strong className="checkin-banner-title">{ev.name}</strong>
+              <span>Právě probíhá! Check-in ti přinese <b>+{ev.points}&nbsp;bodů</b>.</span>
             </div>
-            <button
-              type="button"
-              className="checkin-banner-btn"
+            <Button
+              variant="action"
+              size="sm"
               onClick={() => handleCheckin(ev)}
+              busy={isBusy}
               disabled={isBusy || isDone}
             >
               {btnLabel}
+            </Button>
+            <button
+              type="button"
+              className="checkin-banner-close"
+              aria-label="Skrýt upozornění"
+              onClick={() => dismiss(ev.slug)}
+            >
+              ×
             </button>
           </div>
         );

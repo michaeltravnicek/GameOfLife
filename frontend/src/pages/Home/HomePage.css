@@ -1,4 +1,5 @@
-.home-page{background:var(--color-purple);background-image:var(--tex-purple);background-size:var(--tex-size) var(--tex-size);background-repeat:repeat;color:var(--color-cream-light)}
+/* position:relative — anchors the floating .checkin-banners overlay. */
+.home-page{position:relative;background:var(--color-purple);background-image:var(--tex-purple);background-size:var(--tex-size) var(--tex-size);background-repeat:repeat;color:var(--color-cream-light)}
 .home-page .events-empty{grid-column:1/-1;text-align:center;color:rgba(255,255,255,.6);font-style:italic}
 
 /* Buttons render through the shared <Button> component (Button.css). */

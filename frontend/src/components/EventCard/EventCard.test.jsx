@@ -23,10 +23,10 @@ describe('EventCard', () => {
     expect(badge).toHaveAttribute('src', logo);
   });
 
-  it('falls back to the C50 badge only when no logo is set (dark theme)', () => {
+  it('falls back to the neutral GOL logo only when no logo is set (dark theme)', () => {
     wrap(<EventCard event={{ ...baseEvent, logo: null }} />);
     const badge = screen.getByAltText('Testovací akce');
-    expect(badge).toHaveAttribute('src', '/img/GOL_C50_transparent.webp');
+    expect(badge).toHaveAttribute('src', '/img/GOL_main_logo_pink.webp');
   });
 
   it('uses the event logo from the database when present (light theme)', () => {

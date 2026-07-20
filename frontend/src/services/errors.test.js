@@ -1,6 +1,35 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { reportError } from './errors';
+import { extractApiError, reportError } from './errors';
 import { toast } from '../components/Toast/ToastProvider';
+
+describe('extractApiError', () => {
+  it('reads the single-message shape { error }', () => {
+    const err = { response: { data: { error: 'Server řekl ne.' } } };
+    expect(extractApiError(err, 'Fallback')).toBe('Server řekl ne.');
+  });
+
+  it('reads the wrapped field shape { errors: { field: [...] } }', () => {
+    const err = { response: { data: { errors: { email: ['Neplatný e-mail.'] } } } };
+    expect(extractApiError(err, 'Fallback')).toBe('Neplatný e-mail.');
+  });
+
+  it('reads the bare DRF field shape { field: [...] }', () => {
+    const err = { response: { data: { rating: ['Toto pole je vyžadováno.'] } } };
+    expect(extractApiError(err, 'Fallback')).toBe('Toto pole je vyžadováno.');
+  });
+
+  it('reads non_field_errors from DRF validation', () => {
+    const err = {
+      response: { data: { non_field_errors: ['Zadej šířku i délku, nebo ani jednu.'] } },
+    };
+    expect(extractApiError(err, 'Fallback')).toBe('Zadej šířku i délku, nebo ani jednu.');
+  });
+
+  it('falls back for non-object bodies (e.g. HTML error pages)', () => {
+    const err = { response: { data: '<html>500</html>' } };
+    expect(extractApiError(err, 'Fallback')).toBe('Fallback');
+  });
+});
 
 describe('reportError', () => {
   beforeEach(() => {

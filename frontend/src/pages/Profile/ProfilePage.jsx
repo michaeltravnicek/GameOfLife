@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react';
-import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
+import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import PillTabs from '../../components/PillTabs/PillTabs';
-import StatList from '../../components/StatList/StatList';
+import TicketList from '../../components/StatList/TicketList';
 import { EVENT_COLUMNS, EVENT_LIST_CLASS } from '../../components/StatList/eventColumns';
 import Button from '../../components/Button/Button';
 import { TicketFrame } from '../../components/DashedBorder/DashedBorder';
 import PointsChart from './PointsChart';
+import { seasonStats } from './seasonStats';
 import { fetchProfile, fetchProfileSeason } from '../../services/api';
 import { useCachedQuery } from '../../services/queryCache';
 import { useAuth } from '../../context/AuthContext';
@@ -18,26 +19,10 @@ const TODAY = new Date();
 // Users often save handles with the "@" — strip it so we don't render "@@".
 const handle = (h) => (h || '').replace(/^@+/, '');
 
-function seasonStats(season, today) {
-  // `season` may be a lightweight summary (no events, just season_pts) or the
-  // full detail (with events). When events are present we derive everything from
-  // them; otherwise we fall back to the summary's season_pts so the poster shows
-  // the right total while the event list lazy-loads.
-  const evs = [...(season.events || [])].sort((a, b) => new Date(a.date) - new Date(b.date));
-  const past = evs.filter((e) => new Date(e.date) < today);
-  const future = evs.filter((e) => new Date(e.date) >= today);
-  const totalPts = evs.length ? evs.reduce((a, e) => a + e.pts, 0) : (season.season_pts || 0);
-  const pastPts = past.reduce((a, e) => a + e.pts, 0);
-  const futurePts = future.reduce((a, e) => a + e.pts, 0);
-  const cities = [...new Set(evs.map((e) => e.place))];
-  const rank = season.rank || (totalPts > 0 ? '—' : null);
-  return { evs, past, future, totalPts, pastPts, futurePts, cities, start: new Date(season.start), end: new Date(season.end), label: season.label, rank };
-}
-
 export default function ProfilePage() {
   const { username } = useParams();
   const navigate = useNavigate();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, logout } = useAuth();
   const [pickedSeason, setPickedSeason] = useState(null); // user's explicit pick (season id)
   const [view, setView] = useState('about');
 
@@ -106,7 +91,10 @@ export default function ProfilePage() {
     if (!st) return { sorted: [], max: 1 };
     const buckets = {};
     st.evs.forEach((e) => {
-      const cat = e.category?.name || 'Akce';
+      // Only real categories — uncategorized events don't form a fake bucket,
+      // and the whole section hides when nothing remains.
+      const cat = e.category?.name;
+      if (!cat) return;
       if (!buckets[cat]) buckets[cat] = { n: 0, p: 0 };
       buckets[cat].n += 1;
       buckets[cat].p += e.pts;
@@ -115,8 +103,6 @@ export default function ProfilePage() {
     const max = Math.max(...sorted.map(([, b]) => b.p), 1);
     return { sorted, max };
   }, [st]);
-
-  const best = useMemo(() => (st ? st.evs.slice().sort((a, b) => b.pts - a.pts)[0] : undefined), [st]);
 
   // Bare /profil with no username → send to the logged-in user's own profile.
   if (!username) {
@@ -129,10 +115,11 @@ export default function ProfilePage() {
   // the page renders from profile-level data even for players with no points.
   if (!profile || !st) return <div className="profile-page"><div style={{ padding: '2rem', textAlign: 'center' }}>Profil nenalezen</div></div>;
 
-  const avg = st.evs.length ? Math.round(st.totalPts / st.evs.length) : 0;
   const initials = profile.full_name.split(/\s+/).slice(0, 2).map((w) => w[0]).join('').toUpperCase() || 'GO';
 
   const handleShare = () => shareLink(`${profile.full_name} — Game of Life`);
+  // Actually log out (the label promises it), then land on the homepage.
+  const handleLogout = async () => { await logout(); navigate('/'); };
 
   const seasonTabs = profile.seasons?.map((s) => ({ key: s.id, label: s.label })) || [];
   const viewTabs = [
@@ -195,13 +182,15 @@ export default function ProfilePage() {
                 <div className="section">
                   <div className="sec-rule" />
                   <div className="sec-eyebrow"><span>— 01 · O mně —</span><span className="meta">profil &amp; minulost</span></div>
-                  <h2 className="sec-heading">Hraj naplno, <span className="pink">nebo vůbec.</span></h2>
+                  <h2 className="sec-heading">Joy<span className="pink">Maxxer</span></h2>
                   <p className="about-quote">{profile.bio || 'Bez popisu profilu.'}</p>
-                  <div className="about-meta">
-                    {profile.city && <><span>{profile.city}</span><span className="dot" /></>}
-                    {profile.favourite_categories?.length > 0 && <><span>{profile.favourite_categories.map((c) => c.name).join(' · ')}</span><span className="dot" /></>}
-                    <span>Připojil se {profile.since}</span>
-                  </div>
+                  {(profile.city || profile.favourite_categories?.length > 0) && (
+                    <div className="about-meta">
+                      {profile.city && <span>{profile.city}</span>}
+                      {profile.city && profile.favourite_categories?.length > 0 && <span className="dot" />}
+                      {profile.favourite_categories?.length > 0 && <span>{profile.favourite_categories.map((c) => c.name).join(' · ')}</span>}
+                    </div>
+                  )}
 
                   {profile.city && (
                     <div className="factgrid">
@@ -211,7 +200,7 @@ export default function ProfilePage() {
 
                   {(profile.instagram || profile.strava || profile.spotify || profile.tiktok) && (
                     <div className="socials">
-                      <div className="socials-label">— Najdeš ho na —</div>
+                      <div className="socials-label">— Najdeš na —</div>
                       <div className="socials-grid">
                         {profile.instagram && (
                           <a className="social" href={`https://instagram.com/${handle(profile.instagram)}`} target="_blank" rel="noopener noreferrer">
@@ -265,38 +254,32 @@ export default function ProfilePage() {
                 {upcoming.length > 0 && (
                   <div className="section">
                     <div className="sec-rule" />
-                    <div className="sec-eyebrow"><span>— 03 · Nadcházející —</span><span className="meta">+{st.futurePts} pts na cestě</span></div>
+                    <div className="sec-eyebrow"><span>— 02 · Nadcházející —</span><span className="meta">+{st.futurePts} pts na cestě</span></div>
                     <h2 className="sec-heading">Co ho <span className="pink">čeká.</span></h2>
-                    <div className="ticket-list">
-                      <TicketFrame />
-                      <StatList
-                        className={EVENT_LIST_CLASS}
-                        columns={EVENT_COLUMNS}
-                        rows={upcoming}
-                        rowKey={(e) => e.slug}
-                        rowLink={(e) => `/events/${e.slug}`}
-                        rowClass={() => 'future'}
-                      />
-                    </div>
+                    <TicketList
+                      className={EVENT_LIST_CLASS}
+                      columns={EVENT_COLUMNS}
+                      rows={upcoming}
+                      rowKey={(e) => e.slug}
+                      rowLink={(e) => `/events/${e.slug}`}
+                      rowClass={() => 'future'}
+                    />
                   </div>
                 )}
 
                 <div className="section">
                   <div className="sec-rule" />
-                  <div className="sec-eyebrow"><span>— 04 · Absolvované —</span><span className="meta">+{st.pastPts} pts zatím</span></div>
+                  <div className="sec-eyebrow"><span>— 03 · Absolvované —</span><span className="meta">+{st.pastPts} pts zatím</span></div>
                   <h2 className="sec-heading">Co má <span className="pink">za sebou.</span></h2>
-                  <div className="ticket-list">
-                    <TicketFrame />
-                    <StatList
-                      className={EVENT_LIST_CLASS}
-                      columns={EVENT_COLUMNS}
-                      rows={past}
-                      rowKey={(e) => e.slug}
-                      rowLink={(e) => `/events/${e.slug}`}
-                      rowClass={() => 'past'}
-                      emptyText="Zatím žádné absolvované akce v této sezóně."
-                    />
-                  </div>
+                  <TicketList
+                    className={EVENT_LIST_CLASS}
+                    columns={EVENT_COLUMNS}
+                    rows={past}
+                    rowKey={(e) => e.slug}
+                    rowLink={(e) => `/events/${e.slug}`}
+                    rowClass={() => 'past'}
+                    emptyText="Zatím žádné absolvované akce v této sezóně."
+                  />
                 </div>
               </>
             )}
@@ -305,7 +288,7 @@ export default function ProfilePage() {
               <>
                 <div className="section">
                   <div className="sec-rule" />
-                  <div className="sec-eyebrow"><span>— 05 · Body v čase —</span><span className="meta">křivka sezóny</span></div>
+                  <div className="sec-eyebrow"><span>— 04 · Body v čase —</span><span className="meta">křivka sezóny</span></div>
                   <h2 className="sec-heading">Křivka <span className="pink">sezóny.</span></h2>
 
                   <div className="chart-card">
@@ -323,32 +306,26 @@ export default function ProfilePage() {
                       </div>
                     </div>
                     <PointsChart stats={st} today={TODAY} />
-                    <div className="mini-stats">
-                      <div className="mini"><div className="l">Absolvováno</div><div className="v pink">{st.pastPts}</div><div className="s">bodů zatím</div></div>
-                      <div className="mini"><div className="l">Nadcházející</div><div className="v">{st.futurePts}</div><div className="s">bodů na cestě</div></div>
-                      <div className="mini"><div className="l">Nejlepší akce</div><div className="v yellow">{best ? `+${best.pts}` : '—'}</div><div className="s">{best ? best.name : 'zatím nic'}</div></div>
-                      <div className="mini"><div className="l">Průměr / akce</div><div className="v">{avg}</div><div className="s">bodů</div></div>
-                    </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="section">
-                  <div className="sec-rule" />
-                  <div className="sec-eyebrow"><span>— 06 · Kategorie —</span><span className="meta">{cats.sorted.length} kategorií</span></div>
-                  <h2 className="sec-heading">V čem <span className="pink">jede.</span></h2>
-                  <div className="cat-list">
-                    {cats.sorted.length
-                      ? cats.sorted.map(([cat, b]) => (
+                {cats.sorted.length > 0 && (
+                  <div className="section">
+                    <div className="sec-rule" />
+                    <div className="sec-eyebrow"><span>— 05 · Kategorie —</span><span className="meta">{cats.sorted.length} kategorií</span></div>
+                    <h2 className="sec-heading">V čem <span className="pink">jede.</span></h2>
+                    <div className="cat-list">
+                      {cats.sorted.map(([cat, b]) => (
                         <div className="cat-row" key={cat}>
                           <span className="name">{cat}</span>
                           <span className="bar"><i style={{ width: `${Math.round((b.p / cats.max) * 100)}%` }} /></span>
                           <span className="meta">{b.n}× · <b>+{b.p}</b></span>
                         </div>
-                      ))
-                      : <div className="empty">Žádná data v této sezóně.</div>}
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
               </>
             )}
           </section>
@@ -357,11 +334,12 @@ export default function ProfilePage() {
 
       <div className="back-strip">
         <div className="back-strip-inner">
-          <Link className="back-link" to="/">← Zpět na hlavní stránku</Link>
+          {/* Navigation = 3D buttons (frost for "back"); round pills = in-place actions. */}
+          <Button as="link" to="/" variant="frost">← Zpět na hlavní stránku</Button>
           <div className="back-actions">
-            {profile?.is_own_profile && <Button as="link" to="/upravit-profil" variant="action">✎ Upravit profil</Button>}
+            {profile?.is_own_profile && <Button as="link" to="/upravit-profil">✎ Upravit profil</Button>}
             <Button variant="ghost" onClick={handleShare}>Sdílet profil</Button>
-            {profile?.is_own_profile && <Button variant="ghost" onClick={() => navigate('/')}>Odhlásit se</Button>}
+            {profile?.is_own_profile && <Button variant="ghost" onClick={handleLogout}>Odhlásit se</Button>}
           </div>
         </div>
       </div>

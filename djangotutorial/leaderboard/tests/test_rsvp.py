@@ -23,23 +23,38 @@ class EventRsvpApiTests(TestCase):
         self.url = reverse("api-event-rsvp", kwargs={"slug": self.event.slug})
 
     def test_unauthenticated_returns_403(self):
-        resp = self.client.post(self.url)
+        resp = self.client.put(self.url)
         self.assertEqual(resp.status_code, 403)
 
-    def test_toggle_on_creates_rsvp(self):
+    def test_put_creates_rsvp(self):
         self.client.force_authenticate(user=self.user)
-        resp = self.client.post(self.url)
+        resp = self.client.put(self.url)
         self.assertEqual(resp.status_code, 201)
         self.assertEqual(resp.json(), {"rsvp": True, "rsvp_count": 1})
         self.assertTrue(EventRSVP.objects.filter(auth_user=self.user, event=self.event).exists())
 
-    def test_toggle_off_deletes_rsvp(self):
+    def test_put_is_idempotent(self):
+        # A retried PUT (mobile timeout) must confirm the RSVP, not invert it.
         EventRSVP.objects.create(auth_user=self.user, event=self.event)
         self.client.force_authenticate(user=self.user)
-        resp = self.client.post(self.url)
+        resp = self.client.put(self.url)
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json(), {"rsvp": True, "rsvp_count": 1})
+        self.assertEqual(EventRSVP.objects.filter(auth_user=self.user, event=self.event).count(), 1)
+
+    def test_delete_removes_rsvp(self):
+        EventRSVP.objects.create(auth_user=self.user, event=self.event)
+        self.client.force_authenticate(user=self.user)
+        resp = self.client.delete(self.url)
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.json(), {"rsvp": False, "rsvp_count": 0})
         self.assertFalse(EventRSVP.objects.filter(auth_user=self.user, event=self.event).exists())
+
+    def test_delete_is_idempotent(self):
+        self.client.force_authenticate(user=self.user)
+        resp = self.client.delete(self.url)
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json(), {"rsvp": False, "rsvp_count": 0})
 
     def test_full_event_rejects_new_rsvp(self):
         self.event.capacity = 1
@@ -48,23 +63,34 @@ class EventRsvpApiTests(TestCase):
         EventRSVP.objects.create(auth_user=other, event=self.event)
 
         self.client.force_authenticate(user=self.user)
-        resp = self.client.post(self.url)
-        self.assertEqual(resp.status_code, 400)
+        resp = self.client.put(self.url)
+        self.assertEqual(resp.status_code, 409)
         self.assertIn("obsazena", resp.json()["error"])
 
-    def test_full_event_still_allows_toggle_off(self):
+    def test_full_event_put_confirms_existing_rsvp(self):
+        # The holder of the last spot re-PUTs: 200, still attending.
         self.event.capacity = 1
         self.event.save()
         EventRSVP.objects.create(auth_user=self.user, event=self.event)
 
         self.client.force_authenticate(user=self.user)
-        resp = self.client.post(self.url)
+        resp = self.client.put(self.url)
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json()["rsvp"], True)
+
+    def test_full_event_still_allows_delete(self):
+        self.event.capacity = 1
+        self.event.save()
+        EventRSVP.objects.create(auth_user=self.user, event=self.event)
+
+        self.client.force_authenticate(user=self.user)
+        resp = self.client.delete(self.url)
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.json()["rsvp"], False)
 
     def test_unknown_slug_returns_404(self):
         self.client.force_authenticate(user=self.user)
-        resp = self.client.post(reverse("api-event-rsvp", kwargs={"slug": "neexistuje"}))
+        resp = self.client.put(reverse("api-event-rsvp", kwargs={"slug": "neexistuje"}))
         self.assertEqual(resp.status_code, 404)
 
     def test_past_event_currently_accepts_rsvp(self):
@@ -77,5 +103,5 @@ class EventRsvpApiTests(TestCase):
             date=timezone.now() - timedelta(days=7),
         )
         self.client.force_authenticate(user=self.user)
-        resp = self.client.post(reverse("api-event-rsvp", kwargs={"slug": past.slug}))
+        resp = self.client.put(reverse("api-event-rsvp", kwargs={"slug": past.slug}))
         self.assertEqual(resp.status_code, 201)

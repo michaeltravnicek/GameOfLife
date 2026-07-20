@@ -17,13 +17,25 @@ export default function RegisterPage() {
   const [pw, setPw] = useState('');
   const [pw2, setPw2] = useState('');
   const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState({});
   const [busy, setBusy] = useState(false);
+
+  // API shape: { errors: { field: [messages] } } (Django form errors; non-field
+  // messages arrive under "__all__"). Flatten to one message per field.
+  const apiFieldErrors = (err) => {
+    const errs = err?.response?.data?.errors;
+    if (!errs) return {};
+    return Object.fromEntries(
+      Object.entries(errs).map(([k, v]) => [k, Array.isArray(v) ? v[0] : String(v)]),
+    );
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setFieldErrors({});
     if (pw !== pw2) {
-      setError('Hesla se neshodují.');
+      setFieldErrors({ password2: 'Hesla se neshodují.' });
       return;
     }
     setBusy(true);
@@ -38,7 +50,13 @@ export default function RegisterPage() {
       });
       navigate(location.state?.from || `/profil/${u.username}`, { replace: true });
     } catch (err) {
-      setError(extractApiError(err, 'Registrace selhala.'));
+      const fields = apiFieldErrors(err);
+      setFieldErrors(fields);
+      // Generic box only for non-field failures (or when nothing maps to a field).
+      const fieldKeys = Object.keys(fields).filter((k) => k !== '__all__');
+      if (fields.__all__ || !fieldKeys.length) {
+        setError(fields.__all__ || extractApiError(err, 'Registrace selhala.'));
+      }
     } finally {
       setBusy(false);
     }
@@ -63,31 +81,37 @@ export default function RegisterPage() {
                 id="reg-first" label="Jméno" type="text"
                 placeholder="Jan" autoComplete="given-name"
                 value={first} onChange={(e) => setFirst(e.target.value)} required
+                errorText={fieldErrors.first_name}
               />
               <FormInput
                 id="reg-username" label="Přezdívka" type="text"
                 placeholder="honzic" autoComplete="username"
                 value={username} onChange={(e) => setUsername(e.target.value)} required
+                errorText={fieldErrors.username}
               />
               <FormInput
                 id="reg-phone" label="Telefon (9 číslic)" type="tel"
                 placeholder="731 005 976" autoComplete="tel"
                 value={phone} onChange={(e) => setPhone(e.target.value)} required
+                errorText={fieldErrors.phone}
               />
               <FormInput
                 id="reg-email" label="E-mail" type="email"
                 placeholder="jan@example.com" autoComplete="email"
                 value={email} onChange={(e) => setEmail(e.target.value)} required
+                errorText={fieldErrors.email}
               />
               <FormInput
                 id="reg-pw" label="Heslo" type="password"
                 placeholder="········" autoComplete="new-password"
                 value={pw} onChange={(e) => setPw(e.target.value)} required
+                errorText={fieldErrors.password1}
               />
               <FormInput
                 id="reg-pw2" label="Potvrdit heslo" type="password"
                 placeholder="········" autoComplete="new-password"
                 value={pw2} onChange={(e) => setPw2(e.target.value)} required
+                errorText={fieldErrors.password2}
               />
               {error && <div className="auth-error">{error}</div>}
               <Button type="submit" variant="nav" size="lg" busy={busy} className="pts-btn-wrap">

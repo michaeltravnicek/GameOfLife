@@ -6,6 +6,7 @@
 .form-field-input::placeholder{color:rgba(255,241,212,.28);font-weight:400}
 .form-field-input:focus{border-color:rgba(225,84,99,.7);background:rgba(225,84,99,.08);box-shadow:0 0 0 3px rgba(225,84,99,.14)}
 .form-field-input.has-error{border-color:rgba(225,84,99,.95)}
+.form-field-error{margin-top:7px;font-family:var(--font-mono);font-style:italic;font-size:12px;letter-spacing:.04em;color:var(--color-pink);line-height:1.4}
 
 /* Reserve room for the toggle so typed text doesn't slide under the eye. */
 .form-field-input-wrap.has-toggle .form-field-input{padding-right:48px}

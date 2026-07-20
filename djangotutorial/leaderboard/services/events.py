@@ -1,5 +1,5 @@
 """Event list querying + official image uploads for the API."""
-from django.db.models import Q
+from django.db.models import F, Q
 from django.utils import timezone
 
 from leaderboard.image_utils import validate_upload
@@ -26,7 +26,9 @@ def list_events(period="all", city="", category="", q="", season=None,
         Event.objects
         .select_related("category")
         .only(*EVENTS_LIST_FIELDS)
-        .order_by("-date")
+        # nulls_last: Postgres sorts NULL first on DESC, which would pin
+        # dateless events to the top of the list.
+        .order_by(F("date").desc(nulls_last=True))
     )
     if not include_hidden:
         if include_close_preview:
@@ -63,5 +65,5 @@ def add_event_images(event, files):
     created = []
     for upload in files:
         validate_upload(upload)
-        created.append(ImageToEvent.objects.create(event_id=event, image=upload))
+        created.append(ImageToEvent.objects.create(event=event, image=upload))
     return created

@@ -3,7 +3,7 @@
 
 /* ── POSTER HERO ── */
 .profile-page .poster{position:relative;min-height:88vh;display:flex;flex-direction:column;justify-content:flex-end;overflow:hidden;z-index:1}
-.profile-page .poster-img{position:absolute;inset:0;background:url('/img/gal6.webp') center 38%/cover no-repeat;filter:saturate(.85) contrast(1.06);transform:scale(1.04);z-index:0}
+.profile-page .poster-img{position:absolute;inset:0;background:url('/img/gal14.webp') center 45%/cover no-repeat;filter:saturate(.85) contrast(1.06);transform:scale(1.04);z-index:0}
 .profile-page .poster-grain{position:absolute;inset:0;background:url('/img/Grain_texture_brown.webp') 0 0/var(--tex-size) var(--tex-size) repeat;opacity:var(--grain-opacity);mix-blend-mode:overlay;pointer-events:none;z-index:0}
 .profile-page .poster-vignette{position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,8,30,.35) 0%,rgba(26,15,10,.18) 30%,rgba(26,15,10,.55) 70%,rgba(26,15,10,.92) 100%);pointer-events:none;z-index:0}
 .profile-page .poster-top{position:relative;z-index:2;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:138px 24px 24px;text-align:center}
@@ -87,7 +87,6 @@
 /* Event lists render through the shared <StatList> (ticket ev-grid skin);
    their row/cell styling lives in StatList.css. The list is the dark panel of
    a ticket card — this wrapper carries the white dashed frame around it. */
-.profile-page .ticket-list{position:relative;padding:7px;border-radius:16px}
 .profile-page .empty{padding:28px 18px;font-family:var(--font-body);font-style:italic;color:rgba(255,241,212,.55);font-size:14.5px;text-align:center}
 
 /* ── BODY (chart) ── */
@@ -119,14 +118,6 @@
 .profile-page .dot-tip.show{opacity:1}
 .profile-page .dot-tip b{font-family:var(--font-display);font-style:normal;color:#f5c842;font-size:14px;letter-spacing:.04em;margin-left:4px}
 
-.profile-page .mini-stats{margin-top:18px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
-.profile-page .mini{padding:14px 14px 12px;background:rgba(255,241,212,.04);border:1px dashed rgba(255,241,212,.16);border-radius:10px}
-.profile-page .mini .l{font-family:var(--font-mono);font-style:italic;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,241,212,.55);margin-bottom:6px}
-.profile-page .mini .v{font-family:var(--font-display);font-size:24px;letter-spacing:.04em;color:#fff;line-height:1}
-.profile-page .mini .v.pink{color:var(--color-pink)}
-.profile-page .mini .v.yellow{color:#f5c842}
-.profile-page .mini .s{font-family:var(--font-body);font-style:italic;font-size:11.5px;color:rgba(255,241,212,.62);margin-top:3px}
-
 .profile-page .cat-list{display:flex;flex-direction:column;gap:14px}
 .profile-page .cat-row{display:grid;grid-template-columns:120px 1fr auto;gap:18px;align-items:center;padding-bottom:14px;border-bottom:1px dashed rgba(255,241,212,.16)}
 .profile-page .cat-row:last-child{border-bottom:0}
@@ -140,14 +131,12 @@
 .profile-page .back-strip{background:#1a0f0a url('/img/Grain_texture_brown.webp') 0 0/var(--tex-size) var(--tex-size) repeat;padding:32px 24px 64px;position:relative;z-index:1}
 .profile-page .back-strip-inner{max-width:920px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
 .profile-page .back-actions{display:flex;gap:10px;flex-wrap:wrap}
-.profile-page .back-link{font-family:var(--font-body);font-style:italic;font-size:14px;color:rgba(255,241,212,.75);display:inline-flex;align-items:center;gap:8px;border-bottom:1px dashed rgba(255,241,212,.35);padding-bottom:2px;transition:color .18s,border-color .18s}
-.profile-page .back-link:hover{color:var(--color-pink);border-color:var(--color-pink)}
-/* Action buttons render through the shared <Button> component (Button.css). */
+/* All buttons render through the shared <Button> component (Button.css):
+   3D nav/frost = navigation (frost for "back"), round pills = in-place actions. */
 
 @media(max-width:860px){
   .profile-page .factgrid{grid-template-columns:1fr}
   .profile-page .socials-grid{grid-template-columns:repeat(2,1fr)}
-  .profile-page .mini-stats{grid-template-columns:repeat(2,1fr)}
   .profile-page .cat-row{grid-template-columns:90px 1fr auto;gap:12px}
   .profile-page .cat-row .name{font-size:20px}
 }

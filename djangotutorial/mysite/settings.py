@@ -150,6 +150,15 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'EXCEPTION_HANDLER': 'mysite.drf.api_exception_handler',
+    # Per-IP limits for the anonymous auth endpoints (see accounts/api/throttles.py).
+    'DEFAULT_THROTTLE_RATES': {
+        'login': '10/min',
+        'register': '10/hour',
+        'password_reset': '5/hour',
+    },
+    # Render terminates TLS at one proxy layer; without this the throttle would
+    # key on the load balancer's IP and rate-limit all users as one client.
+    'NUM_PROXIES': 1,
 }
 
 SPECTACULAR_SETTINGS = {
@@ -157,6 +166,17 @@ SPECTACULAR_SETTINGS = {
     'DESCRIPTION': 'REST API for the Game of Life leaderboard platform.',
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
+    # Group order + descriptions for the Swagger/ReDoc sidebar. The `tags=[...]`
+    # on each view (accounts/leaderboard api views) must match these names.
+    'TAGS': [
+        {'name': 'Auth', 'description': 'Login, registration, logout and password reset.'},
+        {'name': 'Profile', 'description': 'Public profiles and editing your own account.'},
+        {'name': 'Events', 'description': 'Events: listing, detail, management, RSVP, check-in and feedback.'},
+        {'name': 'Leaderboard', 'description': 'Rankings, seasons and player details.'},
+        {'name': 'Gallery', 'description': 'Photo gallery: uploading and liking photos.'},
+        {'name': 'Home', 'description': 'Landing-page data (stats, hero carousel).'},
+        {'name': 'Admin', 'description': 'Administrator-only reports.'},
+    ],
 }
 
 WSGI_APPLICATION = 'mysite.wsgi.application'
@@ -188,7 +208,9 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.0/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+# 'cs' — the UI is Czech; DRF/Django validation messages surface directly in
+# the frontend forms, so they must come back localized, not in English.
+LANGUAGE_CODE = 'cs'
 
 TIME_ZONE = 'UTC'
 
@@ -214,6 +236,17 @@ if "test" in sys.argv:
         "default": {
             "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
         }
+    }
+    # Disable API throttling in the suite: throttle state lives in the cache and
+    # accumulates across tests (shared client IP), so rates would cause spurious
+    # 429s unrelated to the code under test. Scopes stay defined (setting them to
+    # None, not removing them, avoids ImproperlyConfigured); the throttle feature
+    # is covered explicitly by AuthThrottleTests via @override_settings.
+    REST_FRAMEWORK = {
+        **REST_FRAMEWORK,
+        "DEFAULT_THROTTLE_RATES": {
+            scope: None for scope in REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]
+        },
     }
 
 

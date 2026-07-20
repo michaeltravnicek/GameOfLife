@@ -42,7 +42,7 @@ class EventImagesUploadApiTests(TestCase):
         )
         self.assertEqual(resp.status_code, 201)
         self.assertEqual(resp.json()["count"], 2)
-        self.assertEqual(ImageToEvent.objects.filter(event_id=self.event).count(), 2)
+        self.assertEqual(ImageToEvent.objects.filter(event=self.event).count(), 2)
 
     def test_regular_user_forbidden(self):
         self.client.force_authenticate(user=self.plain)
@@ -70,7 +70,7 @@ class AdminFeedbacksApiTests(TestCase):
         self.attendee = UserModel.objects.create_user(
             username="att", password="x", first_name="Jana", last_name="Nováková",
         )
-        lb = LeaderboardUser.objects.create(number=11, name="Jana")
+        lb = LeaderboardUser.objects.create(number=700000011, name="Jana Nováková")
         Profile.objects.create(user=self.attendee, leaderboard_user=lb)
 
         self.event = Event.objects.create(
@@ -84,7 +84,7 @@ class AdminFeedbacksApiTests(TestCase):
         UserToEvent.objects.create(user=lb, event=self.event, points=10)
         UserToEvent.objects.create(user=lb, event=other, points=10)
         EventFeedback.objects.create(
-            auth_user=self.attendee, event=self.event, rating=5, comment="super",
+            user=lb, event=self.event, rating=9, comment="super",
         )
 
     def test_admin_gets_feedback_overview(self):
@@ -94,7 +94,9 @@ class AdminFeedbacksApiTests(TestCase):
         feedbacks = resp.json()["feedbacks"]
         self.assertEqual(len(feedbacks), 1)
         entry = feedbacks[0]
-        self.assertEqual(entry["rating"], 5)
+        self.assertEqual(entry["rating"], 9)
+        # Name comes from the leaderboard user now — form respondents have no
+        # auth account to read a full name from.
         self.assertEqual(entry["user"]["name"], "Jana Nováková")
         self.assertEqual(entry["user"]["attended_events"], 2)
         self.assertEqual(entry["event"]["slug"], self.event.slug)

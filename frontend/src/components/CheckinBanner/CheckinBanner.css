@@ -1,17 +1,22 @@
-.checkin-banners{position:relative;z-index:20;display:flex;flex-direction:column;gap:10px;padding:16px 16px 0;max-width:1100px;margin:110px auto 0}
-@media(max-width:900px){.checkin-banners{margin-top:96px}}
-@media(max-width:480px){.checkin-banners{margin-top:84px}}
+/* Floating check-in notice — an OVERLAY on the home hero, absolutely
+   positioned so it never pushes the page down (the hero fills the viewport;
+   the purple page background behind it must stay hidden). Skin matches the
+   toast vocabulary: dark opaque panel, dashed cream border, pink accents. */
+.checkin-banners{position:absolute;top:calc(110px + env(safe-area-inset-top,0px));left:0;right:0;z-index:30;display:flex;flex-direction:column;gap:10px;padding:0 16px;max-width:1100px;margin:0 auto;pointer-events:none}
+@media(max-width:900px){.checkin-banners{top:calc(96px + env(safe-area-inset-top,0px))}}
+@media(max-width:480px){.checkin-banners{top:calc(84px + env(safe-area-inset-top,0px))}}
 
-.checkin-banner{background:linear-gradient(135deg,var(--color-pink),#a0243a);color:#fff;padding:14px 20px;display:flex;align-items:center;gap:14px;border-radius:12px;box-shadow:0 4px 20px rgba(193,57,74,.35);animation:checkin-banner-in .5s cubic-bezier(.22,.68,0,1.2) both}
+.checkin-banner{pointer-events:auto;display:flex;align-items:center;gap:14px;padding:13px 14px 13px 16px;border-radius:14px;border:1.5px dashed rgba(255,241,212,.32);background:rgba(26,15,10,.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:0 14px 38px rgba(0,0,0,.45);color:var(--color-cream-light);animation:checkin-banner-in .5s cubic-bezier(.22,.68,0,1.2) both}
 
-.checkin-banner-icon{font-size:26px;flex-shrink:0;line-height:1}
+.checkin-banner-icon{flex-shrink:0;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;line-height:1;background:rgba(225,84,99,.16);border:1.5px dashed rgba(225,84,99,.5)}
 .checkin-banner-text{flex:1;font-family:var(--font-body);font-size:14px;line-height:1.4;display:flex;flex-direction:column;gap:2px;min-width:0}
-.checkin-banner-text strong{font-family:var(--font-display);font-size:15px;letter-spacing:.04em;text-transform:uppercase}
-.checkin-banner-text span{color:rgba(255,255,255,.92)}
+.checkin-banner-title{font-family:var(--font-display);font-size:16px;letter-spacing:.05em;text-transform:uppercase;color:#fff}
+.checkin-banner-text span{color:rgba(255,241,212,.8)}
+.checkin-banner-text span b{font-weight:700;color:var(--color-gold)}
 
-.checkin-banner-btn{background:#fff;color:var(--color-pink);border:0;border-radius:8px;padding:10px 18px;font-family:var(--font-display);font-size:13px;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:opacity .18s,transform .18s}
-.checkin-banner-btn:hover:not([disabled]){transform:translateY(-1px)}
-.checkin-banner-btn:disabled{opacity:.6;cursor:not-allowed}
+/* CTA renders through the shared <Button variant="action" size="sm">. */
+.checkin-banner-close{flex-shrink:0;background:transparent;border:0;color:rgba(255,241,212,.55);font-size:24px;line-height:1;cursor:pointer;padding:0 4px;transition:color .15s}
+.checkin-banner-close:hover{color:#fff}
 
 @keyframes checkin-banner-in{
   from{opacity:0;transform:translateY(-10px)}
@@ -20,7 +25,8 @@
 
 @media(max-width:640px){
   .checkin-banner{flex-wrap:wrap;padding:12px 14px}
-  .checkin-banner-btn{width:100%;padding:10px 14px}
+  .checkin-banner-close{order:3}
+  .checkin-banner .btn{order:4;width:100%}
 }
 
 @media(prefers-reduced-motion: reduce){

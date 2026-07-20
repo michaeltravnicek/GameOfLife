@@ -27,7 +27,17 @@ export default function PillTabs({ tabs, active, onChange, className = '' }) {
     };
     measure();
     window.addEventListener('resize', measure);
-    return () => window.removeEventListener('resize', measure);
+
+    // The first measure runs on the fallback font, so the indicator keeps the
+    // pre-swap width (a few px too wide) until something forces a resize.
+    // Re-measure once the webfonts land.
+    let cancelled = false;
+    document.fonts?.ready.then(() => { if (!cancelled) measure(); });
+
+    return () => {
+      cancelled = true;
+      window.removeEventListener('resize', measure);
+    };
   }, [active, tabs]);
 
   // After the hooks so the hook order stays stable across renders.

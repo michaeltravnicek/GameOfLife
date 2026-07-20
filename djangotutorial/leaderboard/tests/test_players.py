@@ -24,7 +24,7 @@ class PlayerDetailApiTests(TestCase):
             date=now - timedelta(days=1),
         )
         # Unregistered player — straight from the Google Sheets sync, no account.
-        self.player = LeaderboardUser.objects.create(number=42, name="Sheet Only")
+        self.player = LeaderboardUser.objects.create(number=700000042, name="Sheet Only")
         UserToEvent.objects.create(user=self.player, event=self.event1, points=30)
         UserToEvent.objects.create(user=self.player, event=self.event2, points=20)
 

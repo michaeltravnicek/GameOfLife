@@ -7,13 +7,13 @@ function readCookie(name) {
   return match ? decodeURIComponent(match[2]) : null;
 }
 
-// Default to the same-origin '/api' (how production serves it, and how the Vite
+// Default to the same-origin '/api/v1' (how production serves it, and how the Vite
 // dev server proxies it). Override with VITE_API_URL when running the SPA against
 // a separately-hosted backend. The native app (Capacitor) authenticates with a
 // DRF token instead of session cookies — webview cookies against a remote API
 // are unreliable (WKWebView eviction, CSRF Origin checks).
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api',
+  baseURL: import.meta.env.VITE_API_URL || '/api/v1',
   withCredentials: !isNative,
   xsrfCookieName: 'csrftoken',
   xsrfHeaderName: 'X-CSRFToken',
@@ -108,8 +108,13 @@ export const fetchEvents = (params = {}) =>
   api.get('/events/', { params }).then((r) => r.data);
 export const fetchEventDetail = (slug) =>
   api.get(`/events/${slug}/`).then((r) => r.data);
-export const toggleRsvp = (slug) =>
-  api.post(`/events/${slug}/rsvp/`).then((r) => r.data);
+// Intent-explicit so a retried request confirms the state instead of
+// inverting it: PUT = attend, DELETE = cancel.
+export const setRsvp = (slug, attending) =>
+  (attending
+    ? api.put(`/events/${slug}/rsvp/`)
+    : api.delete(`/events/${slug}/rsvp/`)
+  ).then((r) => r.data);
 export const submitFeedback = (slug, rating, comment) =>
   api.post(`/events/${slug}/feedback/`, { rating, comment }).then((r) => r.data);
 export const apiCheckin = (slug, latitude, longitude) =>
@@ -119,10 +124,26 @@ export const uploadEventImages = (slug, files) => {
   Array.from(files).forEach((f) => fd.append('images', f));
   return api.post(`/events/${slug}/images/`, fd, MULTIPART).then((r) => r.data);
 };
+// --- Events: admin attendance + RSVP management (admin-only endpoints) ---
+// Attendance (UserToEvent) is what feeds the leaderboard; RSVPs are only
+// intentions to come. The two lists are deliberately separate.
+export const fetchEventAttendees = (slug) =>
+  api.get(`/events/${slug}/attendees/`).then((r) => r.data);
+// PUT creates the attendance row when it's missing, updates the points when it
+// isn't — so the same call covers "add player" and "fix their score".
+export const setEventAttendeePoints = (slug, userId, points) =>
+  api.put(`/events/${slug}/attendees/${userId}/`, { points }).then((r) => r.data);
+export const removeEventAttendee = (slug, userId) =>
+  api.delete(`/events/${slug}/attendees/${userId}/`).then((r) => r.data);
+export const fetchEventRsvps = (slug) =>
+  api.get(`/events/${slug}/rsvps/`).then((r) => r.data);
+
 export const createEvent = (formData) =>
   api.post('/events/create/', formData, MULTIPART).then((r) => r.data);
 export const updateEvent = (slug, formData) =>
   api.patch(`/events/${slug}/update/`, formData, MULTIPART).then((r) => r.data);
+export const deleteEvent = (slug) =>
+  api.delete(`/events/${slug}/delete/`).then((r) => r.data);
 
 // --- Leaderboard / Seasons / Players ---
 export const fetchLeaderboard = (seasonId = 'active', { limit } = {}) =>
@@ -151,8 +172,11 @@ export const uploadGalleryPhoto = ({ image, event = '', caption = '' }) => {
   if (caption) fd.append('caption', caption);
   return api.post('/photos/', fd, MULTIPART).then((r) => r.data);
 };
-export const togglePhotoLike = (photoId) =>
-  api.post(`/photos/${photoId}/like/`).then((r) => r.data);
+export const setPhotoLike = (photoId, liked) =>
+  (liked
+    ? api.put(`/photos/${photoId}/like/`)
+    : api.delete(`/photos/${photoId}/like/`)
+  ).then((r) => r.data);
 
 // --- Admin ---
 export const fetchAdminFeedbacks = () =>

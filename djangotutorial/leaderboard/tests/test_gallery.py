@@ -28,17 +28,27 @@ class PhotoLikeApiTests(TestCase):
 
     def test_like_then_unlike(self):
         self.client.force_authenticate(user=self.user)
-        resp = self.client.post(self.url)
+        resp = self.client.put(self.url)
+        self.assertEqual(resp.status_code, 201)
+        self.assertTrue(resp.json()["liked"])
+        self.assertEqual(resp.json()["count"], 1)
+        resp2 = self.client.delete(self.url)
+        self.assertEqual(resp2.status_code, 200)
+        self.assertFalse(resp2.json()["liked"])
+        self.assertEqual(resp2.json()["count"], 0)
+        self.assertFalse(PhotoLike.objects.filter(photo=self.photo, auth_user=self.user).exists())
+
+    def test_like_is_idempotent(self):
+        # A retried PUT (mobile timeout) must confirm the like, not invert it.
+        self.client.force_authenticate(user=self.user)
+        self.client.put(self.url)
+        resp = self.client.put(self.url)
         self.assertEqual(resp.status_code, 200)
         self.assertTrue(resp.json()["liked"])
         self.assertEqual(resp.json()["count"], 1)
-        resp2 = self.client.post(self.url)
-        self.assertFalse(resp2.json()["liked"])
-        self.assertEqual(resp2.json()["count"], 0)
-        self.assertFalse(PhotoLike.objects.filter(photo=self.photo, user=self.user).exists())
 
     def test_requires_auth(self):
-        resp = self.client.post(self.url)
+        resp = self.client.put(self.url)
         self.assertIn(resp.status_code, (401, 403))
 
 
