@@ -23,7 +23,21 @@ function icsDate(date) {
   return date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
 }
 
-function buildIcs({ title, location, notes, start, end, uid }) {
+// Local calendar date (no time) in ICS basic format: YYYYMMDD. Used for all-day
+// events, where a UTC timestamp would risk shifting the day across a tz offset.
+function icsDay(date) {
+  return `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}`;
+}
+
+function buildIcs({ title, location, notes, start, end, uid, allDay }) {
+  // All-day: DATE-valued DTSTART/DTEND, and DTEND is exclusive so it points at
+  // the day after the start (a single-day all-day event).
+  const startLine = allDay
+    ? `DTSTART;VALUE=DATE:${icsDay(start)}`
+    : `DTSTART:${icsDate(start)}`;
+  const endLine = allDay
+    ? `DTEND;VALUE=DATE:${icsDay(new Date(start.getTime() + 24 * 60 * 60 * 1000))}`
+    : `DTEND:${icsDate(end)}`;
   const lines = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
@@ -31,8 +45,8 @@ function buildIcs({ title, location, notes, start, end, uid }) {
     'BEGIN:VEVENT',
     `UID:${uid}@gameofyolo.com`,
     `DTSTAMP:${icsDate(new Date())}`,
-    `DTSTART:${icsDate(start)}`,
-    `DTEND:${icsDate(end)}`,
+    startLine,
+    endLine,
     `SUMMARY:${icsEscape(title)}`,
     ...(location ? [`LOCATION:${icsEscape(location)}`] : []),
     ...(notes ? [`DESCRIPTION:${icsEscape(notes)}`] : []),
@@ -55,6 +69,9 @@ export async function addEventToCalendar(event) {
   const end = event.end_date
     ? new Date(event.end_date)
     : new Date(start.getTime() + DEFAULT_DURATION_MS);
+  // "Čas upřesníme": the day is set but the start time isn't — add it as an
+  // all-day entry instead of pinning a misleading clock time.
+  const allDay = !!event.time_tbd;
   const notes = [stripHtml(event.description), publicUrl(`/events/${event.slug}`)]
     .filter(Boolean)
     .join('\n\n');
@@ -66,6 +83,7 @@ export async function addEventToCalendar(event) {
       notes,
       startDate: start.getTime(),
       endDate: end.getTime(),
+      isAllDay: allDay,
     });
     return;
   }
@@ -77,6 +95,7 @@ export async function addEventToCalendar(event) {
     start,
     end,
     uid: event.slug || `event-${start.getTime()}`,
+    allDay,
   });
   const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
   const url = URL.createObjectURL(blob);

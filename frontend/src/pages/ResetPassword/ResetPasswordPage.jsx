@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { apiPasswordResetConfirm } from '../../services/api';
+import { extractApiError } from '../../services/errors';
 import { useToast } from '../../components/Toast/ToastProvider';
 import FormInput from '../../components/FormInput/FormInput';
 import Button from '../../components/Button/Button';
@@ -36,8 +37,7 @@ export default function ResetPasswordPage() {
       toast.success('Heslo bylo změněno. Můžeš se přihlásit.', { title: 'Hotovo' });
       navigate('/prihlasit');
     } catch (err) {
-      const msg = err.response?.data?.error
-        || 'Odkaz je neplatný nebo vypršel. Požádej o nový.';
+      const msg = extractApiError(err, 'Odkaz je neplatný nebo vypršel. Požádej o nový.');
       setError(msg);
       toast.error(msg, { title: 'Chyba' });
     } finally {

@@ -31,6 +31,7 @@ function DarkCard({ event }) {
         loading="lazy"
         width="150"
         height="150"
+        style={event.logo ? { '--logo-scale': event.logo_scale ?? 1 } : undefined}
       />
     </>
   );
@@ -48,6 +49,7 @@ function LightCard({ event }) {
         loading="lazy"
         width="110"
         height="110"
+        style={event.logo ? { '--logo-scale': event.logo_scale ?? 1 } : undefined}
       />
 
       <div className="evcard-content">

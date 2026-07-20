@@ -13,7 +13,7 @@
 .evcard-dark .ev-emoji{font-style:normal}
 .evcard-dark .evcard-title-wrap{padding-right:96px;display:flex;flex-direction:column;gap:2px}
 .evcard-dark .evcard-brand{color:var(--color-cream-light);font-size:clamp(22px,5vw,30px);font-family:var(--font-event-name);font-weight:400;text-transform:uppercase;line-height:1;letter-spacing:.015em}
-.evcard-dark .evcard-badge{position:absolute;width:126px;height:126px;top:-46px;right:-30px;transform:rotate(12deg);object-fit:contain;pointer-events:none;filter:drop-shadow(0px 5px 12px rgba(0,0,0,.4));z-index:4}
+.evcard-dark .evcard-badge{position:absolute;width:126px;height:126px;top:-46px;right:-30px;transform:rotate(12deg) scale(var(--logo-scale,1));object-fit:contain;pointer-events:none;filter:drop-shadow(0px 5px 12px rgba(0,0,0,.4));z-index:4}
 
 /* ── Light theme (Events list — POSTER skin on the LIGHT texture: cream
    grain, solid black border, 3D ledge drawn as box-shadow so pressing never
@@ -31,9 +31,9 @@
 /* Category + status sit together at the bottom, beside the points pill. */
 .evcard-light .evcard-cat{font-family:var(--font-hv);font-weight:600;font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;padding:4px 10px;border-radius:9999px;background:rgba(26,26,26,.06);color:rgba(26,26,26,.72);border:1px dashed rgba(26,26,26,.3);white-space:nowrap}
 
-.evcard-light .evcard-badge{position:absolute;top:-46px;right:-25px;width:126px;height:126px;transform:rotate(12deg);object-fit:contain;pointer-events:none;filter:drop-shadow(0px 4px 10px rgba(0,0,0,.3));z-index:4;transition:transform .25s cubic-bezier(.2,.7,.2,1.2)}
+.evcard-light .evcard-badge{position:absolute;top:-46px;right:-25px;width:126px;height:126px;transform:rotate(12deg) scale(var(--logo-scale,1));object-fit:contain;pointer-events:none;filter:drop-shadow(0px 4px 10px rgba(0,0,0,.3));z-index:4;transition:transform .25s cubic-bezier(.2,.7,.2,1.2)}
 /* The tilted logo sticker straightens up when the card is pressed. */
-.evcard-light:hover .evcard-badge{transform:rotate(0deg)}
+.evcard-light:hover .evcard-badge{transform:rotate(0deg) scale(var(--logo-scale,1))}
 
 .evcard-light .evcard-content{position:relative;z-index:1;height:100%;padding:16px 24px 20px;display:flex;flex-direction:column;box-sizing:border-box}
 .evcard-light .evcard-title{color:#1a1a1a;font-family:var(--font-display);font-size:clamp(26px,2.8vw,34px);font-weight:400;text-transform:uppercase;line-height:.95;letter-spacing:.013em;margin:5px 0 0;padding-right:80px;height:1.9em;display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word}

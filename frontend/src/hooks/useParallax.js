@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react';
+import { isMobileViewport } from '../utils/img';
 
 /**
  * Lightweight scroll parallax. Returns a callback ref to attach to the element
@@ -19,12 +20,9 @@ const prefersReduced = () =>
   && typeof window.matchMedia === 'function'
   && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-// Never run scroll parallax on phones — the per-frame transform fights the URL-bar
-// resize and reads as a jittery "jump" on scroll. Backgrounds stay flat on mobile.
-const isMobileViewport = () =>
-  typeof window !== 'undefined'
-  && typeof window.matchMedia === 'function'
-  && window.matchMedia('(max-width: 768px)').matches;
+// Note: scroll parallax never runs on phones — the per-frame transform fights the
+// URL-bar resize and reads as a jittery "jump" on scroll (see the isMobileViewport
+// gate in the effect below). Backgrounds stay flat on mobile.
 
 const defaultApply = (el, { offset }) => {
   el.style.transform = `translate3d(0, ${offset.toFixed(1)}px, 0)`;

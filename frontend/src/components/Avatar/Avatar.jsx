@@ -1,15 +1,6 @@
 import { Link } from 'react-router-dom';
+import { initials } from '../../utils/name';
 import './Avatar.css';
-
-function getInitials(name) {
-  return (name || '')
-    .split(' ')
-    .map((w) => w[0])
-    .filter(Boolean)
-    .join('')
-    .slice(0, 2)
-    .toUpperCase();
-}
 
 /**
  * Circular avatar showing a photo or initials fallback.
@@ -37,7 +28,7 @@ export default function Avatar({
 
   const inner = photo
     ? <img src={photo} alt={name || ''} loading="lazy" />
-    : getInitials(name);
+    : initials(name, '');
 
   if (as === 'link' && to) {
     return <Link to={to} className={classes} style={style}>{inner}</Link>;

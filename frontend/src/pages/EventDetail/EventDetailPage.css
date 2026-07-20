@@ -294,16 +294,20 @@
 .event-detail-page .fb-form{display:flex;flex-direction:column;gap:16px;align-items:center;max-width:480px;margin:0 auto}
 /* 1-10 scale. Ten stars would be unreadable at phone widths, so the score is
    a row of numbered chips that wraps to two rows on narrow screens. */
-.event-detail-page .fb-scale{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;max-width:420px}
-.event-detail-page .fb-score{width:38px;height:38px;flex:0 0 auto;background:var(--alpha-cream-04);border:1px solid var(--alpha-cream-22);border-radius:var(--radius-pill);color:var(--color-cream-light);font-family:var(--font-mono);font-size:14px;line-height:1;cursor:pointer;transition:background .12s,border-color .12s,color .12s,transform .14s}
-.event-detail-page .fb-score:hover,.event-detail-page .fb-score:focus-visible{border-color:var(--alpha-cream-55);transform:scale(1.08);outline:none}
-.event-detail-page .fb-score.on{background:var(--color-gold);border-color:var(--color-gold);color:var(--color-dark-brown);transform:scale(1.08)}
+/* Ten stars, always one row: each flexes to an equal share and shrinks to fit
+   the modal width — no wrapping, however narrow the screen. */
+.event-detail-page .fb-stars{display:flex;gap:2px;justify-content:center;align-items:center;width:100%;max-width:420px}
+.event-detail-page .fb-star{flex:1 1 0;min-width:0;background:none;border:none;padding:4px 0;font-size:clamp(18px,6vw,32px);line-height:1;color:var(--alpha-cream-22);cursor:pointer;transition:color .12s,transform .12s;-webkit-tap-highlight-color:transparent}
+.event-detail-page .fb-star:hover,.event-detail-page .fb-star:focus-visible{outline:none;transform:scale(1.18)}
+.event-detail-page .fb-star.on{color:var(--color-gold)}
 .event-detail-page .fb-scale-hint{display:flex;justify-content:space-between;width:100%;max-width:420px;margin-top:-8px;font-family:var(--font-mono);font-size:11px;letter-spacing:.06em;color:rgba(255,241,212,.45)}
 .event-detail-page .fb-comment{width:100%;background:var(--alpha-cream-04);border:1px solid var(--alpha-cream-18);border-radius:var(--radius-md);color:var(--color-cream-light);padding:12px 14px;font-family:var(--font-body);resize:vertical;text-align:left}
 .event-detail-page .fb-comment:focus{outline:none;border-color:var(--alpha-pink-45)}
 .event-detail-page .fb-actions{display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:center}
 .event-detail-page .fb-cancel-btn{background:none;border:1px dashed var(--alpha-cream-22);border-radius:var(--radius-pill);color:rgba(255,241,212,.6);font-family:var(--font-mono);font-size:12px;padding:9px 18px;cursor:pointer;letter-spacing:.06em;transition:border-color .15s,color .15s}
 .event-detail-page .fb-cancel-btn:hover{border-color:var(--alpha-cream-55);color:var(--color-cream-light)}
+.event-detail-page .fb-cta{display:flex;flex-direction:column;align-items:center;gap:14px}
+.event-detail-page .fb-cta .fb-gate{margin:0}
 .event-detail-page .fb-done{display:flex;flex-direction:column;align-items:center;gap:10px}
 .event-detail-page .fb-thanks{font-family:var(--font-mono);color:var(--color-gold);font-size:var(--text-lg);margin:0}
 .event-detail-page .fb-edit-btn{background:none;border:none;font-family:var(--font-mono);font-style:italic;font-size:12px;color:rgba(255,241,212,.45);cursor:pointer;letter-spacing:.08em;text-decoration:underline;text-underline-offset:3px;transition:color .15s}
@@ -313,7 +317,8 @@
 .survey-modal-title{font-family:var(--font-display);font-size:clamp(28px,3.6vw,38px);line-height:1.05;color:var(--color-cream-light, #fff1d4);text-transform:uppercase;letter-spacing:.02em;margin:0 0 16px}
 .survey-modal-title .pink{color:var(--color-pink, #e15463)}
 .survey-modal-text{font-family:var(--font-body);font-size:14px;line-height:1.55;color:var(--alpha-cream-65, rgba(255,241,212,.65));max-width:42ch;margin:0 auto 22px}
-.survey-modal-link{display:inline-block;font-family:var(--font-mono);font-style:italic;font-size:13px;letter-spacing:.06em;color:var(--color-pink, #e15463);text-decoration:underline;text-underline-offset:4px;margin-bottom:28px}
+.survey-modal-links{display:flex;flex-direction:column;align-items:center;gap:12px;margin-bottom:28px}
+.survey-modal-link{display:inline-block;font-family:var(--font-mono);font-style:italic;font-size:13px;letter-spacing:.06em;color:var(--color-pink, #e15463);text-decoration:underline;text-underline-offset:4px}
 .survey-modal-link:hover{color:var(--color-cream-light, #fff1d4)}
 .survey-modal-buttons{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
 

@@ -5,6 +5,7 @@ import { apiCheckin } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../Toast/ToastProvider';
 import { invalidateQuery } from '../../services/queryCache';
+import { extractApiError } from '../../services/errors';
 import { getPosition, GEO_ERROR_MESSAGES } from '../../utils/geolocation';
 import './CheckinBanner.css';
 
@@ -79,12 +80,12 @@ export default function CheckinBanner({ events = [] }) {
         });
       }
       setStatus(slug, 'done');
-      // Refresh home (banner list) + leaderboard.
-      invalidateQuery('home');
+      // Refresh the check-in list (this event drops off once its points are
+      // claimed) + the leaderboard the new points feed into.
+      invalidateQuery('checkin-events');
       invalidateQuery((k) => k.startsWith('leaderboard:'));
     } catch (err) {
-      const msg = err.response?.data?.error || 'Check-in se nepodařil.';
-      toast.error(msg, { title: 'Check-in selhal' });
+      toast.error(extractApiError(err, 'Check-in se nepodařil.'), { title: 'Check-in selhal' });
       setStatus(slug, 'error');
     }
   }, [toast, setStatus, user, navigate, location.pathname]);

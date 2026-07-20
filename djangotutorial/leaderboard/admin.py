@@ -30,8 +30,9 @@ class EventAdmin(admin.ModelAdmin):
     search_fields = ("name", "description")
     fieldsets = (
         (None, {
-            "fields": ("name", "category", "description", "rules", "date", "end_date",
-                       "points", "capacity", "image", "logo", "visible_to_users", "survey_url")
+            "fields": ("name", "category", "description", "rules", "date", "time_tbd", "end_date",
+                       "points", "capacity", "image", "logo", "visible_to_users", "survey_url",
+                       "whatsapp_url")
         }),
         ("Místo a check-in", {
             "description": "Souřadnice se obvykle nastavují přes mapu při vytváření akce na frontendu. Zde je lze ručně doladit.",

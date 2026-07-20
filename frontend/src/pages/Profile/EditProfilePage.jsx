@@ -6,6 +6,9 @@ import Modal from '../../components/Modal/Modal';
 import Button from '../../components/Button/Button';
 import { useToast } from '../../components/Toast/ToastProvider';
 import { fetchMe, fetchProfile, updateProfile, fetchCategories } from '../../services/api';
+import { useBeforeUnload } from '../../hooks/useBeforeUnload';
+import { reportError, extractApiError } from '../../services/errors';
+import { initials } from '../../utils/name';
 import './EditProfilePage.css';
 
 const BIO_MAX = 220;
@@ -83,7 +86,7 @@ export default function EditProfilePage() {
         setLoading(false);
       })
       .catch((err) => {
-        console.error('Failed to load profile:', err);
+        reportError('Nepodařilo se načíst profil.', err);
         setLoading(false);
       });
   }, []);
@@ -131,7 +134,7 @@ export default function EditProfilePage() {
       setRemovePhoto(false);
       setAvatarFile(null);
     } catch (err) {
-      setSaveError(err.response?.data?.error || 'Chyba při ukládání.');
+      setSaveError(extractApiError(err, 'Chyba při ukládání.'));
       setBarVisible(true);
     } finally {
       setSaving(false);
@@ -162,12 +165,7 @@ export default function EditProfilePage() {
     toast.info('Mazání účtu zatím není napojené — kdyby bylo, teď by ses smazal.', { title: 'Smazání účtu' });
   };
 
-  useEffect(() => {
-    if (!dirty) return undefined;
-    const onBeforeUnload = (e) => { e.preventDefault(); e.returnValue = ''; };
-    window.addEventListener('beforeunload', onBeforeUnload);
-    return () => window.removeEventListener('beforeunload', onBeforeUnload);
-  }, [dirty]);
+  useBeforeUnload(dirty);
 
   useEffect(() => {
     if (!saved) return undefined;
@@ -186,7 +184,7 @@ export default function EditProfilePage() {
   }
 
   const fullName = `${form.first_name || ''} ${form.last_name || ''}`.trim();
-  const initials = fullName.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase() || 'GO';
+  const avatarInitials = initials(fullName, 'GO');
 
   return (
     <div className="editprofile-page">
@@ -247,7 +245,7 @@ export default function EditProfilePage() {
               className={`ep-avatar-big${avatar ? ' has-img' : ''}`}
               style={avatar ? { backgroundImage: `url(${avatar})` } : undefined}
             >
-              {!avatar && initials}
+              {!avatar && avatarInitials}
             </div>
             <div className="ep-avatar-meta">
               <div className="ep-l">— Profilová fotka —</div>
@@ -295,7 +293,7 @@ export default function EditProfilePage() {
               <div className="ep-card-head">
                 <div className="ep-sec-eyebrow">— 04 · Oblíbené kategorie —</div>
                 <h2 className="ep-sec-heading">V čem <span className="pink">jedeš.</span></h2>
-                <p className="ep-sec-sub">Vyber 1–4 kategorie, ve kterých se nejvíc realizuješ. Pomůže nám doporučit ti akce na míru.</p>
+                <p className="ep-sec-sub">Vyber až 3 kategorie, ve kterých se nejvíc realizuješ. Pomůže nám doporučit ti akce na míru.</p>
               </div>
               <ChipSelect options={allCategories.map((c) => c.name)} selected={categories} onChange={handleCategories} max={3} />
             </div>

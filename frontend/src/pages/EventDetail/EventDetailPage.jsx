@@ -90,10 +90,11 @@ export default function EventDetailPage() {
   const [lbOpen, setLbOpen] = useState(false);
   const [lbIndex, setLbIndex] = useState(0);
   const [rating, setRating] = useState(0);
+  const [fbHover, setFbHover] = useState(0);
   const [comment, setComment] = useState('');
   const [fbBusy, setFbBusy] = useState(false);
   const [fbDone, setFbDone] = useState(false);
-  const [fbEditing, setFbEditing] = useState(false);
+  const [fbOpen, setFbOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [surveyOpen, setSurveyOpen] = useState(false);
 
@@ -119,8 +120,20 @@ export default function EventDetailPage() {
 
   // Pre-set "done" state if the server already recorded feedback from this user.
   useEffect(() => {
-    if (event?.feedback_given && !fbEditing) setFbDone(true);
-  }, [event?.feedback_given, fbEditing]);
+    if (event?.feedback_given) setFbDone(true);
+  }, [event?.feedback_given]);
+
+  // Feedback prompt: for a past event a signed-in user hasn't rated yet, pop
+  // the rating modal on first landing — the same way the survey modal appears
+  // right after an RSVP. We remember the prompt per event so it never nags
+  // twice; the "Ohodnotit akci" button reopens it on demand.
+  useEffect(() => {
+    if (!user || !event?.is_past || event?.feedback_given) return;
+    const key = `gol_fb_prompted:${slug}`;
+    if (localStorage.getItem(key)) return;
+    localStorage.setItem(key, '1');
+    setFbOpen(true);
+  }, [user, event?.is_past, event?.feedback_given, slug]);
 
   const loadAttendance = async () => {
     setAttLoading(true);
@@ -150,6 +163,13 @@ export default function EventDetailPage() {
     setAttendees([]);
     setRsvps([]);
     setAdminView('popis');
+    // Feedback state is per-event; clear it so navigating between events never
+    // carries one event's rating (or "done" state) onto the next.
+    setFbOpen(false);
+    setFbDone(false);
+    setRating(0);
+    setFbHover(0);
+    setComment('');
   }, [slug]);
 
   const attendingIds = useMemo(() => new Set(attendees.map((a) => a.user_id)), [attendees]);
@@ -233,8 +253,9 @@ export default function EventDetailPage() {
       // (rsvp_count on cards there may now be stale).
       invalidateQuery((k) => k.startsWith('events:'));
       await refetchEvent();
-      // Just joined and the event has a follow-up form? Prompt for it.
-      if (!wasJoined && event.survey_url) setSurveyOpen(true);
+      // Just joined and the event has a follow-up form and/or a WhatsApp group?
+      // Prompt for whichever exists.
+      if (!wasJoined && (event.survey_url || event.whatsapp_url)) setSurveyOpen(true);
     } catch (err) {
       reportError('RSVP se nepodařilo. Zkus to prosím znovu.', err);
     } finally {
@@ -265,12 +286,20 @@ export default function EventDetailPage() {
     try {
       await submitFeedback(slug, rating, comment.trim());
       setFbDone(true);
+      setFbOpen(false);
+      toast.success('Díky za hodnocení!');
     } catch (err) {
       reportError('Nepodařilo se odeslat hodnocení.', err);
     } finally {
       setFbBusy(false);
     }
   };
+
+  // The rating form lives in a modal now; these just open/close it. Opening
+  // works for both a first rating and an edit — the current rating/comment stay
+  // in state, so re-opening after a submit shows what was sent.
+  const openFeedback = () => setFbOpen(true);
+  const closeFeedback = () => setFbOpen(false);
 
   const handleUpload = async (e) => {
     const files = e.target.files;
@@ -383,7 +412,7 @@ export default function EventDetailPage() {
             </span>
           </div>
           {event.logo
-            ? <img className="poster-logo" src={event.logo} alt={event.name} />
+            ? <img className="poster-logo" src={event.logo} alt={event.name} style={{ transform: `scale(${event.logo_scale ?? 1})` }} />
             : <img className="poster-logo" src="/img/GOL_main_logo_pink.webp" alt={event.name} />}
         </div>
         <div className="credits">
@@ -395,7 +424,9 @@ export default function EventDetailPage() {
           </div>
           <div className="credit">
             <div className="credit-label">— Čas —</div>
-            <div className="credit-value">{fmtTime(event.date)}</div>
+            <div className={`credit-value${event.time_tbd ? ' long' : ''}`}>
+              {event.time_tbd ? 'Upřesníme' : fmtTime(event.date)}
+            </div>
             <div className="credit-sub">{event.name}</div>
           </div>
           <div className="credit">
@@ -546,51 +577,18 @@ export default function EventDetailPage() {
                 <p className="fb-gate">
                   <Link to="/prihlasit" state={{ from: location.pathname }} className="fb-gate-link">Přihlaš se</Link> a ohodnoť akci.
                 </p>
-              ) : !event.has_attended ? (
-                <p className="fb-gate">Hodnotit mohou jen účastníci akce.</p>
-              ) : fbDone && !fbEditing ? (
+              ) : fbDone ? (
                 <div className="fb-done">
                   <p className="fb-thanks">Díky za hodnocení!</p>
-                  <button type="button" className="fb-edit-btn" onClick={() => setFbEditing(true)}>
+                  <button type="button" className="fb-edit-btn" onClick={openFeedback}>
                     Upravit hodnocení
                   </button>
                 </div>
               ) : (
-                <form className="fb-form" onSubmit={async (e) => { await handleFeedback(e); setFbEditing(false); }}>
-                  <div className="fb-scale" role="radiogroup" aria-label="Hodnocení 1 až 10">
-                    {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
-                      <button
-                        type="button"
-                        key={n}
-                        className={`fb-score${n === rating ? ' on' : ''}`}
-                        aria-label={`${n} z 10`}
-                        aria-pressed={n === rating}
-                        onClick={() => setRating(n)}
-                      >{n}</button>
-                    ))}
-                  </div>
-                  <div className="fb-scale-hint" aria-hidden="true">
-                    <span>Nic moc</span>
-                    <span>Super</span>
-                  </div>
-                  <textarea
-                    className="fb-comment"
-                    placeholder="Napiš pár slov (nepovinné)…"
-                    value={comment}
-                    onChange={(e) => setComment(e.target.value)}
-                    rows={3}
-                  />
-                  <div className="fb-actions">
-                    <Button type="submit" variant="action" busy={fbBusy} disabled={!rating}>
-                      Odeslat hodnocení
-                    </Button>
-                    {fbEditing && (
-                      <button type="button" className="fb-cancel-btn" onClick={() => setFbEditing(false)}>
-                        Zrušit
-                      </button>
-                    )}
-                  </div>
-                </form>
+                <div className="fb-cta">
+                  <p className="fb-gate">Dej vědět, jaké to bylo.</p>
+                  <Button variant="action" onClick={openFeedback}>★ Ohodnotit akci</Button>
+                </div>
               )}
             </section>
           )}
@@ -812,26 +810,103 @@ export default function EventDetailPage() {
         </Suspense>
       )}
 
-      <Modal open={surveyOpen && !!event.survey_url} labelledBy="survey-modal-title">
+      <Modal open={surveyOpen && (!!event.survey_url || !!event.whatsapp_url)} labelledBy="survey-modal-title">
         <div className="survey-modal-eyebrow">— Ještě jedna věc —</div>
         <h3 id="survey-modal-title" className="survey-modal-title">
-          Potřebovali bychom od vás <span className="pink">pár informací navíc.</span>
+          {event.survey_url
+            ? <>Potřebovali bychom od vás <span className="pink">pár informací navíc.</span></>
+            : <>Přidej se do <span className="pink">skupiny akce.</span></>}
         </h3>
         <p className="survey-modal-text">
-          Otevřete prosím krátký formulář a vyplňte ho. Po odeslání se vraťte sem a klikněte na <strong>Hotovo</strong>.
+          {event.survey_url ? (
+            <>
+              Otevřete prosím krátký formulář a vyplňte ho.
+              {event.whatsapp_url && ' Přidejte se i do WhatsApp skupiny, ať vám nic neuteče.'}
+              {' '}Pak se vraťte sem a klikněte na <strong>Hotovo</strong>.
+            </>
+          ) : (
+            <>Přidejte se do WhatsApp skupiny akce, ať vám neuniknou žádné informace. Pak klikněte na <strong>Hotovo</strong>.</>
+          )}
         </p>
-        <a
-          className="survey-modal-link"
-          href={event.survey_url}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Otevřít formulář ↗
-        </a>
+        <div className="survey-modal-links">
+          {event.survey_url && (
+            <a
+              className="survey-modal-link"
+              href={event.survey_url}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Otevřít formulář ↗
+            </a>
+          )}
+          {event.whatsapp_url && (
+            <a
+              className="survey-modal-link"
+              href={event.whatsapp_url}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Přidat se do WhatsApp skupiny ↗
+            </a>
+          )}
+        </div>
         <div className="survey-modal-buttons">
           <Button variant="frost" onClick={handleSurveyCancel} disabled={busy}>Zrušit účast</Button>
           <Button variant="action" onClick={handleSurveyDone} disabled={busy}>Hotovo</Button>
         </div>
+      </Modal>
+
+      {/* Feedback pop-up — the same modal shell as the survey prompt. Opens
+          automatically for attendees who haven't rated yet, or on demand from
+          the "Ohodnotit akci" / "Upravit hodnocení" buttons. */}
+      <Modal open={fbOpen} onClose={closeFeedback} labelledBy="fb-modal-title">
+        <div className="survey-modal-eyebrow">— Zpětná vazba —</div>
+        <h3 id="fb-modal-title" className="survey-modal-title">
+          Jak se ti akce <span className="pink">líbila?</span>
+        </h3>
+        <form className="fb-form" onSubmit={handleFeedback}>
+          <div
+            className="fb-stars"
+            role="radiogroup"
+            aria-label="Hodnocení 1 až 10"
+            onMouseLeave={() => setFbHover(0)}
+          >
+            {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
+              <button
+                type="button"
+                key={n}
+                // Cumulative fill: every star up to the hovered one (or, with no
+                // hover, up to the picked rating) lights up.
+                className={`fb-star${n <= (fbHover || rating) ? ' on' : ''}`}
+                aria-label={`${n} z 10`}
+                aria-pressed={n <= rating}
+                onClick={() => setRating(n)}
+                onMouseEnter={() => setFbHover(n)}
+                onFocus={() => setFbHover(n)}
+                onBlur={() => setFbHover(0)}
+              >★</button>
+            ))}
+          </div>
+          <div className="fb-scale-hint" aria-hidden="true">
+            <span>Nic moc</span>
+            <span>Super</span>
+          </div>
+          <textarea
+            className="fb-comment"
+            placeholder="Zde je prostor, pokud máte něco na srdíčku…"
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+            rows={3}
+          />
+          <div className="fb-actions">
+            <Button type="submit" variant="action" busy={fbBusy} disabled={!rating}>
+              Odeslat hodnocení
+            </Button>
+            <button type="button" className="fb-cancel-btn" onClick={closeFeedback}>
+              Zavřít
+            </button>
+          </div>
+        </form>
       </Modal>
     </div>
   );

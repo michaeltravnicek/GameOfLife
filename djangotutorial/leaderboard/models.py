@@ -53,9 +53,26 @@ class Event(models.Model):
     # and admin have always treated it as optional — the NOT NULL column was
     # a leftover that 500'd event creation without a date.
     date = models.DateTimeField(null=True, blank=True)
+    # "Čas upřesníme": the start date is set but the exact start time isn't
+    # finalized yet. `date` still stores a datetime (so is_past / check-in /
+    # ordering keep working off the day), the UI just shows "Upřesníme" in
+    # place of the clock time.
+    time_tbd = models.BooleanField(
+        default=False,
+        help_text="Čas upřesníme: datum je dané, ale přesný začátek ještě ne. "
+                  "Místo času se zobrazí „Upřesníme“.",
+    )
     points = models.IntegerField()
     image = models.ImageField(upload_to="event_images/", blank=True, null=True)
     logo = models.ImageField(upload_to="event_logos/", blank=True, null=True)
+    # Logos come in wildly different intrinsic sizes/padding, so the same CSS box
+    # renders some huge and some tiny. This per-event multiplier lets an admin
+    # normalize the displayed size (1.0 = unchanged, applied as a CSS scale).
+    logo_scale = models.FloatField(
+        default=1.0,
+        validators=[MinValueValidator(0.1), MaxValueValidator(5.0)],
+        help_text="Zvětšení/zmenšení loga při zobrazení. 1.0 = beze změny.",
+    )
     rules = models.TextField(blank=True, default="")
     capacity = models.IntegerField(null=True, blank=True)
     visible_to_users = models.BooleanField(
@@ -69,6 +86,11 @@ class Event(models.Model):
     survey_url = models.URLField(
         max_length=500, blank=True, default="",
         help_text="Volitelný dotazník. Zobrazí se uživateli po přihlášení na akci.",
+    )
+    whatsapp_url = models.URLField(
+        max_length=500, blank=True, default="",
+        help_text="Odkaz na WhatsApp skupinu akce. Nabídne se uživateli po "
+                  "přihlášení (spolu s dotazníkem).",
     )
     end_date = models.DateTimeField(
         null=True, blank=True,

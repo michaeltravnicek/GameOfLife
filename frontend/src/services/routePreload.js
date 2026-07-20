@@ -10,13 +10,12 @@
  */
 
 import { prefetchQuery } from './queryCache';
-import { CACHE_TTL, PAGE_SIZE_EVENTS, PAGE_SIZE_GALLERY } from '../constants/config';
+import { PAGE_SIZE_EVENTS, PAGE_SIZE_GALLERY } from '../constants/config';
 import {
   fetchEvents,
   fetchGallery,
   fetchLeaderboard,
   fetchHero,
-  fetchStats,
   fetchEventDetail,
   fetchProfile,
 } from './api';
@@ -39,7 +38,6 @@ const importers = {
 // so warming it means warming each piece the page reads on mount.
 const warmHome = () => {
   prefetchQuery('hero', fetchHero);
-  prefetchQuery('stats', fetchStats);
   prefetchQuery(
     'events:upcoming|Vše|',
     () => fetchEvents({ limit: PAGE_SIZE_EVENTS, offset: 0, period: 'upcoming' }),

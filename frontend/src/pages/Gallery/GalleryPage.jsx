@@ -10,7 +10,7 @@ import LazyImg from '../../components/LazyImg/LazyImg';
 import Reveal from '../../components/Reveal/Reveal';
 import Button from '../../components/Button/Button';
 import Modal from '../../components/Modal/Modal';
-import { fmtDateShort } from '../../utils/date';
+import { fmtDateShort, monthLabel } from '../../utils/date';
 import { isMobileViewport } from '../../utils/img';
 import './GalleryPage.css';
 
@@ -175,15 +175,8 @@ export default function GalleryPage() {
   }, [photos, seasons, seasonOf]);
 
   // ── Calendar grouping: filter by season chip, then bucket by YYYY-MM and
-  // sort month-buckets newest-first. Photos without a usable event_date land
-  // in a trailing 'unknown' bucket.
-  const CZ_MONTHS = ['Leden', 'Únor', 'Březen', 'Duben', 'Květen', 'Červen', 'Červenec', 'Srpen', 'Září', 'Říjen', 'Listopad', 'Prosinec'];
-  const monthLabel = useCallback((key) => {
-    if (key === 'unknown') return 'Neurčeno';
-    const [y, m] = key.split('-');
-    return `${CZ_MONTHS[Number(m) - 1]} ${y}`;
-  }, []);
-
+  // sort month-buckets newest-first (see `monthLabel` in utils/date). Photos
+  // without a usable event_date land in a trailing 'unknown' bucket.
   const monthGroups = useMemo(() => {
     const filtered = activeSeason === 'all'
       ? photos

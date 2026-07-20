@@ -2,11 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import { NavLink, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { preloadRoute } from '../../services/routePreload';
+import { initials } from '../../utils/name';
 import StartPlayingButton from '../StartPlayingButton/StartPlayingButton';
 import './Nav.css';
-
-const initials = (s) =>
-  (s || '').split(' ').map((w) => w[0]).filter(Boolean).join('').slice(0, 2).toUpperCase() || '?';
 
 function activeKey(pathname) {
   if (pathname === '/') return 'home';

@@ -40,6 +40,13 @@
 .event-page .ev-img-preview{width:100%;aspect-ratio:1;border-radius:12px;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 30% 30%,var(--alpha-pink-22),transparent 65%),var(--alpha-dark-62);border:3px dashed var(--alpha-cream-45);font-family:var(--font-mono);font-style:italic;font-size:46px;font-weight:700;color:var(--color-cream-light);box-shadow:0 14px 44px var(--alpha-black-50);background-size:cover;background-position:center}
 .event-page .ev-img-preview.has-img{font-size:0}
 .event-page .ev-img-preview.sm{aspect-ratio:1/1;width:140px;height:140px}
+/* Logo preview: the real logo scaled exactly like the render, clipped to the box. */
+.event-page .ev-img-preview{overflow:hidden}
+.event-page .ev-logo-preview-img{max-width:100%;max-height:100%;object-fit:contain;transition:transform .12s ease}
+.event-page .ev-logo-scale{width:140px;max-width:100%;margin-top:12px}
+.event-page .ev-logo-scale-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;font-family:var(--font-mono);font-style:italic;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-cream-light)}
+.event-page .ev-logo-scale-val{color:var(--color-pink);font-weight:700;font-style:normal}
+.event-page .ev-logo-scale input[type=range]{width:100%;accent-color:var(--color-pink);cursor:pointer}
 .event-page .ev-img-actions{display:flex;gap:10px;flex-wrap:wrap}
 
 .event-page .ev-btn{display:inline-flex;align-items:center;gap:8px;border:0;cursor:pointer;font-family:var(--font-body);font-size:12.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;padding:11px 22px;border-radius:var(--radius-pill);transition:.18s;text-decoration:none}

@@ -46,7 +46,8 @@ class EventListSerializer(serializers.ModelSerializer):
         model = Event
         fields = [
             "id", "slug", "name", "description", "place",
-            "date", "points", "image", "logo", "capacity", "is_past", "category",
+            "date", "time_tbd", "points", "image", "logo", "logo_scale",
+            "capacity", "is_past", "category",
             "visible_to_users", "visible_to_close",
         ]
 
@@ -87,10 +88,10 @@ class EventDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Event
         fields = [
-            "id", "slug", "name", "description", "place", "date", "end_date",
-            "points", "image", "image_mobile", "logo", "rules", "capacity",
+            "id", "slug", "name", "description", "place", "date", "time_tbd", "end_date",
+            "points", "image", "image_mobile", "logo", "logo_scale", "rules", "capacity",
             "latitude", "longitude", "category",
-            "survey_url", "visible_to_users", "visible_to_close",
+            "survey_url", "whatsapp_url", "visible_to_users", "visible_to_close",
             "is_past", "rsvp_count", "attendee_count", "is_full", "has_rsvp",
             "has_attended", "feedback_given",
             "official_images", "user_photos",
@@ -264,14 +265,15 @@ class EventWriteSerializer(serializers.ModelSerializer):
     # downscales it. validate_logo_file keeps it to image/SVG types + a size cap.
     logo = serializers.FileField(required=False, allow_null=True,
                                  validators=[validate_logo_file])
+    logo_scale = serializers.FloatField(min_value=0.1, max_value=5.0, required=False)
 
     class Meta:
         model = Event
         fields = [
-            "name", "description", "place", "date", "end_date", "points",
-            "capacity", "rules", "survey_url", "visible_to_users",
+            "name", "description", "place", "date", "time_tbd", "end_date", "points",
+            "capacity", "rules", "survey_url", "whatsapp_url", "visible_to_users",
             "visible_to_close", "latitude", "longitude", "checkin_radius",
-            "category", "image", "logo",
+            "category", "image", "logo", "logo_scale",
         ]
 
     def validate(self, attrs):

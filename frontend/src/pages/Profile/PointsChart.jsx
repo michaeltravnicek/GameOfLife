@@ -1,12 +1,9 @@
 import { useRef, useState } from 'react';
+import { MONTHS_SHORT, fmtDate } from '../../utils/date';
 
 const W = 900, H = 280, PAD_L = 18, PAD_R = 44, PAD_T = 20, PAD_B = 30;
 const innerW = W - PAD_L - PAD_R;
 const innerH = H - PAD_T - PAD_B;
-
-const MONTHS_SHORT = ['LED', 'ÚNO', 'BŘE', 'DUB', 'KVĚ', 'ČER', 'ČVC', 'SRP', 'ZÁŘ', 'ŘÍJ', 'LIS', 'PRO'];
-const MONTHS_LONG = ['ledna', 'února', 'března', 'dubna', 'května', 'června', 'července', 'srpna', 'září', 'října', 'listopadu', 'prosince'];
-const fmtLong = (iso) => { const d = new Date(iso); return `${d.getDate()}. ${MONTHS_LONG[d.getMonth()]} ${d.getFullYear()}`; };
 
 /**
  * Cumulative points-over-season SVG chart with hover tooltips.
@@ -17,7 +14,9 @@ export default function PointsChart({ stats, today }) {
   const svgRef = useRef(null);
   const [tip, setTip] = useState(null);
 
-  const spanMs = stats.end - stats.start;
+  // Guard a zero-length season (start === end, e.g. a synthesized single-event
+  // player season dated today) so xFor never divides by zero → NaN coordinates.
+  const spanMs = Math.max(stats.end - stats.start, 1);
   const totalY = Math.max(stats.totalPts, 1);
   const xFor = (d) => PAD_L + ((d - stats.start) / spanMs) * innerW;
   const yFor = (p) => PAD_T + innerH - (p / totalY) * innerH;
@@ -100,7 +99,7 @@ export default function PointsChart({ stats, today }) {
       </svg>
       {tip && (
         <div className="dot-tip show" style={{ left: tip.left, top: tip.top }}>
-          {tip.nm} <b>+{tip.pts}</b><br />{fmtLong(tip.date)} · celkem {tip.cum}
+          {tip.nm} <b>+{tip.pts}</b><br />{fmtDate(tip.date)} · celkem {tip.cum}
         </div>
       )}
     </>

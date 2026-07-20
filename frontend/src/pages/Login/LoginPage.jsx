@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import FormInput from '../../components/FormInput/FormInput';
 import Button from '../../components/Button/Button';
@@ -10,6 +10,7 @@ export default function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const [identifier, setIdentifier] = useState('');
   const [pw, setPw] = useState('');
   const [remember, setRemember] = useState(false);
@@ -22,7 +23,11 @@ export default function LoginPage() {
     setBusy(true);
     try {
       const u = await login(identifier, pw, remember);
-      navigate(location.state?.from || `/profil/${u.username}`, { replace: true });
+      // `from` arrives either as router state (in-app redirects) or as a
+      // ?from= query param (the api.js 401 interceptor redirects via
+      // window.location, which can't carry router state).
+      const from = location.state?.from || searchParams.get('from');
+      navigate(from || `/profil/${u.username}`, { replace: true });
     } catch (err) {
       setError(extractApiError(err, 'Přihlášení selhalo.'));
     } finally {
@@ -76,7 +81,7 @@ export default function LoginPage() {
                 {busy ? 'Přihlašuji…' : 'Přihlásit se →'}
               </Button>
             </form>
-            <p className="auth-foot">Nemáš účet? <Link to="/registrace" state={location.state}>Zaregistrovat se</Link></p>
+            <p className="auth-foot">Nemáš účet? <Link to={{ pathname: '/registrace', search: location.search }} state={location.state}>Zaregistrovat se</Link></p>
           </div>
         </div>
       </section>

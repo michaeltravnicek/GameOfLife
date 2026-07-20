@@ -1,17 +1,16 @@
 import { useMemo, useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import PillTabs from '../../components/PillTabs/PillTabs';
-import TicketList from '../../components/StatList/TicketList';
-import { EVENT_COLUMNS, EVENT_LIST_CLASS } from '../../components/StatList/eventColumns';
 import Button from '../../components/Button/Button';
 import { TicketFrame } from '../../components/DashedBorder/DashedBorder';
-import PointsChart from './PointsChart';
-import { seasonStats } from './seasonStats';
+import { useSeasonView } from './useSeasonView';
+import { ProfileCredits, EventsSections, PointsSections } from './profileSections';
 import { fetchProfile, fetchProfileSeason } from '../../services/api';
 import { useCachedQuery } from '../../services/queryCache';
 import { useAuth } from '../../context/AuthContext';
 import { CACHE_TTL } from '../../constants/config';
 import { shareLink } from '../../utils/shareUrl';
+import { initials } from '../../utils/name';
 import './ProfilePage.css';
 
 const TODAY = new Date();
@@ -67,42 +66,15 @@ export default function ProfilePage() {
   // Prefer the detail (has events) for the current season; fall back to the
   // summary so the poster renders immediately while detail loads.
   const seasonData = (seasonDetail && seasonDetail.id === seasonKey) ? seasonDetail : summary;
-  const st = useMemo(() => (seasonData ? seasonStats(seasonData, TODAY) : null), [seasonData]);
+  // Shared derivation (stats + sorted event lists + category breakdown). Runs
+  // unconditionally and tolerates a null seasonData, so it stays above the
+  // early returns and keeps the hook count stable across renders.
+  const { st, upcoming, past, cats } = useSeasonView(seasonData, TODAY);
 
   const loading = profileLoading && !profile;
   const error = profileError
     ? (profileError.response?.status === 404 ? 'Profil nenalezen' : 'Nepodařilo se načíst profil')
     : null;
-
-  // All hooks must run on every render, so these stay ABOVE the early returns
-  // below and tolerate a null `st`. (Calling them only after the loading guard
-  // changes the hook count between renders and crashes React with
-  // "Rendered more hooks than during the previous render.")
-  const upcoming = useMemo(
-    () => (st ? st.future.slice().sort((a, b) => new Date(a.date) - new Date(b.date)) : []),
-    [st],
-  );
-  const past = useMemo(
-    () => (st ? st.past.slice().sort((a, b) => new Date(b.date) - new Date(a.date)) : []),
-    [st],
-  );
-
-  const cats = useMemo(() => {
-    if (!st) return { sorted: [], max: 1 };
-    const buckets = {};
-    st.evs.forEach((e) => {
-      // Only real categories — uncategorized events don't form a fake bucket,
-      // and the whole section hides when nothing remains.
-      const cat = e.category?.name;
-      if (!cat) return;
-      if (!buckets[cat]) buckets[cat] = { n: 0, p: 0 };
-      buckets[cat].n += 1;
-      buckets[cat].p += e.pts;
-    });
-    const sorted = Object.entries(buckets).sort((a, b) => b[1].p - a[1].p);
-    const max = Math.max(...sorted.map(([, b]) => b.p), 1);
-    return { sorted, max };
-  }, [st]);
 
   // Bare /profil with no username → send to the logged-in user's own profile.
   if (!username) {
@@ -115,7 +87,7 @@ export default function ProfilePage() {
   // the page renders from profile-level data even for players with no points.
   if (!profile || !st) return <div className="profile-page"><div style={{ padding: '2rem', textAlign: 'center' }}>Profil nenalezen</div></div>;
 
-  const initials = profile.full_name.split(/\s+/).slice(0, 2).map((w) => w[0]).join('').toUpperCase() || 'GO';
+  const avatarInitials = initials(profile.full_name, 'GO');
 
   const handleShare = () => shareLink(`${profile.full_name} — Game of Life`);
   // Actually log out (the label promises it), then land on the homepage.
@@ -141,30 +113,13 @@ export default function ProfilePage() {
             <span className="ev-pill">Sezóna {st.label}</span>
           </div>
           <div className="poster-avatar">
-            {profile.photo ? <img src={profile.photo} alt={profile.full_name} /> : initials}
+            {profile.photo ? <img src={profile.photo} alt={profile.full_name} /> : avatarInitials}
           </div>
           <h1 className="poster-name">{profile.full_name}</h1>
           <div className="poster-handle">@{profile.username} · hraje od {profile.since}</div>
         </div>
 
-        <div className="credits">
-          <span className="credits-rule" />
-          <div className="credit">
-            <div className="credit-label">— Body —</div>
-            <div className="credit-value">{st.totalPts}</div>
-            <div className="credit-sub"><strong>{st.cities.length} měst</strong> · {st.future.length ? 'aktivní sezóna' : 'sezóna ukončena'}</div>
-          </div>
-          <div className="credit">
-            <div className="credit-label">— Akcí —</div>
-            <div className="credit-value">{st.evs.length}</div>
-            <div className="credit-sub"><strong>{st.past.length} absolv.</strong> · {st.future.length} nadch.</div>
-          </div>
-          <div className="credit">
-            <div className="credit-label">— Pozice —</div>
-            <div className="credit-value">{st.rank ? `#${st.rank}` : '—'}</div>
-            <div className="credit-sub">{st.rank ? 'v sezóně' : 'zatím bez bodů'}</div>
-          </div>
-        </div>
+        <ProfileCredits st={st} />
       </section>
 
       <div className="action-bar">
@@ -250,83 +205,11 @@ export default function ProfilePage() {
             )}
 
             {view === 'events' && (
-              <>
-                {upcoming.length > 0 && (
-                  <div className="section">
-                    <div className="sec-rule" />
-                    <div className="sec-eyebrow"><span>— 02 · Nadcházející —</span><span className="meta">+{st.futurePts} pts na cestě</span></div>
-                    <h2 className="sec-heading">Co ho <span className="pink">čeká.</span></h2>
-                    <TicketList
-                      className={EVENT_LIST_CLASS}
-                      columns={EVENT_COLUMNS}
-                      rows={upcoming}
-                      rowKey={(e) => e.slug}
-                      rowLink={(e) => `/events/${e.slug}`}
-                      rowClass={() => 'future'}
-                    />
-                  </div>
-                )}
-
-                <div className="section">
-                  <div className="sec-rule" />
-                  <div className="sec-eyebrow"><span>— 03 · Absolvované —</span><span className="meta">+{st.pastPts} pts zatím</span></div>
-                  <h2 className="sec-heading">Co má <span className="pink">za sebou.</span></h2>
-                  <TicketList
-                    className={EVENT_LIST_CLASS}
-                    columns={EVENT_COLUMNS}
-                    rows={past}
-                    rowKey={(e) => e.slug}
-                    rowLink={(e) => `/events/${e.slug}`}
-                    rowClass={() => 'past'}
-                    emptyText="Zatím žádné absolvované akce v této sezóně."
-                  />
-                </div>
-              </>
+              <EventsSections st={st} upcoming={upcoming} past={past} startNum={2} />
             )}
 
             {view === 'points' && (
-              <>
-                <div className="section">
-                  <div className="sec-rule" />
-                  <div className="sec-eyebrow"><span>— 04 · Body v čase —</span><span className="meta">křivka sezóny</span></div>
-                  <h2 className="sec-heading">Křivka <span className="pink">sezóny.</span></h2>
-
-                  <div className="chart-card">
-                    <TicketFrame />
-                    <div className="chart-in">
-                    <div className="chart-meta">
-                      <div>
-                        <div className="l">Celkem v sezóně</div>
-                        <div className="total">{st.totalPts}<small>pts</small></div>
-                      </div>
-                      <div className="legend">
-                        <span><i />Absolvováno</span>
-                        <span><i className="dashed" />Nadcházející</span>
-                        <span style={{ color: '#f5c842' }}><i style={{ background: '#f5c842' }} />Dnes</span>
-                      </div>
-                    </div>
-                    <PointsChart stats={st} today={TODAY} />
-                    </div>
-                  </div>
-                </div>
-
-                {cats.sorted.length > 0 && (
-                  <div className="section">
-                    <div className="sec-rule" />
-                    <div className="sec-eyebrow"><span>— 05 · Kategorie —</span><span className="meta">{cats.sorted.length} kategorií</span></div>
-                    <h2 className="sec-heading">V čem <span className="pink">jede.</span></h2>
-                    <div className="cat-list">
-                      {cats.sorted.map(([cat, b]) => (
-                        <div className="cat-row" key={cat}>
-                          <span className="name">{cat}</span>
-                          <span className="bar"><i style={{ width: `${Math.round((b.p / cats.max) * 100)}%` }} /></span>
-                          <span className="meta">{b.n}× · <b>+{b.p}</b></span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </>
+              <PointsSections st={st} cats={cats} today={TODAY} startNum={4} />
             )}
           </section>
         </main>

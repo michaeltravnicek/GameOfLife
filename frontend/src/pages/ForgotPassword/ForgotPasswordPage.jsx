@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { apiPasswordReset } from '../../services/api';
+import { extractApiError } from '../../services/errors';
 import { useToast } from '../../components/Toast/ToastProvider';
 import FormInput from '../../components/FormInput/FormInput';
 import Button from '../../components/Button/Button';
@@ -29,7 +30,7 @@ export default function ForgotPasswordPage() {
         duration: 6500,
       });
     } catch (err) {
-      const msg = err.response?.data?.error || 'Nepodařilo se odeslat e-mail.';
+      const msg = extractApiError(err, 'Nepodařilo se odeslat e-mail.');
       setError(msg);
       toast.error(msg, { title: 'Chyba' });
     } finally {
