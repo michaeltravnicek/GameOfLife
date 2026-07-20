@@ -123,17 +123,8 @@ export default function EventDetailPage() {
     if (event?.feedback_given) setFbDone(true);
   }, [event?.feedback_given]);
 
-  // Feedback prompt: for a past event a signed-in user hasn't rated yet, pop
-  // the rating modal on first landing — the same way the survey modal appears
-  // right after an RSVP. We remember the prompt per event so it never nags
-  // twice; the "Ohodnotit akci" button reopens it on demand.
-  useEffect(() => {
-    if (!user || !event?.is_past || event?.feedback_given) return;
-    const key = `gol_fb_prompted:${slug}`;
-    if (localStorage.getItem(key)) return;
-    localStorage.setItem(key, '1');
-    setFbOpen(true);
-  }, [user, event?.is_past, event?.feedback_given, slug]);
+  // No auto-prompt: the rating modal opens only from the "★ Ohodnotit akci"
+  // button in the feedback section — never on its own on landing.
 
   const loadAttendance = async () => {
     setAttLoading(true);

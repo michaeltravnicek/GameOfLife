@@ -30,7 +30,8 @@
    --frame-gap = distance between an input's dashed frame and the dark panel
    inside it; tune it here for the whole page. */
 .auth-page.auth-poster{background:none;--frame-gap:2px}
-.auth-page.auth-poster .stage{position:fixed;inset:0;bottom:auto;height:100vh;height:100lvh;z-index:-2;background:url('/img/gal12.webp') center 30%/cover no-repeat;filter:saturate(.8)}
+.auth-page.auth-poster .stage{position:fixed;inset:0;bottom:auto;height:100vh;height:100lvh;z-index:-2;background:url('/img/gal12-mobile.webp') center 30%/cover no-repeat;filter:saturate(.8)}
+@media(min-width:769px){.auth-page.auth-poster .stage{background-image:url('/img/gal12-desktop.webp')}}
 .auth-page.auth-poster .stage::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(45,42,142,.12) 0%,rgba(26,15,10,.48) 100%)}
 .auth-page.auth-poster .auth-container{padding:140px 24px 72px}
 /* Poster card — homepage lb-card material: opaque blue grain, solid black

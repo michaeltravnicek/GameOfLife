@@ -25,6 +25,12 @@ python manage.py migrate
 
 python manage.py ensure_season
 
+python manage.py sync_sheets --force-all
+
+# Backfill mobile WebP variants for media uploaded before the variant pipeline
+# (idempotent — existing variants are skipped, so this is cheap on re-deploys).
+python manage.py generate_image_variants
+
 python superuser.py
 
 # Register daily 4 AM Google Sheets sync cron job

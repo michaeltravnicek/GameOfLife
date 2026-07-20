@@ -3,7 +3,8 @@
    input's dashed frame (outline) and its dark panel. */
 .editprofile-page{position:relative;padding-bottom:96px;--frame-gap:2px}
 
-.editprofile-page .ep-stage{position:fixed;inset:0;z-index:-2;background:url('/img/gal3.webp') center 30%/cover no-repeat;filter:saturate(.7) contrast(1.02);transform:scale(1.06)}
+.editprofile-page .ep-stage{position:fixed;inset:0;z-index:-2;background:url('/img/gal3-mobile.webp') center 30%/cover no-repeat;filter:saturate(.7) contrast(1.02);transform:scale(1.06)}
+@media(min-width:769px){.editprofile-page .ep-stage{background-image:url('/img/gal3-desktop.webp')}}
 /* Light tint — the cards are opaque posters, the photo can stay alive. */
 .editprofile-page .ep-stage::after{content:'';position:absolute;inset:0;background:
   radial-gradient(ellipse at 50% 0%, var(--alpha-purple-22) 0%, transparent 38%),

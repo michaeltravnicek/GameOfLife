@@ -33,7 +33,7 @@ const GALLERY_VARIANTS = [
   // enough to also serve to phones.
   { suffix: '', width: 1100, quality: 50 },
   { suffix: '-mobile', width: 768, quality: 52 },
-  { suffix: '-desktop', width: 1600, quality: 70 },
+  { suffix: '-desktop', width: 1920, quality: 78 },
 ];
 
 async function isStale(src, out) {

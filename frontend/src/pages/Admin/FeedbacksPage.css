@@ -2,7 +2,8 @@
    with per-event feedback tables rendered through the shared <StatList>. */
 .feedbacks-page{position:relative;min-height:100vh;color:var(--color-cream-light);overflow-x:hidden;padding:120px 20px 80px;max-width:1000px;margin:0 auto}
 
-.feedbacks-page .stage{position:fixed;inset:0;bottom:auto;height:100vh;height:100lvh;z-index:-2;background:url('/img/gal2.webp') center 28%/cover no-repeat;filter:saturate(.7) contrast(1.02);transform:scale(1.05)}
+.feedbacks-page .stage{position:fixed;inset:0;bottom:auto;height:100vh;height:100lvh;z-index:-2;background:url('/img/gal2-mobile.webp') center 28%/cover no-repeat;filter:saturate(.7) contrast(1.02);transform:scale(1.05)}
+@media(min-width:769px){.feedbacks-page .stage{background-image:url('/img/gal2-desktop.webp')}}
 .feedbacks-page .stage::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 15%,rgba(45,42,142,.12) 0%,transparent 55%),linear-gradient(180deg,rgba(45,42,142,.10) 0%,rgba(26,15,10,.62) 50%,rgba(26,15,10,.84) 100%)}
 .feedbacks-page .grain{position:fixed;inset:0;bottom:auto;height:100vh;height:100lvh;z-index:-1;pointer-events:none;background:url('/img/Grain_texture_blue.webp') 0 0/var(--tex-size) var(--tex-size) repeat;opacity:.08;mix-blend-mode:overlay}
 

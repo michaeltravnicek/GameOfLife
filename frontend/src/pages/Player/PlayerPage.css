@@ -4,7 +4,8 @@
 
 /* Keep the player page's own backdrop so public players stay visually
    distinguishable from account profiles (which use gal6). */
-.profile-page.player-anon .poster-img{background:url('/img/gal11.webp') center 28%/cover no-repeat}
+.profile-page.player-anon .poster-img{background:url('/img/gal11-mobile.webp') center 28%/cover no-repeat}
+@media(min-width:769px){.profile-page.player-anon .poster-img{background-image:url('/img/gal11-desktop.webp')}}
 
 /* Unclaimed avatar: no pink glow, muted dashed ring — the outline of a
    player who hasn't claimed their spot yet. */
