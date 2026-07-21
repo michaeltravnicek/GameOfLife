@@ -117,11 +117,21 @@
   .editprofile-page .ep-savebar-inner{justify-content:center;text-align:center}
 }
 @media(max-width:720px){
+  /* Minimise the gutters so form fields get as much width as possible. */
   .editprofile-page{padding-bottom:128px}
-  .editprofile-page .ep-head{padding:96px 18px 18px}
-  .editprofile-page .ep-card{padding:22px 20px}
+  .editprofile-page .ep-head{padding:96px 12px 16px}
+  .editprofile-page .ep-main{padding:28px 12px 20px}
+  .editprofile-page .ep-card{padding:20px 14px}
+  .editprofile-page .ep-commit-zone{padding:8px 12px 56px}
   .editprofile-page .ep-commit-zone h2{font-size:30px}
-  .editprofile-page .ep-savebar-inner{flex-direction:column;gap:10px;padding:14px 18px}
+  .editprofile-page .ep-savebar-inner{flex-direction:column;gap:10px;padding:12px 12px}
+}
+@media(max-width:420px){
+  /* Very narrow phones: trim to the minimum readable gutter. */
+  .editprofile-page .ep-head{padding:92px 8px 14px}
+  .editprofile-page .ep-main{padding:22px 8px 18px}
+  .editprofile-page .ep-card{padding:18px 11px}
+  .editprofile-page .ep-commit-zone{padding:8px 8px 52px}
 }
 
 /* Mobile: lighten the save bar's blur (smaller blur, no saturate) — the cards

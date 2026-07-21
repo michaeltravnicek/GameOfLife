@@ -4,8 +4,10 @@ import {
   dayName, monthKey, monthLabel,
 } from './date';
 
-// A fixed local timestamp: Friday 2026-05-15 18:30 local time.
-const ISO = '2026-05-15T18:30:00';
+// The API shape: a wall-clock time tagged as UTC (Friday 2026-05-15 18:30).
+// The formatters read it with the UTC getters, so these assertions hold in any
+// machine timezone (no "+2 h in summer" drift).
+const ISO = '2026-05-15T18:30:00Z';
 
 describe('date utils (Czech formatting)', () => {
   it('fmtDate renders genitive month name', () => {
@@ -21,7 +23,7 @@ describe('date utils (Czech formatting)', () => {
   });
 
   it('fmtTime pads hours and minutes', () => {
-    expect(fmtTime('2026-05-15T08:05:00')).toBe('08:05');
+    expect(fmtTime('2026-05-15T08:05:00Z')).toBe('08:05');
   });
 
   it('dayName returns Czech weekday', () => {

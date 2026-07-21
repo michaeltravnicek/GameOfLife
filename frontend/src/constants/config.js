@@ -8,6 +8,9 @@
 
 // ── Pagination ────────────────────────────────────────────────────────
 export const PAGE_SIZE_EVENTS = 30;
+// Phones fetch + render a much smaller batch: the first page paints faster,
+// each "Načíst další" does less work, and we stop shipping cards nobody scrolls to.
+export const PAGE_SIZE_EVENTS_MOBILE = 8;
 export const PAGE_SIZE_GALLERY = 60;
 
 // ── Interaction timing ────────────────────────────────────────────────

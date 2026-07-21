@@ -26,8 +26,12 @@
 .leaderboard-page .lb-search .search-input{background:rgba(26,15,10,.62);border-color:rgba(255,241,212,.45);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
 .leaderboard-page .lb-search .search-input::placeholder{color:rgba(255,241,212,.75)}
 .leaderboard-page .lb-search::before{color:rgba(255,241,212,.78)}
-.leaderboard-page .lb-help-link{font-family:var(--font-hv);font-weight:300;font-style:italic;font-size:15px;color:rgba(255,241,212,.82);border-bottom:1px dashed rgba(255,241,212,.55);padding-bottom:2px;transition:color .18s,border-color .18s;text-decoration:none}
-.leaderboard-page .lb-help-link:hover{color:var(--color-pink);border-bottom-color:var(--color-pink)}
+/* Help affordance — a frosted pill matching the toolbar chrome, but pink-accented
+   with a circled "?" badge so it stands out against the photo stage. */
+.leaderboard-page .lb-help-link{display:inline-flex;align-items:center;gap:9px;font-family:var(--font-hv);font-weight:600;font-style:italic;font-size:14px;color:var(--color-cream-light);background:rgba(26,15,10,.62);border:1.5px dashed var(--color-pink);border-radius:9999px;padding:9px 18px;text-decoration:none;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 4px 14px rgba(0,0,0,.28);transition:background .18s,color .18s,border-color .18s,box-shadow .18s}
+.leaderboard-page .lb-help-link::before{content:'?';display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:var(--color-pink);color:#fff;font-style:normal;font-weight:700;font-size:12px;flex:none}
+.leaderboard-page .lb-help-link:hover{background:var(--color-pink);color:#fff;border-color:var(--color-pink);box-shadow:0 6px 18px rgba(225,84,99,.5)}
+.leaderboard-page .lb-help-link:hover::before{background:#fff;color:var(--color-pink)}
 
 .leaderboard-page .lb-main{position:relative;z-index:2;max-width:880px;margin:0 auto;padding:40px 24px 80px}
 
@@ -119,7 +123,7 @@
   .leaderboard-page .search{max-width:100%}
   .leaderboard-page .controls .search-wrap.lb-search{max-width:100%;width:100%}
   .leaderboard-page .lb-search .search-input{width:100%}
-  .leaderboard-page .lb-help-link{text-align:center}
+  .leaderboard-page .lb-help-link{align-self:center;justify-content:center}
   .leaderboard-page .lb-main{padding:30px 16px 64px}
   .leaderboard-page .stage-wrap{margin:32px 0 40px;padding:0}
 }

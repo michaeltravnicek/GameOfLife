@@ -218,7 +218,7 @@ export default function ProfilePage() {
       <div className="back-strip">
         <div className="back-strip-inner">
           {/* Navigation = 3D buttons (frost for "back"); round pills = in-place actions. */}
-          <Button as="link" to="/" variant="frost">← Zpět na hlavní stránku</Button>
+          <Button as="link" to="/" variant="frost" className="back-home">← Zpět na hlavní stránku</Button>
           <div className="back-actions">
             {profile?.is_own_profile && <Button as="link" to="/upravit-profil">✎ Upravit profil</Button>}
             <Button variant="ghost" onClick={handleShare}>Sdílet profil</Button>

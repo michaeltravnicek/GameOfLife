@@ -250,21 +250,18 @@
 }
 
 @media (max-width:600px){
-  /* Three columns leave the name ~90px, which wraps every Czech full name onto
-     three lines. Give the name the full width and put points + action on a
-     second row underneath it. */
+  /* Keep the whole attendee row on ONE line: name · body · remove. The name
+     ellipsises (StatList's .nm) instead of wrapping, so points + action stay
+     compact on the right. */
   .event-detail-page .att-grid .ev-rk{display:none}
   .event-detail-page .att-grid .stat-row{
-    grid-template-columns:1fr auto !important;
-    grid-template-areas:'info info' 'pts act';
-    row-gap:10px;
+    grid-template-columns:minmax(0,1fr) auto auto !important;
+    gap:10px;padding:12px 10px;
   }
-  .event-detail-page .att-grid .ev-info{grid-area:info}
-  .event-detail-page .att-grid .ev-pt{grid-area:pts;justify-content:flex-start}
-  .event-detail-page .att-grid .att-act{grid-area:act}
+  .event-detail-page .att-grid .ev-pt{justify-content:flex-end}
   /* 44px touch target for the remove action (24px as inline text). */
-  .event-detail-page .att-remove{min-height:44px;display:inline-flex;align-items:center;padding:6px 10px}
-  .event-detail-page .att-pts-input{padding:8px 4px}
+  .event-detail-page .att-remove{min-height:44px;display:inline-flex;align-items:center;padding:6px 6px}
+  .event-detail-page .att-pts-input{width:50px;font-size:19px;padding:8px 2px}
 
   /* Field over switch — side by side leaves the input too narrow to read a
      name in. The switch stays full width so both modes keep a 44px target. */

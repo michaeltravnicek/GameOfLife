@@ -24,7 +24,8 @@ nav.top.hidden{transform:translateY(calc(-120px - env(safe-area-inset-top,0px)))
 @media(prefers-reduced-motion:reduce){.nav-user-menu.open{animation:none}}
 
 /* Hamburger — hidden on desktop */
-.nav-hamburger{display:none;background:none;border:0;cursor:pointer;color:rgba(255,255,255,.88);font-size:26px;padding:10px 4px;line-height:1;transition:color .18s;flex-shrink:0}
+.nav-hamburger{display:none;align-items:center;justify-content:center;background:none;border:0;cursor:pointer;color:rgba(255,255,255,.88);padding:10px 4px;line-height:0;transition:color .18s;flex-shrink:0}
+.nav-hamburger svg{display:block}
 .nav-hamburger:hover{color:#e15463}
 
 /* Mobile dropdown — full-width popup, same visual language as the avatar menu */
@@ -55,7 +56,9 @@ nav.top.hidden{transform:translateY(calc(-120px - env(safe-area-inset-top,0px)))
      tight 14px gutter that desktop used to fit them — keep the 24px inset from the
      1100px breakpoint so the nav matches the page content gutter and doesn't hug
      the screen edge. */
-  nav.top{left:24px;right:24px;top:calc(16px + env(safe-area-inset-top,0px));padding:0 14px}
+  /* Less right gutter than left: the avatar is a big filled circle and looked
+     over-padded against the pill edge; the hamburger (left) stays at 14px. */
+  nav.top{left:24px;right:24px;top:calc(16px + env(safe-area-inset-top,0px));padding:0 8px 0 14px}
   /* Hide text links on both sides; the hamburger (left) opens the full menu. */
   .nav-left .nav-item,.nav-right .nav-item{display:none}
   .nav-right .start-playing-btn{display:none}
@@ -63,16 +66,14 @@ nav.top.hidden{transform:translateY(calc(-120px - env(safe-area-inset-top,0px)))
   .nav-right{margin-left:auto}
   /* Cancel the button's own left padding so the dots sit flush with the nav's
      inner edge — same inset as the avatar on the right (symmetric content). */
-  .nav-hamburger{display:block;margin-left:-4px}
+  .nav-hamburger{display:flex;margin-left:-4px}
   .nav-logo{height:48px}
   .nav-logo img{width:88px;height:42px}
 }
 
 @media(max-width:480px){
-  nav.top{left:16px;right:16px;top:calc(12px + env(safe-area-inset-top,0px));padding:0 16px}
-  /* The avatar is a big filled circle; nudge it in a touch so its visual gap to
-     the edge matches the thin hamburger on the left (optical balance). */
-  .nav-right{margin-right:2px}
+  nav.top{left:16px;right:16px;top:calc(12px + env(safe-area-inset-top,0px));padding:0 8px 0 16px}
+  .nav-right{margin-right:0}
   .nav-avatar{width:42px;height:42px;font-size:11px}
   .nav-logo{height:42px}
   .nav-logo img{width:78px;height:38px}

@@ -141,7 +141,11 @@ export default function Nav() {
           aria-label="Menu"
           aria-haspopup="menu"
           aria-expanded={menuOpen}
-        >☰</button>
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M3.5 7h17M3.5 12h17M3.5 17h17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          </svg>
+        </button>
         {navItem('/', 'Domů', 'home')}
         {navItem('/events', 'Eventy', 'events')}
         {navItem('/galerie', 'Galerie', 'gallery')}

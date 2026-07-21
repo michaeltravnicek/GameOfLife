@@ -142,6 +142,13 @@
   .profile-page .cat-row .name{font-size:20px}
 }
 @media(max-width:720px){
+  /* Chart: the SVG (viewBox 900×280) scales down to the phone width, which
+     shrinks the axis text to ~3–4px — so make the card taller (more visible)
+     and bump the axis font in user-units so the months stay readable. */
+  .profile-page .chart-in{padding:16px 12px 12px}
+  .profile-page .chart-svg{aspect-ratio:2 / 1}
+  .profile-page .chart-axis text{font-size:20px}
+  .profile-page .chart-today-label{font-size:20px}
   .profile-page .poster-top{padding:110px 18px 18px}
   .profile-page .poster-avatar{width:118px;height:118px;font-size:38px;margin-bottom:18px}
   /* align-items:stretch — the desktop flex-end would hug the column right. */
@@ -152,6 +159,13 @@
   .profile-page .highlights li{grid-template-columns:40px 1fr;gap:14px}
   .profile-page .highlights .h-tag{grid-column:1 / -1;grid-row:2;padding-left:54px;margin-top:-4px}
   .profile-page .back-strip-inner{justify-content:center}
+  /* Mobile: drop the "back home" button (the nav already covers it) and fit the
+     three account actions side-by-side as equal columns — labels wrap inside a
+     pill rather than stacking the buttons. */
+  .profile-page .back-home{display:none}
+  .profile-page .back-strip{padding:24px 14px 52px}
+  .profile-page .back-actions{width:100%;flex-wrap:nowrap;gap:7px}
+  .profile-page .back-actions .btn{flex:1 1 0;min-width:0;white-space:normal;text-align:center;line-height:1.15;padding:9px 8px;font-size:11px;letter-spacing:.02em}
 }
 
 /* Mobile: lighten the sticky bar's blur (smaller blur, no saturate) — the

@@ -231,7 +231,8 @@ export default function GalleryPage() {
       <div className="bg-texture" />
 
       <PageHero
-        eyebrow="Vzpomínky, zážitky a okamžiky"
+        className="gallery-hero"
+        eyebrow={<><span className="gal-eyebrow-lead">Vzpomínky, </span>zážitky a okamžiky</>}
         title="Galerie"
       />
 

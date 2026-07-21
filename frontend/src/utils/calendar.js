@@ -18,15 +18,35 @@ function icsEscape(text) {
     .replace(/\r?\n/g, '\\n');
 }
 
-// UTC timestamp in ICS basic format: YYYYMMDDTHHMMSSZ
+// UTC timestamp in ICS basic format: YYYYMMDDTHHMMSSZ. Used for DTSTAMP (a real
+// "now" instant), not for the event's own start/end.
 function icsDate(date) {
   return date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
 }
 
-// Local calendar date (no time) in ICS basic format: YYYYMMDD. Used for all-day
-// events, where a UTC timestamp would risk shifting the day across a tz offset.
+// Event times are wall-clock (stored tagged as UTC — see utils/date.js), so we
+// read them back with the UTC getters and emit *floating* local time (no Z): the
+// calendar shows "18:00" for every viewer instead of shifting it by their tz.
+function icsFloating(date) {
+  const p = (n) => String(n).padStart(2, '0');
+  return `${date.getUTCFullYear()}${p(date.getUTCMonth() + 1)}${p(date.getUTCDate())}`
+    + `T${p(date.getUTCHours())}${p(date.getUTCMinutes())}${p(date.getUTCSeconds())}`;
+}
+
+// All-day calendar date (no time) in ICS basic format: YYYYMMDD, from the same
+// wall-clock (UTC) components so the day never drifts across a tz offset.
 function icsDay(date) {
-  return `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}`;
+  const p = (n) => String(n).padStart(2, '0');
+  return `${date.getUTCFullYear()}${p(date.getUTCMonth() + 1)}${p(date.getUTCDate())}`;
+}
+
+// A local Date carrying the stored wall-clock components — so native calendar
+// APIs (which take an epoch instant) also show "18:00" in the device timezone.
+function wallClockLocal(date) {
+  return new Date(
+    date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(),
+    date.getUTCHours(), date.getUTCMinutes(), date.getUTCSeconds(),
+  );
 }
 
 function buildIcs({ title, location, notes, start, end, uid, allDay }) {
@@ -34,10 +54,10 @@ function buildIcs({ title, location, notes, start, end, uid, allDay }) {
   // the day after the start (a single-day all-day event).
   const startLine = allDay
     ? `DTSTART;VALUE=DATE:${icsDay(start)}`
-    : `DTSTART:${icsDate(start)}`;
+    : `DTSTART:${icsFloating(start)}`;
   const endLine = allDay
     ? `DTEND;VALUE=DATE:${icsDay(new Date(start.getTime() + 24 * 60 * 60 * 1000))}`
-    : `DTEND:${icsDate(end)}`;
+    : `DTEND:${icsFloating(end)}`;
   const lines = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
@@ -81,8 +101,8 @@ export async function addEventToCalendar(event) {
       title: event.name,
       location: event.place || '',
       notes,
-      startDate: start.getTime(),
-      endDate: end.getTime(),
+      startDate: wallClockLocal(start).getTime(),
+      endDate: wallClockLocal(end).getTime(),
       isAllDay: allDay,
     });
     return;

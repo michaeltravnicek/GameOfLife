@@ -142,3 +142,10 @@
   .gal-upload-buttons{flex-direction:column}
   .gal-upload-buttons .btn{width:100%}
 }
+
+/* Keep the hero eyebrow on ONE row on phones: drop the "Vzpomínky," lead-in and
+   tighten the tracking so "zážitky a okamžiky" fits between the ✦ flourishes. */
+@media(max-width:600px){
+  .gallery-hero .gal-eyebrow-lead{display:none}
+  .gallery-hero .page-hero-eyebrow{font-size:14px;letter-spacing:.2em}
+}

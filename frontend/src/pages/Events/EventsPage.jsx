@@ -4,7 +4,8 @@ import { fetchEvents, fetchSeasons } from '../../services/api';
 import { usePaginatedQuery } from '../../services/usePaginatedQuery';
 import { useCachedQuery } from '../../services/queryCache';
 import { useAuth } from '../../context/AuthContext';
-import { CACHE_TTL, PAGE_SIZE_EVENTS, SEARCH_DEBOUNCE_MS } from '../../constants/config';
+import { CACHE_TTL, PAGE_SIZE_EVENTS, PAGE_SIZE_EVENTS_MOBILE, SEARCH_DEBOUNCE_MS } from '../../constants/config';
+import { isMobileViewport } from '../../utils/img';
 import EventCard from '../../components/EventCard/EventCard';
 import PillTabs from '../../components/PillTabs/PillTabs';
 import SearchInput from '../../components/SearchInput/SearchInput';
@@ -64,12 +65,18 @@ export default function EventsPage() {
     [city, season, debouncedQuery],
   );
 
+  // Phones load a much smaller batch per page (evaluated once on mount).
+  const pageSize = useMemo(
+    () => (isMobileViewport() ? PAGE_SIZE_EVENTS_MOBILE : PAGE_SIZE_EVENTS),
+    [],
+  );
+
   const {
     items: events, hasMore, totalCount, loading, loadingMore, loadMore, firstPage, error, retry,
   } = usePaginatedQuery({
     cacheKey,
     fetcher: (offset, limit) => fetchEvents(buildParams(offset, limit)),
-    pageSize: PAGE_SIZE_EVENTS,
+    pageSize,
     ttl: CACHE_TTL.EVENTS,
     errorMessage: 'Nepodařilo se načíst další akce.',
     extractItems: extractEvents,

@@ -97,10 +97,21 @@
   .event-page .ev-img-preview.sm{width:100%;height:auto;aspect-ratio:1}
 }
 @media(max-width:720px){
+  /* Minimise the gutters so form fields get as much width as possible — matches
+     the edit-profile page so all form pages share the same side padding. */
   .event-page{padding-bottom:128px}
-  .event-page .ev-head{padding:96px 18px 18px}
-  .event-page .ev-card{padding:22px 20px}
+  .event-page .ev-head{padding:96px 12px 16px}
+  .event-page .ev-main{padding:28px 12px 20px}
+  .event-page .ev-card{padding:20px 14px}
+  .event-page .ev-commit-zone{padding:8px 12px 56px}
   .event-page .ev-commit-zone h2{font-size:30px}
+}
+@media(max-width:420px){
+  /* Very narrow phones: trim to the minimum readable gutter. */
+  .event-page .ev-head{padding:92px 8px 14px}
+  .event-page .ev-main{padding:22px 8px 18px}
+  .event-page .ev-card{padding:18px 11px}
+  .event-page .ev-commit-zone{padding:8px 8px 52px}
 }
 
 /* ── Save bar — slides up when there are unsaved changes (EditProfile's
@@ -112,7 +123,7 @@
 .event-page .ev-status .ev-pulse{width:8px;height:8px;border-radius:50%;background:var(--color-gold);display:inline-block;box-shadow:0 0 10px var(--alpha-gold-60)}
 .event-page .ev-savebar-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 @media(max-width:720px){
-  .event-page .ev-savebar-inner{flex-direction:column;gap:10px;padding:14px 18px}
+  .event-page .ev-savebar-inner{flex-direction:column;gap:10px;padding:12px 12px}
 }
 /* Mobile: lighten the save bar's blur — the cards are opaque posters now. */
 @media (max-width:768px){
