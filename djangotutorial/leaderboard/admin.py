@@ -28,10 +28,14 @@ class EventAdmin(admin.ModelAdmin):
     list_display = ("id", "name", "category", "date", "place", "points", "visible_to_users")
     list_filter = ("category", "visible_to_users")
     search_fields = ("name", "description")
+    # NB: an explicit `fieldsets` is a whitelist — a model field left out here is
+    # silently uneditable in the admin. Keep it in sync with Event's fields
+    # (test_django_admin.AdminFieldCoverageTests enforces that).
     fieldsets = (
         (None, {
             "fields": ("name", "category", "description", "rules", "date", "time_tbd", "end_date",
-                       "points", "capacity", "image", "logo", "visible_to_users", "survey_url",
+                       "points", "capacity", "image", "logo", "logo_scale",
+                       "visible_to_users", "visible_to_close", "survey_url",
                        "whatsapp_url")
         }),
         ("Místo a check-in", {

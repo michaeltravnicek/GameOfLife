@@ -22,7 +22,7 @@ class Season(models.Model):
                 name="season_single_active",
             ),
             models.CheckConstraint(
-                check=models.Q(end_date__gt=models.F("start_date")),
+                condition=models.Q(end_date__gt=models.F("start_date")),
                 name="season_end_after_start",
             ),
         ]
@@ -126,12 +126,12 @@ class Event(models.Model):
             # DB-level twin of clean(): bulk paths (sheets sync, updates)
             # bypass Python validation, so the pairing rule lives here too.
             models.CheckConstraint(
-                check=(models.Q(latitude__isnull=True, longitude__isnull=True)
+                condition=(models.Q(latitude__isnull=True, longitude__isnull=True)
                        | models.Q(latitude__isnull=False, longitude__isnull=False)),
                 name="event_latlng_pair",
             ),
             models.CheckConstraint(
-                check=models.Q(checkin_radius__gte=1),
+                condition=models.Q(checkin_radius__gte=1),
                 name="event_checkin_radius_positive",
             ),
         ]
@@ -206,7 +206,7 @@ class User(models.Model):
     class Meta:
         constraints = [
             models.CheckConstraint(
-                check=models.Q(number__gte=100_000_000, number__lte=999_999_999),
+                condition=models.Q(number__gte=100_000_000, number__lte=999_999_999),
                 name="user_number_9_digits",
             ),
         ]
@@ -279,7 +279,7 @@ class EventFeedback(models.Model):
         unique_together = ("user", "event")
         constraints = [
             models.CheckConstraint(
-                check=models.Q(rating__gte=1, rating__lte=10),
+                condition=models.Q(rating__gte=1, rating__lte=10),
                 name="feedback_rating_1_10",
             ),
         ]

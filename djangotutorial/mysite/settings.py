@@ -11,7 +11,10 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 import os
 import sys
+from datetime import timedelta
+
 import dj_database_url
+from django.core.exceptions import ImproperlyConfigured
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -22,8 +25,11 @@ MODE = os.getenv("MODE")
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-# I generated a new one:))
-SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", 'django-insecure-apk-d!f9%95l%z3&*^omgieg!z8bd$0+eu3kxiyp_ayjge3k@9')
+# The key signs session cookies and password-reset tokens, so a known value
+# means anyone can forge both. The dev fallback is deliberately only reachable
+# when MODE != PRODUCTION; production must supply DJANGO_SECRET_KEY or refuse
+# to boot (failing loudly beats silently running on a public default).
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "")
 LAST_UPDATE = None
 
 STATIC_ROOT = BASE_DIR / "staticfiles"
@@ -34,25 +40,105 @@ STATICFILES_DIRS = [
 MEDIA_URL = os.getenv("MEDIA_URL", "/media/")
 MEDIA_ROOT = os.getenv("MEDIA_ROOT", BASE_DIR / "media")
 
+# Upload limits.
+#
+# These cover the *non-file* parts of a request only — Django deliberately
+# exempts uploaded files from DATA_UPLOAD_MAX_MEMORY_SIZE. Per-file size,
+# format and pixel-count limits live in leaderboard/image_utils.validate_upload,
+# and the per-request file count is capped in the upload views.
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024   # 10 MB of form fields
+# Above this, an uploaded file is spooled to a temp file instead of being held
+# in RAM. It is a memory/disk trade-off, not a cap.
+FILE_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024
+# Blunts hash-collision / parser-exhaustion POSTs with tens of thousands of keys.
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 1000
+# Ceiling on files per request, enforced by the multi-image upload view.
+MAX_UPLOAD_FILES_PER_REQUEST = 30
+
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = MODE != "PRODUCTION"
 
+if not DEBUG and not SECRET_KEY:
+    raise ImproperlyConfigured(
+        "DJANGO_SECRET_KEY must be set when MODE=PRODUCTION."
+    )
+if not SECRET_KEY:
+    SECRET_KEY = "django-insecure-local-dev-only-not-used-in-production"
+
 # In production, restrict to the real domain(s) via ALLOWED_HOSTS env var
-# (comma-separated). Falls back to "*" only in DEBUG/local dev.
+# (comma-separated). A wildcard here would let an attacker set the Host header
+# freely, which poisons the absolute URLs Django builds — most damagingly the
+# password-reset links sent by email.
 _allowed_hosts_env = os.getenv("ALLOWED_HOSTS", "")
 if _allowed_hosts_env:
     ALLOWED_HOSTS = [h.strip() for h in _allowed_hosts_env.split(",") if h.strip()]
 elif DEBUG:
     ALLOWED_HOSTS = ["*"]
+elif os.getenv("RENDER_EXTERNAL_HOSTNAME"):
+    # Render injects this automatically. It's a safe last resort so a deploy
+    # doesn't hard-fail before ALLOWED_HOSTS is configured, but set the env var
+    # explicitly — this misses any custom domain pointed at the service.
+    ALLOWED_HOSTS = [os.getenv("RENDER_EXTERNAL_HOSTNAME")]
 else:
-    ALLOWED_HOSTS = ["*"]  # TODO: set ALLOWED_HOSTS env var in production.
+    raise ImproperlyConfigured(
+        "ALLOWED_HOSTS must be set when MODE=PRODUCTION "
+        "(comma-separated, e.g. 'gameofyolo.com,www.gameofyolo.com')."
+    )
+
+# Number of proxies between the client and gunicorn. Production is
+# Cloudflare -> Render's load balancer -> gunicorn, i.e. TWO hops, so
+# X-Forwarded-For arrives as "<client>, <cloudflare-edge>".
+#
+# Getting this wrong is not a subtle bug: too low and the rate limiter keys on
+# Cloudflare's IP, so every visitor shares one bucket and one lockout. Too high
+# and it keys on a client-supplied value an attacker can forge to dodge both.
+#
+# Env-overridable rather than hard-coded so it can be corrected without a
+# redeploy — verify the real chain at /whoami/ (superuser only) and set
+# PROXY_COUNT until computed_client_ip equals your own public IP.
+PROXY_COUNT = int(os.getenv("PROXY_COUNT", "1" if DEBUG else "2"))
 
 # Only trust the SSL proxy header in production (behind a real proxy).
 # In local dev with DEBUG=True, trusting this header causes Django to
 # mis-detect HTTPS and mark CSRF cookies as Secure, which breaks forms over HTTP.
 if not DEBUG:
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+# Whether this instance is actually reached over HTTPS. Normally true whenever
+# DEBUG is off — but this repo's local .env also sets MODE=PRODUCTION, and on
+# plain http://localhost the HTTPS hardening below is self-defeating: the
+# redirect sends you to an https:// URL nothing serves, and Secure cookies are
+# dropped by the browser, so you can never log in. Set HTTPS=0 in the local
+# .env for that case; leave it unset (or 1) on Render.
+HTTPS_ENABLED = not DEBUG and os.getenv("HTTPS", "1") != "0"
+
+if HTTPS_ENABLED:
+    # Render terminates TLS upstream, so this redirect decision relies on
+    # SECURE_PROXY_SSL_HEADER above.
+    SECURE_SSL_REDIRECT = True
+    # Tell browsers to refuse plain HTTP for a year. Start with a short
+    # max-age if you want an escape hatch — once a browser has seen the long
+    # value it will honour it even if the header later disappears.
+    SECURE_HSTS_SECONDS = int(os.getenv("SECURE_HSTS_SECONDS", "31536000"))
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+
+    # Session/CSRF cookies must never travel over plain HTTP.
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+
+# The CSRF cookie is read by React (to echo it back in the X-CSRFToken header),
+# so it cannot be HttpOnly. The session cookie can be, and is by default.
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = "Lax"
+CSRF_COOKIE_SAMESITE = "Lax"
+
+# Don't let browsers second-guess Content-Type (an uploaded file sniffed as
+# HTML would run as HTML), and don't leak full URLs to third-party sites.
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_REFERRER_POLICY = "same-origin"
+X_FRAME_OPTIONS = "DENY"
 
 # CSRF trusted origins for local dev + any hosted domains.
 # Django 4+ requires this for POST from origins not matching the Host header.
@@ -79,11 +165,11 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'background_task',
     'rest_framework',
     'rest_framework.authtoken',
     'drf_spectacular',
     'corsheaders',
+    'axes',
     'leaderboard',
     'accounts',
 ]
@@ -92,7 +178,12 @@ INSTALLED_APPS = [
 LOGIN_URL = '/prihlasit'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
-AUTHENTICATION_BACKENDS = ['django.contrib.auth.backends.ModelBackend']
+# AxesStandaloneBackend must come first: it short-circuits authenticate() for a
+# locked-out credential/IP before ModelBackend gets to verify the password.
+AUTHENTICATION_BACKENDS = [
+    'axes.backends.AxesStandaloneBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -104,7 +195,38 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # Must be last: it turns the PermissionDenied raised by the axes backend
+    # into a proper lockout response.
+    'axes.middleware.AxesMiddleware',
 ]
+
+# ---------------------------------------------------------------------------
+# django-axes: brute-force lockout on login.
+#
+# Why this exists alongside the DRF throttles: the throttles only cover the DRF
+# auth endpoints, so /admin/login/ — a plain Django view, and the highest-value
+# target on the site — had no rate limit at all. Axes hooks authenticate()
+# itself, so it covers the admin and the API login in one place.
+# ---------------------------------------------------------------------------
+AXES_FAILURE_LIMIT = 8
+# Lock out on the (IP, username) pair rather than IP alone: locking a bare IP
+# would let one attacker knock every user behind a shared NAT (school/office
+# wifi, mobile carriers) off the site — a denial-of-service handed to them for
+# free. Per-pair still stops password spraying against a single account.
+AXES_LOCKOUT_PARAMETERS = [["ip_address", "username"]]
+# Auto-expire the lockout so a locked-out real user isn't stuck waiting for an
+# admin. An attacker gets 8 tries an hour, which is useless for brute force.
+AXES_COOLOFF_TIME = timedelta(hours=1)
+# A successful login clears the failure count for that pair.
+AXES_RESET_ON_SUCCESS = True
+# Usernames are matched case-insensitively at login, so count them that way too.
+AXES_USERNAME_CALLABLE = lambda request, credentials: (  # noqa: E731
+    (credentials or {}).get("username") or request.POST.get("username") or ""
+).strip().lower()
+# Must agree with REST_FRAMEWORK["NUM_PROXIES"] — both derive from PROXY_COUNT
+# so they cannot drift apart. None in DEBUG (no proxy in front locally).
+AXES_IPWARE_PROXY_COUNT = None if DEBUG else PROXY_COUNT
+AXES_IPWARE_META_PRECEDENCE_ORDER = ["HTTP_X_FORWARDED_FOR", "REMOTE_ADDR"]
 
 # CORS: in dev, React on :5173 hits Django on :8000; same origin in production.
 CORS_ALLOWED_ORIGINS = [
@@ -150,16 +272,36 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'EXCEPTION_HANDLER': 'mysite.drf.api_exception_handler',
+    # Baseline per-IP / per-user ceiling on every endpoint. Views that need a
+    # tighter limit (the auth endpoints) set their own throttle_classes, which
+    # replaces this rather than adding to it.
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle',
+    ],
     # Per-IP limits for the anonymous auth endpoints (see accounts/api/throttles.py).
     'DEFAULT_THROTTLE_RATES': {
         'login': '10/min',
         'register': '10/hour',
         'password_reset': '5/hour',
+        # Generous: one SPA page load fans out into several requests, and
+        # visitors on shared/mobile NAT share an IP. Tune down once you've
+        # seen real traffic.
+        'anon': '120/min',
+        'user': '300/min',
     },
-    # Render terminates TLS at one proxy layer; without this the throttle would
-    # key on the load balancer's IP and rate-limit all users as one client.
-    'NUM_PROXIES': 1,
+    # See PROXY_COUNT above — must match the real number of proxy hops, or the
+    # throttle keys on the wrong address.
+    'NUM_PROXIES': PROXY_COUNT,
 }
+
+# The browsable API renders every endpoint as an HTML page listing its fields
+# and serializer forms. Handy locally, free API documentation for strangers in
+# production — so ship JSON only there.
+if not DEBUG:
+    REST_FRAMEWORK['DEFAULT_RENDERER_CLASSES'] = [
+        'rest_framework.renderers.JSONRenderer',
+    ]
 
 SPECTACULAR_SETTINGS = {
     'TITLE': 'Game of Life API',
@@ -197,11 +339,17 @@ DATABASES = {
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
 
+# A 4-character minimum with no other checks made "1234" a valid password,
+# which is what credential-stuffing bots try first. These four are Django's
+# defaults; the messages are already translated into Czech.
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-        'OPTIONS': {'min_length': 4},
+        'OPTIONS': {'min_length': 8},
     },
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
 ]
 
 
@@ -248,6 +396,11 @@ if "test" in sys.argv:
             scope: None for scope in REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]
         },
     }
+    # Same reasoning for axes: failed-login attempts accumulate across tests
+    # (every test client shares 127.0.0.1), so the many deliberate bad-password
+    # cases in the suite would start locking each other out. The lockout
+    # behaviour itself is covered by AxesLockoutTests via @override_settings.
+    AXES_ENABLED = False
 
 
 # Static files (CSS, JavaScript, Images)
@@ -285,3 +438,92 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "Game of Yolo <noreply@gameofyolo.cz>")
+
+
+# ---------------------------------------------------------------------------
+# Logging
+#
+# Independent of Sentry on purpose: Render captures stdout, so tracebacks stay
+# readable in the dashboard even if Sentry is down, unconfigured, or over quota.
+# ---------------------------------------------------------------------------
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "{asctime} {levelname} {name} {message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": os.getenv("LOG_LEVEL", "INFO"),
+    },
+    "loggers": {
+        # Unhandled exceptions in views. Without this, a 500's traceback is
+        # invisible once DEBUG is off.
+        "django.request": {
+            "handlers": ["console"],
+            "level": "ERROR",
+            "propagate": False,
+        },
+        # Lockouts and repeated login failures — the audit trail for the
+        # brute-force protection above.
+        "axes": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+    },
+}
+
+
+# ---------------------------------------------------------------------------
+# Sentry error reporting.
+#
+# Deliberately env-var only, with no committed fallback: unlike the frontend
+# DSN (which necessarily ships inside the JS bundle and is public anyway), this
+# one is never exposed to clients, so committing it would turn a private
+# credential into a repo-readable one for no functional gain.
+#
+# Set SENTRY_DSN in Render's environment (and in djangotutorial/.env locally).
+# ---------------------------------------------------------------------------
+SENTRY_DSN = os.getenv("SENTRY_DSN", "")
+
+# Never report from the test suite: several tests raise on purpose (error
+# handling, the 500 path, the axes lockout), and with a DSN present in the
+# local .env every run would file those synthetic failures as real issues.
+if "test" in sys.argv:
+    SENTRY_DSN = ""
+
+if SENTRY_DSN:
+    import sentry_sdk
+
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        environment=os.getenv("SENTRY_ENVIRONMENT", "development" if DEBUG else "production"),
+        # NOT True (which is what Sentry's onboarding snippet suggests):
+        # send_default_pii=True attaches the request headers, cookies, client IP
+        # and the logged-in user to every event. For a Czech user base that
+        # means shipping personal data to a processor on every 500 — needing a
+        # legal basis and a much longer privacy-policy entry. Off, the events
+        # still carry the traceback, URL and view name, which is what actually
+        # helps debugging.
+        send_default_pii=False,
+        # Errors only. Performance tracing would burn the free-tier quota fast.
+        traces_sample_rate=0,
+        # Don't let a body sneak in through the request-data machinery.
+        max_request_body_size="never",
+    )
+elif not DEBUG and "test" not in sys.argv:
+    # Loud, but not fatal: missing monitoring shouldn't block a deploy.
+    print(
+        "WARNING: SENTRY_DSN is not set — server errors will not be reported.",
+        file=sys.stderr,
+    )

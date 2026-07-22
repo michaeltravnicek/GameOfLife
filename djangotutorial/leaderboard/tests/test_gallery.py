@@ -12,6 +12,7 @@ from rest_framework.test import APIClient
 
 from accounts.models import Profile
 from leaderboard.models import Event, PhotoLike, Season, UserPhoto
+from leaderboard.tests.helpers import make_image_upload
 
 
 @override_settings(MEDIA_ROOT=tempfile.mkdtemp())
@@ -143,7 +144,7 @@ class PhotoUploadApiTests(TestCase):
         )
 
     def _img(self, name="p.png"):
-        return SimpleUploadedFile(name, b"dummy", content_type="image/png")
+        return make_image_upload(name)
 
     def test_requires_auth(self):
         resp = self.client.post(self.url, {"image": self._img()}, format="multipart")

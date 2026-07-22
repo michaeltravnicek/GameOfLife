@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import transaction
 from django.shortcuts import get_object_or_404
 from django.views.decorators.cache import cache_control
@@ -540,6 +541,14 @@ def event_images_upload(request, slug):
         files = [request.FILES["image"]]
     if not files:
         return Response({"error": "Nahraj prosím obrázky."}, status=status.HTTP_400_BAD_REQUEST)
+    # Each file is size/pixel-capped individually by validate_upload, but the
+    # list itself was unbounded — 500 files x 15 MB is still 7.5 GB of decoding.
+    max_files = getattr(settings, "MAX_UPLOAD_FILES_PER_REQUEST", 30)
+    if len(files) > max_files:
+        return Response(
+            {"error": f"Najednou lze nahrát maximálně {max_files} obrázků."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
     try:
         with transaction.atomic():
             created = add_event_images(event, files)

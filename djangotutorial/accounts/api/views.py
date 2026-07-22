@@ -202,7 +202,10 @@ def register_api(request):
     if not form.is_valid():
         return Response({"errors": form.errors}, status=status.HTTP_400_BAD_REQUEST)
     user = form.save()
-    login(request, user)
+    # Explicit backend required: this user came from form.save(), not
+    # authenticate(), so it carries no `.backend`, and with django-axes there is
+    # more than one backend configured for login() to pick from.
+    login(request, user, backend="django.contrib.auth.backends.ModelBackend")
     payload = {"user": serialize_user(user, request)}
     if request.data.get("client") == "mobile":
         token, _ = Token.objects.get_or_create(user=user)

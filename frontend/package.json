@@ -30,6 +30,7 @@
     "@capacitor/splash-screen": "^8.0.1",
     "@capacitor/status-bar": "^8.0.2",
     "@ebarooni/capacitor-calendar": "^8.0.2",
+    "@sentry/react": "^10.67.0",
     "axios": "^1.16.0",
     "leaflet": "^1.9.4",
     "react": "^19.2.5",

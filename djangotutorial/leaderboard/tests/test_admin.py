@@ -16,6 +16,7 @@ from leaderboard.models import (
     User as LeaderboardUser,
     UserToEvent,
 )
+from leaderboard.tests.helpers import make_image_upload
 
 
 @override_settings(MEDIA_ROOT=tempfile.mkdtemp())
@@ -33,7 +34,7 @@ class EventImagesUploadApiTests(TestCase):
         self.plain = UserModel.objects.create_user(username="plain", password="x")
 
     def _img(self, name="o.png"):
-        return SimpleUploadedFile(name, b"dummy", content_type="image/png")
+        return make_image_upload(name)
 
     def test_photographer_can_upload_multiple(self):
         self.client.force_authenticate(user=self.photographer)

@@ -7,9 +7,13 @@ import { ToastProvider, ToastBridge } from './components/Toast/ToastProvider.jsx
 import ErrorBoundary from './components/ErrorBoundary/ErrorBoundary.jsx';
 import { isNative } from './services/platform';
 import { loadToken } from './services/authToken';
+import { initSentry } from './services/sentry';
 import 'leaflet/dist/leaflet.css';
 import './styles/colors_and_type.css';
 import './styles/global.css';
+
+// Before render, so errors thrown during the first paint are captured too.
+initSentry();
 
 function render() {
   createRoot(document.getElementById('root')).render(

@@ -10,21 +10,74 @@ from PIL import Image, ImageOps
 
 # Pre-resize guard: reject obvious junk before PIL loads the file into memory.
 ALLOWED_IMAGE_CONTENT_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
+# PIL's own names for the same formats (Image.format), used for the real check —
+# the browser-supplied content type is only a hint and is trivially forged.
+ALLOWED_IMAGE_FORMATS = {"JPEG", "PNG", "WEBP", "GIF"}
 MAX_UPLOAD_BYTES = 15 * 1024 * 1024  # 15 MB
+
+# Decompression-bomb ceiling. Bytes on disk say nothing about memory cost: a
+# ~1 MB PNG can declare 50000x50000 px, and PIL allocates the *decoded* bitmap
+# (w * h * 4 bytes ≈ 10 GB) the moment resize_image() touches it — one request
+# is enough to OOM the dyno. 60 MP leaves headroom above 48 MP phone cameras
+# while capping a single decode at roughly a quarter gigabyte.
+MAX_IMAGE_PIXELS = 60_000_000
+
+# Belt and braces: make PIL itself raise instead of merely warning if anything
+# slips past validate_upload (e.g. an image already on disk being re-processed
+# by a backfill command).
+Image.MAX_IMAGE_PIXELS = MAX_IMAGE_PIXELS
+
+
+def _too_many_pixels_message():
+    return (
+        "Rozlišení obrázku je příliš velké "
+        f"(max {MAX_IMAGE_PIXELS // 1_000_000} megapixelů)."
+    )
 
 
 def validate_upload(field_file):
-    """Reject non-images and oversized uploads before they're saved/resized.
+    """Reject non-images, oversized uploads and decompression bombs.
 
-    Raises ValueError with a user-facing message. The stored file is still
-    downscaled by ``resize_image`` on the model's ``save()`` — this only stops
-    a huge or wrong-type upload from reaching (and exhausting) PIL.
+    Raises ValueError with a user-facing (Czech) message. The stored file is
+    still downscaled by ``resize_image`` on the model's ``save()`` — this only
+    stops a hostile or huge upload from reaching (and exhausting) PIL.
+
+    Order matters: the cheap byte-count checks run before the header parse, so
+    a large file is rejected without ever being handed to PIL.
     """
     content_type = (getattr(field_file, "content_type", "") or "").lower()
     if content_type and content_type not in ALLOWED_IMAGE_CONTENT_TYPES:
         raise ValueError("Nepodporovaný formát. Povolené: JPEG, PNG, WebP, GIF.")
     if (getattr(field_file, "size", 0) or 0) > MAX_UPLOAD_BYTES:
         raise ValueError("Obrázek je příliš velký (max 15 MB).")
+
+    # Parse the header only. Image.open() is lazy — it reads enough to fill in
+    # .format and .size but does not decode pixel data, so a bomb is caught
+    # before any large allocation happens.
+    try:
+        field_file.seek(0)
+        with Image.open(field_file) as img:
+            image_format = img.format
+            width, height = img.size
+    except Image.DecompressionBombError:
+        # PIL's own guard (set below to MAX_IMAGE_PIXELS) fires during open()
+        # for anything above 2x the limit, before our explicit check gets to
+        # run. Same rejection, but keep the specific message.
+        raise ValueError(_too_many_pixels_message())
+    except Exception:
+        # Unreadable, truncated, or not an image at all.
+        raise ValueError("Soubor není platný obrázek.")
+    finally:
+        # Rewind whatever we consumed; the caller still has to save this file.
+        try:
+            field_file.seek(0)
+        except (OSError, ValueError):
+            pass
+
+    if image_format not in ALLOWED_IMAGE_FORMATS:
+        raise ValueError("Nepodporovaný formát. Povolené: JPEG, PNG, WebP, GIF.")
+    if width * height > MAX_IMAGE_PIXELS:
+        raise ValueError(_too_many_pixels_message())
 
 
 def variant_name(name, suffix="mobile", ext=".webp"):
@@ -74,6 +127,29 @@ def make_webp_variant(field_file, max_width=768, quality=55, suffix="mobile"):
         pass
 
 
+# A correctly-dimensioned file under this size isn't worth re-encoding.
+RESIZE_MIN_BYTES = 500 * 1024
+
+
+def needs_resize(path, max_width=1200, max_height=1200):
+    """True when ``resize_image`` would actually rewrite the file at `path`.
+
+    Split out of `resize_image` so a bulk backfill can report (or dry-run) what
+    it would touch without writing. Both use this, so the two can't drift.
+    """
+    if not path or not os.path.exists(path):
+        return False
+    try:
+        with Image.open(path) as img:
+            # EXIF-rotated portraits report swapped dimensions until transposed.
+            img = ImageOps.exif_transpose(img)
+            oversized = img.width > max_width or img.height > max_height
+    except (OSError, IOError):
+        return False  # not an image or corrupt — leave it alone
+    # Correct dimensions but heavy on disk still earns a re-encode.
+    return oversized or os.path.getsize(path) >= RESIZE_MIN_BYTES
+
+
 def resize_image(field_file, max_width=1200, max_height=1200, quality=85):
     """Resize an ImageFieldFile in place. Safe to call multiple times.
 
@@ -86,17 +162,13 @@ def resize_image(field_file, max_width=1200, max_height=1200, quality=85):
     path = getattr(field_file, "path", None)
     if not path or not os.path.exists(path):
         return
+    if not needs_resize(path, max_width, max_height):
+        return
 
     try:
         with Image.open(path) as img:
             # Fix orientation from EXIF (phone photos)
             img = ImageOps.exif_transpose(img)
-
-            # Skip if already small enough
-            if img.width <= max_width and img.height <= max_height:
-                # Still re-save as JPEG if original is large on disk
-                if os.path.getsize(path) < 500 * 1024:
-                    return
 
             img.thumbnail((max_width, max_height), Image.LANCZOS)
 

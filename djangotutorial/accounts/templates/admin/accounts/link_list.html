@@ -1,0 +1,57 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+<div id="content-main">
+  <p>
+    Účty bez hráče v žebříčku. Nabídka vpravo je jen návrh — potvrzuje se ručně.
+    Volných hráčů k propojení: <strong>{{ unlinked_players }}</strong>.
+  </p>
+
+  {% if rows %}
+  <table style="width:100%">
+    <thead>
+      <tr>
+        <th>Účet</th>
+        <th>E-mail</th>
+        <th>Registrace</th>
+        <th>Nejlepší návrh</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in rows %}
+      <tr>
+        <td>
+          <strong>{{ row.account.username }}</strong>
+          {% if row.account.get_full_name %}<br><small>{{ row.account.get_full_name }}</small>{% endif %}
+        </td>
+        <td>{{ row.account.email|default:"—" }}</td>
+        <td>{{ row.account.date_joined|date:"j. n. Y" }}</td>
+        <td>
+          {% if row.top %}
+            {{ row.top.player.name }}
+            <small>
+              — {{ row.top.percent }} % podle {{ row.top.signal_label }}{% if row.top.player.total_points %},
+              {{ row.top.player.total_points }} b. / {{ row.top.player.events_count }} akcí{% endif %}
+            </small>
+            {% if row.top.ambiguous %}
+              <br><small style="color:#b32d2e">⚠ víc podobných shod</small>
+            {% endif %}
+          {% else %}
+            <small style="color:#666">žádný podobný hráč</small>
+          {% endif %}
+        </td>
+        <td>
+          <a class="button" href="{% url 'admin:accounts_profile_link_detail' row.account.pk %}">
+            Vybrat hráče
+          </a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p>Všechny účty jsou propojené. 🎉</p>
+  {% endif %}
+</div>
+{% endblock %}

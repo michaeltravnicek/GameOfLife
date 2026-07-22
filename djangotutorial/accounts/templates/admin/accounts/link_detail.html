@@ -1,0 +1,66 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+<div id="content-main">
+
+  <h2>Účet: {{ account.username }}</h2>
+  <ul>
+    <li>Jméno: <strong>{{ signals.name|default:"—" }}</strong></li>
+    <li>E-mail: <strong>{{ account.email|default:"—" }}</strong></li>
+    <li>Registrace: {{ account.date_joined|date:"j. n. Y" }}</li>
+  </ul>
+
+  <p style="margin:1.5em 0">
+    Propojením účet <strong>převezme body i historii akcí</strong> vybraného hráče.
+    Špatné spárování ukáže cizímu člověku cizí historii — u těsných shod radši ověř
+    jinak (Instagram, zeptej se ho).
+  </p>
+
+  {% if candidates %}
+    {% if candidates.0.ambiguous %}
+      <p style="padding:.7em 1em;background:#fdf2f2;border-left:4px solid #b32d2e">
+        ⚠ Dva nejlepší kandidáti jsou skoro stejně dobří. Nepotvrzuj podle skóre.
+      </p>
+    {% endif %}
+
+    <table style="width:100%">
+      <thead>
+        <tr>
+          <th>Hráč</th>
+          <th>Shoda</th>
+          <th>Body</th>
+          <th>Akcí</th>
+          <th>Naposledy</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for candidate in candidates %}
+        <tr>
+          <td><strong>{{ candidate.player.name }}</strong></td>
+          <td>{{ candidate.percent }} % <small>podle {{ candidate.signal_label }}</small></td>
+          <td>{{ candidate.player.total_points|default:0 }}</td>
+          <td>{{ candidate.player.events_count|default:0 }}</td>
+          <td>{{ candidate.player.last_event_at|date:"j. n. Y"|default:"—" }}</td>
+          <td>
+            <form method="post" style="margin:0">
+              {% csrf_token %}
+              <input type="hidden" name="player_id" value="{{ candidate.player.pk }}">
+              <button type="submit" class="button">Propojit</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p>Žádný dost podobný hráč. Buď je to nový člověk bez historie, nebo se
+       jméno účtu liší od jména ve formuláři — pak ho najdi ručně
+       v <a href="{% url 'admin:accounts_profile_changelist' %}">Profilech</a>.</p>
+  {% endif %}
+
+  <p style="margin-top:2em">
+    <a href="{% url 'admin:accounts_profile_link_list' %}">← Zpět na seznam</a>
+  </p>
+</div>
+{% endblock %}

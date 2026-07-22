@@ -1,18 +1,20 @@
-nav.top{position:fixed;top:calc(24px + env(safe-area-inset-top,0px));left:60px;right:60px;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:2px 13px 2px 36px;border-radius:9999px;background-color:rgba(42,36,104,.95);background-image:url('/img/Grain_texture_purple.webp');background-size:var(--tex-size) var(--tex-size);background-repeat:repeat;background-position:0 0;backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);outline:1px solid rgba(255,255,255,.10);outline-offset:-1px;box-shadow:0 8px 32px rgba(0,0,0,.30);opacity:.9;transition:transform .3s ease}
-nav.top.hidden{transform:translateY(calc(-120px - env(safe-area-inset-top,0px)))}
+/* Liquid glass pill: a navy-tinted translucent base keeps the white links
+   legible over cream sections, while a diagonal specular sheen, a bright top
+   rim and a strong saturated blur give it the refractive, glassy read. */
+nav.top{position:fixed;top:calc(24px + env(safe-area-inset-top,0px));left:60px;right:60px;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:2px 13px 2px 36px;border-radius:9999px;background:linear-gradient(125deg,rgba(255,255,255,.22),rgba(255,255,255,0) 42%),linear-gradient(180deg,rgba(255,255,255,.06),rgba(0,0,0,.04)),rgba(14,26,66,.5);backdrop-filter:blur(22px) saturate(185%);-webkit-backdrop-filter:blur(22px) saturate(185%);border:1px solid rgba(255,255,255,.22);box-shadow:0 8px 32px rgba(0,0,0,.28),inset 0 1px 1px rgba(255,255,255,.5),inset 0 -6px 14px rgba(255,255,255,.05),inset 0 0 0 1px rgba(255,255,255,.04)}
 .nav-left,.nav-right{display:flex;align-items:center;gap:36px;flex:1}
 .nav-right{justify-content:flex-end}
 .nav-item{font-family:'Inter',sans-serif;font-size:16px;font-weight:700;letter-spacing:.48px;color:rgba(255,255,255,.88);background:none;border:0;cursor:pointer;transition:color .2s;padding:18px 0;text-decoration:none;display:inline-block}
 .nav-item:hover,.nav-item.active{color:#e15463;text-shadow:0 4px 4px rgba(0,0,0,.25)}
 .nav-logo{position:absolute;left:50%;transform:translateX(-50%);height:48px;display:flex;align-items:center;background:transparent;border:0;cursor:pointer;padding:4.5px 1px;text-decoration:none;pointer-events:auto}
 .nav-logo img{width:90px;height:45px;display:block;object-fit:contain}
-.nav-avatar{width:50px;height:50px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;border:1.5px solid rgba(255,255,255,.5);background:none;padding:0;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;color:#fff;cursor:pointer;transition:border-color .2s;margin:9px 0;text-decoration:none}
+.nav-avatar{width:50px;height:50px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;border:1.5px solid rgba(255,255,255,.5);background:linear-gradient(135deg,rgba(255,255,255,.18),rgba(255,255,255,.03));box-shadow:inset 0 1px 1px rgba(255,255,255,.4);padding:0;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;color:#fff;cursor:pointer;transition:border-color .2s;margin:9px 0;text-decoration:none}
 .nav-avatar:hover,.nav-avatar.active{border-color:#e15463}
 .nav-avatar img{width:100%;height:100%;border-radius:50%;object-fit:cover}
 
 /* Avatar dropdown (profile + logout) */
 .nav-user{position:relative;display:flex;align-items:center}
-.nav-user-menu{position:absolute;top:calc(100% + 8px);right:0;min-width:184px;background-color:rgba(42,36,104,.98);background-image:url('/img/Grain_texture_purple.webp');background-size:var(--tex-size) var(--tex-size);background-repeat:repeat;background-position:0 0;border:1px solid rgba(255,255,255,.14);border-radius:14px;box-shadow:0 14px 36px rgba(0,0,0,.42);padding:8px;display:none;flex-direction:column;gap:2px;z-index:120}
+.nav-user-menu{position:absolute;top:calc(100% + 8px);right:0;min-width:184px;background:linear-gradient(125deg,rgba(255,255,255,.14),rgba(255,255,255,0) 55%),rgba(14,26,66,.72);backdrop-filter:blur(22px) saturate(185%);-webkit-backdrop-filter:blur(22px) saturate(185%);border:1px solid rgba(255,255,255,.2);border-radius:14px;box-shadow:0 14px 36px rgba(0,0,0,.42),inset 0 1px 1px rgba(255,255,255,.4);padding:8px;display:none;flex-direction:column;gap:2px;z-index:120}
 .nav-user-menu.open{display:flex;animation:navUserPop .18s ease both}
 @keyframes navUserPop{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
 .nav-user-name{font-family:var(--font-mono);font-style:italic;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.55);padding:6px 12px 8px;border-bottom:1px dashed rgba(255,255,255,.12);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -29,7 +31,7 @@ nav.top.hidden{transform:translateY(calc(-120px - env(safe-area-inset-top,0px)))
 .nav-hamburger:hover{color:#e15463}
 
 /* Mobile dropdown — full-width popup, same visual language as the avatar menu */
-.nav-drop{position:absolute;top:calc(100% + 10px);left:0;right:0;background-color:rgba(42,36,104,.98);background-image:url('/img/Grain_texture_purple.webp');background-size:var(--tex-size) var(--tex-size);background-repeat:repeat;background-position:0 0;border:1px solid rgba(255,255,255,.14);border-radius:20px;box-shadow:0 16px 40px rgba(0,0,0,.45);padding:10px;display:none;flex-direction:column;gap:2px;z-index:130}
+.nav-drop{position:absolute;top:calc(100% + 10px);left:0;right:0;background:linear-gradient(125deg,rgba(255,255,255,.14),rgba(255,255,255,0) 55%),rgba(14,26,66,.72);backdrop-filter:blur(22px) saturate(185%);-webkit-backdrop-filter:blur(22px) saturate(185%);border:1px solid rgba(255,255,255,.2);border-radius:20px;box-shadow:0 16px 40px rgba(0,0,0,.45),inset 0 1px 1px rgba(255,255,255,.4);padding:10px;display:none;flex-direction:column;gap:2px;z-index:130}
 .nav-drop.open{display:flex;animation:navUserPop .2s ease both}
 .nav-drop-name{font-family:var(--font-mono);font-style:italic;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.55);padding:8px 14px 10px;border-bottom:1px dashed rgba(255,255,255,.12);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .nav-drop-item{font-family:'Inter',sans-serif;font-size:17px;font-weight:600;letter-spacing:.02em;color:rgba(255,255,255,.9);background:none;border:0;cursor:pointer;text-align:left;text-decoration:none;padding:14px 14px;border-radius:10px;transition:background .15s,color .15s;width:100%}

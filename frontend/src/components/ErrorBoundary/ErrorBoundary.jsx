@@ -1,4 +1,5 @@
 import { Component } from 'react';
+import { reportError } from '../../services/sentry';
 
 /**
  * Catches render-time errors anywhere below it so a single broken component
@@ -20,7 +21,9 @@ export default class ErrorBoundary extends Component {
       // eslint-disable-next-line no-console
       console.error('Uncaught render error:', error, info);
     }
-    // TODO: forward to an error-aggregation service (e.g. Sentry) in production.
+    // React swallows the error once a boundary handles it, so without this
+    // Sentry would never see the crashes that actually blank the UI.
+    reportError(error, { componentStack: info?.componentStack });
   }
 
   render() {

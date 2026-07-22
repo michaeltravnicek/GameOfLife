@@ -20,55 +20,19 @@ export default function Nav() {
   const { user, logout } = useAuth();
   const location = useLocation();
   const page = activeKey(location.pathname);
-  const [hidden, setHidden] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const lastY = useRef(0);
-  const upRef = useRef(0);
   const navRef = useRef(null);
   const userRef = useRef(null);
-  const menuOpenRef = useRef(false);
 
   const closeMenu = () => setMenuOpen(false);
 
-  useEffect(() => {
-    const onScroll = () => {
-      const y = window.pageYOffset;
-      // While the mobile menu is open, never hide the nav (it would yank the
-      // open dropdown up with it). Keep lastY current so closing doesn't jump.
-      if (menuOpenRef.current) { lastY.current = y <= 0 ? 0 : y; return; }
-      if (y > lastY.current) {
-        upRef.current = 0;
-        setHidden(true);
-      } else {
-        upRef.current += 1;
-        if (upRef.current >= 3) {
-          setHidden(false);
-          upRef.current = 0;
-        }
-      }
-      lastY.current = y <= 0 ? 0 : y;
-    };
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
-
-  // On navigation: close menus and make sure the nav is visible at the top of
-  // the freshly-loaded page (the page also scrolls to 0).
+  // The nav is always present (no hide-on-scroll); on navigation just close any
+  // open menus. The page itself scrolls back to the top.
   useEffect(() => {
     setMenuOpen(false);
     setUserMenuOpen(false);
-    setHidden(false);
-    lastY.current = 0;
-    upRef.current = 0;
   }, [location.pathname]);
-
-  // Keep the scroll handler's ref in sync; opening the menu also forces the nav
-  // visible so it can't be left hidden underneath the open dropdown.
-  useEffect(() => {
-    menuOpenRef.current = menuOpen;
-    if (menuOpen) setHidden(false);
-  }, [menuOpen]);
 
   // Close on Escape
   useEffect(() => {
@@ -133,7 +97,7 @@ export default function Nav() {
   const displayName = user?.full_name || user?.username || '';
 
   return (
-    <nav className={`top${hidden ? ' hidden' : ''}`} id="gol-nav" ref={navRef}>
+    <nav className="top" id="gol-nav" ref={navRef}>
       <div className="nav-left">
         <button
           className="nav-hamburger"

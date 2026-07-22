@@ -11,6 +11,7 @@ from rest_framework.test import APIClient
 
 from accounts.models import Profile
 from leaderboard.models import Event, Season, User as LeaderboardUser, UserToEvent
+from leaderboard.tests.helpers import make_image_upload
 
 
 class ProfileApiTests(TestCase):
@@ -72,7 +73,7 @@ class ProfilePhotoUploadApiTests(TestCase):
         Profile.objects.create(user=self.user)
 
     def _img(self):
-        return SimpleUploadedFile("a.png", b"dummy", content_type="image/png")
+        return make_image_upload("a.png")
 
     def test_requires_auth(self):
         resp = self.client.post(self.url, {"photo": self._img()}, format="multipart")
