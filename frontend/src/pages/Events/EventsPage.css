@@ -9,6 +9,9 @@
 /* ── Filter bar: always-visible compact row with toggle + result count ── */
 .events-page .filterbar{position:relative;z-index:2;max-width:1100px;margin:32px auto 0;padding:0 24px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
 .events-page .filter-toggle{display:inline-flex;align-items:center;gap:10px;padding:10px 18px;font-family:var(--font-hv);font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--color-cream-light);background:rgba(26,15,10,.55);border:1.5px dashed rgba(255,241,212,.32);border-radius:9999px;cursor:pointer;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);transition:border-color .18s,background .18s,color .18s}
+/* Faint grain over the frosted filter controls so they aren't a flat wash. */
+.events-page .filter-toggle,.events-page .filter-count-pill,.events-page .filter-panel,.events-page .loc{position:relative;isolation:isolate}
+.events-page .filter-toggle::after,.events-page .filter-count-pill::after,.events-page .filter-panel::after,.events-page .loc::after{content:'';position:absolute;inset:0;border-radius:inherit;background:var(--tex-brown) 0 0/var(--tex-size) var(--tex-size) repeat;opacity:.3;pointer-events:none;z-index:-1}
 .events-page .filter-toggle:hover{border-color:rgba(255,241,212,.6);color:#fff}
 .events-page .filter-toggle.open{background:rgba(225,84,99,.18);border-color:rgba(225,84,99,.55);color:#fff}
 .events-page .filter-toggle .ft-ico{font-size:14px;line-height:1}

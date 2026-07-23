@@ -197,7 +197,15 @@ def password_reset_confirm_api(request):
 @throttle_classes([RegisterThrottle])
 @transaction.atomic
 def register_api(request):
-    """Create an account (links to a leaderboard user by phone) and log in."""
+    """Create an unlinked account, log in, and hint if points may already exist.
+
+    No phone number: the account starts with no LeaderboardUser attached. If the
+    name resembles an existing unclaimed player, the response carries a neutral
+    `possible_link` flag so the UI can say "we may already have your points" —
+    but the actual link is only ever made by an admin (matching.suggest_players
+    is a ranking, never a write), because self-service claiming would let anyone
+    inherit a namesake's history.
+    """
     form = CustomUserCreationForm(request.data)
     if not form.is_valid():
         return Response({"errors": form.errors}, status=status.HTTP_400_BAD_REQUEST)
@@ -206,7 +214,17 @@ def register_api(request):
     # authenticate(), so it carries no `.backend`, and with django-axes there is
     # more than one backend configured for login() to pick from.
     login(request, user, backend="django.contrib.auth.backends.ModelBackend")
-    payload = {"user": serialize_user(user, request)}
+
+    # Deliberately a boolean, not the matched names/points: revealing which
+    # player a stranger's name resembles would re-identify people who never
+    # registered. The admin sees the candidates; the registrant sees only that
+    # a link is likely coming.
+    from accounts import matching
+    possible_link = bool(
+        matching.suggest_players(user, list(matching.unlinked_players()), limit=1)
+    )
+
+    payload = {"user": serialize_user(user, request), "possible_link": possible_link}
     if request.data.get("client") == "mobile":
         token, _ = Token.objects.get_or_create(user=user)
         payload["token"] = token.key

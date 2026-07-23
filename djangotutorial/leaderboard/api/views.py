@@ -321,7 +321,7 @@ def player_detail(request, user_id):
     linked account (so the frontend can redirect to the full /profiles/ page).
     """
     lb_user = get_object_or_404(LeaderboardUser, id=user_id)
-    return Response(player_payload(lb_user), status=status.HTTP_200_OK)
+    return Response(player_payload(lb_user, request), status=status.HTTP_200_OK)
 
 
 @extend_schema(tags=["Leaderboard"], responses=SeasonDetailSerializer)

@@ -1,24 +1,22 @@
-import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useMemo, useState } from 'react';
 import { fetchEvents, fetchGallery, fetchSeasons, uploadGalleryPhoto } from '../../services/api';
 import { usePaginatedQuery } from '../../services/usePaginatedQuery';
 import { prefetchQuery, invalidateQuery, useCachedQuery } from '../../services/queryCache';
 import { useAuth } from '../../context/AuthContext';
 import { reportError } from '../../services/errors';
-import { CACHE_TTL, GALLERY_PREFETCH_TAIL, PAGE_SIZE_GALLERY } from '../../constants/config';
+import { CACHE_TTL, PAGE_SIZE_GALLERY } from '../../constants/config';
 import PageHero from '../../components/PageHero/PageHero';
 import LazyImg from '../../components/LazyImg/LazyImg';
 import Reveal from '../../components/Reveal/Reveal';
 import Button from '../../components/Button/Button';
 import Modal from '../../components/Modal/Modal';
 import { fmtDateShort, monthLabel } from '../../utils/date';
-import { isMobileViewport } from '../../utils/img';
 import './GalleryPage.css';
 
 // Lightbox loaded only when user opens a fullscreen photo.
 const Lightbox = lazy(() => import('../../components/Lightbox/Lightbox'));
 
 const PAGE_SIZE = PAGE_SIZE_GALLERY;
-const PREFETCH_TAIL = GALLERY_PREFETCH_TAIL;
 
 const extractPhotos = (r) => r.photos || [];
 const extractHasMore = (r) => !!r.has_more;
@@ -26,8 +24,6 @@ const extractCount = (r) => r.count ?? 0;
 
 export default function GalleryPage() {
   const { canUpload } = useAuth();
-  const [view, setView] = useState('slideshow');
-  const [cur, setCur] = useState(0);
   const [activeSeason, setActiveSeason] = useState('all'); // 'all', a season id (string), or 'unknown'
   const [lbOpen, setLbOpen] = useState(false);
   const [lbPhotos, setLbPhotos] = useState([]);
@@ -38,25 +34,6 @@ export default function GalleryPage() {
   const [uploadPreview, setUploadPreview] = useState(null);
   const [uploadEvent, setUploadEvent] = useState('');
   const [uploadCaption, setUploadCaption] = useState('');
-
-  const tx = useRef(0);
-  const viewToggleRef = useRef(null);
-  const [vtInd, setVtInd] = useState({ left: 5, width: 0, visible: false });
-
-  useLayoutEffect(() => {
-    const group = viewToggleRef.current;
-    if (!group) return undefined;
-    const measure = () => {
-      const activeBtn = group.querySelector('.vt-btn.on');
-      if (!activeBtn) { setVtInd((s) => ({ ...s, visible: false })); return; }
-      const g = group.getBoundingClientRect();
-      const a = activeBtn.getBoundingClientRect();
-      setVtInd({ left: a.left - g.left, width: a.width, visible: true });
-    };
-    measure();
-    window.addEventListener('resize', measure);
-    return () => window.removeEventListener('resize', measure);
-  }, [view]);
 
   const {
     items: photos, hasMore, totalCount, loading, loadingMore, loadMore,
@@ -123,25 +100,6 @@ export default function GalleryPage() {
     }
   };
 
-  // If the loaded photo set shrinks (cache invalidation, filter), keep `cur`
-  // in bounds so we don't index undefined and blank the slideshow.
-  useEffect(() => {
-    setCur((c) => {
-      if (photos.length === 0) return 0;
-      return c >= photos.length ? photos.length - 1 : c;
-    });
-  }, [photos.length]);
-
-  // Auto-prefetch next page when the slideshow cursor approaches the loaded tail.
-  useEffect(() => {
-    if (view !== 'slideshow') return;
-    if (!hasMore || loadingMore) return;
-    if (photos.length === 0) return;
-    if (cur >= photos.length - PREFETCH_TAIL) {
-      loadMore();
-    }
-  }, [cur, photos.length, view, hasMore, loadingMore, loadMore]);
-
   // Seasons drive the calendar grouping (replaces the old per-month buckets).
   // Newest season first so the most recent photos lead.
   const { data: seasonsData } = useCachedQuery('seasons', fetchSeasons, { ttl: CACHE_TTL.LEADERBOARD });
@@ -198,7 +156,6 @@ export default function GalleryPage() {
   }, [photos, activeSeason, seasonOf]);
 
   const n = photos.length;
-  const goSlide = (idx) => setCur(((idx % Math.max(n, 1)) + Math.max(n, 1)) % Math.max(n, 1));
 
   const openLb = (list, i) => {
     setLbPhotos(list);
@@ -206,25 +163,6 @@ export default function GalleryPage() {
     setLbOpen(true);
   };
   const lbStep = (d) => setLbIndex((i) => (i + d + lbPhotos.length) % lbPhotos.length);
-
-  const slidePhoto = photos[cur] || {};
-  const prevPhoto = photos[(cur - 1 + n) % n] || {};
-  const nextPhoto = photos[(cur + 1) % n] || {};
-
-  // The narrow side strips (≤220px) never need the full-size original, and on
-  // phones neither does the main slide. Full quality stays in the lightbox.
-  const sideSrc = (p) => p.url_mobile || p.url;
-  const mainSrc = isMobileViewport() ? (slidePhoto.url_mobile || slidePhoto.url) : slidePhoto.url;
-
-  const onTouchStart = (e) => { tx.current = e.touches[0].clientX; };
-  const onTouchEnd = (e) => {
-    const dx = e.changedTouches[0].clientX - tx.current;
-    if (Math.abs(dx) > 40) goSlide(dx < 0 ? cur + 1 : cur - 1);
-  };
-
-  const loadedCounter = hasMore
-    ? `${n} / ${totalCount}`
-    : `${n}`;
 
   return (
     <div className="gallery-page">
@@ -244,19 +182,6 @@ export default function GalleryPage() {
         </div>
       )}
 
-      <div
-        ref={viewToggleRef}
-        className={`view-toggle${vtInd.visible ? ' has-active' : ''}`}
-        style={{ '--pill-left': `${vtInd.left}px`, '--pill-w': `${vtInd.width}px` }}
-      >
-        <button className={`vt-btn${view === 'slideshow' ? ' on' : ''}`} onClick={() => setView('slideshow')}>
-          <span className="vt-icon">▶</span> Slideshow
-        </button>
-        <button className={`vt-btn${view === 'calendar' ? ' on' : ''}`} onClick={() => setView('calendar')}>
-          <span className="vt-icon">▦</span> Kalendář
-        </button>
-      </div>
-
       {loading && (
         <p style={{ textAlign: 'center', padding: '60px 20px', color: 'rgba(255,241,212,.6)' }}>
           Načítám galerii…
@@ -269,71 +194,7 @@ export default function GalleryPage() {
         </p>
       )}
 
-      {view === 'slideshow' && n > 0 && (
-        <div id="view-slideshow">
-          <div className="counter"><span>{cur + 1}</span> / <span>{loadedCounter}</span></div>
-          <div className="gal-container">
-            <div
-              className="gal-side"
-              style={{ background: `url('${sideSrc(prevPhoto)}') center/cover no-repeat` }}
-              onClick={() => goSlide(cur - 1)}
-            />
-            <div
-              className="gal-main"
-              style={{ background: `url('${mainSrc}') center/cover no-repeat` }}
-              onClick={(e) => { if (!e.target.closest('.gal-zone')) openLb(photos, cur); }}
-              onTouchStart={onTouchStart}
-              onTouchEnd={onTouchEnd}
-            >
-              <div
-                className="gal-zone gal-zone-left"
-                role="button"
-                tabIndex={0}
-                aria-label="Předchozí fotografie"
-                onClick={() => goSlide(cur - 1)}
-                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goSlide(cur - 1); } }}
-              >
-                <div className="gal-zone-arrow" aria-hidden="true">‹</div>
-              </div>
-              <div
-                className="gal-zone gal-zone-right"
-                role="button"
-                tabIndex={0}
-                aria-label="Další fotografie"
-                onClick={() => goSlide(cur + 1)}
-                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goSlide(cur + 1); } }}
-              >
-                <div className="gal-zone-arrow" aria-hidden="true">›</div>
-              </div>
-              <div className="gal-caption">
-                <div className="gal-caption-label">{slidePhoto.is_user_photo ? `Foto: ${slidePhoto.uploaded_by}` : 'Akce'}</div>
-                <div className="gal-caption-title">{slidePhoto.event_name}</div>
-              </div>
-            </div>
-            <div
-              className="gal-side"
-              style={{ background: `url('${sideSrc(nextPhoto)}') center/cover no-repeat` }}
-              onClick={() => goSlide(cur + 1)}
-            />
-          </div>
-          <div className="gal-dots" role="tablist" aria-label="Přepnout na konkrétní fotografii">
-            {photos.map((_, i) => (
-              <div
-                key={i}
-                role="tab"
-                tabIndex={0}
-                aria-label={`Snímek ${i + 1} z ${photos.length}`}
-                aria-selected={i === cur}
-                className={`gal-dot${i === cur ? ' on' : ''}`}
-                onClick={() => goSlide(i)}
-                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goSlide(i); } }}
-              />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {view === 'calendar' && n > 0 && (
+      {n > 0 && (
         <div id="view-calendar">
           <div className="season-filters">
             <button className={`sf-chip${activeSeason === 'all' ? ' on' : ''}`} onClick={() => setActiveSeason('all')}>Vše</button>

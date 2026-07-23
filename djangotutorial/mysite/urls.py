@@ -57,26 +57,14 @@ urlpatterns = [
 # rather than changing the bytes behind an existing one. `immutable` is left
 # off deliberately — it forbids revalidation entirely, and a month is a long
 # time to be unable to correct a mistake.
-# The `Vary: origin` that django-cors-headers stamps on every response is the
-# second half of the problem. Cloudflare only varies its cache on
-# Accept-Encoding; a response carrying any other Vary is commonly treated as
-# uncacheable, which would leave images DYNAMIC even with Cache-Control set.
-#
-# Dropping it here is safe for images specifically: <img> tags are not
-# CORS-controlled, so nothing in the SPA or the Capacitor webview relies on
-# this header to display media. It would matter for a fetch()/canvas read of an
-# image, which this app does not do.
+# The other half of the problem is the `Vary: origin` that django-cors-headers
+# stamps on every response — Cloudflare only varies its cache on
+# Accept-Encoding and commonly treats any other Vary as uncacheable. It cannot
+# be stripped here (CorsMiddleware adds it after the view returns); it is
+# scoped away from /media/ by CORS_URLS_REGEX in settings.py instead.
 _media_prefix = settings.MEDIA_URL.lstrip("/")
 _media_max_age = int(os.getenv("MEDIA_CACHE_SECONDS", 60 * 60 * 24 * 30))  # 30 days
-
-
-def _cacheable_media(request, *args, **kwargs):
-    response = serve_media(request, *args, **kwargs)
-    response.headers.pop("Vary", None)
-    return response
-
-
-_cached_media = cache_control(public=True, max_age=_media_max_age)(_cacheable_media)
+_cached_media = cache_control(public=True, max_age=_media_max_age)(serve_media)
 
 urlpatterns += [
     re_path(rf"^{_media_prefix}(?P<path>.*)$", _cached_media, {"document_root": settings.MEDIA_ROOT}),

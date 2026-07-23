@@ -18,6 +18,7 @@ const ProfilePage = lazy(() => import('./pages/Profile/ProfilePage'));
 const EditProfilePage = lazy(() => import('./pages/Profile/EditProfilePage'));
 const LoginPage = lazy(() => import('./pages/Login/LoginPage'));
 const RegisterPage = lazy(() => import('./pages/Register/RegisterPage'));
+const PrivacyPage = lazy(() => import('./pages/Privacy/PrivacyPage'));
 const ForgotPasswordPage = lazy(() => import('./pages/ForgotPassword/ForgotPasswordPage'));
 const ResetPasswordPage = lazy(() => import('./pages/ResetPassword/ResetPasswordPage'));
 const PlayerPage = lazy(() => import('./pages/Player/PlayerPage'));
@@ -76,6 +77,7 @@ export default function App() {
           <Route path="/historie" element={<Layout><HistoriePage /></Layout>} />
           <Route path="/prihlasit" element={<Layout><LoginPage /></Layout>} />
           <Route path="/registrace" element={<Layout><RegisterPage /></Layout>} />
+          <Route path="/ochrana-osobnich-udaju" element={<Layout><PrivacyPage /></Layout>} />
           <Route path="/zapomenute-heslo" element={<Layout><ForgotPasswordPage /></Layout>} />
           <Route path="/obnova-hesla/:uid/:token" element={<Layout><ResetPasswordPage /></Layout>} />
           <Route path="/hrac/:userId" element={<Layout><PlayerPage /></Layout>} />

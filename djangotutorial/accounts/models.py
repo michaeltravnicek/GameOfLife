@@ -62,8 +62,35 @@ class Profile(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
 
+    # GDPR accountability (Art. 5(2) / 7(1)): it is not enough that the user
+    # ticked a box — the controller has to be able to *demonstrate* it later.
+    # Storing the moment and the document version means a consent given against
+    # an older text can be told apart from one given against the current one,
+    # which is what makes a re-consent campaign possible after a material change.
+    #
+    # Null for accounts created before this field existed; those users have not
+    # agreed to anything and must not be presented as if they had.
+    gdpr_consent_at = models.DateTimeField(
+        null=True, blank=True,
+        help_text="Kdy uživatel potvrdil seznámení se zásadami ochrany osobních údajů.",
+    )
+    gdpr_consent_version = models.CharField(
+        max_length=20, blank=True, default="",
+        help_text="Verze zásad, se kterou uživatel souhlasil (např. 2026-07-22).",
+    )
+
     def __str__(self):
         return f"Profile<{self.user.username}>"
+
+    @property
+    def has_current_gdpr_consent(self):
+        """True when consent exists *and* matches the policy in force."""
+        from django.conf import settings as django_settings
+
+        return bool(
+            self.gdpr_consent_at
+            and self.gdpr_consent_version == django_settings.PRIVACY_POLICY_VERSION
+        )
 
     @property
     def phone(self):

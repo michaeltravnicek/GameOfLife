@@ -124,3 +124,13 @@
   .auth-page .auth-card-inner{padding:18px 12px 22px}
   .auth-page .form-group label{font-size:11px;letter-spacing:.06em}
 }
+
+/* ── CONSENT ROW (registration) — checkbox + link to the privacy policy.
+   Sits directly above the submit button; the pink accent keeps its usual
+   role as the interactive/CTA colour. ── */
+.auth-page .auth-consent{margin:6px 0 16px}
+.auth-page .auth-consent-row{display:flex;align-items:flex-start;gap:10px;cursor:pointer;font-size:13.5px;line-height:1.5;color:rgba(255,255,255,.86)}
+.auth-page .auth-consent-row input[type="checkbox"]{flex:0 0 auto;width:18px;height:18px;margin-top:1px;accent-color:var(--color-pink);cursor:pointer}
+.auth-page .auth-consent-row a{color:var(--color-pink);text-decoration:underline;text-underline-offset:3px}
+.auth-page .auth-consent-row a:hover{color:var(--color-gold)}
+.auth-page .auth-consent-err{margin-top:7px;padding-left:28px;font-size:12.5px;color:var(--color-pink)}

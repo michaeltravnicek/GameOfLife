@@ -18,6 +18,9 @@ const TODAY = new Date();
 // Users often save handles with the "@" — strip it so we don't render "@@".
 const handle = (h) => (h || '').replace(/^@+/, '');
 
+// Czech count agreement: 1 odznak, 2–4 odznaky, 5+ odznaků.
+const badgeWord = (n) => (n === 1 ? 'odznak' : n >= 2 && n <= 4 ? 'odznaky' : 'odznaků');
+
 export default function ProfilePage() {
   const { username } = useParams();
   const navigate = useNavigate();
@@ -201,6 +204,27 @@ export default function ProfilePage() {
                     </div>
                   )}
                 </div>
+
+                {profile.badges?.length > 0 && (
+                  <div className="section">
+                    <div className="sec-rule" />
+                    <div className="sec-eyebrow"><span>— Sbírka —</span><span className="meta">{profile.badges.length} {badgeWord(profile.badges.length)}</span></div>
+                    <h2 className="sec-heading">Od<span className="pink">znaky</span></h2>
+                    <div className="badge-grid">
+                      {profile.badges.map((b) => (
+                        <div className="badge-item" key={b.id} title={b.description || b.name}>
+                          <TicketFrame />
+                          <div className="badge-in">
+                            {b.image
+                              ? <img className="badge-img" src={b.image} alt={b.name} loading="lazy" />
+                              : <span className="badge-fallback">{b.name.slice(0, 2).toUpperCase()}</span>}
+                            <span className="badge-name">{b.name}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </>
             )}
 

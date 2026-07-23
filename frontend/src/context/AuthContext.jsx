@@ -48,7 +48,10 @@ export function AuthProvider({ children }) {
       title: 'Účet vytvořen',
       duration: 6000,
     });
-    return data.user;
+    // possible_link rides along on the user object so RegisterPage can tell the
+    // newcomer their points are likely on the way (backend flags it; an admin
+    // does the actual linking).
+    return { ...data.user, possible_link: data.possible_link };
   }, []);
 
   const logout = useCallback(async () => {

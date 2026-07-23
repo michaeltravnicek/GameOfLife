@@ -23,3 +23,5 @@ build/
 /custom
 djangotutorial/media
 djangotutorial/staticfiles
+# load-test tooling (isolated venv, not part of the app)
+loadtest/.venv/

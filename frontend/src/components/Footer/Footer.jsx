@@ -14,6 +14,9 @@ export default function Footer() {
           <a className="ft-link" style={{ marginTop: 14 }} href="#">Instagram</a>
           <a className="ft-link" href="https://www.facebook.com/profile.php?id=61576755543429&sk=followers&locale=cs_CZ" target="_blank" rel="noopener noreferrer">Facebook</a>
           <a className="ft-link" href="https://www.tiktok.com/@gameofyolo" target="_blank" rel="noopener noreferrer">TikTok</a>
+          {/* Reachable from every page, not just registration — the policy has
+              to be findable by someone who never signed up. */}
+          <Link className="ft-link" style={{ marginTop: 14 }} to="/ochrana-osobnich-udaju">Ochrana osobních údajů</Link>
         </div>
         <div className="ft-right">
           <div className="ft-logo"><img className="ft-logo-img" src="/assets/gameoflive-onrender-com-english-us-by-html-to-design-free-version-0905-gol-logo-bw-1.svg" alt="" aria-hidden="true" /> GAME OF LIFE</div>

@@ -17,9 +17,6 @@ export const PAGE_SIZE_GALLERY = 60;
 export const SEARCH_DEBOUNCE_MS = 300;
 export const HERO_AUTO_CYCLE_MS = 5000;
 
-// How many slides ahead of the cursor we prefetch in the gallery slideshow.
-export const GALLERY_PREFETCH_TAIL = 5;
-
 // ── Query cache lifetimes (milliseconds) ──────────────────────────────
 //
 // "Fresh" = served instantly from cache. After this, we do stale-while-revalidate

@@ -38,9 +38,11 @@ class SeasonLeaderboardApiTests(TestCase):
         self.assertEqual(resp.status_code, 200)
         data = resp.json()
         self.assertEqual(data["season"]["id"], self.season.id)
-        by_name = {e["name"]: e for e in data["entries"]}
-        self.assertEqual(by_name["Alice"]["total_points"], 100)  # pre-season 100 excluded
-        self.assertEqual(by_name["Bob"]["total_points"], 50)
+        # Keyed by id, not name: display names are now initials unless the player
+        # consented (leaderboard/privacy.py), and this test is about points.
+        by_id = {e["id"]: e for e in data["entries"]}
+        self.assertEqual(by_id[self.alice.id]["total_points"], 100)  # pre-season 100 excluded
+        self.assertEqual(by_id[self.bob.id]["total_points"], 50)
 
     def test_default_uses_active_season(self):
         resp = self.client.get(self.url)
@@ -52,8 +54,10 @@ class SeasonLeaderboardApiTests(TestCase):
         self.assertEqual(resp.status_code, 200)
         data = resp.json()
         self.assertIsNone(data["season"])
-        by_name = {e["name"]: e for e in data["entries"]}
-        self.assertEqual(by_name["Alice"]["total_points"], 200)
+        # Keyed by id, not name: display names are now initials unless the player
+        # consented (leaderboard/privacy.py), and this test is about points.
+        by_id = {e["id"]: e for e in data["entries"]}
+        self.assertEqual(by_id[self.alice.id]["total_points"], 200)
 
     def test_unknown_season_id_returns_404(self):
         resp = self.client.get(self.url, {"season_id": 999999})

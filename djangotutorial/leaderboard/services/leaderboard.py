@@ -103,25 +103,35 @@ def attach_profile_usernames(players):
         return players
     ids = [p.pk for p in players]
     from accounts.models import Profile
+    from leaderboard.privacy import profile_has_consent
+    # Consent is resolved in this same query rather than per player — the
+    # leaderboard renders hundreds of rows and a lookup inside _entry would be
+    # one query each.
     info_by_lb_user = {
         prof.leaderboard_user_id: (
             prof.user.username,
             prof.photo.url if prof.photo else None,
+            profile_has_consent(prof),
         )
         for prof in Profile.objects.filter(leaderboard_user_id__in=ids).select_related("user")
     }
     for player in players:
-        username, photo = info_by_lb_user.get(player.pk, (None, None))
+        username, photo, consented = info_by_lb_user.get(player.pk, (None, None, False))
         player.profile_username = username
         player.photo = photo
+        player.name_consented = consented
     return players
 
 
 def _entry(player):
     """Shape one ranked user into the leaderboard-entry dict the API returns."""
+    from leaderboard.privacy import display_name
     return {
         "id": player.id,
-        "name": player.name,
+        # Initials unless the player registered and consented — see
+        # leaderboard/privacy.py. Defaults to False so any caller that forgets
+        # to annotate publishes less, not more.
+        "name": display_name(player.name, consented=getattr(player, "name_consented", False)),
         "rank": getattr(player, "rank", 0),
         "total_points": getattr(player, "total_points", 0),
         "events_count": getattr(player, "events_count", 0),
@@ -190,9 +200,12 @@ def cached_leaderboard_entries(season, cache_id):
     return entries
 
 
-def player_payload(lb_user):
+def player_payload(lb_user, request=None):
     """Public profile for a leaderboard user by id — works whether or not they
     have a registered account (leaderboard users come from the Google Sheets sync).
+
+    `request` is optional only so existing callers keep working; pass it so badge
+    image URLs come back absolute (the mobile app can't resolve relative ones).
 
     Returns totals, all-time rank, the linked account's username (if any), and the
     full list of attended events (newest first).
@@ -237,13 +250,17 @@ def player_payload(lb_user):
         )
     ]
 
+    from leaderboard.privacy import display_name, profile_has_consent
+    from leaderboard.services.badges import badges_for
+
     return {
         "id": lb_user.id,
-        "name": lb_user.name,
+        "name": display_name(lb_user.name, consented=profile_has_consent(profile)),
         "total_points": total_points,
         "events_count": events_count,
         "rank": rank,
         "profile_username": profile.user.username if profile else None,
         "events": events,
         "seasons": season_summaries(lb_user),
+        "badges": badges_for(lb_user, request),
     }

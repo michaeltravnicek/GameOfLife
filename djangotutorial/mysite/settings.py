@@ -117,12 +117,24 @@ if HTTPS_ENABLED:
     # Render terminates TLS upstream, so this redirect decision relies on
     # SECURE_PROXY_SSL_HEADER above.
     SECURE_SSL_REDIRECT = True
-    # Tell browsers to refuse plain HTTP for a year. Start with a short
-    # max-age if you want an escape hatch — once a browser has seen the long
-    # value it will honour it even if the header later disappears.
-    SECURE_HSTS_SECONDS = int(os.getenv("SECURE_HSTS_SECONDS", "31536000"))
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-    SECURE_HSTS_PRELOAD = True
+    # HSTS: tell browsers to refuse plain HTTP for this domain.
+    #
+    # This is the ONE irreversible setting here. Once a browser has seen a long
+    # max-age it honours it for that long even if the header disappears
+    # tomorrow — so if HTTPS breaks, visitors cannot reach the site at all and
+    # there is no way to reach out and fix their browsers.
+    #
+    # Default is therefore 5 minutes: real protection, but a mistake ages out
+    # almost immediately. Once the deploy is confirmed healthy over HTTPS
+    # (including the Cloudflare leg), raise it via the environment:
+    #
+    #   SECURE_HSTS_SECONDS=31536000   (1 year — the value worth ending on)
+    #
+    # includeSubDomains + preload are held back until the max-age is raised;
+    # submitting to the preload list is effectively permanent.
+    SECURE_HSTS_SECONDS = int(os.getenv("SECURE_HSTS_SECONDS", "300"))
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = SECURE_HSTS_SECONDS >= 86400
+    SECURE_HSTS_PRELOAD = SECURE_HSTS_SECONDS >= 31536000
 
     # Session/CSRF cookies must never travel over plain HTTP.
     SESSION_COOKIE_SECURE = True
@@ -243,6 +255,25 @@ CORS_ALLOWED_ORIGINS += [
     for o in os.getenv("CORS_EXTRA_ORIGINS", "capacitor://localhost,https://localhost").split(",")
     if o.strip()
 ]
+
+# Apply CORS handling to the API only.
+#
+# By default django-cors-headers processes every response, including /media/,
+# and stamps `Vary: origin` on each one. Cloudflare only varies its cache on
+# Accept-Encoding and treats other Vary values as uncacheable — so that header
+# alone can keep every image at `cf-cache-status: DYNAMIC`, sending 100% of
+# image traffic to the origin no matter what Cache-Control says.
+#
+# Safe: only XHR/fetch calls need CORS, and those all live under /api/. Images
+# rendered in <img> tags (the SPA and the Capacitor webview) are not subject to
+# CORS at all. This would only matter if JS read an image via fetch()/canvas.
+CORS_URLS_REGEX = r"^/api/.*$"
+
+# Version of the privacy policy currently in force, stored alongside each
+# user's consent. Bump it (and the date in the React PrivacyPage) whenever the
+# document changes materially — that makes it visible which users agreed to the
+# old text and would need to re-confirm.
+PRIVACY_POLICY_VERSION = os.getenv("PRIVACY_POLICY_VERSION", "2026-07-22")
 
 ROOT_URLCONF = 'mysite.urls'
 

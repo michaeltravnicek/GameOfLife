@@ -28,9 +28,14 @@ from leaderboard.models import Event, ImageToEvent, UserPhoto
 
 # (queryset, field name, resize_image kwargs, make_webp_variant kwargs).
 # Mirrors each model's save() — keep the limits in sync with it.
+# A `None` in the last slot means "resize only, no .mobile.webp sibling".
 TARGETS = [
     (Event.objects.exclude(image="").filter(image__isnull=False), "image",
      {"max_width": 1200, "max_height": 1200, "quality": 85}, {}),
+    # Logos: never processed before this, so 2000x2000 exports accumulated.
+    # resize_image leaves the SVG and GIF ones untouched by design.
+    (Event.objects.exclude(logo="").filter(logo__isnull=False), "logo",
+     {"max_width": 512, "max_height": 512, "quality": 90}, None),
     (ImageToEvent.objects.exclude(image="").filter(image__isnull=False), "image",
      {"max_width": 1024, "max_height": 1024, "quality": 75}, {}),
     (UserPhoto.objects.exclude(image="").filter(image__isnull=False), "image",
@@ -104,7 +109,7 @@ class Command(BaseCommand):
                         self.stdout.write(
                             f"  ↓ {field.name}  {_mb(before)} → {_mb(after)}")
 
-                if dry_run:
+                if dry_run or variant_kwargs is None:
                     continue
                 # A variant built from the pre-resize original is stale, so a
                 # shrink always re-derives it.

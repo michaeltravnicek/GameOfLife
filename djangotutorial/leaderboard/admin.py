@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Category, Event, EventFeedback, EventRSVP, ImageToEvent, LastUpdate, ProfileAnswer, ProfileQuestion, Season, User, UserPhoto, UserToEvent
+from .models import Badge, Category, Event, EventFeedback, EventRSVP, ImageToEvent, LastUpdate, ProfileAnswer, ProfileQuestion, Season, User, UserBadge, UserToEvent, UserPhoto
 
 
 @admin.register(Category)
@@ -33,7 +33,7 @@ class EventAdmin(admin.ModelAdmin):
     # (test_django_admin.AdminFieldCoverageTests enforces that).
     fieldsets = (
         (None, {
-            "fields": ("name", "category", "description", "rules", "date", "time_tbd", "end_date",
+            "fields": ("name", "category", "badge", "description", "rules", "date", "time_tbd", "end_date",
                        "points", "capacity", "image", "logo", "logo_scale",
                        "visible_to_users", "visible_to_close", "survey_url",
                        "whatsapp_url")
@@ -103,3 +103,33 @@ class ProfileAnswerAdmin(admin.ModelAdmin):
     list_display = ("auth_user", "question", "updated_at")
     list_filter = ("question", "updated_at")
     search_fields = ("auth_user__username", "auth_user__first_name")
+
+@admin.register(Badge)
+class BadgeAdmin(admin.ModelAdmin):
+    list_display = ("name", "events_count", "holders_count", "created_at")
+    search_fields = ("name", "description")
+    # slug is auto-derived in Badge.save(); showing it read-only avoids the
+    # AdminFieldCoverageTests failure without inviting hand-edited slugs.
+    readonly_fields = ("slug",)
+
+    @admin.display(description="Akcí")
+    def events_count(self, badge):
+        return badge.events.count()
+
+    @admin.display(description="Držitelů")
+    def holders_count(self, badge):
+        return badge.holders.count()
+
+
+@admin.register(UserBadge)
+class UserBadgeAdmin(admin.ModelAdmin):
+    """Read-mostly: badges are awarded automatically by leaderboard.signals.
+
+    Kept in the admin so a wrong award can be removed by hand, and so the
+    field-coverage test has a home for every UserBadge field.
+    """
+    list_display = ("user", "badge", "event", "awarded_at")
+    list_filter = ("badge",)
+    search_fields = ("user__name", "badge__name")
+    raw_id_fields = ("user", "badge", "event")
+    readonly_fields = ("awarded_at",)

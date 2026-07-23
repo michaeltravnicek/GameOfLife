@@ -1,6 +1,7 @@
 import tempfile
 from datetime import date, datetime
 
+from django.conf import settings
 from django.contrib.auth.models import User as AuthUser
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
@@ -100,7 +101,7 @@ class ProfilePhotoUploadApiTests(TestCase):
 
 
 class RegisterApiTests(TestCase):
-    """POST /api/auth/register/ — account creation + leaderboard linking."""
+    """POST /api/auth/register/ — account creation (no phone, starts unlinked)."""
 
     def setUp(self):
         self.client = APIClient()
@@ -109,9 +110,11 @@ class RegisterApiTests(TestCase):
             "username": "novacek",
             "first_name": "Nova",
             "email": "novacek@example.com",
-            "phone": "731 005 976",
             "password1": "bezpecneheslo1",
             "password2": "bezpecneheslo1",
+            # Required since the privacy policy shipped; see GdprConsentTests
+            # for the cases that assert it cannot be omitted.
+            "gdpr_consent": True,
         }
 
     def test_register_creates_user_and_logs_in(self):
@@ -122,20 +125,32 @@ class RegisterApiTests(TestCase):
         me = self.client.get(reverse("api-me"))
         self.assertEqual(me.json()["user"]["username"], "novacek")
 
-    def test_register_links_existing_leaderboard_user_by_phone(self):
-        # A player already synced from Sheets (identified by phone number)
-        # claims their points when registering with the same phone.
-        lb = LeaderboardUser.objects.create(number=731005976, name="Nova ze Sheetu")
-        resp = self.client.post(self.url, self.payload, format="json")
-        self.assertEqual(resp.status_code, 201)
-        profile = Profile.objects.get(user__username="novacek")
-        self.assertEqual(profile.leaderboard_user_id, lb.id)
-
-    def test_register_creates_leaderboard_user_when_phone_unknown(self):
+    def test_new_account_starts_unlinked(self):
+        # No phone means no automatic link and no placeholder LeaderboardUser —
+        # linking is an admin action (accounts.matching + admin).
+        before = LeaderboardUser.objects.count()
         self.client.post(self.url, self.payload, format="json")
         profile = Profile.objects.get(user__username="novacek")
-        self.assertIsNotNone(profile.leaderboard_user)
-        self.assertEqual(profile.leaderboard_user.number, 731005976)
+        self.assertIsNone(profile.leaderboard_user)
+        self.assertEqual(LeaderboardUser.objects.count(), before)
+
+    def test_possible_link_flagged_when_name_matches_unclaimed_player(self):
+        LeaderboardUser.objects.create(number=700000301, name="Nova Nováková")
+        resp = self.client.post(self.url, self.payload, format="json")
+        self.assertTrue(resp.json()["possible_link"])
+
+    def test_possible_link_false_when_no_similar_player(self):
+        LeaderboardUser.objects.create(number=700000302, name="Úplně Jiný")
+        resp = self.client.post(self.url, self.payload, format="json")
+        self.assertFalse(resp.json()["possible_link"])
+
+    def test_possible_link_ignores_already_claimed_players(self):
+        # A namesake whose row is already taken must not be offered again.
+        lb = LeaderboardUser.objects.create(number=700000303, name="Nova Nováková")
+        taken = AuthUser.objects.create_user(username="drzitel", password="x")
+        Profile.objects.create(user=taken, leaderboard_user=lb)
+        resp = self.client.post(self.url, self.payload, format="json")
+        self.assertFalse(resp.json()["possible_link"])
 
     def test_duplicate_username_case_insensitive_rejected(self):
         AuthUser.objects.create_user(username="NOVACEK", password="x")
@@ -149,28 +164,55 @@ class RegisterApiTests(TestCase):
         self.assertEqual(resp.status_code, 400)
         self.assertIn("email", resp.json()["errors"])
 
-    def test_claimed_phone_rejected(self):
-        lb = LeaderboardUser.objects.create(number=731005976, name="Obsazeno")
-        other = AuthUser.objects.create_user(username="drzitel", password="x")
-        Profile.objects.create(user=other, leaderboard_user=lb)
-        resp = self.client.post(self.url, self.payload, format="json")
-        self.assertEqual(resp.status_code, 400)
-
-    def test_invalid_phone_rejected(self):
-        self.payload["phone"] = "12345"
-        resp = self.client.post(self.url, self.payload, format="json")
-        self.assertEqual(resp.status_code, 400)
-        self.assertIn("phone", resp.json()["errors"])
-
     def test_password_mismatch_rejected(self):
         self.payload["password2"] = "jineheslo"
         resp = self.client.post(self.url, self.payload, format="json")
         self.assertEqual(resp.status_code, 400)
         self.assertIn("password2", resp.json()["errors"])
 
-    def test_phone_with_country_code_normalized(self):
-        self.payload["phone"] = "+420 731 005 976"
+
+class GdprConsentTests(TestCase):
+    """Registration must record consent, and must refuse without it."""
+
+    def setUp(self):
+        self.client = APIClient()
+        self.url = reverse("api-register")
+        self.payload = {
+            "username": "souhlas",
+            "first_name": "Souhlas",
+            "email": "souhlas@example.com",
+            "password1": "bezpecneheslo1",
+            "password2": "bezpecneheslo1",
+            "gdpr_consent": True,
+        }
+
+    def test_registration_records_consent(self):
         resp = self.client.post(self.url, self.payload, format="json")
         self.assertEqual(resp.status_code, 201)
-        profile = Profile.objects.get(user__username="novacek")
-        self.assertEqual(profile.leaderboard_user.number, 731005976)
+        profile = Profile.objects.get(user__username="souhlas")
+        self.assertIsNotNone(profile.gdpr_consent_at)
+        self.assertEqual(profile.gdpr_consent_version, settings.PRIVACY_POLICY_VERSION)
+        self.assertTrue(profile.has_current_gdpr_consent)
+
+    def test_registration_rejected_without_consent(self):
+        self.payload["gdpr_consent"] = False
+        resp = self.client.post(self.url, self.payload, format="json")
+        self.assertEqual(resp.status_code, 400)
+        self.assertIn("gdpr_consent", resp.json()["errors"])
+        self.assertFalse(AuthUser.objects.filter(username="souhlas").exists())
+
+    def test_registration_rejected_when_field_missing(self):
+        # A client posting straight to the API must not bypass the checkbox.
+        del self.payload["gdpr_consent"]
+        resp = self.client.post(self.url, self.payload, format="json")
+        self.assertEqual(resp.status_code, 400)
+        self.assertIn("gdpr_consent", resp.json()["errors"])
+        self.assertFalse(AuthUser.objects.filter(username="souhlas").exists())
+
+    def test_stale_consent_version_is_not_current(self):
+        # A policy change must be detectable, so users can be asked again.
+        self.client.post(self.url, self.payload, format="json")
+        profile = Profile.objects.get(user__username="souhlas")
+        profile.gdpr_consent_version = "2020-01-01"
+        profile.save()
+        self.assertFalse(profile.has_current_gdpr_consent)

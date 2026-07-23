@@ -49,9 +49,12 @@ class RegisterRequestSerializer(serializers.Serializer):
     first_name = serializers.CharField()
     username = serializers.CharField(help_text="Public display handle.")
     email = serializers.EmailField()
-    phone = serializers.CharField(help_text="Czech mobile number; links the account to a leaderboard player.")
     password1 = serializers.CharField(style={"input_type": "password"})
     password2 = serializers.CharField(style={"input_type": "password"}, help_text="Must match password1.")
+    gdpr_consent = serializers.BooleanField(
+        help_text="Must be true. Records agreement to the privacy policy; the "
+                  "server stores the timestamp and policy version.",
+    )
     client = serializers.ChoiceField(choices=["mobile"], required=False)
 
 

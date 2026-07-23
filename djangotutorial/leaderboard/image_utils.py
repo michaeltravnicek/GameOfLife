@@ -113,11 +113,17 @@ def make_webp_variant(field_file, max_width=768, quality=55, suffix="mobile"):
     path = getattr(field_file, "path", None)
     if not path or not os.path.exists(path):
         return
+    if os.path.splitext(path)[1].lower() in VECTOR_EXTENSIONS:
+        return  # SVG is already tiny and PIL can't read it
     out = variant_name(path, suffix)
     try:
         with Image.open(path) as img:
             img = ImageOps.exif_transpose(img)
-            if img.mode not in ("RGB", "RGBA"):
+            if img.mode == "P":
+                # Palette images (GIF logos) keep transparency in `info`; going
+                # straight to RGB would paint the transparent parts black.
+                img = img.convert("RGBA" if "transparency" in img.info else "RGB")
+            elif img.mode not in ("RGB", "RGBA"):
                 img = img.convert("RGB")
             # Cap width; allow tall portraits to keep their aspect ratio.
             img.thumbnail((max_width, max_width * 6), Image.LANCZOS)
@@ -130,6 +136,28 @@ def make_webp_variant(field_file, max_width=768, quality=55, suffix="mobile"):
 # A correctly-dimensioned file under this size isn't worth re-encoding.
 RESIZE_MIN_BYTES = 500 * 1024
 
+# Extension -> PIL format that `resize_image` may rewrite the original as. The
+# stored format is always preserved: writing a resized JPEG over a .png would
+# destroy the alpha channel that event logos depend on, and would leave the file
+# lying about its own type.
+#
+# Deliberately absent:
+#   .svg  vector; PIL can't read it and there is nothing to downscale.
+#   .gif  palette format. A naive resize wrecks the palette, and an animation
+#         would be flattened to one frame. The variant below still gives the
+#         frontend a small WebP, without touching the original.
+RESIZABLE_FORMATS = {
+    ".jpg": "JPEG", ".jpeg": "JPEG", ".png": "PNG", ".webp": "WEBP",
+}
+
+# Never handed to PIL at all — not an image in the raster sense.
+VECTOR_EXTENSIONS = {".svg"}
+
+
+def is_animated(img):
+    """True for multi-frame images (animated GIF/WebP)."""
+    return getattr(img, "n_frames", 1) > 1
+
 
 def needs_resize(path, max_width=1200, max_height=1200):
     """True when ``resize_image`` would actually rewrite the file at `path`.
@@ -138,6 +166,9 @@ def needs_resize(path, max_width=1200, max_height=1200):
     it would touch without writing. Both use this, so the two can't drift.
     """
     if not path or not os.path.exists(path):
+        return False
+    extension = os.path.splitext(path)[1].lower()
+    if extension not in RESIZABLE_FORMATS:
         return False
     try:
         with Image.open(path) as img:
@@ -154,37 +185,40 @@ def resize_image(field_file, max_width=1200, max_height=1200, quality=85):
     """Resize an ImageFieldFile in place. Safe to call multiple times.
 
     - Respects EXIF orientation (phones save photos rotated).
-    - Converts to RGB if needed (PNG with alpha is converted to RGB for JPEG).
-    - Skips if the file doesn't exist or isn't an image.
+    - Keeps the stored format, so transparency survives (event logos are PNGs
+      with alpha and must stay that way).
+    - Leaves alone anything it cannot rewrite safely: SVG, GIF, animations, and
+      unknown extensions. See RESIZABLE_FORMATS.
     """
     if not field_file:
         return
     path = getattr(field_file, "path", None)
     if not path or not os.path.exists(path):
         return
+    target_format = RESIZABLE_FORMATS.get(os.path.splitext(path)[1].lower())
+    if target_format is None:
+        return
     if not needs_resize(path, max_width, max_height):
         return
 
     try:
         with Image.open(path) as img:
+            if is_animated(img):
+                return  # a resize would flatten it to a single frame
             # Fix orientation from EXIF (phone photos)
             img = ImageOps.exif_transpose(img)
 
             img.thumbnail((max_width, max_height), Image.LANCZOS)
 
-            # JPEG doesn't support alpha; convert if needed
-            ext = os.path.splitext(path)[1].lower()
-            if ext in (".jpg", ".jpeg"):
+            if target_format == "JPEG":
+                # JPEG has no alpha channel; flatten whatever mode we're in.
                 if img.mode != "RGB":
                     img = img.convert("RGB")
                 img.save(path, "JPEG", quality=quality, optimize=True)
-            elif ext == ".png":
+            elif target_format == "PNG":
                 img.save(path, "PNG", optimize=True)
-            else:
-                # Force everything else to JPEG to save space
-                if img.mode != "RGB":
-                    img = img.convert("RGB")
-                img.save(path, "JPEG", quality=quality, optimize=True)
+            else:  # WEBP — keeps RGBA, so nothing to convert
+                img.save(path, "WEBP", quality=quality, method=6)
     except (OSError, IOError):
         # Not an image or file is corrupt — leave it alone
         pass

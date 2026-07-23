@@ -1,5 +1,7 @@
 .search-wrap{position:relative;min-width:0}
 .search-wrap::before{content:'⌕';position:absolute;left:16px;top:50%;transform:translateY(-50%);color:rgba(255,241,212,.6);font-size:14px;pointer-events:none;z-index:1}
-.search-input{width:100%;padding:11px 18px 11px 40px;font-family:var(--font-hv);font-size:13px;color:var(--color-cream-light);background:rgba(26,15,10,.45);border:1.5px dashed rgba(255,241,212,.32);border-radius:9999px;outline:none;transition:border-color .18s;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+/* Grain baked into the fill (inputs can't take a ::after overlay): a tint veil
+   on top dims the grain to a faint texture over the frosted brown. */
+.search-input{width:100%;padding:11px 18px 11px 40px;font-family:var(--font-hv);font-size:13px;color:var(--color-cream-light);background:linear-gradient(rgba(26,15,10,.45),rgba(26,15,10,.45)),var(--tex-brown) 0 0/var(--tex-size) var(--tex-size) repeat;border:1.5px dashed rgba(255,241,212,.32);border-radius:9999px;outline:none;transition:border-color .18s;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
 .search-input:focus{border-color:var(--color-pink)}
 .search-input::placeholder{color:rgba(255,241,212,.5);font-style:italic}

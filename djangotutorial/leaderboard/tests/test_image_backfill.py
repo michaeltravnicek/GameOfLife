@@ -9,8 +9,20 @@ from django.test import TestCase, override_settings
 from django.utils import timezone
 from PIL import Image
 
-from leaderboard.image_utils import needs_resize, variant_name
+from leaderboard.image_utils import (
+    make_webp_variant, needs_resize, resize_image, variant_name,
+)
 from leaderboard.models import Event
+
+
+class _FieldFile:
+    """Minimal stand-in for an ImageFieldFile — the utils only need `.path`."""
+
+    def __init__(self, path):
+        self.path = path
+
+    def __bool__(self):
+        return True
 
 
 def _write_jpeg(path, width, height, noisy=False):
@@ -53,6 +65,137 @@ class NeedsResizeTests(TestCase):
         with open(path, "w") as fh:
             fh.write("definitely not a jpeg")
         self.assertFalse(needs_resize(path, 1200, 1200))
+
+
+class FormatPreservationTests(TestCase):
+    """resize_image must never rewrite a file as a different format.
+
+    The original implementation force-saved anything that wasn't .jpg/.png as
+    JPEG *to the same path*, so a .gif or .webp logo ended up as JPEG bytes
+    under its old extension, with transparency (and any animation) gone.
+    """
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+
+    def _path(self, name):
+        return os.path.join(self.tmp.name, name)
+
+    def _resize(self, path, **kwargs):
+        resize_image(_FieldFile(path), max_width=512, max_height=512, **kwargs)
+
+    def test_svg_is_left_byte_for_byte(self):
+        path = self._path("logo.svg")
+        with open(path, "w") as fh:
+            fh.write('<svg xmlns="http://www.w3.org/2000/svg"><rect width="9000"/></svg>')
+        before = open(path, "rb").read()
+        self._resize(path)
+        self.assertEqual(open(path, "rb").read(), before)
+
+    def test_svg_gets_no_webp_variant(self):
+        path = self._path("logo.svg")
+        with open(path, "w") as fh:
+            fh.write("<svg xmlns='http://www.w3.org/2000/svg'></svg>")
+        make_webp_variant(_FieldFile(path))
+        self.assertFalse(os.path.exists(variant_name(path)))
+
+    def test_gif_is_not_rewritten_as_jpeg(self):
+        path = self._path("logo.gif")
+        Image.new("P", (2000, 2000)).save(path, "GIF")
+        self._resize(path)
+        with Image.open(path) as img:
+            self.assertEqual(img.format, "GIF")
+
+    def test_webp_stays_webp(self):
+        path = self._path("logo.webp")
+        Image.new("RGBA", (2000, 2000), (255, 0, 0, 128)).save(path, "WEBP")
+        self._resize(path)
+        with Image.open(path) as img:
+            self.assertEqual(img.format, "WEBP")
+            self.assertLessEqual(img.width, 512)
+
+    def test_png_keeps_its_alpha_channel(self):
+        """Event logos are transparent PNGs — flattening them is visible damage."""
+        path = self._path("logo.png")
+        Image.new("RGBA", (2000, 2000), (255, 0, 0, 0)).save(path, "PNG")
+        self._resize(path)
+        with Image.open(path) as img:
+            self.assertEqual(img.format, "PNG")
+            self.assertIn("A", img.mode)
+            self.assertLessEqual(img.width, 512)
+
+    def test_animated_webp_is_not_flattened(self):
+        path = self._path("anim.webp")
+        frames = [Image.new("RGB", (900, 900), c) for c in ("red", "blue", "green")]
+        frames[0].save(path, "WEBP", save_all=True, append_images=frames[1:], duration=80)
+        self._resize(path)
+        with Image.open(path) as img:
+            self.assertGreater(getattr(img, "n_frames", 1), 1)
+
+    def test_unknown_extension_is_ignored(self):
+        path = self._path("thing.bmp")
+        Image.new("RGB", (2000, 2000)).save(path, "BMP")
+        before = os.path.getsize(path)
+        self._resize(path)
+        self.assertEqual(os.path.getsize(path), before)
+
+
+class EventLogoTests(TestCase):
+    """Event.logo was never resized or variant-ed, in save() or the backfill."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        override = override_settings(MEDIA_ROOT=self.tmp.name)
+        override.enable()
+        self.addCleanup(override.disable)
+
+    def _event_with_logo(self, name="event_logos/big.png", size=(2000, 2000)):
+        event = Event.objects.create(
+            sheet_id="lg", sheet_list_id="x", name="S logem",
+            place="Brno", points=10, date=timezone.now() + timedelta(days=1),
+        )
+        path = os.path.join(self.tmp.name, name)
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        Image.new("RGBA", size, (255, 0, 0, 128)).save(path, "PNG")
+        Event.objects.filter(pk=event.pk).update(logo=name)
+        return Event.objects.get(pk=event.pk), path
+
+    def test_save_downscales_a_new_logo(self):
+        event, path = self._event_with_logo()
+        event.save()
+        with Image.open(path) as img:
+            self.assertLessEqual(img.width, 512)
+            self.assertIn("A", img.mode)
+
+    def test_backfill_downscales_legacy_logos(self):
+        _, path = self._event_with_logo()
+        before = os.path.getsize(path)
+        call_command("generate_image_variants", resize=True, stdout=StringIO())
+        with Image.open(path) as img:
+            self.assertLessEqual(img.width, 512)
+        self.assertLess(os.path.getsize(path), before)
+
+    def test_logos_get_no_webp_sibling(self):
+        """At 512px a variant would save nothing and only add a file."""
+        _, path = self._event_with_logo()
+        call_command("generate_image_variants", resize=True, stdout=StringIO())
+        self.assertFalse(os.path.exists(variant_name(path)))
+
+    def test_svg_logo_survives_the_backfill(self):
+        event = Event.objects.create(
+            sheet_id="lg2", sheet_list_id="x", name="SVG logo",
+            place="Brno", points=10, date=timezone.now() + timedelta(days=1),
+        )
+        path = os.path.join(self.tmp.name, "event_logos/logo.svg")
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w") as fh:
+            fh.write("<svg xmlns='http://www.w3.org/2000/svg'><circle r='5'/></svg>")
+        Event.objects.filter(pk=event.pk).update(logo="event_logos/logo.svg")
+        before = open(path, "rb").read()
+        call_command("generate_image_variants", resize=True, stdout=StringIO())
+        self.assertEqual(open(path, "rb").read(), before)
 
 
 class BackfillCommandTests(TestCase):

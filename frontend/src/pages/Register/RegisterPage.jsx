@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { toast } from '../../components/Toast/ToastProvider';
 import FormInput from '../../components/FormInput/FormInput';
 import Button from '../../components/Button/Button';
 import { extractApiError } from '../../services/errors';
@@ -13,10 +14,10 @@ export default function RegisterPage() {
   const [searchParams] = useSearchParams();
   const [first, setFirst] = useState('');
   const [username, setUsername] = useState('');
-  const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [pw, setPw] = useState('');
   const [pw2, setPw2] = useState('');
+  const [gdpr, setGdpr] = useState(false);
   const [error, setError] = useState('');
   const [fieldErrors, setFieldErrors] = useState({});
   const [busy, setBusy] = useState(false);
@@ -39,16 +40,32 @@ export default function RegisterPage() {
       setFieldErrors({ password2: 'Hesla se neshodují.' });
       return;
     }
+    // Checked here for a fast, friendly message; the server enforces it too
+    // (CustomUserCreationForm.gdpr_consent), so posting straight to the API
+    // cannot create an account without a recorded consent.
+    if (!gdpr) {
+      setFieldErrors({ gdpr_consent: 'Bez souhlasu tě bohužel nemůžeme zaregistrovat.' });
+      return;
+    }
     setBusy(true);
     try {
       const u = await register({
         first_name: first,
         username,
         email,
-        phone,
         password1: pw,
         password2: pw2,
+        gdpr_consent: gdpr,
       });
+      // The name looked like an existing unclaimed player. Set expectations —
+      // the points aren't lost, an admin just has to confirm the link. We never
+      // say whose points, so this leaks nothing about other people.
+      if (u.possible_link) {
+        toast.info(
+          'Vypadá to, že už u nás máš body z dřívějška. Přiřadíme ti je, jakmile tě ověříme.',
+          { title: 'Možná už tě známe', duration: 9000 },
+        );
+      }
       // `from` may arrive as router state (in-app) or a ?from= query param
       // (api.js 401 interceptor redirect) — honour either.
       const from = location.state?.from || searchParams.get('from');
@@ -94,12 +111,6 @@ export default function RegisterPage() {
                 errorText={fieldErrors.username}
               />
               <FormInput
-                id="reg-phone" label="Telefon (9 číslic)" type="tel"
-                placeholder="731 005 976" autoComplete="tel"
-                value={phone} onChange={(e) => setPhone(e.target.value)} required
-                errorText={fieldErrors.phone}
-              />
-              <FormInput
                 id="reg-email" label="E-mail" type="email"
                 placeholder="jan@example.com" autoComplete="email"
                 value={email} onChange={(e) => setEmail(e.target.value)} required
@@ -117,6 +128,32 @@ export default function RegisterPage() {
                 value={pw2} onChange={(e) => setPw2(e.target.value)} required
                 errorText={fieldErrors.password2}
               />
+              {/* Consent lives immediately above the submit button so it is
+                  read at the moment of deciding, not skimmed past earlier.
+                  The policy opens in a new tab — navigating away here would
+                  discard everything already typed into the form. */}
+              <div className="auth-consent">
+                <label className="auth-consent-row" htmlFor="reg-gdpr">
+                  <input
+                    id="reg-gdpr"
+                    type="checkbox"
+                    checked={gdpr}
+                    onChange={(e) => setGdpr(e.target.checked)}
+                    aria-describedby={fieldErrors.gdpr_consent ? 'reg-gdpr-err' : undefined}
+                  />
+                  <span>
+                    Souhlasím se zpracováním osobních údajů a beru na vědomí{' '}
+                    <Link to="/ochrana-osobnich-udaju" target="_blank" rel="noopener noreferrer">
+                      zásady ochrany osobních údajů
+                    </Link>.
+                  </span>
+                </label>
+                {fieldErrors.gdpr_consent && (
+                  <div className="auth-consent-err" id="reg-gdpr-err" role="alert">
+                    {fieldErrors.gdpr_consent}
+                  </div>
+                )}
+              </div>
               {error && <div className="auth-error">{error}</div>}
               <Button type="submit" variant="nav" size="lg" busy={busy} className="pts-btn-wrap">
                 {busy ? 'Registruji…' : 'Registrovat se →'}

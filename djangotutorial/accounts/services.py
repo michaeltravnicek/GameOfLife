@@ -11,6 +11,7 @@ from django.utils.http import urlsafe_base64_decode
 from leaderboard.image_utils import validate_upload
 from leaderboard.models import Category, Season, User as LeaderboardUser, UserToEvent
 from leaderboard.services import season_rank
+from leaderboard.services.badges import badges_for
 from leaderboard.utils import parse_phone_number
 
 from .models import Profile
@@ -207,6 +208,7 @@ def profile_payload(profile_user, request):
         "upcoming_rsvps": upcoming_rsvps,
         "past_events":    past_events,
         "seasons":        season_summaries(lb_user) if lb_user else [],
+        "badges":         badges_for(lb_user, request),
         "is_own_profile": is_own_profile,
     }
     # Private account fields — only exposed to the owner so the edit form can

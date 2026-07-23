@@ -1,10 +1,9 @@
 from django import forms
+from django.conf import settings
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from django.db import transaction
-
-from leaderboard.models import User as LeaderboardUser
-from leaderboard.utils import parse_phone_number
+from django.utils import timezone
 
 from .models import Profile
 
@@ -28,16 +27,29 @@ class CustomUserCreationForm(UserCreationForm):
         label="E-mail",
         widget=forms.EmailInput(attrs=_input_attrs("tvuj@email.cz", "email")),
     )
-    phone = forms.CharField(
-        label="Telefon",
+    # No phone field any more. It used to be the exact key that matched an
+    # account to its LeaderboardUser (number == phone), but that meant collecting
+    # a phone number from everyone up front. Linking is now a name-based
+    # suggestion an admin confirms (see accounts.matching + admin), so a fresh
+    # account starts UNLINKED and claims its history later.
+
+    # Enforced here, not only in React: a client-side checkbox is a UX nicety,
+    # but the record of consent has to be trustworthy, and anything posting
+    # straight to the API would otherwise create an account with no consent at
+    # all. `required=True` on a BooleanField rejects both a missing and a false
+    # value.
+    gdpr_consent = forms.BooleanField(
+        label="Souhlas se zpracováním osobních údajů",
         required=True,
-        widget=forms.TextInput(attrs=_input_attrs("731 005 976", "tel")),
-        help_text="Zadej 9-místné české číslo. Slouží k propojení s tvými body.",
+        error_messages={
+            "required": "Bez souhlasu se zpracováním osobních údajů tě bohužel "
+                        "nemůžeme zaregistrovat.",
+        },
     )
 
     class Meta:
         model = User
-        fields = ("first_name", "username", "email", "phone", "password1", "password2")
+        fields = ("first_name", "username", "email", "password1", "password2")
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -63,28 +75,11 @@ class CustomUserCreationForm(UserCreationForm):
             raise forms.ValidationError("Tato přezdívka je už obsazená.")
         return username
 
-    def clean_phone(self):
-        phone = parse_phone_number(self.cleaned_data["phone"])
-        if phone is None:
-            raise forms.ValidationError("Zadej platné 9-místné české číslo.")
-        return phone
-
     def clean_email(self):
         email = self.cleaned_data["email"]
         if User.objects.filter(email__iexact=email).exists():
             raise forms.ValidationError("Účet s tímto e-mailem už existuje.")
         return email
-
-    def clean(self):
-        cleaned = super().clean()
-        phone = cleaned.get("phone")
-        if phone is not None:
-            lb_user = LeaderboardUser.objects.filter(number=phone).first()
-            if lb_user is not None and Profile.objects.filter(leaderboard_user=lb_user).exists():
-                raise forms.ValidationError(
-                    "Účet s tímto telefonem už existuje. Zkus se přihlásit."
-                )
-        return cleaned
 
     @transaction.atomic
     def save(self, commit=True):
@@ -94,12 +89,15 @@ class CustomUserCreationForm(UserCreationForm):
             password=self.cleaned_data["password1"],
             first_name=self.cleaned_data["first_name"],
         )
-        phone = self.cleaned_data["phone"]
-        lb_user = LeaderboardUser.objects.filter(number=phone).first()
-        if lb_user is None:
-            lb_user = LeaderboardUser.objects.create(
-                number=phone,
-                name=self.cleaned_data["first_name"],
-            )
-        Profile.objects.create(user=user, leaderboard_user=lb_user)
+        # Unlinked on purpose: no LeaderboardUser is created or attached here.
+        # A brand-new player has no points yet, and someone who already has a
+        # history gets matched to their existing row by an admin (never
+        # auto-claimed — that would let anyone inherit a namesake's points).
+        Profile.objects.create(
+            user=user,
+            # Recorded from the server clock, not from anything the client sent
+            # — a consent timestamp the user could choose is worthless as proof.
+            gdpr_consent_at=timezone.now(),
+            gdpr_consent_version=settings.PRIVACY_POLICY_VERSION,
+        )
         return user

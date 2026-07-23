@@ -42,6 +42,48 @@ class Category(models.Model):
         return self.name
 
 
+class Badge(models.Model):
+    """A collectible emblem, shared by the events that award it.
+
+    Event logos repeat across editions of the same event (a Karaoke Tour logo on
+    every karaoke night), so the artwork lives here once and events point at it.
+    Attending an event that has a badge earns the attendee a copy in their
+    collection -- see UserBadge and leaderboard.signals.
+    """
+    name = models.CharField(max_length=255)
+    slug = models.SlugField(max_length=280, unique=True)
+    # The emblem artwork. Treated exactly like Event.logo: downscaled to 512px on
+    # save (format preserved, so transparent PNG / SVG / GIF survive).
+    image = models.ImageField(upload_to="badges/", blank=True, null=True)
+    description = models.TextField(
+        blank=True, default="",
+        help_text="Volitelný popis odznaku (za co se uděluje).",
+    )
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
+
+    class Meta:
+        ordering = ["name"]
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            base = slugify(self.name) or "odznak"
+            slug = base
+            n = 2
+            while Badge.objects.exclude(pk=self.pk).filter(slug=slug).exists():
+                slug = f"{base}-{n}"
+                n += 1
+            self.slug = slug
+        super().save(*args, **kwargs)
+        if self.image:
+            # Same treatment as Event.logo: a small box, format preserved. No
+            # .mobile.webp sibling — at 512px it would save nothing.
+            from .image_utils import resize_image
+            resize_image(self.image, max_width=512, max_height=512, quality=90)
+
+    def __str__(self):
+        return self.name
+
+
 class Event(models.Model):
     # Google Sheets is optional — events can be created manually in the admin.
     sheet_id = models.CharField(max_length=255, blank=True, default="")
@@ -72,6 +114,14 @@ class Event(models.Model):
         default=1.0,
         validators=[MinValueValidator(0.1), MaxValueValidator(5.0)],
         help_text="Zvětšení/zmenšení loga při zobrazení. 1.0 = beze změny.",
+    )
+    # Attending this event awards this badge (if set). SET_NULL: deleting a badge
+    # must not cascade-delete events. Separate from `logo` on purpose — an event
+    # can show its own logo and still hand out a shared badge.
+    badge = models.ForeignKey(
+        "Badge", on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="events",
+        help_text="Odznak, který účastníci za tuto akci získají do sbírky.",
     )
     rules = models.TextField(blank=True, default="")
     capacity = models.IntegerField(null=True, blank=True)
@@ -157,6 +207,14 @@ class Event(models.Model):
             from .image_utils import resize_image, make_webp_variant
             resize_image(self.image, max_width=1200, max_height=1200, quality=85)
             make_webp_variant(self.image)
+        if self.logo:
+            # Logos were never processed at all, so 2000x2000 PNG exports piled
+            # up. They render inside a small box (scaled by logo_scale), so 512
+            # is plenty. No .mobile.webp sibling: at this size it would save
+            # nothing and only add a file. resize_image no-ops on the SVG and
+            # GIF logos, which must keep their original bytes.
+            from .image_utils import resize_image
+            resize_image(self.logo, max_width=512, max_height=512, quality=90)
         # Best-effort: a cache outage must not break saving an event.
         from .cache_config import invalidate_event_caches
         invalidate_event_caches()
@@ -225,6 +283,34 @@ class UserToEvent(models.Model):
 
     def __str__(self):
         return f"{self.user} → {self.event}"
+
+
+class UserBadge(models.Model):
+    """One earned badge in a leaderboard player's collection.
+
+    Keyed on the leaderboard User (not the account) because that is what
+    attendance keys on -- so a Google-Sheets player collects badges too, and
+    they follow the player when an account links to them.
+
+    unique_together (user, badge): a badge is collected once, however many of its
+    events you attend. `event` records which attendance first earned it (kept
+    even if that attendance is later removed -- the badge stays collected).
+    """
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="badges")
+    badge = models.ForeignKey(Badge, on_delete=models.CASCADE, related_name="holders")
+    # SET_NULL so removing the source attendance's event doesn't revoke the badge.
+    event = models.ForeignKey(
+        Event, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="awarded_badges",
+    )
+    awarded_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("user", "badge")
+        ordering = ["-awarded_at"]
+
+    def __str__(self):
+        return f"{self.user} ← {self.badge}"
 
 
 class LastUpdate(models.Model):

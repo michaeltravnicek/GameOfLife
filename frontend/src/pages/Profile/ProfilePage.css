@@ -84,6 +84,18 @@
 .profile-page .social .arr{font-family:var(--font-mono);font-style:italic;color:rgba(255,241,212,.4);font-size:16px;transition:.2s}
 .profile-page .social:hover .arr{color:var(--color-pink);transform:translateX(3px)}
 
+/* ── ODZNAKY ── same ticket-card family as socials: dashed frame, dark grain
+   panel floating inside, pink accent on hover. ── */
+.profile-page .badge-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px;margin-top:6px}
+.profile-page .badge-item{position:relative;display:flex;padding:6px;border-radius:16px;transition:transform .2s ease}
+.profile-page .badge-item:hover{transform:translateY(-2px)}
+.profile-page .badge-item:hover .dashed-border rect{stroke:var(--color-pink)}
+.profile-page .badge-in{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:10px;padding:16px 12px;background:#150c08 var(--tex-brown-2) 0 0/var(--tex-size) var(--tex-size) repeat;border-radius:11px}
+.profile-page .badge-img{width:64px;height:64px;object-fit:contain;filter:drop-shadow(0 4px 10px rgba(0,0,0,.45))}
+.profile-page .badge-fallback{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(225,84,99,.16);border:1.5px dashed rgba(225,84,99,.5);color:var(--color-pink);font-family:var(--font-display);font-size:24px;letter-spacing:.04em}
+.profile-page .badge-item:hover .badge-fallback{background:var(--color-pink);color:#fff;border-color:transparent;border-style:solid}
+.profile-page .badge-name{font-family:var(--font-body);font-weight:600;font-size:13px;color:#fff;text-align:center;line-height:1.25;letter-spacing:.01em}
+
 /* ── AKCE ── */
 /* Event lists render through the shared <StatList> (ticket ev-grid skin);
    their row/cell styling lives in StatList.css. The list is the dark panel of
