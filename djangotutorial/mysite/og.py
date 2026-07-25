@@ -11,9 +11,12 @@ serves that HTML for every non-API route, which makes it the one place per-route
 metadata can be attached without adding an SSR runtime.
 
 Scope: events get real per-event previews (the pages people actually paste into
-group chats); everything else gets a per-page title on top of the site defaults.
-Player/profile pages deliberately fall through to the defaults -- see
-`_PAGE_TITLES` -- so nobody's name and photo land in a preview card by accident.
+group chats). Player and profile pages get a title carrying the player's public
+display name -- full name only where a matching consent is on file, otherwise
+initials, the exact rule leaderboard/privacy.py applies everywhere else -- and
+NO personal photo: the card falls back to the site's default image, so a name
+may show but a face never does. Everything else gets a per-page title on top of
+the site defaults.
 """
 import os
 import re
@@ -26,6 +29,9 @@ DEFAULT_DESCRIPTION = (
     "Sbírej body za zážitky, ne za lajky. Přidej se k hráčům, "
     "kteří místo scrollování žijí."
 )
+# Player/profile cards: a generic, non-identifying line. The name lives in the
+# title (consent-gated); the description stays deliberately anonymous.
+PLAYER_DESCRIPTION = "Profil hráče v žebříčku Game of Live."
 # Served by WhiteNoise from the React build (WHITENOISE_ROOT = staticfiles/react).
 # Swap for a purpose-made 1200x630 card if you ever cut one.
 DEFAULT_IMAGE = "/img/home-onas-desktop.webp"
@@ -53,6 +59,11 @@ _PAGE_TITLES = {
 # edit form -- neither is an event to preview.
 _EVENT_DETAIL_RE = re.compile(r"^events/(?P<slug>[^/]+)/?$")
 _RESERVED_EVENT_SLUGS = {"vytvorit"}
+
+# /hrac/<id> (a leaderboard-user id, matching /api/v1/players/<id>/) and
+# /profil/<username> (a linked account). Both resolve to the same player card.
+_PLAYER_DETAIL_RE = re.compile(r"^hrac/(?P<user_id>\d+)/?$")
+_PROFILE_DETAIL_RE = re.compile(r"^profil/(?P<username>[^/]+)/?$")
 
 
 def _truncate(text, limit=_MAX_DESCRIPTION):
@@ -137,6 +148,57 @@ def _event_metadata(request, slug):
     }
 
 
+def _public_player_name(lb_user, profile):
+    """The name to show for a player, gated by consent exactly like the site."""
+    from leaderboard.privacy import display_name, profile_has_consent
+
+    return display_name(lb_user.name, consented=profile_has_consent(profile))
+
+
+def _player_card(request, name):
+    """A player/profile card: name in the title, default image (never a face)."""
+    return {
+        "title": f"{name} — {SITE_NAME}",
+        "description": PLAYER_DESCRIPTION,
+        "image": _absolute(request, DEFAULT_IMAGE),
+        "url": request.build_absolute_uri(),
+    }
+
+
+def _player_metadata(request, user_id):
+    """Card for /hrac/<id>, or None when there's no such leaderboard user."""
+    from leaderboard.models import User as LeaderboardUser
+    from accounts.models import Profile
+
+    lb_user = LeaderboardUser.objects.filter(pk=user_id).only("id", "name").first()
+    if lb_user is None:
+        return None
+    profile = (
+        Profile.objects.filter(leaderboard_user=lb_user).select_related("user").first()
+    )
+    return _player_card(request, _public_player_name(lb_user, profile))
+
+
+def _profile_metadata(request, username):
+    """Card for /profil/<username>, or None when the account has no player link.
+
+    The username in the URL identifies an account; the previewable name still
+    comes from the linked leaderboard user through the consent gate, so an
+    account with no leaderboard link falls through to the site defaults.
+    """
+    from accounts.models import Profile
+
+    profile = (
+        Profile.objects
+        .filter(user__username=username)
+        .select_related("user", "leaderboard_user")
+        .first()
+    )
+    if profile is None or profile.leaderboard_user is None:
+        return None
+    return _player_card(request, _public_player_name(profile.leaderboard_user, profile))
+
+
 def metadata_for(request):
     """Resolve the request path to the metadata dict used for the tags."""
     path = request.path.strip("/")
@@ -148,6 +210,18 @@ def metadata_for(request):
             event_meta = _event_metadata(request, slug)
             if event_meta:
                 return event_meta
+
+    player_match = _PLAYER_DETAIL_RE.match(path)
+    if player_match:
+        player_meta = _player_metadata(request, player_match.group("user_id"))
+        if player_meta:
+            return player_meta
+
+    profile_match = _PROFILE_DETAIL_RE.match(path)
+    if profile_match:
+        profile_meta = _profile_metadata(request, profile_match.group("username"))
+        if profile_meta:
+            return profile_meta
 
     title = DEFAULT_TITLE
     page_title = _PAGE_TITLES.get(path)

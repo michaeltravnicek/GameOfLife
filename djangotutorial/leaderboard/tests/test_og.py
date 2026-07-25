@@ -75,14 +75,72 @@ class MetadataResolutionTests(TestCase):
     def test_home_uses_default_title(self):
         self.assertEqual(self._meta("/")["title"], og.DEFAULT_TITLE)
 
-    def test_profile_path_falls_back_to_defaults(self):
-        """Player pages deliberately don't put a person's name in a link card."""
+    def test_unknown_profile_falls_back_to_defaults(self):
+        """A profile URL with no matching account carries no name."""
         self.assertEqual(self._meta("/profil/michael")["title"], og.DEFAULT_TITLE)
 
     def test_image_and_url_are_absolute(self):
         meta = self._meta("/")
         self.assertTrue(meta["image"].startswith("http://"))
         self.assertTrue(meta["url"].startswith("http://"))
+
+
+class PlayerMetadataTests(TestCase):
+    """Player/profile cards: name gated by consent, and never a personal photo."""
+
+    def setUp(self):
+        self.factory = RequestFactory()
+        self._n = 700000000  # leaderboard_user.number must be 9 digits
+
+    def _meta(self, path):
+        return og.metadata_for(self.factory.get(path))
+
+    def _player(self, name="Jan Novák", *, consented, username="jan"):
+        """Create a leaderboard user. `consented=None` means no account at all."""
+        from django.conf import settings
+        from django.contrib.auth import get_user_model
+        from accounts.models import Profile
+        from leaderboard.models import User as LeaderboardUser
+
+        self._n += 1
+        lb = LeaderboardUser.objects.create(number=self._n, name=name)
+        if consented is None:
+            return lb
+        account = get_user_model().objects.create_user(username=username, password="x")
+        profile = Profile.objects.create(user=account, leaderboard_user=lb)
+        if consented:
+            profile.gdpr_consent_at = timezone.now()
+            profile.gdpr_consent_version = settings.PRIVACY_POLICY_VERSION
+            profile.save()
+        return lb
+
+    def test_player_without_consent_shows_initials(self):
+        lb = self._player("Jan Novák", consented=None)
+        meta = self._meta(f"/hrac/{lb.id}")
+        self.assertIn("J. N.", meta["title"])
+        self.assertNotIn("Jan Novák", meta["title"])
+
+    def test_player_with_consent_shows_full_name(self):
+        lb = self._player("Jan Novák", consented=True)
+        self.assertIn("Jan Novák", self._meta(f"/hrac/{lb.id}")["title"])
+
+    def test_registered_but_unconsented_player_shows_initials(self):
+        """An account without a current consent is not agreement — initials."""
+        lb = self._player("Jan Novák", consented=False)
+        meta = self._meta(f"/hrac/{lb.id}")
+        self.assertIn("J. N.", meta["title"])
+        self.assertNotIn("Jan Novák", meta["title"])
+
+    def test_player_card_never_uses_a_personal_photo(self):
+        lb = self._player("Jan Novák", consented=True)
+        self.assertIn(og.DEFAULT_IMAGE, self._meta(f"/hrac/{lb.id}")["image"])
+
+    def test_profile_username_resolves_through_the_link(self):
+        self._player("Jan Novák", consented=True, username="jan")
+        self.assertIn("Jan Novák", self._meta("/profil/jan")["title"])
+
+    def test_unknown_player_id_falls_back_to_defaults(self):
+        self.assertEqual(self._meta("/hrac/999999")["title"], og.DEFAULT_TITLE)
 
 
 class RenderAndInjectTests(TestCase):
