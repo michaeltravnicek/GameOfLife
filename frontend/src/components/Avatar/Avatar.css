@@ -7,6 +7,6 @@
 .avatar-xl{width:76px;height:76px;font-size:18px}
 
 /* Rank-specific border colours */
-.avatar-gold{border-color:var(--color-gold);box-shadow:0 0 0 3px rgba(245,200,66,.14),0 6px 20px rgba(0,0,0,.5)}
+.avatar-gold{border-color:var(--color-gold);box-shadow:0 0 0 3px var(--alpha-gold-15),0 6px 20px var(--alpha-black-50)}
 .avatar-silver{border-color:rgba(210,210,215,.7)}
 .avatar-bronze{border-color:rgba(205,127,50,.75)}

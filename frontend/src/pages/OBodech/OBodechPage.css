@@ -5,7 +5,7 @@
 /* Dimmed photo — reading page, the darker backdrop keeps the long text calm
    (user's explicit pick over the lighter "alive" tint). */
 .obodech-page .stage::after{content:'';position:absolute;inset:0;background:
-  radial-gradient(ellipse at 50% 0%, var(--alpha-purple-22) 0%, transparent 38%),
+  radial-gradient(ellipse at 50% 0%, var(--alpha-purple-20) 0%, transparent 38%),
   linear-gradient(180deg, var(--alpha-dark-55) 0%, var(--alpha-dark-80) 38%, var(--alpha-dark-95) 100%)}
 
 
@@ -15,18 +15,18 @@
 .obodech-page .credit + .credit{border-left:1px solid var(--alpha-cream-20)}
 .obodech-page .credit-label{font-family:var(--font-mono);font-style:italic;font-size:17px;letter-spacing:.28em;text-transform:uppercase;color:var(--color-pink);margin-bottom:10px;text-shadow:0 2px 12px var(--alpha-black-75)}
 .obodech-page .credit-value{font-family:var(--font-display);font-size:clamp(38px,5vw,64px);letter-spacing:.04em;line-height:.95;color:var(--color-white);text-shadow:0 4px 28px var(--alpha-black-75),0 1px 0 var(--alpha-black-40)}
-.obodech-page .credit-sub{font-family:var(--font-body);font-style:italic;font-size:13px;color:var(--alpha-cream-78);margin-top:8px;text-shadow:0 2px 10px var(--alpha-black-60);line-height:1.4}
+.obodech-page .credit-sub{font-family:var(--font-body);font-style:italic;font-size:13px;color:var(--alpha-cream-80);margin-top:8px;text-shadow:0 2px 10px var(--alpha-black-60);line-height:1.4}
 
 .obodech-page main.body{position:relative;z-index:2;max-width:1040px;margin:0 auto;padding:60px 24px 60px}
 
 .obodech-page .section{margin-bottom:64px}
 .obodech-page .section:last-child{margin-bottom:0}
-.obodech-page .sec-eyebrow{font-family:var(--font-mono);font-style:italic;font-size:16px;letter-spacing:.26em;text-transform:uppercase;color:var(--color-pink);margin-bottom:10px;display:flex;align-items:center;gap:14px}
+.obodech-page .sec-eyebrow{font-size:16px;letter-spacing:.26em;display:flex;align-items:center;gap:14px}
 .obodech-page .sec-eyebrow::before{content:'';width:32px;height:1px;background:repeating-linear-gradient(90deg,var(--color-pink) 0 5px,transparent 5px 10px)}
 .obodech-page .sec-heading{font-family:var(--font-display);font-weight:400;font-size:clamp(38px,5vw,62px);letter-spacing:.03em;line-height:.95;color:var(--color-heading);text-transform:uppercase;margin-bottom:24px;text-shadow:0 2px 18px rgba(0,0,0,.55)}
 .obodech-page .sec-heading .pink{color:var(--color-pink)}
 
-.obodech-page .intro-quote{font-family:var(--font-body);font-style:italic;font-size:clamp(20px,2.2vw,26px);line-height:1.5;color:var(--alpha-cream-94);max-width:62ch;position:relative;padding-left:24px;border-left:2px dashed var(--alpha-pink-45);text-shadow:0 2px 10px rgba(0,0,0,.55)}
+.obodech-page .intro-quote{font-family:var(--font-body);font-style:italic;font-size:clamp(20px,2.2vw,26px);line-height:1.5;color:var(--alpha-cream-95);max-width:62ch;position:relative;padding-left:24px;border-left:2px dashed var(--alpha-pink-45);text-shadow:0 2px 10px rgba(0,0,0,.55)}
 .obodech-page .intro-quote::before{content:'"';position:absolute;left:-2px;top:-22px;font-family:var(--font-display);font-size:80px;line-height:1;color:var(--alpha-pink-35)}
 .obodech-page .intro-meta{font-family:var(--font-mono);font-style:italic;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--alpha-cream-55);margin-top:18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
 .obodech-page .intro-meta .dot{width:4px;height:4px;border-radius:50%;background:var(--color-pink);display:inline-block}
@@ -37,42 +37,42 @@
 .obodech-page .source-num{font-family:var(--font-display);font-size:80px;line-height:.85;color:var(--color-pink);letter-spacing:.02em;margin-bottom:14px;opacity:.85}
 .obodech-page .source-tag{font-family:var(--font-mono);font-style:italic;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--color-pink-dark);margin-bottom:6px}
 .obodech-page .source-title{font-family:var(--font-display);font-size:26px;letter-spacing:.02em;line-height:.95;text-transform:uppercase;color:var(--color-black);margin-bottom:12px}
-.obodech-page .source-text{font-family:var(--font-body);font-size:13.5px;line-height:1.6;color:var(--alpha-dark-text-78)}
+.obodech-page .source-text{font-family:var(--font-body);font-size:13.5px;line-height:1.6;color:var(--alpha-dark-text-80)}
 .obodech-page .source-pts{position:absolute;top:18px;right:14px;font-family:var(--font-display);font-size:18px;letter-spacing:.04em;padding:6px 14px 3px;background:var(--color-pink);color:var(--color-white);border-radius:var(--radius-pill);box-shadow:0 4px 12px var(--alpha-pink-45);transform:rotate(4deg)}
 
 .obodech-page .examples{position:relative;margin-top:22px;padding:10px;background:var(--color-dark-brown) url('/img/Grain_texture_blue.webp') 0 0/var(--tex-size) var(--tex-size) repeat;border:1.5px solid var(--alpha-white-10);border-radius:14px;box-shadow:0 20px 44px var(--alpha-black-50);overflow:hidden}
-.obodech-page .examples::before{content:'';position:absolute;inset:6px;border:1.5px dashed var(--alpha-cream-22);border-radius:10px;pointer-events:none}
+.obodech-page .examples::before{content:'';position:absolute;inset:6px;border:1.5px dashed var(--alpha-cream-20);border-radius:10px;pointer-events:none}
 .obodech-page .examples-inner{position:relative;z-index:1;padding:8px 6px}
 .obodech-page .ex-head,.obodech-page .ex-row{display:grid;grid-template-columns:1fr 90px 110px 110px;align-items:center;gap:14px;padding:13px 18px}
-.obodech-page .ex-head{font-family:var(--font-mono);font-style:italic;font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--alpha-cream-55);border-bottom:1px dashed var(--alpha-cream-22)}
+.obodech-page .ex-head{font-family:var(--font-mono);font-style:italic;font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--alpha-cream-55);border-bottom:1px dashed var(--alpha-cream-20)}
 .obodech-page .ex-row{border-bottom:1px dashed var(--alpha-cream-10);transition:background .18s,transform .18s;cursor:default}
 .obodech-page .ex-row:last-child{border-bottom:0}
 .obodech-page .ex-row:hover{background:var(--alpha-cream-05);transform:translateX(2px)}
 .obodech-page .ex-name{font-family:var(--font-body);font-weight:500;font-size:15px;color:var(--color-white);letter-spacing:.01em;min-width:0}
 .obodech-page .ex-name .s{display:block;font-family:var(--font-body);font-weight:400;font-style:italic;font-size:12px;color:var(--alpha-cream-55);margin-top:3px;letter-spacing:0}
 .obodech-page .ex-pill{font-family:var(--font-mono);font-style:italic;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;padding:4px 10px;border-radius:var(--radius-pill);text-align:center;justify-self:start}
-.obodech-page .ex-pill.t-sport{background:var(--alpha-pink-18);color:var(--color-pink-light);border:1px dashed var(--alpha-pink-40)}
-.obodech-page .ex-pill.t-body{background:var(--alpha-gold-16);color:var(--color-gold);border:1px dashed var(--alpha-gold-40)}
-.obodech-page .ex-pill.t-mind{background:var(--alpha-blue-16);color:var(--color-blue);border:1px dashed var(--alpha-blue-40)}
-.obodech-page .ex-pill.t-game{background:var(--alpha-green-14);color:var(--color-green);border:1px dashed var(--alpha-green-40)}
+.obodech-page .ex-pill.t-sport{background:var(--alpha-pink-20);color:var(--color-pink-light);border:1px dashed var(--alpha-pink-40)}
+.obodech-page .ex-pill.t-body{background:var(--alpha-gold-15);color:var(--color-gold);border:1px dashed var(--alpha-gold-40)}
+.obodech-page .ex-pill.t-mind{background:var(--alpha-blue-15);color:var(--color-blue);border:1px dashed var(--alpha-blue-40)}
+.obodech-page .ex-pill.t-game{background:var(--alpha-green-15);color:var(--color-green);border:1px dashed var(--alpha-green-40)}
 .obodech-page .ex-diff{font-family:var(--font-mono);font-style:italic;font-size:12px;color:var(--alpha-cream-70);letter-spacing:.06em}
 .obodech-page .ex-pts{text-align:right;font-family:var(--font-display);font-size:24px;letter-spacing:.03em;color:var(--color-gold);line-height:1;white-space:nowrap}
 .obodech-page .ex-pts .u{font-family:var(--font-mono);font-style:italic;font-size:10px;color:var(--alpha-cream-55);letter-spacing:.16em;margin-left:5px}
 
 .obodech-page .rewards{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
 /* Poster cards — photo page, opaque print artifacts (homepage lb-card). */
-.obodech-page .reward{position:relative;background:var(--color-dark-brown) var(--tex-blue) 0 0/var(--tex-size) var(--tex-size) repeat;color:var(--color-cream-light);border:2px solid var(--color-black);border-bottom:8px solid var(--color-black);border-radius:14px;padding:26px 24px 24px;box-shadow:0 16px 40px rgba(0,0,0,.5);transition:transform .25s,border-color .25s}
+.obodech-page .reward{position:relative;background:var(--color-dark-brown) var(--tex-blue) 0 0/var(--tex-size) var(--tex-size) repeat;color:var(--color-cream-light);border:2px solid var(--color-black);border-bottom:8px solid var(--color-black);border-radius:14px;padding:26px 24px 24px;box-shadow:0 16px 40px var(--alpha-black-50);transition:transform .25s,border-color .25s}
 .obodech-page .reward:hover{transform:translateY(-3px);border-color:var(--color-pink)}
 .obodech-page .soon-stamp{position:absolute;top:14px;right:14px;font-family:var(--font-display);font-size:14px;letter-spacing:.18em;padding:5px 12px 2px;background:var(--color-gold);color:var(--color-dark-brown);border:2px dashed var(--color-dark-brown);border-radius:6px;text-transform:uppercase;transform:rotate(4deg);box-shadow:0 4px 10px var(--alpha-black-35)}
-.obodech-page .reward-ico{width:56px;height:56px;border-radius:50%;background:var(--alpha-pink-16);border:2px dashed var(--alpha-pink-45);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:26px;color:var(--color-pink);margin-bottom:18px}
+.obodech-page .reward-ico{width:56px;height:56px;border-radius:50%;background:var(--alpha-pink-15);border:2px dashed var(--alpha-pink-45);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:26px;color:var(--color-pink);margin-bottom:18px}
 .obodech-page .reward-title{font-family:var(--font-display);font-size:24px;letter-spacing:.02em;text-transform:uppercase;color:var(--color-white);line-height:.95;margin-bottom:10px;padding-right:60px}
-.obodech-page .reward-text{font-family:var(--font-body);font-size:13.5px;line-height:1.6;color:var(--alpha-cream-78)}
+.obodech-page .reward-text{font-family:var(--font-body);font-size:13.5px;line-height:1.6;color:var(--alpha-cream-80)}
 
 /* Buttons render through the shared <Button> component (Button.css). */
 .obodech-page .obo-cta{position:relative;z-index:2;max-width:720px;margin:24px auto 0;padding:48px 24px 40px;text-align:center}
-.obodech-page .obo-cta-stamp{display:inline-flex;align-items:center;gap:14px;padding:14px 26px;border:2.5px solid var(--color-pink);border-radius:4px;font-family:var(--font-display);font-size:28px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-pink);transform:rotate(-3.5deg);background:var(--alpha-pink-12);margin-bottom:28px;box-shadow:inset 0 0 0 1px var(--alpha-pink-22),0 6px 18px var(--alpha-black-35)}
+.obodech-page .obo-cta-stamp{display:inline-flex;align-items:center;gap:14px;padding:14px 26px;border:2.5px solid var(--color-pink);border-radius:4px;font-family:var(--font-display);font-size:28px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-pink);transform:rotate(-3.5deg);background:var(--alpha-pink-10);margin-bottom:28px;box-shadow:inset 0 0 0 1px var(--alpha-pink-20),0 6px 18px var(--alpha-black-35)}
 .obodech-page .obo-cta-stamp-arrow{font-family:var(--font-body);font-style:italic;font-weight:300;font-size:32px;line-height:.8}
-.obodech-page .obo-cta-text{font-family:var(--font-body);font-style:italic;font-size:17px;line-height:1.55;color:var(--alpha-cream-78);max-width:42ch;margin:0 auto 26px}
+.obodech-page .obo-cta-text{font-family:var(--font-body);font-style:italic;font-size:17px;line-height:1.55;color:var(--alpha-cream-80);max-width:42ch;margin:0 auto 26px}
 .obodech-page .obo-cta-links{display:inline-flex;gap:12px;flex-wrap:wrap;justify-content:center}
 
 .obodech-page .cta-foot{position:relative;z-index:2;max-width:780px;margin:40px auto 0;padding:0 24px 80px;text-align:center}

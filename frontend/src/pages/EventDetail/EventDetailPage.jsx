@@ -476,7 +476,7 @@ export default function EventDetailPage() {
                   space-between puts them side by side, like the profile
                   page's action bar. */}
               <div className={`rsvp-recap${isAdmin ? ' with-tabs' : ''}`}>
-                <span className="recap-eyebrow">— Proběhlo —</span>
+                <span className="gol-sec-eyebrow recap-eyebrow">— Proběhlo —</span>
                 {/* Deliberately no turnout figure: a public "8 dorazilo" is a
                     verdict on the event that nobody asked for. Admins still see
                     the real attendance in the Účast tab. */}

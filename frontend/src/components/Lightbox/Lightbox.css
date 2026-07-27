@@ -1,6 +1,6 @@
 /* overflow:hidden so a photo sliding to ±105vw is clipped at the viewport edge
    (never a page scrollbar) — the photo at rest is ≤90vw and never clipped. */
-.lb-overlay{position:fixed;inset:0;z-index:400;overflow:hidden;background:rgba(0,0,0,.94);display:flex;align-items:center;justify-content:center;padding:40px;box-sizing:border-box;animation:lbOverlayIn .2s ease both;--lb-slide-dur:.42s}
+.lb-overlay{position:fixed;inset:0;z-index:400;overflow:hidden;background:rgba(0,0,0,.95);display:flex;align-items:center;justify-content:center;padding:40px;box-sizing:border-box;animation:lbOverlayIn .2s ease both;--lb-slide-dur:.42s}
 /* Shared positioning context for the two <img> layers. z-index:0 keeps them
    (and their internal z-index:2) below the nav arrows / close button (z-index:1).
    Its dead space around the photo still closes on click — Lightbox.jsx treats
@@ -32,13 +32,13 @@
 }
 .lb-close{position:absolute;top:calc(18px + env(safe-area-inset-top,0px));right:26px;background:transparent;border:0;color:var(--color-white);font-size:38px;cursor:pointer;line-height:1;opacity:.7;transition:opacity .15s;z-index:1;padding:4px 8px}
 .lb-close:hover{opacity:1}
-.lb-nav-btn{position:absolute;top:50%;transform:translateY(-50%);width:50px;height:50px;border-radius:50%;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.3);color:var(--color-white);font-size:26px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .18s;z-index:1;padding:0}
-.lb-nav-btn:hover{background:rgba(255,255,255,.24)}
+.lb-nav-btn{position:absolute;top:50%;transform:translateY(-50%);width:50px;height:50px;border-radius:50%;background:var(--alpha-white-10);border:1px solid rgba(255,255,255,.3);color:var(--color-white);font-size:26px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .18s;z-index:1;padding:0}
+.lb-nav-btn:hover{background:rgba(255,255,255,.25)}
 .lb-nav-prev{left:28px}
 .lb-nav-next{right:28px}
 .lb-info{position:absolute;bottom:18px;left:0;right:0;display:flex;flex-direction:column;align-items:center;gap:10px;padding:0 80px;pointer-events:none}
-.lb-info-title{font-size:13px;letter-spacing:.16em;color:var(--alpha-cream-78);text-align:center;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.lb-info-credit{display:inline-flex;align-items:center;gap:8px;padding:7px 16px 7px 14px;background:rgba(26,15,10,.78);border:1.5px dashed var(--alpha-cream-55);border-radius:9999px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);box-shadow:0 6px 20px rgba(0,0,0,.45);pointer-events:auto}
+.lb-info-title{font-size:13px;letter-spacing:.16em;color:var(--alpha-cream-80);text-align:center;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lb-info-credit{display:inline-flex;align-items:center;gap:8px;padding:7px 16px 7px 14px;background:var(--alpha-dark-80);border:1.5px dashed var(--alpha-cream-55);border-radius:9999px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);box-shadow:0 6px 20px var(--alpha-black-45);pointer-events:auto}
 .lb-info-cam{font-size:14px;line-height:1}
-.lb-info-credit-label{font-size:11px;letter-spacing:.18em;color:rgba(255,241,212,.62)}
+.lb-info-credit-label{font-size:11px;letter-spacing:.18em;color:rgba(255,241,212,.6)}
 .lb-info-credit-name{font-family:var(--font-body);font-weight:700;font-size:13.5px;letter-spacing:.02em;color:var(--color-cream-light)}

@@ -47,8 +47,9 @@ function ScrollToTop() {
 function Layout({ children, withChrome = true }) {
   return (
     <div className="app-shell">
+      {withChrome && <a className="gol-skip-link" href="#obsah">Přeskočit na obsah</a>}
       {withChrome && <Nav />}
-      <main className="app-main">{children}</main>
+      <main id="obsah" className="app-main">{children}</main>
       {withChrome && <Footer />}
     </div>
   );

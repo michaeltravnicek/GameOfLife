@@ -38,26 +38,21 @@
 .gol-crumb{font-family:var(--font-mono);font-style:italic;font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:var(--alpha-cream-55);margin-bottom:14px}
 .gol-crumb a{color:var(--alpha-cream-70);border-bottom:1px dashed var(--alpha-cream-45)}
 .gol-crumb a:hover{color:var(--color-pink);border-color:var(--color-pink)}
-.gol-eyebrow{font-family:var(--font-mono);font-style:italic;font-size:13px;letter-spacing:.3em;text-transform:uppercase;color:var(--color-pink);margin-bottom:8px;display:inline-flex;align-items:center;gap:10px}
-.gol-eyebrow::before,.gol-eyebrow::after{content:'✦';font-size:11px;opacity:.9}
 .gol-head h1{font-family:var(--font-display);font-size:clamp(60px,8.4vw,116px);line-height:.92;color:var(--color-white);text-transform:uppercase;letter-spacing:.04em;text-shadow:0 6px 38px var(--alpha-black-60);margin-bottom:10px}
-.gol-lede{font-family:var(--font-body);font-style:italic;font-size:15px;color:var(--alpha-cream-78);max-width:540px;margin:0 auto;line-height:1.55}
-.gol-divider{width:120px;height:1px;margin:24px auto 0;background:repeating-linear-gradient(90deg,var(--alpha-cream-45) 0 5px,transparent 5px 10px)}
+.gol-lede{font-family:var(--font-body);font-style:italic;font-size:16px;color:var(--alpha-cream-80);max-width:540px;margin:0 auto;line-height:1.55}
 
 /* ── Sections ── */
 .gol-main{position:relative;z-index:2;max-width:980px;margin:0 auto;padding:48px 24px 28px}
 .gol-section{margin-bottom:48px}
 .gol-section:last-child{margin-bottom:0}
-.gol-sec-rule{height:1px;background:repeating-linear-gradient(90deg,var(--alpha-cream-45) 0 6px,transparent 6px 12px);margin-bottom:14px}
-.gol-sec-eyebrow{font-family:var(--font-mono);font-style:italic;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--color-pink);margin-bottom:8px;display:flex;align-items:center;gap:10px}
 /* Section header lives INSIDE the card (readable on the opaque surface, not on
    the photo behind) — .gol-card-head wraps eyebrow + heading + sub. */
 .gol-sec-heading{font-family:var(--font-display);font-size:clamp(26px,3vw,36px);letter-spacing:.04em;color:var(--color-white);text-transform:uppercase;line-height:.95;margin-bottom:6px}
 .gol-sec-heading .pink{color:var(--color-pink)}
-.gol-card-head{padding-bottom:18px;border-bottom:1px dashed var(--alpha-cream-22);margin-bottom:22px}
+.gol-card-head{padding-bottom:18px;border-bottom:1px dashed var(--alpha-cream-20);margin-bottom:22px}
 
 /* Poster card — homepage lb-card material (photo page → opaque poster). */
-.gol-card{position:relative;background:var(--color-dark-brown) var(--tex-blue) 0 0/var(--tex-size) var(--tex-size) repeat;border:2px solid var(--color-black);border-bottom:8px solid var(--color-black);border-radius:14px;padding:26px;overflow:hidden;box-shadow:0 16px 40px rgba(0,0,0,.5)}
+.gol-card{position:relative;background:var(--color-dark-brown) var(--tex-blue) 0 0/var(--tex-size) var(--tex-size) repeat;border:2px solid var(--color-black);border-bottom:8px solid var(--color-black);border-radius:14px;padding:26px;overflow:hidden;box-shadow:0 16px 40px var(--alpha-black-50)}
 .gol-danger-card{border-color:var(--alpha-pink-45)}
 
 /* ── Fields ── */
@@ -65,7 +60,7 @@
 .gol-field{display:flex;flex-direction:column;gap:8px}
 .gol-field.gol-full{grid-column:1 / -1}
 .gol-field label{font-family:var(--font-mono);font-style:italic;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--alpha-cream-65);display:flex;align-items:center;justify-content:space-between;gap:10px}
-.gol-hint{font-family:var(--font-body);font-style:italic;font-size:11px;letter-spacing:.04em;text-transform:none;color:var(--alpha-cream-45)}
+.gol-hint{font-family:var(--font-body);font-style:italic;font-size:11px;letter-spacing:.04em;text-transform:none;color:var(--fg-muted-dark)}
 
 .gol-toggle-row{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;padding:16px 0;border-bottom:1px dashed var(--alpha-cream-10)}
 .gol-toggle-row:last-child{border-bottom:0}
@@ -82,7 +77,7 @@
 
 /* ── Save bar — slides up when there are unsaved changes. Frost is fine here:
    it's chrome over scrolling content. ── */
-.gol-savebar{position:fixed;left:0;right:0;bottom:0;z-index:50;background:var(--alpha-dark-95);backdrop-filter:blur(16px) saturate(1.15);-webkit-backdrop-filter:blur(16px) saturate(1.15);border-top:1px dashed var(--alpha-cream-22);transform:translateY(110%);transition:transform .28s cubic-bezier(.2,.7,.2,1);box-shadow:0 -14px 36px var(--alpha-black-50)}
+.gol-savebar{position:fixed;left:0;right:0;bottom:0;z-index:50;background:var(--alpha-dark-95);backdrop-filter:blur(16px) saturate(1.15);-webkit-backdrop-filter:blur(16px) saturate(1.15);border-top:1px dashed var(--alpha-cream-20);transform:translateY(110%);transition:transform .28s cubic-bezier(.2,.7,.2,1);box-shadow:0 -14px 36px var(--alpha-black-50)}
 .gol-savebar.visible{transform:translateY(0)}
 .gol-savebar-inner{max-width:1040px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 24px;flex-wrap:wrap}
 .gol-savebar-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
@@ -104,7 +99,7 @@
 .gol-btn.ghost{background:transparent;color:var(--color-cream-light);border:1.5px dashed var(--alpha-cream-45);padding:9px 20px}
 .gol-btn.ghost:hover{border-color:var(--color-pink);color:var(--color-pink);border-style:solid}
 .gol-btn.danger{background:transparent;color:var(--color-pink);border:1.5px dashed var(--alpha-pink-45);padding:9px 20px}
-.gol-btn.danger:hover{background:var(--alpha-pink-12);border-style:solid}
+.gol-btn.danger:hover{background:var(--alpha-pink-10);border-style:solid}
 .gol-btn.lg{padding:15px 32px;font-size:14px;letter-spacing:.16em}
 
 /* ── Fields ─────────────────────────────────────────────────────────────────
@@ -115,10 +110,10 @@
    Separate from <FormInput> (components/FormInput) on purpose: that component
    renders its own <label>, error slot and password toggle, while these fields
    sit in the forms' own label markup. */
-.gol-input,.gol-textarea{width:100%;background:rgba(0,0,0,.28);border:none;border-radius:9px;padding:13px 16px;font-family:var(--font-body);font-size:15px;color:var(--color-white);outline:2px dashed rgba(255,255,255,.85);outline-offset:var(--frame-gap);transition:outline-color .18s,background .18s;letter-spacing:.01em}
+.gol-input,.gol-textarea{width:100%;background:rgba(0,0,0,.3);border:none;border-radius:9px;padding:13px 16px;font-family:var(--font-body);font-size:15px;color:var(--color-white);outline:2px dashed rgba(255,255,255,.85);outline-offset:var(--frame-gap);transition:outline-color .18s,background .18s;letter-spacing:.01em}
 .gol-input:hover,.gol-textarea:hover{outline-color:var(--color-white)}
-.gol-input:focus,.gol-textarea:focus{outline-color:var(--color-pink);background:rgba(0,0,0,.4)}
-.gol-input::placeholder,.gol-textarea::placeholder{color:var(--alpha-cream-45);font-style:italic}
+.gol-input:focus,.gol-textarea:focus{outline-color:var(--color-pink);background:var(--alpha-black-40)}
+.gol-input::placeholder,.gol-textarea::placeholder{color:var(--fg-muted-dark);font-style:italic}
 .gol-textarea{min-height:130px;resize:vertical;line-height:1.55}
 
 /* ── Responsive ── */

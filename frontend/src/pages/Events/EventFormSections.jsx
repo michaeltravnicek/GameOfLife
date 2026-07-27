@@ -30,7 +30,7 @@ export default function EventFormSections({
     <>
       {/* 01 · Základy */}
       <section className="gol-section">
-        <div className="gol-sec-rule" />
+        <div className="gol-rule" />
         <div className="gol-card">
           <div className="gol-card-head">
             <div className="gol-sec-eyebrow">— 01 · Základy —</div>
@@ -56,7 +56,7 @@ export default function EventFormSections({
 
       {/* 02 · Čas a body */}
       <section className="gol-section">
-        <div className="gol-sec-rule" />
+        <div className="gol-rule" />
         <div className="gol-card">
           <div className="gol-card-head">
             <div className="gol-sec-eyebrow">— 02 · Čas a body —</div>
@@ -94,7 +94,7 @@ export default function EventFormSections({
 
       {/* 03 · Poloha */}
       <section className="gol-section">
-        <div className="gol-sec-rule" />
+        <div className="gol-rule" />
         <div className="gol-card">
           <div className="gol-card-head">
             <div className="gol-sec-eyebrow">— 03 · Poloha na mapě —</div>
@@ -128,7 +128,7 @@ export default function EventFormSections({
 
       {/* 04 · Obrázky */}
       <section className="gol-section">
-        <div className="gol-sec-rule" />
+        <div className="gol-rule" />
         <div className="gol-card">
           <div className="gol-card-head">
             <div className="gol-sec-eyebrow">— 04 · Vizuál —</div>
@@ -190,7 +190,7 @@ export default function EventFormSections({
 
       {/* 05 · Kategorie */}
       <section className="gol-section">
-        <div className="gol-sec-rule" />
+        <div className="gol-rule" />
         <div className="gol-card">
           <div className="gol-card-head">
             <div className="gol-sec-eyebrow">— 05 · Kategorie —</div>
@@ -203,7 +203,7 @@ export default function EventFormSections({
 
       {/* 06 · Pravidla a formulář */}
       <section className="gol-section">
-        <div className="gol-sec-rule" />
+        <div className="gol-rule" />
         <div className="gol-card">
           <div className="gol-card-head">
             <div className="gol-sec-eyebrow">— 06 · Obsah —</div>
@@ -227,7 +227,7 @@ export default function EventFormSections({
 
       {/* 07 · Viditelnost */}
       <section className="gol-section">
-        <div className="gol-sec-rule" />
+        <div className="gol-rule" />
         <div className="gol-card">
           <div className="gol-card-head">
             <div className="gol-sec-eyebrow">— 07 · Viditelnost —</div>

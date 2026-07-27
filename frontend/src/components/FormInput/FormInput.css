@@ -1,16 +1,16 @@
 .form-field{margin-bottom:22px;position:relative}
 .form-field-label{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
-.form-field-label-text{display:block;font-family:var(--font-mono);font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,241,212,.80);font-weight:500}
+.form-field-label-text{display:block;font-family:var(--font-mono);font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--alpha-cream-80);font-weight:500}
 .form-field-input-wrap{position:relative;display:block}
-.form-field-input{width:100%;background:rgba(255,255,255,.06);border:1.5px solid var(--alpha-cream-22);border-radius:10px;padding:15px 18px;font-family:var(--font-body);font-size:16px;font-weight:500;color:var(--color-cream-light);outline:none;transition:border-color .2s,background .2s,box-shadow .2s;box-sizing:border-box}
-.form-field-input::placeholder{color:rgba(255,241,212,.28);font-weight:400}
-.form-field-input:focus{border-color:rgba(225,84,99,.7);background:rgba(225,84,99,.08);box-shadow:0 0 0 3px rgba(225,84,99,.14)}
+.form-field-input{width:100%;background:rgba(255,255,255,.05);border:1.5px solid var(--alpha-cream-20);border-radius:10px;padding:15px 18px;font-family:var(--font-body);font-size:16px;font-weight:500;color:var(--color-cream-light);outline:none;transition:border-color .2s,background .2s,box-shadow .2s;box-sizing:border-box}
+.form-field-input::placeholder{color:var(--alpha-cream-30);font-weight:400}
+.form-field-input:focus{border-color:rgba(225,84,99,.7);background:var(--alpha-pink-10);box-shadow:0 0 0 3px var(--alpha-pink-15)}
 .form-field-input.has-error{border-color:rgba(225,84,99,.95)}
 .form-field-error{margin-top:7px;font-size:12px;letter-spacing:.04em;color:var(--color-pink);line-height:1.4}
 
 /* Reserve room for the toggle so typed text doesn't slide under the eye. */
 .form-field-input-wrap.has-toggle .form-field-input{padding-right:48px}
-.form-field-pw-toggle{position:absolute;top:50%;right:6px;transform:translateY(-50%);display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;background:transparent;border:0;border-radius:8px;color:var(--alpha-cream-55);cursor:pointer;transition:color .18s,background .18s}
-.form-field-pw-toggle:hover{color:var(--color-cream-light);background:rgba(255,241,212,.08)}
+.form-field-pw-toggle{position:absolute;top:50%;right:6px;transform:translateY(-50%);display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;background:transparent;border:0;border-radius:8px;color:var(--alpha-cream-55);cursor:pointer;transition:color .18s,background .18s}
+.form-field-pw-toggle:hover{color:var(--color-cream-light);background:var(--alpha-cream-10)}
 .form-field-pw-toggle:focus-visible{outline:2px solid rgba(225,84,99,.7);outline-offset:2px;color:var(--color-cream-light)}
 .form-field-pw-toggle svg{display:block}

@@ -204,7 +204,7 @@ export default function EditProfilePage() {
       <main className="gol-main">
         {/* 01 · Základy */}
         <section className="gol-section">
-          <div className="gol-sec-rule" />
+          <div className="gol-rule" />
           <div className="gol-card">
             <div className="gol-card-head">
               <div className="gol-sec-eyebrow">— 01 · Základy —</div>
@@ -238,7 +238,7 @@ export default function EditProfilePage() {
 
         {/* 02 · Avatar */}
         <section className="gol-section">
-          <div className="gol-sec-rule" />
+          <div className="gol-rule" />
           <div className="gol-card ep-avatar-card">
             <div className="gol-card-head">
               <div className="gol-sec-eyebrow">— 02 · Avatar &amp; identita —</div>
@@ -267,7 +267,7 @@ export default function EditProfilePage() {
 
         {/* 03 · Bio */}
         <section className="gol-section">
-          <div className="gol-sec-rule" />
+          <div className="gol-rule" />
           <div className="gol-card">
             <div className="gol-card-head">
               <div className="gol-sec-eyebrow">— 03 · O mně —</div>
@@ -292,7 +292,7 @@ export default function EditProfilePage() {
         {/* 04 · Kategorie — hidden entirely when no categories exist to pick */}
         {allCategories.length > 0 && (
           <section className="gol-section">
-            <div className="gol-sec-rule" />
+            <div className="gol-rule" />
             <div className="gol-card">
               <div className="gol-card-head">
                 <div className="gol-sec-eyebrow">— 04 · Oblíbené kategorie —</div>
@@ -306,7 +306,7 @@ export default function EditProfilePage() {
 
         {/* 05 · Sociální sítě */}
         <section className="gol-section">
-          <div className="gol-sec-rule" />
+          <div className="gol-rule" />
           <div className="gol-card">
             <div className="gol-card-head">
               <div className="gol-sec-eyebrow">— 05 · Sociální sítě —</div>
@@ -329,7 +329,7 @@ export default function EditProfilePage() {
 
         {/* 06 · Soukromí */}
         <section className="gol-section">
-          <div className="gol-sec-rule" />
+          <div className="gol-rule" />
           <div className="gol-card">
             <div className="gol-card-head">
               <div className="gol-sec-eyebrow">— 06 · Soukromí —</div>
@@ -353,7 +353,7 @@ export default function EditProfilePage() {
 
         {/* 07 · Danger */}
         <section className="gol-section">
-          <div className="gol-sec-rule" />
+          <div className="gol-rule" />
           <div className="gol-card gol-danger-card">
             <div className="gol-card-head">
               <div className="gol-sec-eyebrow danger">— 07 · Konec hry —</div>

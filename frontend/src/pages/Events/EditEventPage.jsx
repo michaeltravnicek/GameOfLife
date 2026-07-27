@@ -114,7 +114,7 @@ export default function EditEventPage() {
 
         {/* 08 · Konec akce */}
         <section className="gol-section">
-          <div className="gol-sec-rule" />
+          <div className="gol-rule" />
           <div className="gol-card gol-danger-card">
             <div className="gol-card-head">
               <div className="gol-sec-eyebrow">— 08 · Konec akce —</div>

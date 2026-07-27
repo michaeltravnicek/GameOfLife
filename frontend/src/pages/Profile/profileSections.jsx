@@ -58,7 +58,7 @@ export function EventsSections({ st, upcoming, past, startNum }) {
       {upcoming.length > 0 && (
         <div className="section">
           <div className="gol-rule" />
-          <div className="sec-eyebrow"><span>— {pad(startNum)} · Nadcházející —</span><span className="meta">+{st.futurePts} pts na cestě</span></div>
+          <div className="gol-sec-eyebrow sec-eyebrow"><span>— {pad(startNum)} · Nadcházející —</span><span className="meta">+{st.futurePts} pts na cestě</span></div>
           <h2 className="sec-heading">Co ho <span className="pink">čeká.</span></h2>
           <TicketList
             className={EVENT_LIST_CLASS}
@@ -73,7 +73,7 @@ export function EventsSections({ st, upcoming, past, startNum }) {
 
       <div className="section">
         <div className="gol-rule" />
-        <div className="sec-eyebrow"><span>— {pad(startNum + 1)} · Absolvované —</span><span className="meta">+{st.pastPts} pts zatím</span></div>
+        <div className="gol-sec-eyebrow sec-eyebrow"><span>— {pad(startNum + 1)} · Absolvované —</span><span className="meta">+{st.pastPts} pts zatím</span></div>
         <h2 className="sec-heading">Co má <span className="pink">za sebou.</span></h2>
         <TicketList
           className={EVENT_LIST_CLASS}
@@ -95,7 +95,7 @@ export function PointsSections({ st, cats, today, startNum }) {
     <>
       <div className="section">
         <div className="gol-rule" />
-        <div className="sec-eyebrow"><span>— {pad(startNum)} · Body v čase —</span><span className="meta">křivka sezóny</span></div>
+        <div className="gol-sec-eyebrow sec-eyebrow"><span>— {pad(startNum)} · Body v čase —</span><span className="meta">křivka sezóny</span></div>
         <h2 className="sec-heading">Křivka <span className="pink">sezóny.</span></h2>
 
         <div className="chart-card">
@@ -120,7 +120,7 @@ export function PointsSections({ st, cats, today, startNum }) {
       {cats.sorted.length > 0 && (
         <div className="section">
           <div className="gol-rule" />
-          <div className="sec-eyebrow"><span>— {pad(startNum + 1)} · Kategorie —</span><span className="meta">{cats.sorted.length} kategorií</span></div>
+          <div className="gol-sec-eyebrow sec-eyebrow"><span>— {pad(startNum + 1)} · Kategorie —</span><span className="meta">{cats.sorted.length} kategorií</span></div>
           <h2 className="sec-heading">V čem <span className="pink">jede.</span></h2>
           <div className="cat-list">
             {cats.sorted.map(([cat, b]) => (

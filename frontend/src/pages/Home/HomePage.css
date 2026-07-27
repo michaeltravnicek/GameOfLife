@@ -21,12 +21,12 @@
 .home-page .lb-bg{position:absolute;inset:0;background:center/cover;filter:saturate(.8)}
 .home-page .lb-bg.ready{background-image:url('/img/home-tophraci-mobile.webp')}
 @media(min-width:769px){.home-page .lb-bg.ready{background-image:url('/img/home-tophraci-desktop.webp')}}
-.home-page .lb-tint{position:absolute;inset:0;background:linear-gradient(180deg,rgba(45,42,142,.12) 0%,rgba(26,15,10,.48) 100%)}
+.home-page .lb-tint{position:absolute;inset:0;background:linear-gradient(180deg,rgba(45,42,142,.1) 0%,rgba(26,15,10,.5) 100%)}
 .home-page .lb-inner{position:relative;z-index:2;max-width:620px;margin:0 auto}
 .home-page .lb-title{font-family:var(--font-leaderboard);font-size:clamp(48px,3.6vw,48px);letter-spacing:.05em;text-align:center;color:var(--color-heading);text-transform:uppercase;margin-bottom:22px;display:flex;justify-content:center;align-items:center;gap:14px}
 .home-page .lb-title .star{color:var(--color-pink);font-size:.7em}
 .home-page .lb-title .lb-trophy{font-size:.78em;line-height:1}
-.home-page .lb-card{background:var(--color-dark-brown) var(--tex-blue) 0 0/var(--tex-size) var(--tex-size) repeat;border:2px solid var(--color-black);border-bottom:8px solid var(--color-black);border-radius:14px;overflow:hidden;padding-bottom:12px;box-shadow:0 16px 40px rgba(0,0,0,.5)}
+.home-page .lb-card{background:var(--color-dark-brown) var(--tex-blue) 0 0/var(--tex-size) var(--tex-size) repeat;border:2px solid var(--color-black);border-bottom:8px solid var(--color-black);border-radius:14px;overflow:hidden;padding-bottom:12px;box-shadow:0 16px 40px var(--alpha-black-50)}
 .home-page .lb-head{display:grid;grid-template-columns:52px 1fr 52px;align-items:center;gap:14px;padding:9px 24px;font-family:var(--font-body);font-style:italic;font-weight:600;font-size:18px;letter-spacing:.02em;text-transform:none;background-color:var(--color-cream-light);color:var(--color-black);border-bottom:2px solid var(--color-black)}
 .home-page .lb-head>div:first-child{text-align:center}
 .home-page .lb-head>div:nth-child(2){padding-left:16px}
@@ -42,9 +42,8 @@
 .home-page .about-photo img{width:100%;height:100%;display:block;object-fit:cover;transition:transform .5s cubic-bezier(.22,.68,0,1.1)}
 .home-page .about-photo:hover img{transform:scale(1.05)}
 .home-page .about-content{display:flex;flex-direction:column;gap:14px}
-.home-page .about-eyebrow{font-family:var(--font-mono);font-style:italic;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--color-pink)}
 .home-page .about-heading{font-family:var(--font-display);font-size:clamp(28px,3.6vw,46px);letter-spacing:.03em;line-height:1;color:var(--color-heading);text-transform:uppercase}
-.home-page .about-body{font-family:var(--font-hv);font-weight:300;font-size:14px;line-height:1.78;color:var(--alpha-cream-78);max-width:520px}
+.home-page .about-body{font-family:var(--font-hv);font-weight:300;font-size:14px;line-height:1.78;color:var(--alpha-cream-80);max-width:520px}
 .home-page .stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;padding-top:24px;margin-top:8px;background:left top/16px 3px repeat-x url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='3'%3E%3Cline x1='1.5' y1='1.5' x2='7.5' y2='1.5' stroke='%23fff1d4' stroke-opacity='0.3' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E")}
 .home-page .stat-item{text-align:center;transition:transform .2s ease}
 .home-page .stat-item:hover{transform:translateY(-3px)}

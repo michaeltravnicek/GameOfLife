@@ -7,7 +7,7 @@
    different photo and a heavier tint). ── */
 .event-page .ev-stage{position:fixed;inset:0;z-index:-2;background:url('/img/gal2.webp') center 30%/cover no-repeat;filter:saturate(.7) contrast(1.02);transform:scale(1.06)}
 .event-page .ev-stage::after{content:'';position:absolute;inset:0;background:
-  radial-gradient(ellipse at 50% 0%, var(--alpha-purple-22) 0%, transparent 38%),
+  radial-gradient(ellipse at 50% 0%, var(--alpha-purple-20) 0%, transparent 38%),
   linear-gradient(180deg, var(--alpha-dark-55) 0%, var(--alpha-dark-80) 32%, var(--alpha-dark-95) 60%)}
 
 /* Slightly dimmer than the profile editor's sub-heading. */
@@ -17,7 +17,7 @@
 .event-page .ev-image-pair{display:grid;grid-template-columns:1fr 1fr;gap:28px}
 .event-page .ev-img-section{display:flex;flex-direction:column;gap:14px}
 .event-page .ev-img-label{font-family:var(--font-mono);font-style:italic;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--color-pink);margin-bottom:0}
-.event-page .ev-img-preview{width:100%;aspect-ratio:1;border-radius:12px;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 30% 30%,var(--alpha-pink-22),transparent 65%),var(--alpha-dark-62);border:3px dashed var(--alpha-cream-45);font-family:var(--font-mono);font-style:italic;font-size:46px;font-weight:700;color:var(--color-cream-light);box-shadow:0 14px 44px var(--alpha-black-50);background-size:cover;background-position:center;overflow:hidden}
+.event-page .ev-img-preview{width:100%;aspect-ratio:1;border-radius:12px;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 30% 30%,var(--alpha-pink-20),transparent 65%),var(--alpha-dark-60);border:3px dashed var(--alpha-cream-45);font-family:var(--font-mono);font-style:italic;font-size:46px;font-weight:700;color:var(--color-cream-light);box-shadow:0 14px 44px var(--alpha-black-50);background-size:cover;background-position:center;overflow:hidden}
 .event-page .ev-img-preview.has-img{font-size:0}
 .event-page .ev-img-preview.sm{aspect-ratio:1/1;width:140px;height:140px}
 /* Badge preview: the real artwork scaled exactly like the render, clipped to

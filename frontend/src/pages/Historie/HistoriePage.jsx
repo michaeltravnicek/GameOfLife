@@ -179,7 +179,7 @@ export default function HistoriePage() {
               <QRCodeSVG value={SUPPORT_QR} size={196} bgColor="#fff1d4" fgColor="#1a0f0a" level="M" marginSize={2} />
             </div>
             <div className="hist-support-body">
-              <div className="hist-support-eyebrow">— Podpoř Game of Life —</div>
+              <div className="gol-sec-eyebrow hist-support-eyebrow">— Podpoř Game of Life —</div>
               <p className="hist-support-text">
                 Gameofyolo žije jen díky vám, díky tomu že se zajímáte a chodíte na akce.
                 Připravovat akce nám ale bere hodně úsilí, pokud si i vy ceníte, co pro Vás

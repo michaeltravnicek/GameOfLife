@@ -34,7 +34,6 @@ export default function OBodechPage() {
       <PageHero
         eyebrow="Systém bodů"
         title={<>O bodech<br />a cenách</>}
-        divider={false}
       />
 
       <Reveal as="section" stagger className="credits" aria-label="Rozsah bodů">
@@ -52,20 +51,20 @@ export default function OBodechPage() {
 
       <main className="body">
         <Reveal as="section" className="section">
-          <div className="sec-eyebrow">Co jsou body</div>
+          <div className="gol-sec-eyebrow sec-eyebrow">Co jsou body</div>
           <h2 className="sec-heading">Měřítko <span className="pink">zapojení</span>, ne výhry</h2>
           <p className="intro-quote">Body měří, kolik jsi do hry vložil. Jsou odměnou za účast, za odvahu jít mimo komfortní zónu a za to, že jsi prostě přišel.</p>
         </Reveal>
 
         <Reveal as="section" className="section">
-          <div className="sec-eyebrow">Příklady</div>
+          <div className="gol-sec-eyebrow sec-eyebrow">Příklady</div>
           <h2 className="sec-heading">Kolik za <span className="pink">co</span></h2>
           <p className="intro-quote" style={{ marginBottom: 28 }}>Žádný kalkulátor, žádný vzorec. Vojta přiřkne akci hodnotu předem podle toho, jak je dlouhá, náročná a kolik k ní bude potřeba odvahy. Nové typy akcí mají často vyšší ohodnocení.</p>
 
         </Reveal>
 
         <Reveal as="section" className="section">
-          <div className="sec-eyebrow">Odměny a výhody</div>
+          <div className="gol-sec-eyebrow sec-eyebrow">Odměny a výhody</div>
           <h2 className="sec-heading">Co za to <span className="pink">jednou bude</span></h2>
           <p className="intro-quote" style={{ marginBottom: 30 }}>Reward systém se teď peče. Kromě hřejivého pocitu žádnou fyzickou odměnu zatím nedostaneš. Tady je ale, co plánujeme a na co se můžeš těšit.</p>
 

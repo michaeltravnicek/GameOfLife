@@ -7,12 +7,28 @@
    StatList row (`.stat-list .ev-info .loc`, used by the event-detail attendee
    lists). Renamed, so this can now be an unscoped shared class and reused on
    any page. The StatList `.loc` is a different thing and keeps its name. */
-.gol-pill{display:inline-flex;align-items:center;gap:7px;font-family:var(--font-hv);font-weight:300;font-style:italic;font-size:12.5px;letter-spacing:.04em;padding:7px 14px;min-height:30px;border-radius:9999px;cursor:pointer;background:rgba(26,15,10,.45);border:1.5px dashed rgba(255,241,212,.28);color:var(--alpha-cream-78);transition:all .18s;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.gol-pill{display:inline-flex;align-items:center;gap:7px;font-family:var(--font-hv);font-weight:300;font-style:italic;font-size:12.5px;letter-spacing:.04em;padding:7px 14px;min-height:30px;border-radius:9999px;cursor:pointer;background:rgba(26,15,10,.45);border:1.5px dashed var(--alpha-cream-30);color:var(--alpha-cream-80);transition:all .18s;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
 .gol-pill:hover{color:var(--color-white);border-color:var(--alpha-cream-55)}
+/* a11y: the pill renders 30px tall by design, which is under the 44px minimum
+   touch target. Expand the *hit* area with a centred overlay instead of growing
+   the box, so the layout is untouched. */
+.gol-pill::before{content:'';position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);height:44px;z-index:1}
 /* Every pill wants the grain overlay, so it gets it without needing `gol-tex`
    on each one — see the shared rule further down. */
 /* The selected state (.on) and the count badge (.gol-pill-count) are only used
    by the events city filter, so they stay in EventsPage.css. */
+
+
+/* ── Eyebrows ───────────────────────────────────────────────────────────────
+   Two roles, site-wide. Everything else was a near-copy under a different name
+   (.page-eyebrow, .sec-hdr-eyebrow, .about-eyebrow, per-page .sec-eyebrow …).
+
+   gol-eyebrow      page/hero level — 13px, wide tracking, flanked by ✦
+   gol-sec-eyebrow  section level   — 11px, sits above a section heading
+   Pages add only their own delta (layout, a different colour on a photo). */
+.gol-eyebrow{font-family:var(--font-mono);font-style:italic;font-size:13px;letter-spacing:.3em;text-transform:uppercase;color:var(--color-pink);margin-bottom:8px;display:inline-flex;align-items:center;gap:10px}
+.gol-eyebrow::before,.gol-eyebrow::after{content:'✦';font-size:11px;opacity:.9}
+.gol-sec-eyebrow{font-family:var(--font-mono);font-style:italic;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--color-pink);margin-bottom:8px;display:flex;align-items:center;gap:10px}
 
 /* ── Dark page shell — the base every dark reading page shares ──
    (event detail, o-bodech, historie). Pages keep their own class alongside for
@@ -29,15 +45,14 @@
    The short dashed divider under a section eyebrow. Was `.sec-rule` (profile)
    and `.sec-hdr-rule` (SectionHeader component).
 
-   NOT merged with `.gol-sec-rule` in edit-form.css: that one is built on
-   --alpha-cream-45 while this is rgba(...,.5). The 0.05 difference is invisible
-   but real, so unifying them is a design decision, not a refactor. */
-.gol-rule{height:1px;background:repeating-linear-gradient(90deg,rgba(255,241,212,.5) 0 6px,transparent 6px 12px);margin-bottom:14px}
+   Was also `.gol-sec-rule` (edit-form) at a 0.05-different alpha — now one
+   rule on --alpha-cream-45. */
+.gol-rule{height:1px;background:repeating-linear-gradient(90deg,var(--alpha-cream-45) 0 6px,transparent 6px 12px);margin-bottom:14px}
 
 /* ── Flanking dashed lines ── a centred label with a dashed rule either side.
    Was duplicated as `.year-mark` (historie), `.list-label` (leaderboard) and
    `.group-label` (events). Put `gol-flank` on the flex container. */
-.gol-flank::before,.gol-flank::after{content:'';flex:1;height:1px;background:repeating-linear-gradient(90deg,rgba(255,241,212,.3) 0 6px,transparent 6px 12px)}
+.gol-flank::before,.gol-flank::after{content:'';flex:1;height:1px;background:repeating-linear-gradient(90deg,var(--alpha-cream-30) 0 6px,transparent 6px 12px)}
 
 /* ── Grain overlay on a frosted control ──
    Faint texture over frosted chips/panels so they don't read as flat glass.
@@ -48,5 +63,5 @@
 .gol-tex::after,.gol-pill::after{content:'';position:absolute;inset:0;border-radius:inherit;background:var(--tex-brown) 0 0/var(--tex-size) var(--tex-size) repeat;opacity:.3;pointer-events:none;z-index:-1}
 
 /* ── Admin action button (Events list + Event detail) ── */
-.events-page .admin-btn,.event-detail-page .admin-btn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:var(--radius-pill);border:1px solid var(--alpha-gold-40);color:var(--color-gold);background:var(--alpha-gold-16);text-decoration:none;font-family:var(--font-mono);font-size:var(--text-sm);letter-spacing:.03em;transition:background .15s}
+.events-page .admin-btn,.event-detail-page .admin-btn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:var(--radius-pill);border:1px solid var(--alpha-gold-40);color:var(--color-gold);background:var(--alpha-gold-15);text-decoration:none;font-family:var(--font-mono);font-size:var(--text-sm);letter-spacing:.03em;transition:background .15s}
 .events-page .admin-btn:hover,.event-detail-page .admin-btn:hover{background:var(--alpha-gold-40)}

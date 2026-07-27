@@ -4,7 +4,7 @@
 
 .feedbacks-page .stage{position:fixed;inset:0;bottom:auto;height:100vh;height:100lvh;z-index:-2;background:url('/img/gal2-mobile.webp') center 28%/cover no-repeat;filter:saturate(.7) contrast(1.02);transform:scale(1.05)}
 @media(min-width:769px){.feedbacks-page .stage{background-image:url('/img/gal2-desktop.webp')}}
-.feedbacks-page .stage::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 15%,rgba(45,42,142,.12) 0%,transparent 55%),linear-gradient(180deg,rgba(45,42,142,.10) 0%,var(--alpha-dark-62) 50%,rgba(26,15,10,.84) 100%)}
+.feedbacks-page .stage::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 15%,rgba(45,42,142,.1) 0%,transparent 55%),linear-gradient(180deg,rgba(45,42,142,.1) 0%,var(--alpha-dark-60) 50%,rgba(26,15,10,.85) 100%)}
 .feedbacks-page .grain{position:fixed;inset:0;bottom:auto;height:100vh;height:100lvh;z-index:-1;pointer-events:none;background:url('/img/Grain_texture_blue.webp') 0 0/var(--tex-size) var(--tex-size) repeat;opacity:.08;mix-blend-mode:overlay}
 
 /* ── ENTRANCE ── gentle on-mount fade-up: header first, then the tables. */
@@ -14,7 +14,7 @@
 @media(prefers-reduced-motion:reduce){.fb-head,.fb-main{animation:none}}
 
 .fb-head{text-align:center;margin-bottom:28px}
-.fb-eyebrow{font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.16em;font-size:var(--text-xs);color:var(--color-pink)}
+.fb-eyebrow{letter-spacing:.16em;font-size:var(--text-xs)}
 .fb-head h1{font-family:var(--font-display);font-size:var(--text-5xl);line-height:.95;margin:6px 0 4px;letter-spacing:.02em}
 .fb-sub{color:var(--alpha-cream-55);font-size:var(--text-sm)}
 .fb-status{text-align:center;padding:40px;color:var(--alpha-cream-55);font-family:var(--font-mono);font-style:italic}
@@ -29,7 +29,7 @@
 .fb-avg{flex-shrink:0;text-align:right}
 .fb-avg-score{font-family:var(--font-display);font-size:var(--text-2xl);letter-spacing:.02em;line-height:1;color:var(--color-gold);white-space:nowrap}
 .fb-avg-star{font-family:var(--font-body)}
-.fb-avg-max{color:var(--alpha-cream-45)}
+.fb-avg-max{color:var(--fg-muted-dark)}
 .fb-avg-label{font-family:var(--font-mono);font-style:italic;font-size:var(--text-xs);letter-spacing:.1em;text-transform:uppercase;color:var(--alpha-cream-55);margin-top:5px;white-space:nowrap}
 .fb-event-name{display:block;font-family:var(--font-display);font-size:var(--text-3xl);letter-spacing:.02em;color:var(--color-heading);text-decoration:none;line-height:1.05}
 .fb-event-name:hover{color:var(--color-pink)}
@@ -38,8 +38,8 @@
 /* StatList cells. */
 .fb-player{font-family:var(--font-hv);font-size:14px;color:var(--color-white);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .fb-stars{color:var(--color-gold);letter-spacing:2px;text-align:center;font-size:14px}
-.fb-comment{font-family:var(--font-body);font-size:13.5px;line-height:1.5;color:var(--alpha-cream-78)}
-.fb-muted{color:var(--alpha-cream-45)}
+.fb-comment{font-family:var(--font-body);font-size:13.5px;line-height:1.5;color:var(--alpha-cream-80)}
+.fb-muted{color:var(--fg-muted-dark)}
 .fb-event-link{color:var(--color-pink);text-decoration:none}
 .fb-event-link:hover{text-decoration:underline}
 

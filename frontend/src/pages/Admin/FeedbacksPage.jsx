@@ -98,7 +98,7 @@ export default function FeedbacksPage() {
       <div className="grain" />
 
       <header className="fb-head">
-        <div className="fb-eyebrow">— Admin —</div>
+        <div className="gol-sec-eyebrow fb-eyebrow">— Admin —</div>
         <h1>Zpětná vazba{eventName ? ` · ${eventName}` : ''}</h1>
       </header>
 

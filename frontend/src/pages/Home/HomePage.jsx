@@ -155,7 +155,7 @@ export default function HomePage() {
             </picture>
           </div>
           <div className="about-content">
-            <div className="about-eyebrow">— O nás —</div>
+            <div className="gol-sec-eyebrow">— O nás —</div>
             <h3 className="about-heading">Komunita, která hraje život naplno</h3>
             <p className="about-body">
               <strong>Game of Life</strong> je celoroční komunitní hra plná zábavy, výzev a nezapomenutelných
