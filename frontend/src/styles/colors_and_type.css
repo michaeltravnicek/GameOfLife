@@ -2,9 +2,6 @@
    GAME OF LIFE — Design Tokens
    ============================================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');
-
 /* ── Helvetica ── */
 @font-face {
   font-family: 'Helvetica';
@@ -31,48 +28,8 @@
   src: url('/fonts/helvetica-light-587ebe5a59211.ttf') format('truetype');
   font-weight: 300; font-style: normal; font-display: swap;
 }
-@font-face {
-  font-family: 'Helvetica Compressed';
-  src: url('/fonts/helvetica-compressed-5871d14b6903a.otf') format('opentype');
-  font-weight: 400; font-style: normal; font-display: swap;
-}
-@font-face {
-  font-family: 'Helvetica Rounded';
-  src: url('/fonts/helvetica-rounded-bold-5871d05ead8de.otf') format('opentype');
-  font-weight: 700; font-style: normal; font-display: swap;
-}
 
 /* ── IBM Plex Serif ── */
-@font-face {
-  font-family: 'IBM Plex Serif';
-  src: url('/fonts/IBMPlexSerif-Light.ttf') format('truetype');
-  font-weight: 300; font-style: normal; font-display: swap;
-}
-@font-face {
-  font-family: 'IBM Plex Serif';
-  src: url('/fonts/IBMPlexSerif-LightItalic.ttf') format('truetype');
-  font-weight: 300; font-style: italic; font-display: swap;
-}
-@font-face {
-  font-family: 'IBM Plex Serif';
-  src: url('/fonts/IBMPlexSerif-Regular.ttf') format('truetype');
-  font-weight: 400; font-style: normal; font-display: swap;
-}
-@font-face {
-  font-family: 'IBM Plex Serif';
-  src: url('/fonts/IBMPlexSerif-Italic.ttf') format('truetype');
-  font-weight: 400; font-style: italic; font-display: swap;
-}
-@font-face {
-  font-family: 'IBM Plex Serif';
-  src: url('/fonts/IBMPlexSerif-SemiBold.ttf') format('truetype');
-  font-weight: 600; font-style: normal; font-display: swap;
-}
-@font-face {
-  font-family: 'IBM Plex Serif';
-  src: url('/fonts/IBMPlexSerif-SemiBoldItalic.ttf') format('truetype');
-  font-weight: 600; font-style: italic; font-display: swap;
-}
 
 /* ── IBM Plex Mono ── navigation + every "mono" role (labels, eyebrows, pills) */
 @font-face {
@@ -104,36 +61,11 @@
 /* ── Ringold Gym ── */
 @font-face {
   font-family: 'Ringold Gym';
-  src: url('/fonts/Ringold-Gym (1).ttf') format('truetype');
+  src: url('/fonts/Ringold-Gym.ttf') format('truetype');
   font-weight: 400; font-style: normal; font-display: swap;
 }
 
 /* ── Open Sans ── */
-@font-face {
-  font-family: 'Open Sans';
-  src: url('/fonts/OpenSans-Regular.ttf') format('truetype');
-  font-weight: 400; font-style: normal; font-display: swap;
-}
-@font-face {
-  font-family: 'Open Sans';
-  src: url('/fonts/OpenSans-SemiboldItalic.ttf') format('truetype');
-  font-weight: 600; font-style: italic; font-display: swap;
-}
-@font-face {
-  font-family: 'Open Sans';
-  src: url('/fonts/OpenSans-Semibold.ttf') format('truetype');
-  font-weight: 600; font-style: normal; font-display: swap;
-}
-@font-face {
-  font-family: 'Open Sans';
-  src: url('/fonts/OpenSans-Bold.ttf') format('truetype');
-  font-weight: 700; font-style: normal; font-display: swap;
-}
-@font-face {
-  font-family: 'Open Sans';
-  src: url('/fonts/OpenSans-ExtraBold.ttf') format('truetype');
-  font-weight: 800; font-style: normal; font-display: swap;
-}
 
 /* ── Ringold Sans ── */
 @font-face {
@@ -159,7 +91,7 @@
   --color-black:          #1a1a1a;
   --color-cream-light:    #fff1d4;
   --color-cream-lighter:  #fff4e1;
-  --color-pink:           #dd5865;
+  --color-pink:           #e15463;   /* GOL_Web_Manual_2026 */
   --color-purple:         #2d2a8e;
   --color-logo-purple:    rgba(71, 81, 133, 1);
   --color-dark-brown:     #1a0f0a;
@@ -239,23 +171,24 @@
   /* Headings sit one step whiter than body cream — the manual's #fff4e1. */
   --color-heading:        var(--color-cream-lighter);
 
+  /* ── Type ── GOL_Web_Manual_2026 defines exactly three families:
+       Helvetica World (+ Italic) · IBM Plex Mono (+ Italic) · Ringold
+     Anything outside that set was removed (Barlow, IBM Plex Serif, Bebas Neue,
+     Open Sans, Helvetica Compressed, Helvetica Rounded).
+
+     Ringold ships in five cuts per the manual — Sans, Clarendon, Gym, Slab,
+     Soft. Only Gym and Sans have font files here, so the others fall back to
+     Gym until their .ttf lands. 'Helvetica World' likewise falls back to the
+     plain Helvetica files that are present. */
   --font-display:         'Ringold Gym', sans-serif;          /* velké nadpisy */
   --font-event-name:      'Ringold Gym', sans-serif;          /* Název akce */
-  --font-leaderboard:     'Ringold Gym', sans-serif;          /* Top 10 leaderboard (= Ringold Gym) */
-  /* TODO: --font-events: 'Ringold Clarendon', sans-serif; — add when Ringold-Clarendon.ttf is provided */
-  --font-events:          'Ringold Gym', sans-serif;          /* akce titles — temp fallback until Ringold Clarendon */
+  --font-leaderboard:     'Ringold Gym', sans-serif;          /* Top 10 leaderboard */
+  --font-sans:            'Ringold Sans', 'Ringold Gym', sans-serif;
   --font-nav:             'IBM Plex Mono', ui-monospace, monospace; /* navigation bar */
-  --font-number:          'IBM Plex Serif', Georgia, serif;   /* číslování, čísla */
-  --font-body:            'Barlow', Arial, sans-serif;
   --font-mono:            'IBM Plex Mono', ui-monospace, monospace;
-  --font-serif:           'IBM Plex Serif', Georgia, serif;
-  --font-hv:              'Helvetica', Arial, sans-serif;     /* čitelná, podnadpis */
-  /* Button face. 'Helvetica World' is the intended one — see the TODO above;
-     until its file lands the name resolves to nothing and Helvetica wins. */
-  --font-hv-world:        'Helvetica World', 'Helvetica', Arial, sans-serif;
-  --font-hv-comp:         'Helvetica Compressed', Arial, sans-serif;
-  --font-hv-rnd:          'Helvetica Rounded', Arial, sans-serif;
-  --font-gym:             'Ringold Gym', sans-serif;
+  --font-body:            'Helvetica World', 'Helvetica', Arial, sans-serif;
+  --font-hv:              var(--font-body);                   /* alias, kept for existing call sites */
+  --font-hv-world:        var(--font-body);                   /* alias */
 
   --text-xs:    0.75rem;
   --text-sm:    0.875rem;

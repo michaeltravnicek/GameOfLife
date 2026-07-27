@@ -20,30 +20,29 @@ export function ProfileCredits({ st, hidden = [] }) {
   const pointsHidden = hidden.includes('points');
   const eventsHidden = hidden.includes('events');
   return (
-    <div className="credits">
-      <span className="credits-rule" />
-      <div className="credit">
-        <div className="credit-label">— Body —</div>
-        <div className="credit-value">{pointsHidden ? '·' : st.totalPts}</div>
-        <div className="credit-sub">
+    <div className="gol-credits">
+      <div className="gol-credit">
+        <div className="gol-credit-label">— Body —</div>
+        <div className="gol-credit-value">{pointsHidden ? '·' : st.totalPts}</div>
+        <div className="gol-credit-sub">
           {pointsHidden
             ? 'skryto'
             : <><strong>{st.cities.length} měst</strong> · {st.future.length ? 'aktivní sezóna' : 'sezóna ukončena'}</>}
         </div>
       </div>
-      <div className="credit">
-        <div className="credit-label">— Akcí —</div>
-        <div className="credit-value">{eventsHidden ? '·' : st.evs.length}</div>
-        <div className="credit-sub">
+      <div className="gol-credit">
+        <div className="gol-credit-label">— Akcí —</div>
+        <div className="gol-credit-value">{eventsHidden ? '·' : st.evs.length}</div>
+        <div className="gol-credit-sub">
           {eventsHidden
             ? 'skryto'
             : <><strong>{st.past.length} absolv.</strong> · {st.future.length} nadch.</>}
         </div>
       </div>
-      <div className="credit">
-        <div className="credit-label">— Pozice —</div>
-        <div className="credit-value">{pointsHidden ? '·' : (st.rank ? `#${st.rank}` : '—')}</div>
-        <div className="credit-sub">
+      <div className="gol-credit">
+        <div className="gol-credit-label">— Pozice —</div>
+        <div className="gol-credit-value">{pointsHidden ? '·' : (st.rank ? `#${st.rank}` : '—')}</div>
+        <div className="gol-credit-sub">
           {pointsHidden ? 'skryto' : (st.rank ? 'v sezóně' : 'zatím bez bodů')}
         </div>
       </div>

@@ -133,12 +133,12 @@ export default function HistoriePage() {
         title="Historie"
       />
 
-      <Reveal as="section" stagger className="credits" aria-label="Souhrn">
+      <Reveal as="section" stagger className="gol-credits" aria-label="Souhrn">
         {credits.map((c) => (
-          <div key={c.label} className="credit">
-            <div className="credit-label">{c.label}</div>
-            <div className="credit-value">{c.value}</div>
-            <div className="credit-sub">{c.sub}</div>
+          <div key={c.label} className="gol-credit">
+            <div className="gol-credit-label">{c.label}</div>
+            <div className="gol-credit-value">{c.value}</div>
+            <div className="gol-credit-sub">{c.sub}</div>
           </div>
         ))}
       </Reveal>

@@ -36,16 +36,16 @@ export default function OBodechPage() {
         title={<>O bodech<br />a cenách</>}
       />
 
-      <Reveal as="section" stagger className="credits" aria-label="Rozsah bodů">
-        <div className="credit">
-          <div className="credit-label">— Od —</div>
-          <div className="credit-value">+10</div>
-          <div className="credit-sub">za fotku v galerii nebo přivedení nového hráče</div>
+      <Reveal as="section" stagger className="gol-credits" aria-label="Rozsah bodů">
+        <div className="gol-credit">
+          <div className="gol-credit-label">— Od —</div>
+          <div className="gol-credit-value">+10</div>
+          <div className="gol-credit-sub">za fotku v galerii nebo přivedení nového hráče</div>
         </div>
-        <div className="credit">
-          <div className="credit-label">— Do —</div>
-          <div className="credit-value">+250</div>
-          <div className="credit-sub">za vícedenní expedici, kdy zvedneš tábor</div>
+        <div className="gol-credit">
+          <div className="gol-credit-label">— Do —</div>
+          <div className="gol-credit-value">+250</div>
+          <div className="gol-credit-sub">za vícedenní expedici, kdy zvedneš tábor</div>
         </div>
       </Reveal>
 

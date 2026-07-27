@@ -406,24 +406,23 @@ export default function EventDetailPage() {
             ? <img className="poster-logo" src={event.logo} alt={event.name} style={{ transform: `scale(${event.logo_scale ?? 1})` }} />
             : <img className="poster-logo" src="/img/GOL_main_logo_pink.webp" alt={event.name} />}
         </div>
-        <div className="credits">
-          <span className="credits-rule" />
-          <div className="credit">
-            <div className="credit-label">— Datum —</div>
-            <div className="credit-value">{fmtDateShort(event.date)}</div>
-            <div className="credit-sub">{dayName(event.date)}</div>
+        <div className="gol-credits">
+          <div className="gol-credit">
+            <div className="gol-credit-label">— Datum —</div>
+            <div className="gol-credit-value">{fmtDateShort(event.date)}</div>
+            <div className="gol-credit-sub">{dayName(event.date)}</div>
           </div>
-          <div className="credit">
-            <div className="credit-label">— Čas —</div>
-            <div className={`credit-value${event.time_tbd ? ' long' : ''}`}>
+          <div className="gol-credit">
+            <div className="gol-credit-label">— Čas —</div>
+            <div className={`gol-credit-value${event.time_tbd ? ' long' : ''}`}>
               {event.time_tbd ? 'Upřesníme' : fmtTime(event.date)}
             </div>
-            <div className="credit-sub">{event.name}</div>
+            <div className="gol-credit-sub">{event.name}</div>
           </div>
-          <div className="credit">
-            <div className="credit-label">— Místo —</div>
-            <div className={`credit-value${(event.place || '').length > 12 ? ' xlong' : (event.place || '').length > 8 ? ' long' : ''}`}>{event.place}</div>
-            <div className="credit-sub">&nbsp;</div>
+          <div className="gol-credit">
+            <div className="gol-credit-label">— Místo —</div>
+            <div className={`gol-credit-value${(event.place || '').length > 12 ? ' xlong' : (event.place || '').length > 8 ? ' long' : ''}`}>{event.place}</div>
+            <div className="gol-credit-sub">&nbsp;</div>
           </div>
         </div>
       </section>
