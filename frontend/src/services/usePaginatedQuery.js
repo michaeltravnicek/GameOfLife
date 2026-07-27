@@ -39,9 +39,13 @@ export function usePaginatedQuery({
   const [extraHasMore, setExtraHasMore] = useState(null);
   const [loadingMore, setLoadingMore] = useState(false);
 
-  // Each filter change increments reqId. In-flight `loadMore` results
-  // arriving after a filter change are discarded.
-  const reqIdRef = useRef(0);
+  // Always holds the current cache key, so an in-flight `loadMore` that resolves
+  // after a filter change can tell that its result is stale and drop it. Written
+  // from an effect (ref writes during render are not allowed) — see loadMore.
+  const cacheKeyRef = useRef(cacheKey);
+  useEffect(() => {
+    cacheKeyRef.current = cacheKey;
+  }, [cacheKey]);
 
   // First page is owned by the shared cache.
   const {
@@ -52,13 +56,21 @@ export function usePaginatedQuery({
     { ttl },
   );
 
-  // Reset local accumulator whenever the cache key (= filter combo) flips.
-  useEffect(() => {
+  // Reset the local accumulator whenever the cache key (= filter combo) flips.
+  //
+  // Done during render rather than in an effect: an effect runs *after* the
+  // commit, so there was one painted frame where the NEW filter's first page
+  // was concatenated with the OLD filter's appended pages. Adjusting state
+  // during render lets React discard the in-progress output and re-run before
+  // touching the DOM, so that frame never ships.
+  // https://react.dev/learn/you-might-not-need-an-effect
+  const [prevKey, setPrevKey] = useState(cacheKey);
+  if (prevKey !== cacheKey) {
+    setPrevKey(cacheKey);
     setExtraItems([]);
     setExtraHasMore(null);
     setLoadingMore(false);
-    reqIdRef.current += 1;
-  }, [cacheKey]);
+  }
 
   const firstItems = extractItems(firstPage || {});
   const items = useMemo(
@@ -75,17 +87,17 @@ export function usePaginatedQuery({
 
   const loadMore = useCallback(() => {
     if (loadingMore || !hasMore) return Promise.resolve();
-    const myReq = reqIdRef.current;
+    const myKey = cacheKeyRef.current;
     setLoadingMore(true);
     return fetcher(items.length, pageSize)
       .then((d) => {
-        if (reqIdRef.current !== myReq) return; // filter changed mid-flight
+        if (cacheKeyRef.current !== myKey) return; // filter changed mid-flight
         setExtraItems((prev) => [...prev, ...extractItems(d)]);
         setExtraHasMore(extractHasMore(d));
       })
       .catch(reportError(errorMessage))
       .finally(() => {
-        if (reqIdRef.current === myReq) setLoadingMore(false);
+        if (cacheKeyRef.current === myKey) setLoadingMore(false);
       });
   }, [
     fetcher, items.length, pageSize, hasMore, loadingMore,

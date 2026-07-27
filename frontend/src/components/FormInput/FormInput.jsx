@@ -78,7 +78,7 @@ export default function FormInput({
           </button>
         )}
       </div>
-      {errorText && <div id={`${id}-error`} className="form-field-error">{errorText}</div>}
+      {errorText && <div id={`${id}-error`} className="u-mono form-field-error">{errorText}</div>}
     </div>
   );
 }

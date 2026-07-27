@@ -129,11 +129,11 @@ export default function Lightbox({
 
       {meta && (meta.event_name || photographer) && (
         <div className="lb-info">
-          {meta.event_name && <div className="lb-info-title">{meta.event_name}</div>}
+          {meta.event_name && <div className="u-label lb-info-title">{meta.event_name}</div>}
           {photographer && (
             <div className="lb-info-credit">
               <span className="lb-info-cam" aria-hidden="true">📷</span>
-              <span className="lb-info-credit-label">Foto:</span>
+              <span className="u-label lb-info-credit-label">Foto:</span>
               <span className="lb-info-credit-name">{photographer}</span>
             </div>
           )}

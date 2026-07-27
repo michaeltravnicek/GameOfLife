@@ -48,7 +48,7 @@
 .event-page .ev-card-head{padding-bottom:18px;border-bottom:1px dashed var(--alpha-cream-22);margin-bottom:22px}
 
 /* Poster card — homepage lb-card material (photo page → opaque poster). */
-.event-page .ev-card{position:relative;background:#1a0f0a var(--tex-blue) 0 0/var(--tex-size) var(--tex-size) repeat;border:2px solid #1a1a1a;border-bottom:8px solid #1a1a1a;border-radius:14px;padding:26px;overflow:hidden;box-shadow:0 16px 40px rgba(0,0,0,.5)}
+.event-page .ev-card{position:relative;background:var(--color-dark-brown) var(--tex-blue) 0 0/var(--tex-size) var(--tex-size) repeat;border:2px solid var(--color-black);border-bottom:8px solid var(--color-black);border-radius:14px;padding:26px;overflow:hidden;box-shadow:0 16px 40px rgba(0,0,0,.5)}
 
 .event-page .ev-image-pair{display:grid;grid-template-columns:1fr 1fr;gap:28px}
 .event-page .ev-img-section{display:flex;flex-direction:column;gap:14px}
@@ -64,14 +64,6 @@
 .event-page .ev-hint-block{margin-top:8px;font-family:var(--font-body);font-style:italic;font-size:12.5px;line-height:1.5;color:var(--alpha-cream-65);max-width:34ch}
 .event-page .ev-img-actions{display:flex;gap:10px;flex-wrap:wrap}
 
-.event-page .ev-btn{display:inline-flex;align-items:center;gap:8px;border:0;cursor:pointer;font-family:var(--font-body);font-size:12.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;padding:11px 22px;border-radius:var(--radius-pill);transition:.18s;text-decoration:none}
-.event-page .ev-btn.primary{background:var(--color-pink);color:var(--color-white);box-shadow:0 6px 18px var(--alpha-pink-40)}
-.event-page .ev-btn.primary:hover{background:var(--btn-primary-hover);transform:translateY(-1px)}
-.event-page .ev-btn.ghost{background:transparent;color:var(--color-cream-light);border:1.5px dashed var(--alpha-cream-45);padding:9px 20px}
-.event-page .ev-btn.ghost:hover{border-color:var(--color-pink);color:var(--color-pink);border-style:solid}
-.event-page .ev-btn.danger{background:transparent;color:var(--color-pink);border:1.5px dashed var(--alpha-pink-45);padding:9px 20px}
-.event-page .ev-btn.danger:hover{background:var(--alpha-pink-12);border-style:solid}
-.event-page .ev-btn.lg{padding:15px 32px;font-size:14px;letter-spacing:.16em}
 
 .event-page .ev-grid-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
 /* Fields stacked directly in a card (no grid) need the same 18px gap, or the
@@ -84,11 +76,6 @@
 /* Mini-ticket inputs (EditProfile recipe): dark panel + white dashed frame
    floating --frame-gap outside it, drawn as an outline so no wrapper element
    is needed. Focus turns the frame pink. */
-.event-page .ev-input,.event-page .ev-textarea{width:100%;background:rgba(0,0,0,.28);border:none;border-radius:9px;padding:13px 16px;font-family:var(--font-body);font-size:15px;color:var(--color-white);outline:2px dashed rgba(255,255,255,.85);outline-offset:var(--frame-gap);transition:outline-color .18s,background .18s;letter-spacing:.01em}
-.event-page .ev-input:hover,.event-page .ev-textarea:hover{outline-color:#fff}
-.event-page .ev-input:focus,.event-page .ev-textarea:focus{outline-color:var(--color-pink);background:rgba(0,0,0,.4)}
-.event-page .ev-input::placeholder,.event-page .ev-textarea::placeholder{color:var(--alpha-cream-45);font-style:italic}
-.event-page .ev-textarea{min-height:130px;resize:vertical;line-height:1.55;font-style:italic}
 
 .event-page .ev-toggle-row{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;padding:16px 0;border-bottom:1px dashed var(--alpha-cream-10)}
 .event-page .ev-toggle-row:last-child{border-bottom:0}
@@ -147,14 +134,12 @@
 
 /* ── DANGER ZONE (delete event) — mirrors EditProfile's "Konec hry" ── */
 .event-page .ev-danger-card{border-color:var(--alpha-pink-45)}
-.event-page .ev-btn.danger{background:transparent;color:var(--color-pink);border:1.5px dashed var(--alpha-pink-45);padding:9px 20px}
-.event-page .ev-btn.danger:hover{background:var(--alpha-pink-12);border-style:solid}
 
 /* Delete confirm modal (shared <Modal> shell; eyebrow → title → text → buttons). */
-.ev-modal-eyebrow{font-family:var(--font-mono);font-style:italic;font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--alpha-cream-55, rgba(255,241,212,.55));margin-bottom:14px}
+.ev-modal-eyebrow{font-family:var(--font-mono);font-style:italic;font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--alpha-cream-55, var(--alpha-cream-55));margin-bottom:14px}
 .ev-modal-title{font-family:var(--font-display);font-size:clamp(28px,3.6vw,38px);line-height:1.05;color:var(--color-heading);text-transform:uppercase;letter-spacing:.02em;margin:0 0 16px}
-.ev-modal-title .pink{color:var(--color-pink, #e15463)}
-.ev-modal-text{font-family:var(--font-body);font-size:14px;line-height:1.55;color:var(--alpha-cream-65, rgba(255,241,212,.65));max-width:42ch;margin:0 auto 26px}
+.ev-modal-title .pink{color:var(--color-pink)}
+.ev-modal-text{font-family:var(--font-body);font-size:14px;line-height:1.55;color:var(--alpha-cream-65, var(--alpha-cream-65));max-width:42ch;margin:0 auto 26px}
 .ev-modal-buttons{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
 @media(max-width:520px){
   .ev-modal-buttons{flex-direction:column}

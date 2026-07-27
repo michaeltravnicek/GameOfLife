@@ -145,7 +145,7 @@ export default function Hero({
       <div className="gol-hero__overlay" />
 
       <div className="gol-hero__inner" ref={innerRef}>
-        <div className="gol-hero__eyebrow">{eyebrow}</div>
+        <div className="u-label gol-hero__eyebrow">{eyebrow}</div>
         <h1 className="gol-hero__title">{slide?.name || fallbackTitle}</h1>
         {slide?.date && <p className="gol-hero__date">{fmtDate(slide.date)}</p>}
       </div>

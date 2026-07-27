@@ -123,7 +123,7 @@ export default function EditEventPage() {
             </div>
             <div className="ev-toggle-row">
               <div className="ev-txt"><h4>Smazat akci</h4><p>Hráčům se odečtou body získané na této akci.</p></div>
-              <button type="button" className="ev-btn danger" onClick={() => setDeleteOpen(true)}>Smazat akci</button>
+              <button type="button" className="gol-btn danger" onClick={() => setDeleteOpen(true)}>Smazat akci</button>
             </div>
           </div>
         </section>
@@ -143,8 +143,8 @@ export default function EditEventPage() {
         <div className="ev-commit-label">— Hotovo? —</div>
         <h2>Uložit změny</h2>
         <div className="ev-commit-row">
-          <Link className="ev-btn ghost" to={`/events/${slug}`}>Zrušit</Link>
-          <button type="button" className="ev-btn primary lg" onClick={handleSave} disabled={saving}>{saving ? 'Ukládám…' : 'Uložit akci'}</button>
+          <Link className="gol-btn ghost" to={`/events/${slug}`}>Zrušit</Link>
+          <button type="button" className="gol-btn primary lg" onClick={handleSave} disabled={saving}>{saving ? 'Ukládám…' : 'Uložit akci'}</button>
         </div>
         <div className="ev-commit-note">{saveError ? `— Chyba: ${saveError} —` : (dirty ? '— Neuložené změny —' : '— Vše uloženo —')}</div>
       </section>
@@ -154,8 +154,8 @@ export default function EditEventPage() {
         <div className="ev-savebar-inner">
           <div className="ev-status"><span className="ev-pulse" />{saveError || 'Neuložené změny'}</div>
           <div className="ev-savebar-actions">
-            <Link className="ev-btn ghost" to={`/events/${slug}`}>Zrušit</Link>
-            <button type="button" className="ev-btn primary" onClick={handleSave} disabled={saving}>{saving ? 'Ukládám…' : 'Uložit změny'}</button>
+            <Link className="gol-btn ghost" to={`/events/${slug}`}>Zrušit</Link>
+            <button type="button" className="gol-btn primary" onClick={handleSave} disabled={saving}>{saving ? 'Ukládám…' : 'Uložit změny'}</button>
           </div>
         </div>
       </div>

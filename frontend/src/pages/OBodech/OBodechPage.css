@@ -42,7 +42,7 @@
 .obodech-page .source-text{font-family:var(--font-body);font-size:13.5px;line-height:1.6;color:var(--alpha-dark-text-78)}
 .obodech-page .source-pts{position:absolute;top:18px;right:14px;font-family:var(--font-display);font-size:18px;letter-spacing:.04em;padding:6px 14px 3px;background:var(--color-pink);color:var(--color-white);border-radius:var(--radius-pill);box-shadow:0 4px 12px var(--alpha-pink-45);transform:rotate(4deg)}
 
-.obodech-page .examples{position:relative;margin-top:22px;padding:10px;background:#1a0f0a url('/img/Grain_texture_blue.webp') 0 0/var(--tex-size) var(--tex-size) repeat;border:1.5px solid var(--alpha-white-10);border-radius:14px;box-shadow:0 20px 44px var(--alpha-black-50);overflow:hidden}
+.obodech-page .examples{position:relative;margin-top:22px;padding:10px;background:var(--color-dark-brown) url('/img/Grain_texture_blue.webp') 0 0/var(--tex-size) var(--tex-size) repeat;border:1.5px solid var(--alpha-white-10);border-radius:14px;box-shadow:0 20px 44px var(--alpha-black-50);overflow:hidden}
 .obodech-page .examples::before{content:'';position:absolute;inset:6px;border:1.5px dashed var(--alpha-cream-22);border-radius:10px;pointer-events:none}
 .obodech-page .examples-inner{position:relative;z-index:1;padding:8px 6px}
 .obodech-page .ex-head,.obodech-page .ex-row{display:grid;grid-template-columns:1fr 90px 110px 110px;align-items:center;gap:14px;padding:13px 18px}
@@ -63,7 +63,7 @@
 
 .obodech-page .rewards{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
 /* Poster cards — photo page, opaque print artifacts (homepage lb-card). */
-.obodech-page .reward{position:relative;background:#1a0f0a var(--tex-blue) 0 0/var(--tex-size) var(--tex-size) repeat;color:var(--color-cream-light);border:2px solid #1a1a1a;border-bottom:8px solid #1a1a1a;border-radius:14px;padding:26px 24px 24px;box-shadow:0 16px 40px rgba(0,0,0,.5);transition:transform .25s,border-color .25s}
+.obodech-page .reward{position:relative;background:var(--color-dark-brown) var(--tex-blue) 0 0/var(--tex-size) var(--tex-size) repeat;color:var(--color-cream-light);border:2px solid var(--color-black);border-bottom:8px solid var(--color-black);border-radius:14px;padding:26px 24px 24px;box-shadow:0 16px 40px rgba(0,0,0,.5);transition:transform .25s,border-color .25s}
 .obodech-page .reward:hover{transform:translateY(-3px);border-color:var(--color-pink)}
 .obodech-page .soon-stamp{position:absolute;top:14px;right:14px;font-family:var(--font-display);font-size:14px;letter-spacing:.18em;padding:5px 12px 2px;background:var(--color-gold);color:var(--color-dark-brown);border:2px dashed var(--color-dark-brown);border-radius:6px;text-transform:uppercase;transform:rotate(4deg);box-shadow:0 4px 10px var(--alpha-black-35)}
 .obodech-page .reward-ico{width:56px;height:56px;border-radius:50%;background:var(--alpha-pink-16);border:2px dashed var(--alpha-pink-45);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:26px;color:var(--color-pink);margin-bottom:18px}

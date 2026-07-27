@@ -214,23 +214,23 @@ export default function EditProfilePage() {
             <div className="ep-grid-2">
               <div className="ep-field">
                 <label htmlFor="f-name">Jméno</label>
-                <input className="ep-input" id="f-name" value={form.first_name} onChange={setField('first_name')} />
+                <input className="gol-input" id="f-name" value={form.first_name} onChange={setField('first_name')} />
               </div>
               <div className="ep-field">
                 <label htmlFor="f-surname">Příjmení</label>
-                <input className="ep-input" id="f-surname" value={form.last_name} onChange={setField('last_name')} />
+                <input className="gol-input" id="f-surname" value={form.last_name} onChange={setField('last_name')} />
               </div>
               <div className="ep-field">
                 <label htmlFor="f-handle">Přezdívka <span className="ep-hint">jen písmena, číslice a _</span></label>
-                <div className="ep-input-prefix"><span className="ep-pre">@</span><input className="ep-input" id="f-handle" value={form.username} onChange={setField('username')} autoComplete="username" /></div>
+                <div className="gol-input-prefix"><span className="ep-pre">@</span><input className="gol-input" id="f-handle" value={form.username} onChange={setField('username')} autoComplete="username" /></div>
               </div>
               <div className="ep-field">
                 <label htmlFor="f-city">Město</label>
-                <input className="ep-input" id="f-city" value={form.city} onChange={setField('city')} placeholder="Brno, CZ" />
+                <input className="gol-input" id="f-city" value={form.city} onChange={setField('city')} placeholder="Brno, CZ" />
               </div>
               <div className="ep-field">
                 <label htmlFor="f-email">E-mail <span className="ep-hint">jen pro organizátory</span></label>
-                <input className="ep-input" id="f-email" type="email" value={form.email} onChange={setField('email')} />
+                <input className="gol-input" id="f-email" type="email" value={form.email} onChange={setField('email')} />
               </div>
             </div>
           </div>
@@ -256,10 +256,10 @@ export default function EditProfilePage() {
               <div className="ep-h">{fullName || 'Tvoje jméno'}</div>
               <div className="ep-s">JPG nebo PNG, alespoň 400×400 px. Co tam dáš — z toho ti budou ostatní vařit kávu.</div>
               <div className="ep-avatar-actions">
-                <label className="ep-btn primary" htmlFor="avatar-input">Nahrát fotku
+                <label className="gol-btn primary" htmlFor="avatar-input">Nahrát fotku
                   <input type="file" id="avatar-input" accept="image/*" hidden onChange={handleAvatar} />
                 </label>
-                <button type="button" className="ep-btn ghost" onClick={removeAvatar}>Odebrat</button>
+                <button type="button" className="gol-btn ghost" onClick={removeAvatar}>Odebrat</button>
               </div>
             </div>
           </div>
@@ -277,7 +277,7 @@ export default function EditProfilePage() {
             <div className="ep-field ep-full">
               <label htmlFor="f-bio">Bio</label>
               <textarea
-                className="ep-textarea"
+                className="gol-textarea"
                 id="f-bio"
                 maxLength={BIO_MAX}
                 placeholder="Karaoke v sobotu, deskovky ve středu…"
@@ -319,7 +319,7 @@ export default function EditProfilePage() {
                   <span className="ep-ico">{s.ico}</span>
                   <div className="ep-combo">
                     <span className="ep-pre">{s.pre}</span>
-                    <input className="ep-input" value={socials[s.key]} onChange={setSocial(s.key)} placeholder={s.placeholder} />
+                    <input className="gol-input" value={socials[s.key]} onChange={setSocial(s.key)} placeholder={s.placeholder} />
                   </div>
                 </div>
               ))}
@@ -362,7 +362,7 @@ export default function EditProfilePage() {
             </div>
             <div className="ep-toggle-row">
               <div className="ep-txt"><h4>Smazat účet</h4><p>Trvalé. Všechny tvoje akce, body i fotky budou ztraceny v čase, jako slzy v dešti.</p></div>
-              <button type="button" className="ep-btn danger" onClick={() => setDeleteOpen(true)}>Smazat účet</button>
+              <button type="button" className="gol-btn danger" onClick={() => setDeleteOpen(true)}>Smazat účet</button>
             </div>
           </div>
         </section>

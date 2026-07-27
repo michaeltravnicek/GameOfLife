@@ -4,7 +4,7 @@
 
 .feedbacks-page .stage{position:fixed;inset:0;bottom:auto;height:100vh;height:100lvh;z-index:-2;background:url('/img/gal2-mobile.webp') center 28%/cover no-repeat;filter:saturate(.7) contrast(1.02);transform:scale(1.05)}
 @media(min-width:769px){.feedbacks-page .stage{background-image:url('/img/gal2-desktop.webp')}}
-.feedbacks-page .stage::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 15%,rgba(45,42,142,.12) 0%,transparent 55%),linear-gradient(180deg,rgba(45,42,142,.10) 0%,rgba(26,15,10,.62) 50%,rgba(26,15,10,.84) 100%)}
+.feedbacks-page .stage::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 15%,rgba(45,42,142,.12) 0%,transparent 55%),linear-gradient(180deg,rgba(45,42,142,.10) 0%,var(--alpha-dark-62) 50%,rgba(26,15,10,.84) 100%)}
 .feedbacks-page .grain{position:fixed;inset:0;bottom:auto;height:100vh;height:100lvh;z-index:-1;pointer-events:none;background:url('/img/Grain_texture_blue.webp') 0 0/var(--tex-size) var(--tex-size) repeat;opacity:.08;mix-blend-mode:overlay}
 
 /* ── ENTRANCE ── gentle on-mount fade-up: header first, then the tables. */
@@ -36,7 +36,7 @@
 .fb-event-date{font-family:var(--font-mono);font-style:italic;font-size:var(--text-xs);letter-spacing:.14em;text-transform:uppercase;color:var(--alpha-cream-55);margin-top:4px}
 
 /* StatList cells. */
-.fb-player{font-family:var(--font-hv);font-size:14px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.fb-player{font-family:var(--font-hv);font-size:14px;color:var(--color-white);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .fb-stars{color:var(--color-gold);letter-spacing:2px;text-align:center;font-size:14px}
 .fb-comment{font-family:var(--font-body);font-size:13.5px;line-height:1.5;color:var(--alpha-cream-78)}
 .fb-muted{color:var(--alpha-cream-45)}
@@ -50,5 +50,5 @@
   .fb-avg{text-align:left}
   .fb-group .stat-row{grid-template-columns:1fr 96px!important;row-gap:6px}
   /* Comment drops to a full-width second line on narrow screens. */
-  .fb-comment{grid-column:1 / -1;border-top:1px dashed rgba(255,241,212,.10);padding-top:8px}
+  .fb-comment{grid-column:1 / -1;border-top:1px dashed var(--alpha-cream-10);padding-top:8px}
 }

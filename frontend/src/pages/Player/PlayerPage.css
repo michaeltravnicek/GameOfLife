@@ -9,7 +9,7 @@
 
 /* Unclaimed avatar: no pink glow, muted dashed ring — the outline of a
    player who hasn't claimed their spot yet. */
-.profile-page.player-anon .poster-avatar{background:rgba(26,15,10,.6);border-color:rgba(255,241,212,.35);color:rgba(255,241,212,.7)}
+.profile-page.player-anon .poster-avatar{background:var(--alpha-dark-60);border-color:rgba(255,241,212,.35);color:var(--alpha-cream-70)}
 
 .profile-page.player-anon .claim-note{font-family:var(--font-body);font-style:italic;font-size:13px;color:rgba(255,241,212,.6);align-self:center}
 

@@ -1,7 +1,11 @@
 import axios from 'axios';
 
-function readCookie(name) {
-  const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+// Hoisted: this runs on every unsafe request, and rebuilding the RegExp each
+// call re-compiles the same pattern for nothing.
+const CSRF_COOKIE_RE = /(^| )csrftoken=([^;]+)/;
+
+function readCsrfCookie() {
+  const match = document.cookie.match(CSRF_COOKIE_RE);
   return match ? decodeURIComponent(match[2]) : null;
 }
 
@@ -24,7 +28,7 @@ api.interceptors.request.use((config) => {
   // xsrfCookieName fallback isn't enough (e.g., cross-origin in dev).
   const method = (config.method || 'get').toLowerCase();
   if (['post', 'put', 'patch', 'delete'].includes(method)) {
-    const token = readCookie('csrftoken');
+    const token = readCsrfCookie();
     if (token) config.headers['X-CSRFToken'] = token;
   }
   return config;

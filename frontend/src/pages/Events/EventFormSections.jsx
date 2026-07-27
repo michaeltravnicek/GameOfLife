@@ -40,15 +40,15 @@ export default function EventFormSections({
           <div className="ev-grid-2">
             <div className="ev-field">
               <label htmlFor="f-name">Název akce</label>
-              <input className="ev-input" id="f-name" value={form.name} onChange={setField('name')} placeholder="Bikepacking" />
+              <input className="gol-input" id="f-name" value={form.name} onChange={setField('name')} placeholder="Bikepacking" />
             </div>
             <div className="ev-field">
               <label htmlFor="f-place">Místo</label>
-              <input className="ev-input" id="f-place" value={form.place} onChange={setField('place')} placeholder="Brno" />
+              <input className="gol-input" id="f-place" value={form.place} onChange={setField('place')} placeholder="Brno" />
             </div>
             <div className="ev-field ev-full">
               <label htmlFor="f-desc">Popis</label>
-              <textarea className="ev-textarea" id="f-desc" placeholder="Podrobný popis akce…" value={form.description} onChange={setField('description')} />
+              <textarea className="gol-textarea" id="f-desc" placeholder="Podrobný popis akce…" value={form.description} onChange={setField('description')} />
             </div>
           </div>
         </div>
@@ -66,23 +66,23 @@ export default function EventFormSections({
           <div className="ev-grid-2">
             <div className="ev-field">
               <label htmlFor="f-date">Začátek akce <span className="ev-hint">nepovinné</span></label>
-              <input className="ev-input" id="f-date" type="datetime-local" value={form.date} onChange={setField('date')} />
+              <input className="gol-input" id="f-date" type="datetime-local" value={form.date} onChange={setField('date')} />
             </div>
             <div className="ev-field">
               <label htmlFor="f-end-date">Konec check-in okna <span className="ev-hint">nepovinné · jinak +4 h</span></label>
-              <input className="ev-input" id="f-end-date" type="datetime-local" value={form.end_date} onChange={setField('end_date')} />
+              <input className="gol-input" id="f-end-date" type="datetime-local" value={form.end_date} onChange={setField('end_date')} />
             </div>
             <div className="ev-field">
               <label htmlFor="f-points">Body</label>
-              <input className="ev-input" id="f-points" type="number" value={form.points} onChange={setField('points')} placeholder="10" />
+              <input className="gol-input" id="f-points" type="number" value={form.points} onChange={setField('points')} placeholder="10" />
             </div>
             <div className="ev-field">
               <label htmlFor="f-capacity">Kapacita <span className="ev-hint">nepovinné</span></label>
-              <input className="ev-input" id="f-capacity" type="number" value={form.capacity} onChange={setField('capacity')} placeholder="30" />
+              <input className="gol-input" id="f-capacity" type="number" value={form.capacity} onChange={setField('capacity')} placeholder="30" />
             </div>
             <div className="ev-field">
               <label htmlFor="f-checkin-radius">Check-in poloměr (m)</label>
-              <input className="ev-input" id="f-checkin-radius" type="number" value={form.checkin_radius} onChange={setField('checkin_radius')} />
+              <input className="gol-input" id="f-checkin-radius" type="number" value={form.checkin_radius} onChange={setField('checkin_radius')} />
             </div>
           </div>
           <div className="ev-toggle-row">
@@ -143,10 +143,10 @@ export default function EventFormSections({
                 style={poster.preview ? { backgroundImage: `url(${poster.preview})` } : undefined}
               />
               <div className="ev-img-actions">
-                <label className="ev-btn primary" htmlFor="image-input">Nahrát obrázek
+                <label className="gol-btn primary" htmlFor="image-input">Nahrát obrázek
                   <input type="file" id="image-input" accept="image/*" hidden onChange={poster.onSelect} />
                 </label>
-                {poster.preview && <button type="button" className="ev-btn ghost" onClick={poster.clear}>Odebrat</button>}
+                {poster.preview && <button type="button" className="gol-btn ghost" onClick={poster.clear}>Odebrat</button>}
               </div>
             </div>
             <div className="ev-img-section">
@@ -167,7 +167,7 @@ export default function EventFormSections({
               <div className="ev-field">
                 <label htmlFor="f-badge">Odznak akce</label>
                 <select
-                  className="ev-input"
+                  className="gol-input"
                   id="f-badge"
                   value={form.badge ?? ''}
                   onChange={(e) => { setForm((f) => ({ ...f, badge: e.target.value })); markDirty(); }}
@@ -212,15 +212,15 @@ export default function EventFormSections({
           </div>
           <div className="ev-field ev-full">
             <label htmlFor="f-rules">Pravidla</label>
-            <textarea className="ev-textarea" id="f-rules" placeholder="Každé pravidlo na nový řádek…" value={form.rules} onChange={setField('rules')} />
+            <textarea className="gol-textarea" id="f-rules" placeholder="Každé pravidlo na nový řádek…" value={form.rules} onChange={setField('rules')} />
           </div>
           <div className="ev-field ev-full">
             <label htmlFor="f-survey">URL dotazníku (Google Forms)</label>
-            <input className="ev-input" id="f-survey" type="url" placeholder="https://forms.google.com/…" value={form.survey_url} onChange={setField('survey_url')} />
+            <input className="gol-input" id="f-survey" type="url" placeholder="https://forms.google.com/…" value={form.survey_url} onChange={setField('survey_url')} />
           </div>
           <div className="ev-field ev-full">
             <label htmlFor="f-whatsapp">Odkaz na WhatsApp skupinu <span className="ev-hint">nepovinné · nabídne se po přihlášení</span></label>
-            <input className="ev-input" id="f-whatsapp" type="url" placeholder="https://chat.whatsapp.com/…" value={form.whatsapp_url} onChange={setField('whatsapp_url')} />
+            <input className="gol-input" id="f-whatsapp" type="url" placeholder="https://chat.whatsapp.com/…" value={form.whatsapp_url} onChange={setField('whatsapp_url')} />
           </div>
         </div>
       </section>

@@ -57,7 +57,7 @@ export default function PillTabs({ tabs, active, onChange, className = '' }) {
           onClick={() => onChange(t.key)}
         >
           {t.label}
-          {t.badge != null && <span className="pilltabs-badge">{t.badge}</span>}
+          {t.badge != null && <span className="u-mono pilltabs-badge">{t.badge}</span>}
         </button>
       ))}
     </div>

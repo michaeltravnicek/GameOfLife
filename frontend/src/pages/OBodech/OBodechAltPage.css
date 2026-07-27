@@ -28,7 +28,7 @@
 
 /* ── Sources — cream event-ticket cards (evcard-light recipe) ── */
 .obodechalt-page .sources{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
-.obodechalt-page .source{position:relative;background:#fff1d4 var(--tex-light) 0 0/var(--tex-size) var(--tex-size) repeat;color:var(--color-dark-brown);border-radius:16px;padding:26px 24px 24px;box-shadow:0 12px 28px rgba(0,0,0,.22),0 0 0 1.5px rgba(26,26,26,.92);transition:transform .25s}
+.obodechalt-page .source{position:relative;background:var(--color-cream-light) var(--tex-light) 0 0/var(--tex-size) var(--tex-size) repeat;color:var(--color-dark-brown);border-radius:16px;padding:26px 24px 24px;box-shadow:0 12px 28px rgba(0,0,0,.22),0 0 0 1.5px rgba(26,26,26,.92);transition:transform .25s}
 .obodechalt-page .source::before{content:'';position:absolute;inset:6px;border:1.5px dashed rgba(26,26,26,.42);border-radius:11px;pointer-events:none;z-index:2}
 .obodechalt-page .source::after{content:'';position:absolute;inset:0;background:rgba(255,253,253,.22);border-radius:16px;pointer-events:none;z-index:0}
 .obodechalt-page .source:hover{transform:translateY(-3px)}
@@ -67,7 +67,7 @@
 .obodechalt-page .pb-tint{position:absolute;inset:0;background:linear-gradient(180deg,rgba(45,42,142,.12) 0%,rgba(26,15,10,.48) 100%)}
 .obodechalt-page .pb-inner{position:relative;z-index:2;max-width:900px;margin:0 auto}
 .obodechalt-page .pb-eyebrow{font-family:var(--font-mono);font-style:italic;font-size:12px;letter-spacing:.3em;text-transform:uppercase;color:var(--color-gold);margin-bottom:14px;text-shadow:0 2px 10px rgba(0,0,0,.6)}
-.obodechalt-page .pb-line{font-family:var(--font-display);font-weight:400;font-size:clamp(40px,6vw,76px);letter-spacing:.03em;line-height:.95;color:#fff;text-transform:uppercase;text-shadow:0 6px 32px rgba(0,0,0,.55)}
+.obodechalt-page .pb-line{font-family:var(--font-display);font-weight:400;font-size:clamp(40px,6vw,76px);letter-spacing:.03em;line-height:.95;color:var(--color-white);text-transform:uppercase;text-shadow:0 6px 32px rgba(0,0,0,.55)}
 
 /* ── Rewards — dark ticket cards ── */
 .obodechalt-page .rewards{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}

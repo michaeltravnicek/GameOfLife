@@ -8,9 +8,9 @@
 /* Fixed photo backdrop behind the content, mirrored from the auth poster stage.
    The page element itself stays transparent so it can't paint over the fixed
    stage (which sits at a negative z-index). */
-.privacy-page .privacy-stage{position:fixed;inset:0;bottom:auto;height:100vh;height:100lvh;z-index:-1;background:#1a0f0a url('/img/gal12-mobile.webp') center 30%/cover no-repeat;filter:saturate(.8)}
+.privacy-page .privacy-stage{position:fixed;inset:0;bottom:auto;height:100vh;height:100lvh;z-index:-1;background:var(--color-dark-brown) url('/img/gal12-mobile.webp') center 30%/cover no-repeat;filter:saturate(.8)}
 @media(min-width:769px){.privacy-page .privacy-stage{background-image:url('/img/gal12-desktop.webp')}}
-.privacy-page .privacy-stage::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(26,15,10,.42) 0%,rgba(26,15,10,.6) 100%)}
+.privacy-page .privacy-stage::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(26,15,10,.42) 0%,var(--alpha-dark-60) 100%)}
 
 .privacy-page .privacy-container{position:relative;z-index:2;max-width:820px;margin:0 auto;padding:120px 24px 72px}
 
@@ -27,7 +27,7 @@
 .privacy-page .privacy-meta{font-family:var(--font-mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.6)}
 
 /* ── BODY SLAB ── */
-.privacy-page .privacy-body{background:#1a0f0a var(--tex-blue) 0 0/var(--tex-size) var(--tex-size) repeat;border:2px solid #1a1a1a;border-bottom:8px solid #1a1a1a;border-radius:14px;box-shadow:0 16px 40px rgba(0,0,0,.5);padding:40px 44px 44px}
+.privacy-page .privacy-body{background:var(--color-dark-brown) var(--tex-blue) 0 0/var(--tex-size) var(--tex-size) repeat;border:2px solid var(--color-black);border-bottom:8px solid var(--color-black);border-radius:14px;box-shadow:0 16px 40px rgba(0,0,0,.5);padding:40px 44px 44px}
 @media(max-width:640px){.privacy-page .privacy-body{padding:28px 20px 32px}.privacy-page .privacy-container{padding:96px 16px 56px}}
 
 .privacy-page .privacy-body h2{font-family:var(--font-display);font-size:clamp(24px,3.4vw,32px);line-height:1.1;letter-spacing:.02em;text-transform:uppercase;font-weight:400;color:var(--color-heading);margin:34px 0 12px;padding-top:20px;border-top:1px dashed rgba(255,255,255,.22)}
@@ -48,7 +48,7 @@
 /* ── TABLES — must scroll inside themselves, never widen the page ── */
 .privacy-page .privacy-table{display:block;overflow-x:auto;width:100%;border-collapse:collapse;margin:0 0 16px;font-size:14px}
 .privacy-page .privacy-table th{text-align:left;font-family:var(--font-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-gold);padding:8px 14px 8px 0;border-bottom:1px solid rgba(255,255,255,.28);white-space:nowrap}
-.privacy-page .privacy-table td{padding:9px 14px 9px 0;border-bottom:1px solid rgba(255,255,255,.10);color:rgba(255,255,255,.84);line-height:1.5;vertical-align:top}
+.privacy-page .privacy-table td{padding:9px 14px 9px 0;border-bottom:1px solid var(--alpha-white-10);color:rgba(255,255,255,.84);line-height:1.5;vertical-align:top}
 .privacy-page .privacy-table tr:last-child td{border-bottom:none}
 
 /* ── FOOT ── */

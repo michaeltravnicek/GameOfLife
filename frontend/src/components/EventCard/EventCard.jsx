@@ -62,7 +62,7 @@ function LightCard({ event }) {
           <div className="evcard-foot-tags">
             <span className="evcard-pts"><span className="ev-emoji">🏆</span>+{event.points} pts</span>
             {event.category?.name && <span className="evcard-cat">{event.category.name}</span>}
-            <span className={`evcard-status${event.is_past ? ' done' : ''}`}>
+            <span className={`u-label evcard-status${event.is_past ? ' done' : ''}`}>
               {event.is_past ? 'Proběhlo' : 'Akce'}
             </span>
           </div>

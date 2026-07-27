@@ -133,7 +133,7 @@ export default function Nav() {
               {user.photo ? <img src={user.photo} alt={displayName} /> : initials(displayName)}
             </button>
             <div className={`nav-user-menu${userMenuOpen ? ' open' : ''}`} role="menu">
-              <div className="nav-user-name">{displayName}</div>
+              <div className="u-label nav-user-name">{displayName}</div>
               <Link className="nav-user-item" role="menuitem" to={profileHref}>Profil</Link>
               <button
                 type="button"
@@ -150,7 +150,7 @@ export default function Nav() {
 
       {/* Full-width mobile dropdown — same popup style as the avatar menu. */}
       <div className={`nav-drop${menuOpen ? ' open' : ''}`} role="menu">
-        {user && <div className="nav-drop-name">{displayName}</div>}
+        {user && <div className="u-label nav-drop-name">{displayName}</div>}
         {dropItem('/', 'Domů', 'home')}
         {dropItem('/events', 'Eventy', 'events')}
         {dropItem('/galerie', 'Galerie', 'gallery')}

@@ -20,6 +20,7 @@ export default function Avatar({
   style,
 }) {
   const classes = [
+    'u-mono',
     'avatar',
     `avatar-${size}`,
     rank ? `avatar-${rank}` : '',

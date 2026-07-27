@@ -2,7 +2,7 @@
    animation so every page matches the leaderboard reference. */
 .page-hero{position:relative;z-index:2;max-width:1100px;margin:0 auto;padding:148px 24px 16px;text-align:center}
 
-.page-hero-eyebrow{font-family:var(--font-mono);font-style:italic;font-size:20px;letter-spacing:.3em;text-transform:uppercase;color:var(--color-pink);margin-bottom:10px;display:inline-flex;align-items:center;gap:10px}
+.page-hero-eyebrow{font-size:20px;letter-spacing:.3em;color:var(--color-pink);margin-bottom:10px;display:inline-flex;align-items:center;gap:10px}
 .page-hero-eyebrow::before,.page-hero-eyebrow::after{content:'✦';font-size:13px;opacity:.9}
 
 .page-hero-title{font-family:var(--font-display);font-weight:400;font-size:clamp(70px,10vw,140px);line-height:.92;color:var(--color-heading);text-transform:uppercase;letter-spacing:.03em;text-shadow:0 6px 34px var(--alpha-black-60)}

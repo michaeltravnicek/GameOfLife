@@ -2,7 +2,6 @@ import { lazy, Suspense, useEffect, useRef } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import Nav from './components/Nav/Nav';
 import Footer from './components/Footer/Footer';
-import NativeBridge from './components/NativeBridge/NativeBridge';
 
 // Eager: only the home page. Everything else is split into its own chunk
 // and downloaded on-demand the first time the route is visited.
@@ -69,7 +68,6 @@ function RouteFallback() {
 export default function App() {
   return (
     <>
-      <NativeBridge />
       <ScrollToTop />
       <Suspense fallback={<RouteFallback />}>
         <Routes>

@@ -93,7 +93,7 @@ export default function EventLocationMap({
         {position && <FlyTo position={position} />}
       </MapContainer>
       {interactive && !hasMarker && (
-        <div className="elm-hint">Klikni na mapu pro výběr místa.</div>
+        <div className="u-mono elm-hint">Klikni na mapu pro výběr místa.</div>
       )}
     </div>
   );

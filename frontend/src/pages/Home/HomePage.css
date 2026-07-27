@@ -26,13 +26,13 @@
 .home-page .lb-title{font-family:var(--font-leaderboard);font-size:clamp(48px,3.6vw,48px);letter-spacing:.05em;text-align:center;color:var(--color-heading);text-transform:uppercase;margin-bottom:22px;display:flex;justify-content:center;align-items:center;gap:14px}
 .home-page .lb-title .star{color:var(--color-pink);font-size:.7em}
 .home-page .lb-title .lb-trophy{font-size:.78em;line-height:1}
-.home-page .lb-card{background:#1a0f0a var(--tex-blue) 0 0/var(--tex-size) var(--tex-size) repeat;border:2px solid #1a1a1a;border-bottom:8px solid #1a1a1a;border-radius:14px;overflow:hidden;padding-bottom:12px;box-shadow:0 16px 40px rgba(0,0,0,.5)}
-.home-page .lb-head{display:grid;grid-template-columns:52px 1fr 52px;align-items:center;gap:14px;padding:9px 24px;font-family:var(--font-body);font-style:italic;font-weight:600;font-size:18px;letter-spacing:.02em;text-transform:none;background-color:var(--color-cream-light);color:#1a1a1a;border-bottom:2px solid #1a1a1a}
+.home-page .lb-card{background:var(--color-dark-brown) var(--tex-blue) 0 0/var(--tex-size) var(--tex-size) repeat;border:2px solid var(--color-black);border-bottom:8px solid var(--color-black);border-radius:14px;overflow:hidden;padding-bottom:12px;box-shadow:0 16px 40px rgba(0,0,0,.5)}
+.home-page .lb-head{display:grid;grid-template-columns:52px 1fr 52px;align-items:center;gap:14px;padding:9px 24px;font-family:var(--font-body);font-style:italic;font-weight:600;font-size:18px;letter-spacing:.02em;text-transform:none;background-color:var(--color-cream-light);color:var(--color-black);border-bottom:2px solid var(--color-black)}
 .home-page .lb-head>div:first-child{text-align:center}
 .home-page .lb-head>div:nth-child(2){padding-left:16px}
 .home-page .lb-head-pts{text-align:center}
 .home-page .lb-cta{text-align:center;margin-top:28px}
-.home-page .lb-link{font-family:var(--font-hv);font-weight:300;font-style:italic;font-size:12px;color:rgba(255,255,255,.65);text-decoration:none;border-bottom:1px dashed rgba(255,255,255,.45);padding-bottom:2px;transition:color .2s}
+.home-page .lb-link{font-family:var(--font-hv);font-weight:300;font-style:italic;font-size:12px;color:rgba(255,255,255,.65);text-decoration:none;border-bottom:1px dashed var(--alpha-white-45);padding-bottom:2px;transition:color .2s}
 .home-page .lb-link:hover{color:rgba(255,255,255,.9)}
 
 /* ── ABOUT ── */
@@ -44,15 +44,15 @@
 .home-page .about-content{display:flex;flex-direction:column;gap:14px}
 .home-page .about-eyebrow{font-family:var(--font-mono);font-style:italic;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--color-pink)}
 .home-page .about-heading{font-family:var(--font-display);font-size:clamp(28px,3.6vw,46px);letter-spacing:.03em;line-height:1;color:var(--color-heading);text-transform:uppercase}
-.home-page .about-body{font-family:var(--font-hv);font-weight:300;font-size:14px;line-height:1.78;color:rgba(255,241,212,.78);max-width:520px}
+.home-page .about-body{font-family:var(--font-hv);font-weight:300;font-size:14px;line-height:1.78;color:var(--alpha-cream-78);max-width:520px}
 .home-page .stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;padding-top:24px;margin-top:8px;background:left top/16px 3px repeat-x url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='3'%3E%3Cline x1='1.5' y1='1.5' x2='7.5' y2='1.5' stroke='%23fff1d4' stroke-opacity='0.3' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E")}
 .home-page .stat-item{text-align:center;transition:transform .2s ease}
 .home-page .stat-item:hover{transform:translateY(-3px)}
 .home-page .stat-num{font-family:var(--font-display);font-weight:400;font-size:36px;letter-spacing:.03em;color:var(--color-pink);margin-bottom:4px}
-.home-page .stat-label{font-family:var(--font-body);font-size:11px;color:rgba(255,241,212,.65);text-transform:uppercase;letter-spacing:.1em}
+.home-page .stat-label{font-family:var(--font-body);font-size:11px;color:var(--alpha-cream-65);text-transform:uppercase;letter-spacing:.1em}
 
 /* ── GALLERY ── */
-.home-page .gallery-section{position:relative;overflow:hidden;background:#1a0f0a}
+.home-page .gallery-section{position:relative;overflow:hidden;background:var(--color-dark-brown)}
 .home-page .gallery-section::before{content:'';position:absolute;inset:0;background:url('/img/home-galeriebg.webp') center/cover;filter:blur(4px) brightness(.42) saturate(.65);transform:scale(1.05);z-index:0}
 .home-page .gallery-section > *{position:relative;z-index:1}
 .home-page .gal-header{text-align:center;padding:44px 0 0}

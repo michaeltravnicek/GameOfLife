@@ -13,28 +13,28 @@
 
 .leaderboard-page .controls{position:relative;z-index:2;max-width:880px;margin:32px auto 0;padding:0 24px;display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap}
 .leaderboard-page .controls .search-wrap{flex:1;max-width:290px}
-.leaderboard-page .tabs{display:inline-flex;padding:5px;gap:5px;background:rgba(26,15,10,.62);border:1.5px dashed rgba(255,241,212,.45);border-radius:9999px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.leaderboard-page .tabs{display:inline-flex;padding:5px;gap:5px;background:var(--alpha-dark-62);border:1.5px dashed var(--alpha-cream-45);border-radius:9999px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
 /* Faint grain over the frosted controls so they aren't a flat wash. */
 .leaderboard-page .tabs,.leaderboard-page .lb-help-link,.leaderboard-page .loc{position:relative;isolation:isolate}
 .leaderboard-page .tabs::after,.leaderboard-page .lb-help-link::after,.leaderboard-page .loc::after{content:'';position:absolute;inset:0;border-radius:inherit;background:var(--tex-brown) 0 0/var(--tex-size) var(--tex-size) repeat;opacity:.3;pointer-events:none;z-index:-1}
 .leaderboard-page .tab{font-family:var(--font-hv);font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;padding:9px 20px;border-radius:9999px;cursor:pointer;background:transparent;border:0;color:rgba(255,241,212,.9);transition:all .18s}
-.leaderboard-page .tab:hover{color:#fff}
-.leaderboard-page .tab.on{background:var(--color-pink);color:#fff;box-shadow:0 4px 14px rgba(225,84,99,.45)}
+.leaderboard-page .tab:hover{color:var(--color-white)}
+.leaderboard-page .tab.on{background:var(--color-pink);color:var(--color-white);box-shadow:0 4px 14px var(--alpha-pink-45)}
 .leaderboard-page .search{flex:1;max-width:290px;min-width:180px;position:relative}
-.leaderboard-page .search input{width:100%;padding:11px 18px 11px 40px;font-family:var(--font-hv);font-size:13px;color:var(--color-cream-light);background:linear-gradient(rgba(26,15,10,.62),rgba(26,15,10,.62)),var(--tex-brown) 0 0/var(--tex-size) var(--tex-size) repeat;border:1.5px dashed rgba(255,241,212,.45);border-radius:9999px;outline:none;transition:border-color .18s;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.leaderboard-page .search input{width:100%;padding:11px 18px 11px 40px;font-family:var(--font-hv);font-size:13px;color:var(--color-cream-light);background:linear-gradient(var(--alpha-dark-62),var(--alpha-dark-62)),var(--tex-brown) 0 0/var(--tex-size) var(--tex-size) repeat;border:1.5px dashed var(--alpha-cream-45);border-radius:9999px;outline:none;transition:border-color .18s;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
 .leaderboard-page .search input:focus{border-color:var(--color-pink)}
 .leaderboard-page .search input::placeholder{color:rgba(255,241,212,.75);font-style:italic}
-.leaderboard-page .search::before{content:'⌕';position:absolute;left:16px;top:50%;transform:translateY(-50%);color:rgba(255,241,212,.78);font-size:14px;pointer-events:none}
+.leaderboard-page .search::before{content:'⌕';position:absolute;left:16px;top:50%;transform:translateY(-50%);color:var(--alpha-cream-78);font-size:14px;pointer-events:none}
 .leaderboard-page .lb-search{flex:1;max-width:290px}
-.leaderboard-page .lb-search .search-input{background:linear-gradient(rgba(26,15,10,.62),rgba(26,15,10,.62)),var(--tex-brown) 0 0/var(--tex-size) var(--tex-size) repeat;border-color:rgba(255,241,212,.45);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.leaderboard-page .lb-search .search-input{background:linear-gradient(var(--alpha-dark-62),var(--alpha-dark-62)),var(--tex-brown) 0 0/var(--tex-size) var(--tex-size) repeat;border-color:var(--alpha-cream-45);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
 .leaderboard-page .lb-search .search-input::placeholder{color:rgba(255,241,212,.75)}
-.leaderboard-page .lb-search::before{color:rgba(255,241,212,.78)}
+.leaderboard-page .lb-search::before{color:var(--alpha-cream-78)}
 /* Help affordance — a frosted pill matching the toolbar chrome, but pink-accented
    with a circled "?" badge so it stands out against the photo stage. */
-.leaderboard-page .lb-help-link{display:inline-flex;align-items:center;gap:9px;font-family:var(--font-hv);font-weight:600;font-style:italic;font-size:14px;color:var(--color-cream-light);background:rgba(26,15,10,.62);border:1.5px dashed var(--color-pink);border-radius:9999px;padding:9px 18px;text-decoration:none;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 4px 14px rgba(0,0,0,.28);transition:background .18s,color .18s,border-color .18s,box-shadow .18s}
-.leaderboard-page .lb-help-link::before{content:'?';display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:var(--color-pink);color:#fff;font-style:normal;font-weight:700;font-size:12px;flex:none}
-.leaderboard-page .lb-help-link:hover{background:var(--color-pink);color:#fff;border-color:var(--color-pink);box-shadow:0 6px 18px rgba(225,84,99,.5)}
-.leaderboard-page .lb-help-link:hover::before{background:#fff;color:var(--color-pink)}
+.leaderboard-page .lb-help-link{display:inline-flex;align-items:center;gap:9px;font-family:var(--font-hv);font-weight:600;font-style:italic;font-size:14px;color:var(--color-cream-light);background:var(--alpha-dark-62);border:1.5px dashed var(--color-pink);border-radius:9999px;padding:9px 18px;text-decoration:none;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 4px 14px rgba(0,0,0,.28);transition:background .18s,color .18s,border-color .18s,box-shadow .18s}
+.leaderboard-page .lb-help-link::before{content:'?';display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:var(--color-pink);color:var(--color-white);font-style:normal;font-weight:700;font-size:12px;flex:none}
+.leaderboard-page .lb-help-link:hover{background:var(--color-pink);color:var(--color-white);border-color:var(--color-pink);box-shadow:0 6px 18px rgba(225,84,99,.5)}
+.leaderboard-page .lb-help-link:hover::before{background:var(--color-white);color:var(--color-pink)}
 
 .leaderboard-page .lb-main{position:relative;z-index:2;max-width:880px;margin:0 auto;padding:40px 24px 80px}
 
@@ -54,8 +54,8 @@
 .leaderboard-page .pod.clickable:hover .trophy{transform:scale(1.06) rotate(-3deg)}
 .leaderboard-page .pod .trophy{font-size:52px;line-height:1;margin-bottom:10px;filter:drop-shadow(0 6px 14px rgba(0,0,0,.55));transition:transform .3s}
 .leaderboard-page .pod.p1 .trophy{font-size:68px;filter:drop-shadow(0 0 22px rgba(245,200,66,.55)) drop-shadow(0 6px 14px rgba(0,0,0,.55))}
-.leaderboard-page .pod .ava{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 30% 30%,rgba(225,84,99,.30),transparent 65%),rgba(26,15,10,.65);border:2px dashed rgba(255,241,212,.55);font-family:var(--font-mono);font-style:italic;font-size:16px;font-weight:700;color:var(--color-cream-light);margin-bottom:10px;box-shadow:0 6px 16px rgba(0,0,0,.4)}
-.leaderboard-page .pod.p1 .ava{width:76px;height:76px;font-size:18px;border-color:#f5c842;box-shadow:0 0 0 3px rgba(245,200,66,.14),0 6px 20px rgba(0,0,0,.5)}
+.leaderboard-page .pod .ava{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 30% 30%,rgba(225,84,99,.30),transparent 65%),rgba(26,15,10,.65);border:2px dashed var(--alpha-cream-55);font-family:var(--font-mono);font-style:italic;font-size:16px;font-weight:700;color:var(--color-cream-light);margin-bottom:10px;box-shadow:0 6px 16px rgba(0,0,0,.4)}
+.leaderboard-page .pod.p1 .ava{width:76px;height:76px;font-size:18px;border-color:var(--color-gold);box-shadow:0 0 0 3px rgba(245,200,66,.14),0 6px 20px rgba(0,0,0,.5)}
 .leaderboard-page .pod.p2 .ava{border-color:rgba(210,210,215,.7)}
 .leaderboard-page .pod.p3 .ava{border-color:rgba(205,127,50,.75)}
 /* Name + points follow the o-bodech "credits" typography: mono italic label,
@@ -66,13 +66,13 @@
 .leaderboard-page .pod .pts-u{font-family:var(--font-mono);font-style:italic;font-size:10px;color:rgba(255,241,212,.72);letter-spacing:.16em;margin-left:4px}
 /* Poster pedestal: grain slab with the standard poster border + 3D ledge
    (box-shadow, not a border, so pressing never changes the box height). */
-.leaderboard-page .pod .base{width:100%;position:relative;background:#1a0f0a var(--tex-blue) 0 0/var(--tex-size) var(--tex-size) repeat;border:2px solid #1a1a1a;border-radius:8px;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 0 0 #1a1a1a,0 14px 28px rgba(0,0,0,.5);transition:box-shadow .13s}
-.leaderboard-page .pod.clickable:hover .base{box-shadow:0 0 0 0 #1a1a1a,0 6px 14px rgba(0,0,0,.4)}
+.leaderboard-page .pod .base{width:100%;position:relative;background:var(--color-dark-brown) var(--tex-blue) 0 0/var(--tex-size) var(--tex-size) repeat;border:2px solid var(--color-black);border-radius:8px;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 0 0 var(--color-black),0 14px 28px rgba(0,0,0,.5);transition:box-shadow .13s}
+.leaderboard-page .pod.clickable:hover .base{box-shadow:0 0 0 0 var(--color-black),0 6px 14px rgba(0,0,0,.4)}
 .leaderboard-page .pod .base .rk{font-family:var(--font-display);letter-spacing:.04em;line-height:1}
 .leaderboard-page .pod.p1 .base{height:120px}
 .leaderboard-page .pod.p2 .base{height:86px}
 .leaderboard-page .pod.p3 .base{height:64px}
-.leaderboard-page .pod.p1 .base .rk{font-size:72px;color:#f5c842}
+.leaderboard-page .pod.p1 .base .rk{font-size:72px;color:var(--color-gold)}
 .leaderboard-page .pod.p2 .base .rk{font-size:54px;color:rgba(210,210,215,.85)}
 .leaderboard-page .pod.p3 .base .rk{font-size:42px;color:rgba(205,127,50,.95)}
 
@@ -80,9 +80,9 @@
 .leaderboard-page .list-label::before,.leaderboard-page .list-label::after{content:'';flex:1;height:1px;background:repeating-linear-gradient(90deg,rgba(255,241,212,.3) 0 6px,transparent 6px 12px)}
 /* Poster card — the homepage .lb-card, expanded: opaque blue grain, solid
    black border with a fat bottom edge, pinned onto the living photo. */
-.leaderboard-page .list{position:relative;background:#1a0f0a var(--tex-blue) 0 0/var(--tex-size) var(--tex-size) repeat;border:2px solid #1a1a1a;border-bottom:8px solid #1a1a1a;border-radius:14px;overflow:hidden;box-shadow:0 16px 40px rgba(0,0,0,.5)}
+.leaderboard-page .list{position:relative;background:var(--color-dark-brown) var(--tex-blue) 0 0/var(--tex-size) var(--tex-size) repeat;border:2px solid var(--color-black);border-bottom:8px solid var(--color-black);border-radius:14px;overflow:hidden;box-shadow:0 16px 40px rgba(0,0,0,.5)}
 .leaderboard-page .list-inner{position:relative;z-index:1;padding:10px 8px 14px}
-.leaderboard-page .empty{text-align:center;padding:44px 20px;font-family:var(--font-body);font-style:italic;color:rgba(255,241,212,.55);font-size:14px}
+.leaderboard-page .empty{text-align:center;padding:44px 20px;font-family:var(--font-body);font-style:italic;color:var(--alpha-cream-55);font-size:14px}
 
 /* ── Animations ── (heroFade keyframe is defined in PageHero.css) */
 .leaderboard-page .controls{animation:heroFade .5s ease both .56s}
@@ -176,5 +176,5 @@
 
 /* "Načíst další" — same dashed-pill load-more as the events page. */
 .leaderboard-page .load-more-row{display:flex;justify-content:center;margin-top:26px}
-.leaderboard-page .loc{display:inline-flex;align-items:center;gap:7px;font-family:var(--font-hv);font-weight:300;font-style:italic;font-size:12.5px;letter-spacing:.04em;padding:7px 14px;min-height:30px;border-radius:9999px;cursor:pointer;background:rgba(26,15,10,.45);border:1.5px dashed rgba(255,241,212,.28);color:rgba(255,241,212,.78);transition:all .18s;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
-.leaderboard-page .loc:hover{color:#fff;border-color:rgba(255,241,212,.55)}
+.leaderboard-page .loc{display:inline-flex;align-items:center;gap:7px;font-family:var(--font-hv);font-weight:300;font-style:italic;font-size:12.5px;letter-spacing:.04em;padding:7px 14px;min-height:30px;border-radius:9999px;cursor:pointer;background:rgba(26,15,10,.45);border:1.5px dashed rgba(255,241,212,.28);color:var(--alpha-cream-78);transition:all .18s;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.leaderboard-page .loc:hover{color:var(--color-white);border-color:var(--alpha-cream-55)}

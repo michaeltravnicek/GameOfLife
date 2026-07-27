@@ -21,7 +21,7 @@ export default function PageHero({
 }) {
   return (
     <header className={`page-hero ${className}`.trim()}>
-      {eyebrow && <div className="page-hero-eyebrow">{eyebrow}</div>}
+      {eyebrow && <div className="u-label page-hero-eyebrow">{eyebrow}</div>}
       {title && <h1 className="page-hero-title">{title}</h1>}
       {tagline && <p className="page-hero-tagline">{tagline}</p>}
     </header>
