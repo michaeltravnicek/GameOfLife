@@ -29,24 +29,24 @@ export default function EventFormSections({
   return (
     <>
       {/* 01 · Základy */}
-      <section className="ev-section">
-        <div className="ev-sec-rule" />
-        <div className="ev-card">
-          <div className="ev-card-head">
-            <div className="ev-sec-eyebrow">— 01 · Základy —</div>
-            <h2 className="ev-sec-heading">Jak se <span className="pink">jmenuje.</span></h2>
+      <section className="gol-section">
+        <div className="gol-sec-rule" />
+        <div className="gol-card">
+          <div className="gol-card-head">
+            <div className="gol-sec-eyebrow">— 01 · Základy —</div>
+            <h2 className="gol-sec-heading">Jak se <span className="pink">jmenuje.</span></h2>
             <p className="ev-sec-sub">Základní informace o akci — název, popis a kde se to bude dít.</p>
           </div>
-          <div className="ev-grid-2">
-            <div className="ev-field">
+          <div className="gol-grid-2">
+            <div className="gol-field">
               <label htmlFor="f-name">Název akce</label>
               <input className="gol-input" id="f-name" value={form.name} onChange={setField('name')} placeholder="Bikepacking" />
             </div>
-            <div className="ev-field">
+            <div className="gol-field">
               <label htmlFor="f-place">Místo</label>
               <input className="gol-input" id="f-place" value={form.place} onChange={setField('place')} placeholder="Brno" />
             </div>
-            <div className="ev-field ev-full">
+            <div className="gol-field gol-full">
               <label htmlFor="f-desc">Popis</label>
               <textarea className="gol-textarea" id="f-desc" placeholder="Podrobný popis akce…" value={form.description} onChange={setField('description')} />
             </div>
@@ -55,50 +55,50 @@ export default function EventFormSections({
       </section>
 
       {/* 02 · Čas a body */}
-      <section className="ev-section">
-        <div className="ev-sec-rule" />
-        <div className="ev-card">
-          <div className="ev-card-head">
-            <div className="ev-sec-eyebrow">— 02 · Čas a body —</div>
-            <h2 className="ev-sec-heading">Kdy a za <span className="pink">kolik.</span></h2>
+      <section className="gol-section">
+        <div className="gol-sec-rule" />
+        <div className="gol-card">
+          <div className="gol-card-head">
+            <div className="gol-sec-eyebrow">— 02 · Čas a body —</div>
+            <h2 className="gol-sec-heading">Kdy a za <span className="pink">kolik.</span></h2>
             <p className="ev-sec-sub">Nastav datum, čas (lze nechat prázdné) a počet bodů za účast.</p>
           </div>
-          <div className="ev-grid-2">
-            <div className="ev-field">
-              <label htmlFor="f-date">Začátek akce <span className="ev-hint">nepovinné</span></label>
+          <div className="gol-grid-2">
+            <div className="gol-field">
+              <label htmlFor="f-date">Začátek akce <span className="gol-hint">nepovinné</span></label>
               <input className="gol-input" id="f-date" type="datetime-local" value={form.date} onChange={setField('date')} />
             </div>
-            <div className="ev-field">
-              <label htmlFor="f-end-date">Konec check-in okna <span className="ev-hint">nepovinné · jinak +4 h</span></label>
+            <div className="gol-field">
+              <label htmlFor="f-end-date">Konec check-in okna <span className="gol-hint">nepovinné · jinak +4 h</span></label>
               <input className="gol-input" id="f-end-date" type="datetime-local" value={form.end_date} onChange={setField('end_date')} />
             </div>
-            <div className="ev-field">
+            <div className="gol-field">
               <label htmlFor="f-points">Body</label>
               <input className="gol-input" id="f-points" type="number" value={form.points} onChange={setField('points')} placeholder="10" />
             </div>
-            <div className="ev-field">
-              <label htmlFor="f-capacity">Kapacita <span className="ev-hint">nepovinné</span></label>
+            <div className="gol-field">
+              <label htmlFor="f-capacity">Kapacita <span className="gol-hint">nepovinné</span></label>
               <input className="gol-input" id="f-capacity" type="number" value={form.capacity} onChange={setField('capacity')} placeholder="30" />
             </div>
-            <div className="ev-field">
+            <div className="gol-field">
               <label htmlFor="f-checkin-radius">Check-in poloměr (m)</label>
               <input className="gol-input" id="f-checkin-radius" type="number" value={form.checkin_radius} onChange={setField('checkin_radius')} />
             </div>
           </div>
-          <div className="ev-toggle-row">
-            <div className="ev-txt"><h4>Čas upřesníme</h4><p>Datum zůstane, ale místo přesného času se u akce zobrazí „Upřesníme“.</p></div>
+          <div className="gol-toggle-row">
+            <div className="gol-txt"><h4>Čas upřesníme</h4><p>Datum zůstane, ale místo přesného času se u akce zobrazí „Upřesníme“.</p></div>
             <Switch checked={form.time_tbd} onChange={(val) => { setForm((f) => ({ ...f, time_tbd: val })); markDirty(); }} ariaLabel="Čas upřesníme" />
           </div>
         </div>
       </section>
 
       {/* 03 · Poloha */}
-      <section className="ev-section">
-        <div className="ev-sec-rule" />
-        <div className="ev-card">
-          <div className="ev-card-head">
-            <div className="ev-sec-eyebrow">— 03 · Poloha na mapě —</div>
-            <h2 className="ev-sec-heading">Kde se to <span className="pink">děje.</span></h2>
+      <section className="gol-section">
+        <div className="gol-sec-rule" />
+        <div className="gol-card">
+          <div className="gol-card-head">
+            <div className="gol-sec-eyebrow">— 03 · Poloha na mapě —</div>
+            <h2 className="gol-sec-heading">Kde se to <span className="pink">děje.</span></h2>
             <p className="ev-sec-sub">Klikni na mapu pro výběr místa. Tažením kolíku ho doladíš.</p>
           </div>
           <EventLocationMap
@@ -127,12 +127,12 @@ export default function EventFormSections({
       </section>
 
       {/* 04 · Obrázky */}
-      <section className="ev-section">
-        <div className="ev-sec-rule" />
-        <div className="ev-card">
-          <div className="ev-card-head">
-            <div className="ev-sec-eyebrow">— 04 · Vizuál —</div>
-            <h2 className="ev-sec-heading">Jak <span className="pink">vypadá.</span></h2>
+      <section className="gol-section">
+        <div className="gol-sec-rule" />
+        <div className="gol-card">
+          <div className="gol-card-head">
+            <div className="gol-sec-eyebrow">— 04 · Vizuál —</div>
+            <h2 className="gol-sec-heading">Jak <span className="pink">vypadá.</span></h2>
             <p className="ev-sec-sub">Nahraj plakát a vyber odznak — jeho obrázek je zároveň logo akce.</p>
           </div>
           <div className="ev-image-pair">
@@ -164,7 +164,7 @@ export default function EventFormSections({
                   />
                 )}
               </div>
-              <div className="ev-field">
+              <div className="gol-field">
                 <label htmlFor="f-badge">Odznak akce</label>
                 <select
                   className="gol-input"
@@ -189,12 +189,12 @@ export default function EventFormSections({
       </section>
 
       {/* 05 · Kategorie */}
-      <section className="ev-section">
-        <div className="ev-sec-rule" />
-        <div className="ev-card">
-          <div className="ev-card-head">
-            <div className="ev-sec-eyebrow">— 05 · Kategorie —</div>
-            <h2 className="ev-sec-heading">V jaké <span className="pink">kategorii.</span></h2>
+      <section className="gol-section">
+        <div className="gol-sec-rule" />
+        <div className="gol-card">
+          <div className="gol-card-head">
+            <div className="gol-sec-eyebrow">— 05 · Kategorie —</div>
+            <h2 className="gol-sec-heading">V jaké <span className="pink">kategorii.</span></h2>
             <p className="ev-sec-sub">Vyber kategorii, do které akce patří.</p>
           </div>
           <ChipSelect options={allCategories.map((c) => c.name)} selected={categories} onChange={onCategories} max={1} />
@@ -202,44 +202,44 @@ export default function EventFormSections({
       </section>
 
       {/* 06 · Pravidla a formulář */}
-      <section className="ev-section">
-        <div className="ev-sec-rule" />
-        <div className="ev-card">
-          <div className="ev-card-head">
-            <div className="ev-sec-eyebrow">— 06 · Obsah —</div>
-            <h2 className="ev-sec-heading">Jaká <span className="pink">pravidla.</span></h2>
+      <section className="gol-section">
+        <div className="gol-sec-rule" />
+        <div className="gol-card">
+          <div className="gol-card-head">
+            <div className="gol-sec-eyebrow">— 06 · Obsah —</div>
+            <h2 className="gol-sec-heading">Jaká <span className="pink">pravidla.</span></h2>
             <p className="ev-sec-sub">Postup, řád, instrukce… a odkaz na dotazník (Google Forms).</p>
           </div>
-          <div className="ev-field ev-full">
+          <div className="gol-field gol-full">
             <label htmlFor="f-rules">Pravidla</label>
             <textarea className="gol-textarea" id="f-rules" placeholder="Každé pravidlo na nový řádek…" value={form.rules} onChange={setField('rules')} />
           </div>
-          <div className="ev-field ev-full">
+          <div className="gol-field gol-full">
             <label htmlFor="f-survey">URL dotazníku (Google Forms)</label>
             <input className="gol-input" id="f-survey" type="url" placeholder="https://forms.google.com/…" value={form.survey_url} onChange={setField('survey_url')} />
           </div>
-          <div className="ev-field ev-full">
-            <label htmlFor="f-whatsapp">Odkaz na WhatsApp skupinu <span className="ev-hint">nepovinné · nabídne se po přihlášení</span></label>
+          <div className="gol-field gol-full">
+            <label htmlFor="f-whatsapp">Odkaz na WhatsApp skupinu <span className="gol-hint">nepovinné · nabídne se po přihlášení</span></label>
             <input className="gol-input" id="f-whatsapp" type="url" placeholder="https://chat.whatsapp.com/…" value={form.whatsapp_url} onChange={setField('whatsapp_url')} />
           </div>
         </div>
       </section>
 
       {/* 07 · Viditelnost */}
-      <section className="ev-section">
-        <div className="ev-sec-rule" />
-        <div className="ev-card">
-          <div className="ev-card-head">
-            <div className="ev-sec-eyebrow">— 07 · Viditelnost —</div>
-            <h2 className="ev-sec-heading">Kdo <span className="pink">uvidí.</span></h2>
+      <section className="gol-section">
+        <div className="gol-sec-rule" />
+        <div className="gol-card">
+          <div className="gol-card-head">
+            <div className="gol-sec-eyebrow">— 07 · Viditelnost —</div>
+            <h2 className="gol-sec-heading">Kdo <span className="pink">uvidí.</span></h2>
             <p className="ev-sec-sub">Postav si, zda je akce viditelná pro běžné uživatele.</p>
           </div>
-          <div className="ev-toggle-row">
-            <div className="ev-txt"><h4>Viditelná pro uživatele</h4><p>Pokud vypnuto, akce se zobrazí jen v adminu.</p></div>
+          <div className="gol-toggle-row">
+            <div className="gol-txt"><h4>Viditelná pro uživatele</h4><p>Pokud vypnuto, akce se zobrazí jen v adminu.</p></div>
             <Switch checked={form.visible_to_users} onChange={(val) => { setForm((f) => ({ ...f, visible_to_users: val })); markDirty(); }} ariaLabel="Viditelná pro uživatele" />
           </div>
-          <div className="ev-toggle-row">
-            <div className="ev-txt"><h4>Náhled pro Close</h4><p>Close uvidí akci dříve než ostatní uživatelé (i když je vypnuto výše).</p></div>
+          <div className="gol-toggle-row">
+            <div className="gol-txt"><h4>Náhled pro Close</h4><p>Close uvidí akci dříve než ostatní uživatelé (i když je vypnuto výše).</p></div>
             <Switch checked={form.visible_to_close} onChange={(val) => { setForm((f) => ({ ...f, visible_to_close: val })); markDirty(); }} ariaLabel="Náhled pro Close" />
           </div>
         </div>

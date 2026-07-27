@@ -85,21 +85,21 @@ export default function EditEventPage() {
   };
 
   if (loading) {
-    return <div className="event-page"><div style={{ padding: '2rem', textAlign: 'center' }}>Načítání akce…</div></div>;
+    return <div className="gol-form-page event-page"><div style={{ padding: '2rem', textAlign: 'center' }}>Načítání akce…</div></div>;
   }
 
   return (
-    <div className="event-page">
+    <div className="gol-form-page event-page">
       <div className="ev-stage" aria-hidden="true" />
-      <div className="ev-grain" aria-hidden="true" />
+      <div className="gol-grain" aria-hidden="true" />
 
-      <section className="ev-head">
-        <div className="ev-crumb">— <Link to={`/events/${slug}`}>{form.name}</Link> · Upravit —</div>
-        <div className="ev-eyebrow">Úprava akce</div>
+      <section className="gol-head">
+        <div className="gol-crumb">— <Link to={`/events/${slug}`}>{form.name}</Link> · Upravit —</div>
+        <div className="gol-eyebrow">Úprava akce</div>
         <h1>Upravit akci</h1>
       </section>
 
-      <main className="ev-main">
+      <main className="gol-main">
         <EventFormSections
           form={form}
           setForm={setForm}
@@ -113,16 +113,16 @@ export default function EditEventPage() {
         />
 
         {/* 08 · Konec akce */}
-        <section className="ev-section">
-          <div className="ev-sec-rule" />
-          <div className="ev-card ev-danger-card">
-            <div className="ev-card-head">
-              <div className="ev-sec-eyebrow">— 08 · Konec akce —</div>
-              <h2 className="ev-sec-heading">Smazat <span className="pink">akci.</span></h2>
+        <section className="gol-section">
+          <div className="gol-sec-rule" />
+          <div className="gol-card gol-danger-card">
+            <div className="gol-card-head">
+              <div className="gol-sec-eyebrow">— 08 · Konec akce —</div>
+              <h2 className="gol-sec-heading">Smazat <span className="pink">akci.</span></h2>
               <p className="ev-sec-sub">Nevratné. S akcí zmizí i všechny udělené body, RSVP a fotky.</p>
             </div>
-            <div className="ev-toggle-row">
-              <div className="ev-txt"><h4>Smazat akci</h4><p>Hráčům se odečtou body získané na této akci.</p></div>
+            <div className="gol-toggle-row">
+              <div className="gol-txt"><h4>Smazat akci</h4><p>Hráčům se odečtou body získané na této akci.</p></div>
               <button type="button" className="gol-btn danger" onClick={() => setDeleteOpen(true)}>Smazat akci</button>
             </div>
           </div>
@@ -130,30 +130,30 @@ export default function EditEventPage() {
       </main>
 
       <Modal open={deleteOpen} onClose={deleting ? undefined : () => setDeleteOpen(false)} labelledBy="ev-delete-title" width={480}>
-        <div className="ev-modal-eyebrow">— Konec akce —</div>
-        <h3 id="ev-delete-title" className="ev-modal-title">Smazat akci <span className="pink">natrvalo?</span></h3>
-        <p className="ev-modal-text">„{form.name}“ zmizí i se všemi udělenými body, RSVP a fotkami. Tohle vzít zpět nejde.</p>
-        <div className="ev-modal-buttons">
+        <div className="gol-modal-eyebrow">— Konec akce —</div>
+        <h3 id="ev-delete-title" className="gol-modal-title">Smazat akci <span className="pink">natrvalo?</span></h3>
+        <p className="gol-modal-text">„{form.name}“ zmizí i se všemi udělenými body, RSVP a fotkami. Tohle vzít zpět nejde.</p>
+        <div className="gol-modal-buttons">
           <Button variant="frost" onClick={() => setDeleteOpen(false)} disabled={deleting}>Zpět</Button>
           <Button variant="action" onClick={confirmDelete} busy={deleting}>Smazat natrvalo</Button>
         </div>
       </Modal>
 
-      <section className="ev-commit-zone">
-        <div className="ev-commit-label">— Hotovo? —</div>
+      <section className="gol-commit-zone">
+        <div className="gol-commit-label">— Hotovo? —</div>
         <h2>Uložit změny</h2>
-        <div className="ev-commit-row">
+        <div className="gol-commit-row">
           <Link className="gol-btn ghost" to={`/events/${slug}`}>Zrušit</Link>
           <button type="button" className="gol-btn primary lg" onClick={handleSave} disabled={saving}>{saving ? 'Ukládám…' : 'Uložit akci'}</button>
         </div>
-        <div className="ev-commit-note">{saveError ? `— Chyba: ${saveError} —` : (dirty ? '— Neuložené změny —' : '— Vše uloženo —')}</div>
+        <div className="gol-commit-note">{saveError ? `— Chyba: ${saveError} —` : (dirty ? '— Neuložené změny —' : '— Vše uloženo —')}</div>
       </section>
 
       {/* Slides up as soon as anything changes — mirrors EditProfile's save bar. */}
-      <div className={`ev-savebar${dirty ? ' visible' : ''}`}>
-        <div className="ev-savebar-inner">
-          <div className="ev-status"><span className="ev-pulse" />{saveError || 'Neuložené změny'}</div>
-          <div className="ev-savebar-actions">
+      <div className={`gol-savebar${dirty ? ' visible' : ''}`}>
+        <div className="gol-savebar-inner">
+          <div className="gol-status"><span className="gol-pulse" />{saveError || 'Neuložené změny'}</div>
+          <div className="gol-savebar-actions">
             <Link className="gol-btn ghost" to={`/events/${slug}`}>Zrušit</Link>
             <button type="button" className="gol-btn primary" onClick={handleSave} disabled={saving}>{saving ? 'Ukládám…' : 'Uložit změny'}</button>
           </div>

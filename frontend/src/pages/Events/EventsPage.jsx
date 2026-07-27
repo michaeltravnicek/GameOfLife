@@ -156,7 +156,7 @@ export default function EventsPage() {
       <section className="filterbar">
         <button
           type="button"
-          className={`filter-toggle${filtersOpen ? ' open' : ''}`}
+          className={`gol-tex filter-toggle${filtersOpen ? ' open' : ''}`}
           onClick={() => setFiltersOpen((o) => !o)}
           aria-expanded={filtersOpen}
           aria-controls="filter-panel"
@@ -166,7 +166,7 @@ export default function EventsPage() {
           {activeFilterCount > 0 && <span className="ft-badge">{activeFilterCount}</span>}
           <span className="ft-chev" aria-hidden="true">{filtersOpen ? '▴' : '▾'}</span>
         </button>
-        <div className="filter-count-pill" aria-live="polite">
+        <div className="gol-tex filter-count-pill" aria-live="polite">
           {loading && events.length === 0
             ? '…'
             : <><span className="fc-num">{totalCount}</span><span className="fc-lab">{totalCount >= 1 && totalCount <= 4 ? 'akce' : 'akcí'}</span></>}
@@ -174,7 +174,7 @@ export default function EventsPage() {
       </section>
 
       {filtersOpen && (
-        <section id="filter-panel" className="filter-panel">
+        <section id="filter-panel" className="gol-tex filter-panel">
           <div className="fp-group fp-search">
             <SearchInput
               value={query}
@@ -196,11 +196,11 @@ export default function EventsPage() {
                   <button
                     key={c.name}
                     type="button"
-                    className={`loc${city === c.name ? ' on' : ''}`}
+                    className={`gol-pill${city === c.name ? ' on' : ''}`}
                     onClick={() => setCity(c.name)}
                   >
                     {c.name}
-                    {c.count != null && <span className="loc-count">{c.count}</span>}
+                    {c.count != null && <span className="gol-pill-count">{c.count}</span>}
                   </button>
                 ))}
               </div>
@@ -231,7 +231,7 @@ export default function EventsPage() {
         {error && (
           <div className="events-error">
             <p>Akce se nepodařilo načíst. Zkontroluj připojení a zkus to znovu.</p>
-            <button type="button" className="loc" onClick={handleRetry} disabled={retrying}>
+            <button type="button" className="gol-pill" onClick={handleRetry} disabled={retrying}>
               {retrying ? 'Načítám…' : 'Zkusit znovu'}
             </button>
           </div>
@@ -239,7 +239,7 @@ export default function EventsPage() {
 
         {upcoming.length > 0 && (
           <>
-            <div className="group-label">Nadcházející</div>
+            <div className="gol-flank group-label">Nadcházející</div>
             <div ref={upRef} className={`events-grid reveal-stagger${upIn ? ' in' : ''}`}>
               {upcoming.map((ev) => (
                 <div key={ev.id} className={`ev-wrap${isAdmin && !ev.visible_to_users ? ' ev-hidden' : ''}`}>
@@ -252,7 +252,7 @@ export default function EventsPage() {
         )}
         {past.length > 0 && (
           <>
-            <div className="group-label past">Proběhlo</div>
+            <div className="gol-flank group-label past">Proběhlo</div>
             <div ref={pastRef} className={`events-grid reveal-stagger${pastIn ? ' in' : ''}`}>
               {past.map((ev) => (
                 <div key={ev.id} className={`ev-wrap${isAdmin && !ev.visible_to_users ? ' ev-hidden' : ''}`}>
@@ -268,7 +268,7 @@ export default function EventsPage() {
           <div className="load-more-row">
             <button
               type="button"
-              className="loc"
+              className="gol-pill"
               onClick={loadMore}
               disabled={loadingMore}
             >

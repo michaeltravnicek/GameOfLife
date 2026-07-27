@@ -124,9 +124,9 @@ function NoteCard({ row }) {
 
 export default function HistoriePage() {
   return (
-    <div className="historie-page">
+    <div className="gol-page historie-page">
       <div className="stage" aria-hidden="true" />
-      <div className="grain" aria-hidden="true" />
+      <div className="gol-page-grain" aria-hidden="true" />
 
       <PageHero
         eyebrow="Nostalgické momenty"
@@ -146,7 +146,7 @@ export default function HistoriePage() {
       <main className="timeline">
         {years.map((y) => (
           <div key={y.year}>
-            <div className={`year-mark${y.muted ? ' muted' : ''}`}><span className="y">{y.year}</span></div>
+            <div className={`gol-flank year-mark${y.muted ? ' muted' : ''}`}><span className="y">{y.year}</span></div>
             <Reveal stagger className="spine">
               {y.rows.map((row, i) => (
                 <article key={`${y.year}-${i}`} className={`row ${row.side}`}>

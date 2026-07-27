@@ -46,21 +46,21 @@ export default function CreateEventPage() {
   };
 
   if (loading) {
-    return <div className="event-page"><div style={{ padding: '2rem', textAlign: 'center' }}>Načítání…</div></div>;
+    return <div className="gol-form-page event-page"><div style={{ padding: '2rem', textAlign: 'center' }}>Načítání…</div></div>;
   }
 
   return (
-    <div className="event-page">
+    <div className="gol-form-page event-page">
       <div className="ev-stage" aria-hidden="true" />
-      <div className="ev-grain" aria-hidden="true" />
+      <div className="gol-grain" aria-hidden="true" />
 
-      <section className="ev-head">
-        <div className="ev-crumb">— <Link to="/events">Akce</Link> · Vytvořit —</div>
-        <div className="ev-eyebrow">Nová akce</div>
+      <section className="gol-head">
+        <div className="gol-crumb">— <Link to="/events">Akce</Link> · Vytvořit —</div>
+        <div className="gol-eyebrow">Nová akce</div>
         <h1>Vytvořit akci</h1>
       </section>
 
-      <main className="ev-main">
+      <main className="gol-main">
         <EventFormSections
           form={form}
           setForm={setForm}
@@ -74,14 +74,14 @@ export default function CreateEventPage() {
         />
       </main>
 
-      <section className="ev-commit-zone">
-        <div className="ev-commit-label">— Hotovo? —</div>
+      <section className="gol-commit-zone">
+        <div className="gol-commit-label">— Hotovo? —</div>
         <h2>Vytvořit akci</h2>
-        <div className="ev-commit-row">
+        <div className="gol-commit-row">
           <Link className="gol-btn ghost" to="/events">Zrušit</Link>
           <button type="button" className="gol-btn primary lg" onClick={handleSave} disabled={saving}>{saving ? 'Vytvářím…' : 'Vytvořit akci'}</button>
         </div>
-        <div className="ev-commit-note">{saveError ? `— Chyba: ${saveError} —` : (dirty ? '— Neuložené změny —' : '— Připraveno —')}</div>
+        <div className="gol-commit-note">{saveError ? `— Chyba: ${saveError} —` : (dirty ? '— Neuložené změny —' : '— Připraveno —')}</div>
       </section>
     </div>
   );

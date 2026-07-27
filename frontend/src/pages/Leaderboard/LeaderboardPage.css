@@ -13,10 +13,6 @@
 
 .leaderboard-page .controls{position:relative;z-index:2;max-width:880px;margin:32px auto 0;padding:0 24px;display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap}
 .leaderboard-page .controls .search-wrap{flex:1;max-width:290px}
-.leaderboard-page .tabs{display:inline-flex;padding:5px;gap:5px;background:var(--alpha-dark-62);border:1.5px dashed var(--alpha-cream-45);border-radius:9999px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
-/* Faint grain over the frosted controls so they aren't a flat wash. */
-.leaderboard-page .tabs,.leaderboard-page .lb-help-link,.leaderboard-page .loc{position:relative;isolation:isolate}
-.leaderboard-page .tabs::after,.leaderboard-page .lb-help-link::after,.leaderboard-page .loc::after{content:'';position:absolute;inset:0;border-radius:inherit;background:var(--tex-brown) 0 0/var(--tex-size) var(--tex-size) repeat;opacity:.3;pointer-events:none;z-index:-1}
 .leaderboard-page .tab{font-family:var(--font-hv);font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;padding:9px 20px;border-radius:9999px;cursor:pointer;background:transparent;border:0;color:rgba(255,241,212,.9);transition:all .18s}
 .leaderboard-page .tab:hover{color:var(--color-white)}
 .leaderboard-page .tab.on{background:var(--color-pink);color:var(--color-white);box-shadow:0 4px 14px var(--alpha-pink-45)}
@@ -77,7 +73,6 @@
 .leaderboard-page .pod.p3 .base .rk{font-size:42px;color:rgba(205,127,50,.95)}
 
 .leaderboard-page .list-label{font-family:var(--font-mono);font-style:italic;font-size:13px;letter-spacing:.26em;text-transform:uppercase;color:rgba(255,241,212,.9);margin:0 6px 18px;display:flex;align-items:center;gap:14px}
-.leaderboard-page .list-label::before,.leaderboard-page .list-label::after{content:'';flex:1;height:1px;background:repeating-linear-gradient(90deg,rgba(255,241,212,.3) 0 6px,transparent 6px 12px)}
 /* Poster card — the homepage .lb-card, expanded: opaque blue grain, solid
    black border with a fat bottom edge, pinned onto the living photo. */
 .leaderboard-page .list{position:relative;background:var(--color-dark-brown) var(--tex-blue) 0 0/var(--tex-size) var(--tex-size) repeat;border:2px solid var(--color-black);border-bottom:8px solid var(--color-black);border-radius:14px;overflow:hidden;box-shadow:0 16px 40px rgba(0,0,0,.5)}
@@ -131,7 +126,6 @@
   .leaderboard-page .stage-wrap{margin:32px 0 40px;padding:0}
 }
 
-@media(max-width:640px){}
 
 @media(max-width:560px){
   .leaderboard-page .controls{padding:0 12px}
@@ -176,5 +170,3 @@
 
 /* "Načíst další" — same dashed-pill load-more as the events page. */
 .leaderboard-page .load-more-row{display:flex;justify-content:center;margin-top:26px}
-.leaderboard-page .loc{display:inline-flex;align-items:center;gap:7px;font-family:var(--font-hv);font-weight:300;font-style:italic;font-size:12.5px;letter-spacing:.04em;padding:7px 14px;min-height:30px;border-radius:9999px;cursor:pointer;background:rgba(26,15,10,.45);border:1.5px dashed rgba(255,241,212,.28);color:var(--alpha-cream-78);transition:all .18s;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
-.leaderboard-page .loc:hover{color:var(--color-white);border-color:var(--alpha-cream-55)}

@@ -5,6 +5,21 @@
 @keyframes modal-fade{from{opacity:0}to{opacity:1}}
 @keyframes modal-rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 
+/* ── Modal content chrome ───────────────────────────────────────────────────
+   Every modal in the app follows the same pattern: eyebrow → display title →
+   text → buttons. This lived four times over (delete-event, delete-account,
+   gallery upload, survey/feedback) with different prefixes. It lives here now
+   so anything using <Modal> gets it for free.
+
+   Pages keep only their own delta — e.g. a different bottom margin. */
+.gol-modal-eyebrow{font-family:var(--font-mono);font-style:italic;font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--alpha-cream-55);margin-bottom:14px}
+.gol-modal-title{font-family:var(--font-display);font-size:clamp(28px,3.6vw,38px);line-height:1.05;color:var(--color-heading);text-transform:uppercase;letter-spacing:.02em;margin:0 0 16px}
+.gol-modal-title .pink{color:var(--color-pink)}
+.gol-modal-text{font-family:var(--font-body);font-size:14px;line-height:1.55;color:var(--alpha-cream-65);max-width:42ch;margin:0 auto 26px}
+.gol-modal-buttons{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+
 @media(max-width:520px){
   .modal-inner{padding:28px 22px 22px}
+  .gol-modal-buttons{flex-direction:column}
+  .gol-modal-buttons .btn{width:100%}
 }

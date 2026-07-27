@@ -1,4 +1,4 @@
-.sec-hdr-rule{height:1px;background:repeating-linear-gradient(90deg,rgba(255,241,212,.5) 0 6px,transparent 6px 12px);margin-bottom:14px}
+
 .sec-hdr-eyebrow{font-size:11px;letter-spacing:.22em;color:var(--color-pink);margin-bottom:8px}
 .sec-hdr-heading{font-family:var(--font-display);letter-spacing:.04em;color:var(--color-heading);text-transform:uppercase;line-height:.95;margin-bottom:22px}
 .sec-hdr-heading-md{font-size:clamp(38px,4.4vw,54px)}

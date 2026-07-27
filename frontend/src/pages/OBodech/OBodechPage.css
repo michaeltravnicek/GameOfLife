@@ -1,5 +1,4 @@
-/* All selectors scoped under .obodech-page to prevent cross-page leaks. */
-.obodech-page{min-height:100vh;color:var(--color-cream-light);overflow-x:hidden;background:var(--color-dark-brown)}
+
 
 .obodech-page .stage{position:fixed;inset:0;bottom:auto;height:100vh;height:100lvh;z-index:0;background:url('/img/gal1-mobile.webp') center 28%/cover no-repeat;filter:saturate(.7) contrast(1.02);transform:scale(1.06)}
 @media(min-width:769px){.obodech-page .stage{background-image:url('/img/gal1-desktop.webp')}}
@@ -8,7 +7,6 @@
 .obodech-page .stage::after{content:'';position:absolute;inset:0;background:
   radial-gradient(ellipse at 50% 0%, var(--alpha-purple-22) 0%, transparent 38%),
   linear-gradient(180deg, var(--alpha-dark-55) 0%, var(--alpha-dark-80) 38%, var(--alpha-dark-95) 100%)}
-.obodech-page .grain{position:fixed;inset:0;bottom:auto;height:100vh;height:100lvh;z-index:0;pointer-events:none;background:url('/img/Grain_texture_brown.webp') 0 0/var(--tex-size) var(--tex-size) repeat;opacity:var(--grain-opacity);mix-blend-mode:overlay}
 
 
 .obodech-page .credits{position:relative;z-index:2;max-width:980px;margin:36px auto 0;padding:34px 24px 0;display:flex;justify-content:center;align-items:flex-start;gap:0}

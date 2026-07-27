@@ -55,7 +55,6 @@
 
 .profile-page .section{margin-bottom:56px}
 .profile-page .section:last-child{margin-bottom:0}
-.profile-page .sec-rule{height:1px;background:repeating-linear-gradient(90deg,rgba(255,241,212,.5) 0 6px,transparent 6px 12px);margin-bottom:14px}
 .profile-page .sec-eyebrow{font-family:var(--font-mono);font-style:italic;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--color-pink);margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;gap:14px}
 .profile-page .sec-eyebrow .meta{color:var(--alpha-cream-55);font-size:10.5px;letter-spacing:.16em;font-weight:400;font-style:italic}
 .profile-page .sec-heading{font-family:var(--font-display);font-weight:400;font-size:clamp(38px,4.4vw,54px);letter-spacing:.04em;color:var(--color-heading);text-transform:uppercase;line-height:.95;margin-bottom:22px}
@@ -78,13 +77,6 @@
 .profile-page .fact .l{font-family:var(--font-mono);font-style:italic;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--color-pink);margin-bottom:8px}
 .profile-page .fact .v{font-family:var(--font-display);font-size:34px;letter-spacing:.03em;color:var(--color-white);line-height:.95;margin-bottom:4px}
 .profile-page .fact .s{font-family:var(--font-body);font-style:italic;font-size:12.5px;color:var(--alpha-cream-70);line-height:1.4}
-
-.profile-page .highlights{list-style:none;display:flex;flex-direction:column;gap:18px;counter-reset:r;margin-top:30px;padding:0}
-.profile-page .highlights li{display:grid;grid-template-columns:48px 1fr auto;gap:18px;align-items:baseline;font-family:var(--font-body);font-size:15.5px;line-height:1.6;color:rgba(255,241,212,.86);padding-bottom:14px;border-bottom:1px dashed rgba(255,241,212,.14)}
-.profile-page .highlights li:last-child{border-bottom:0}
-.profile-page .highlights li::before{counter-increment:r;content:counter(r,decimal-leading-zero);font-family:var(--font-display);font-size:34px;letter-spacing:.04em;color:var(--color-pink);line-height:.9}
-.profile-page .highlights .h-body strong{font-family:var(--font-body);font-weight:700;color:var(--color-white);letter-spacing:.01em}
-.profile-page .highlights .h-tag{font-family:var(--font-mono);font-style:italic;font-size:11px;letter-spacing:.1em;color:var(--alpha-cream-55);white-space:nowrap}
 
 .profile-page .socials{margin-top:30px}
 .profile-page .socials-label{font-family:var(--font-mono);font-style:italic;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--alpha-cream-55);margin-bottom:14px;display:flex;align-items:center;gap:14px}
@@ -186,8 +178,6 @@
   .profile-page .credit{max-width:none;padding:0}
   .profile-page .credit + .credit{border-left:0;border-top:1px solid var(--alpha-cream-20);padding-top:18px}
   .profile-page .action-inner{flex-direction:column;align-items:stretch;gap:14px}
-  .profile-page .highlights li{grid-template-columns:40px 1fr;gap:14px}
-  .profile-page .highlights .h-tag{grid-column:1 / -1;grid-row:2;padding-left:54px;margin-top:-4px}
   .profile-page .back-strip-inner{justify-content:center}
   /* Mobile: drop the "back home" button (the nav already covers it) and fit the
      three account actions side-by-side as equal columns — labels wrap inside a

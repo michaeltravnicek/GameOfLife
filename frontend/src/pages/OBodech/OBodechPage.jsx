@@ -27,9 +27,9 @@ const rewards = [
 
 export default function OBodechPage() {
   return (
-    <div className="obodech-page">
+    <div className="gol-page obodech-page">
       <div className="stage" aria-hidden="true" />
-      <div className="grain" aria-hidden="true" />
+      <div className="gol-page-grain" aria-hidden="true" />
 
       <PageHero
         eyebrow="Systém bodů"

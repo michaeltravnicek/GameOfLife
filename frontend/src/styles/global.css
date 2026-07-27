@@ -1,6 +1,6 @@
 @import './page-bg.css';
 @import './reveal.css';
-@import './form-buttons.css';
+@import './shared-ui.css';
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html,body,#root{min-height:100%;width:100%}
 html{background:var(--color-dark-brown)}

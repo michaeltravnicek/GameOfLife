@@ -142,7 +142,7 @@ export default function ProfilePage() {
             {view === 'about' && (
               <>
                 <div className="section">
-                  <div className="sec-rule" />
+                  <div className="gol-rule" />
                   <div className="sec-eyebrow"><span>— 01 · O mně —</span><span className="meta">profil &amp; minulost</span></div>
                   <h2 className="sec-heading">Joy<span className="pink">Maxxer</span></h2>
                   <p className="about-quote">{profile.bio || 'Bez popisu profilu.'}</p>
@@ -211,7 +211,7 @@ export default function ProfilePage() {
 
                 {profile.badges?.length > 0 && (
                   <div className="section">
-                    <div className="sec-rule" />
+                    <div className="gol-rule" />
                     <div className="sec-eyebrow"><span>— Sbírka —</span><span className="meta">{profile.badges.length} {badgeWord(profile.badges.length)}</span></div>
                     <h2 className="sec-heading">Od<span className="pink">znaky</span></h2>
                     <div className="badge-grid">

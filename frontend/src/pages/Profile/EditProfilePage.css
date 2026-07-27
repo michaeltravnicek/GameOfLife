@@ -1,61 +1,27 @@
-/* Poster form page (register-poster family): dim photo stage stays, cards are
-   opaque posters, inputs are mini tickets. --frame-gap = distance between an
-   input's dashed frame (outline) and its dark panel. */
-.editprofile-page{position:relative;padding-bottom:96px;--frame-gap:2px}
+/* Profile editor — page-specific parts only.
+   The shared poster-form chrome (head, cards, fields, save bar, modal, buttons)
+   lives in styles/edit-form.css under `.gol-*`. */
+@import '../../styles/edit-form.css';
 
-/* ── ENTRANCE ── on-mount staggered fade-up (matches the event form / profile).
-   Header, then each form card cascades in, then the commit zone. */
-@keyframes epFade{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
-.editprofile-page .ep-head{animation:epFade .6s cubic-bezier(.22,.68,0,1.2) both .05s}
-.editprofile-page .ep-main > .ep-section{animation:epFade .55s cubic-bezier(.22,.68,0,1.2) both}
-.editprofile-page .ep-main > .ep-section:nth-child(1){animation-delay:.14s}
-.editprofile-page .ep-main > .ep-section:nth-child(2){animation-delay:.2s}
-.editprofile-page .ep-main > .ep-section:nth-child(3){animation-delay:.26s}
-.editprofile-page .ep-main > .ep-section:nth-child(4){animation-delay:.32s}
-.editprofile-page .ep-main > .ep-section:nth-child(n+5){animation-delay:.38s}
-.editprofile-page .ep-commit-zone{animation:epFade .6s ease both .44s}
-@media(prefers-reduced-motion:reduce){
-  .editprofile-page .ep-head,.editprofile-page .ep-main > .ep-section,.editprofile-page .ep-commit-zone{animation:none}
-}
-
+/* ── Photo stage — this page's own backdrop (the event editor uses a different
+   photo). Light tint: the cards are opaque posters, so the photo can stay
+   alive. ── */
 .editprofile-page .ep-stage{position:fixed;inset:0;z-index:-2;background:url('/img/gal3-mobile.webp') center 30%/cover no-repeat;filter:saturate(.7) contrast(1.02);transform:scale(1.06)}
 @media(min-width:769px){.editprofile-page .ep-stage{background-image:url('/img/gal3-desktop.webp')}}
-/* Light tint — the cards are opaque posters, the photo can stay alive. */
 .editprofile-page .ep-stage::after{content:'';position:absolute;inset:0;background:
   radial-gradient(ellipse at 50% 0%, var(--alpha-purple-22) 0%, transparent 38%),
   linear-gradient(180deg, rgba(26,15,10,.35) 0%, rgba(26,15,10,.50) 32%, rgba(26,15,10,.68) 100%)}
-.editprofile-page .ep-grain{position:fixed;inset:0;z-index:-1;pointer-events:none;background:url('/img/Grain_texture_brown.webp') 0 0/var(--tex-size) var(--tex-size) repeat;opacity:var(--grain-opacity);mix-blend-mode:overlay}
 
-.editprofile-page .ep-head{position:relative;z-index:2;padding:120px 24px 28px;text-align:center;max-width:1040px;margin:0 auto}
-.editprofile-page .ep-crumb{font-family:var(--font-mono);font-style:italic;font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:var(--alpha-cream-55);margin-bottom:14px}
-.editprofile-page .ep-crumb a{color:var(--alpha-cream-70);border-bottom:1px dashed var(--alpha-cream-45)}
-.editprofile-page .ep-crumb a:hover{color:var(--color-pink);border-color:var(--color-pink)}
-.editprofile-page .ep-eyebrow{font-family:var(--font-mono);font-style:italic;font-size:13px;letter-spacing:.3em;text-transform:uppercase;color:var(--color-pink);margin-bottom:8px;display:inline-flex;align-items:center;gap:10px}
-.editprofile-page .ep-eyebrow::before,.editprofile-page .ep-eyebrow::after{content:'✦';font-size:11px;opacity:.9}
-.editprofile-page .ep-head h1{font-family:var(--font-display);font-size:clamp(60px,8.4vw,116px);line-height:.92;color:var(--color-white);text-transform:uppercase;letter-spacing:.04em;text-shadow:0 6px 38px var(--alpha-black-60);margin-bottom:10px}
-.editprofile-page .ep-lede{font-family:var(--font-body);font-style:italic;font-size:15px;color:var(--alpha-cream-78);max-width:540px;margin:0 auto;line-height:1.55}
-.editprofile-page .ep-divider{width:120px;height:1px;margin:24px auto 0;background:repeating-linear-gradient(90deg,var(--alpha-cream-45) 0 5px,transparent 5px 10px)}
-
-.editprofile-page .ep-main{position:relative;z-index:2;max-width:980px;margin:0 auto;padding:48px 24px 28px}
-
-.editprofile-page .ep-section{margin-bottom:48px}
-.editprofile-page .ep-section:last-child{margin-bottom:0}
-.editprofile-page .ep-sec-rule{height:1px;background:repeating-linear-gradient(90deg,var(--alpha-cream-45) 0 6px,transparent 6px 12px);margin-bottom:14px}
-.editprofile-page .ep-sec-eyebrow{font-family:var(--font-mono);font-style:italic;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--color-pink);margin-bottom:8px;display:flex;align-items:center;gap:10px}
-/* Section header lives INSIDE the card (readable on the opaque surface, not
-   on the photo behind) — .ep-card-head wraps eyebrow + heading + sub. */
-.editprofile-page .ep-sec-heading{font-family:var(--font-display);font-size:clamp(26px,3vw,36px);letter-spacing:.04em;color:var(--color-white);text-transform:uppercase;line-height:.95;margin-bottom:6px}
-.editprofile-page .ep-sec-heading .pink{color:var(--color-pink)}
+/* Slightly brighter than the event editor's sub-heading. */
 .editprofile-page .ep-sec-sub{font-family:var(--font-body);font-style:italic;font-size:14px;color:var(--alpha-cream-78);margin-bottom:0;line-height:1.5;max-width:62ch}
-.editprofile-page .ep-card-head{padding-bottom:18px;border-bottom:1px dashed var(--alpha-cream-22);margin-bottom:22px}
 
-/* Poster card — homepage lb-card material (photo page → opaque poster). */
-.editprofile-page .ep-card{position:relative;background:var(--color-dark-brown) var(--tex-blue) 0 0/var(--tex-size) var(--tex-size) repeat;border:2px solid var(--color-black);border-bottom:8px solid var(--color-black);border-radius:14px;padding:26px;overflow:hidden;box-shadow:0 16px 40px rgba(0,0,0,.5)}
-.editprofile-page .ep-card > *{position:relative;z-index:1}
+.editprofile-page .gol-card > *{position:relative;z-index:1}
+.editprofile-page .gol-danger-card .gol-sec-heading{color:var(--color-pink)}
 
+/* ── Avatar card ── */
 .editprofile-page .ep-avatar-card{display:grid;grid-template-columns:auto 1fr;gap:28px;align-items:center}
 /* The card head is a grid child here — span it so avatar + meta keep their row. */
-.editprofile-page .ep-avatar-card .ep-card-head{grid-column:1 / -1}
+.editprofile-page .ep-avatar-card .gol-card-head{grid-column:1 / -1}
 .editprofile-page .ep-avatar-big{width:140px;height:140px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 30% 30%,var(--alpha-pink-22),transparent 65%),var(--alpha-dark-62);border:3px dashed var(--alpha-cream-45);font-family:var(--font-mono);font-style:italic;font-size:46px;font-weight:700;color:var(--color-cream-light);box-shadow:0 14px 44px var(--alpha-black-50);background-size:cover;background-position:center}
 .editprofile-page .ep-avatar-big.has-img{font-size:0}
 .editprofile-page .ep-avatar-meta .ep-l{font-family:var(--font-mono);font-style:italic;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--color-pink);margin-bottom:8px}
@@ -63,15 +29,7 @@
 .editprofile-page .ep-avatar-meta .ep-s{font-family:var(--font-body);font-style:italic;font-size:13px;color:var(--alpha-cream-65);margin-bottom:14px;line-height:1.5;max-width:48ch}
 .editprofile-page .ep-avatar-actions{display:flex;gap:10px;flex-wrap:wrap}
 
-
-.editprofile-page .ep-grid-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
-.editprofile-page .ep-field{display:flex;flex-direction:column;gap:8px}
-.editprofile-page .ep-field.ep-full{grid-column:1 / -1}
-.editprofile-page .ep-field label{font-family:var(--font-mono);font-style:italic;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--alpha-cream-65);display:flex;align-items:center;justify-content:space-between;gap:10px}
-.editprofile-page .ep-hint{font-family:var(--font-body);font-style:italic;font-size:11px;letter-spacing:.04em;text-transform:none;color:var(--alpha-cream-45)}
-/* Mini-ticket inputs (register-poster recipe): dark panel + white dashed
-   frame floating --frame-gap outside it, drawn as an outline so no wrapper
-   element is needed. Focus turns the frame pink. */
+/* ── Prefixed / combo inputs (@handle, social URLs) ── */
 .editprofile-page .gol-input-prefix{position:relative}
 .editprofile-page .gol-input-prefix .gol-input{padding-left:42px}
 .editprofile-page .gol-input-prefix .ep-pre{position:absolute;left:14px;top:50%;transform:translateY(-50%);font-family:var(--font-mono);font-style:italic;font-size:13px;color:var(--alpha-cream-55);letter-spacing:.04em;pointer-events:none}
@@ -88,68 +46,9 @@
 .editprofile-page .ep-combo .gol-input{flex:1;min-width:0;background:transparent;border:0;border-radius:0;padding:13px 14px 13px 4px;outline:none}
 .editprofile-page .ep-combo .gol-input:hover,.editprofile-page .ep-combo .gol-input:focus{background:transparent;border:0;outline:none}
 
-.editprofile-page .ep-toggle-row{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;padding:16px 0;border-bottom:1px dashed var(--alpha-cream-10)}
-.editprofile-page .ep-toggle-row:last-child{border-bottom:0}
-.editprofile-page .ep-toggle-row .ep-txt h4{font-family:var(--font-body);font-weight:700;font-size:15px;color:var(--color-white);margin-bottom:4px;letter-spacing:.01em}
-.editprofile-page .ep-toggle-row .ep-txt p{font-family:var(--font-body);font-style:italic;font-size:13px;color:var(--alpha-cream-65);line-height:1.5;max-width:48ch}
-.editprofile-page .ep-toggle-row .switch{margin-top:2px}
-
-.editprofile-page .ep-danger-card{border-color:var(--alpha-pink-45)}
-.editprofile-page .ep-danger-card .ep-sec-heading{color:var(--color-pink)}
-
-.editprofile-page .ep-commit-zone{position:relative;z-index:2;max-width:980px;margin:0 auto;padding:8px 24px 64px;text-align:center}
-.editprofile-page .ep-commit-label{font-family:var(--font-mono);font-style:italic;font-size:13px;letter-spacing:.22em;text-transform:uppercase;color:var(--alpha-cream-65);margin-bottom:14px}
-.editprofile-page .ep-commit-zone h2{font-family:var(--font-display);font-size:clamp(34px,4.6vw,52px);line-height:1;color:var(--color-heading);text-transform:uppercase;letter-spacing:.03em;margin-bottom:22px}
-.editprofile-page .ep-commit-row{display:inline-flex;gap:12px;flex-wrap:wrap;justify-content:center;align-items:center}
-.editprofile-page .ep-commit-note{font-family:var(--font-mono);font-style:italic;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--alpha-cream-55);margin-top:18px}
-
-.editprofile-page .ep-savebar{position:fixed;left:0;right:0;bottom:0;z-index:50;background:var(--alpha-dark-95);backdrop-filter:blur(16px) saturate(1.15);-webkit-backdrop-filter:blur(16px) saturate(1.15);border-top:1px dashed var(--alpha-cream-22);transform:translateY(110%);transition:transform .28s cubic-bezier(.2,.7,.2,1);box-shadow:0 -14px 36px var(--alpha-black-50)}
-.editprofile-page .ep-savebar.visible{transform:translateY(0)}
-.editprofile-page .ep-savebar-inner{max-width:1040px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 24px;flex-wrap:wrap}
-.editprofile-page .ep-status{font-family:var(--font-mono);font-style:italic;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--alpha-cream-65);display:inline-flex;align-items:center;gap:10px}
-.editprofile-page .ep-status .ep-pulse{width:8px;height:8px;border-radius:50%;background:var(--color-gold);display:inline-block;box-shadow:0 0 10px var(--alpha-gold-60)}
-.editprofile-page .ep-status.saved .ep-pulse{background:var(--color-success);box-shadow:0 0 10px var(--alpha-success-60)}
-.editprofile-page .ep-savebar-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-
 @media(max-width:860px){
-  .editprofile-page .ep-grid-2{grid-template-columns:1fr}
   .editprofile-page .ep-avatar-card{grid-template-columns:1fr;text-align:center}
   .editprofile-page .ep-avatar-actions{justify-content:center}
   .editprofile-page .ep-avatar-big{margin:0 auto}
-  .editprofile-page .ep-savebar-inner{justify-content:center;text-align:center}
-}
-@media(max-width:720px){
-  /* Minimise the gutters so form fields get as much width as possible. */
-  .editprofile-page{padding-bottom:128px}
-  .editprofile-page .ep-head{padding:96px 12px 16px}
-  .editprofile-page .ep-main{padding:28px 12px 20px}
-  .editprofile-page .ep-card{padding:20px 14px}
-  .editprofile-page .ep-commit-zone{padding:8px 12px 56px}
-  .editprofile-page .ep-commit-zone h2{font-size:30px}
-  .editprofile-page .ep-savebar-inner{flex-direction:column;gap:10px;padding:12px 12px}
-}
-@media(max-width:420px){
-  /* Very narrow phones: trim to the minimum readable gutter. */
-  .editprofile-page .ep-head{padding:92px 8px 14px}
-  .editprofile-page .ep-main{padding:22px 8px 18px}
-  .editprofile-page .ep-card{padding:18px 11px}
-  .editprofile-page .ep-commit-zone{padding:8px 8px 52px}
-}
-
-/* Mobile: lighten the save bar's blur (smaller blur, no saturate) — the cards
-   are opaque posters now, so only this chrome still blurs. */
-@media (max-width:768px){
-  .editprofile-page .ep-savebar{backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
-}
-
-/* Delete-account confirm modal (shared <Modal> shell; content pattern matches
-   the survey/upload modals: eyebrow → display title → text → buttons). */
-.ep-modal-eyebrow{font-family:var(--font-mono);font-style:italic;font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--alpha-cream-55, var(--alpha-cream-55));margin-bottom:14px}
-.ep-modal-title{font-family:var(--font-display);font-size:clamp(28px,3.6vw,38px);line-height:1.05;color:var(--color-heading);text-transform:uppercase;letter-spacing:.02em;margin:0 0 16px}
-.ep-modal-title .pink{color:var(--color-pink)}
-.ep-modal-text{font-family:var(--font-body);font-size:14px;line-height:1.55;color:var(--alpha-cream-65, var(--alpha-cream-65));max-width:42ch;margin:0 auto 26px}
-.ep-modal-buttons{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
-@media(max-width:520px){
-  .ep-modal-buttons{flex-direction:column}
-  .ep-modal-buttons .btn{width:100%}
+  .editprofile-page .gol-savebar-inner{justify-content:center;text-align:center}
 }

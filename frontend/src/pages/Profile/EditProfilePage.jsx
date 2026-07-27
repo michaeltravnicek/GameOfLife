@@ -184,52 +184,52 @@ export default function EditProfilePage() {
   }, [btnSaved]);
 
   if (loading) {
-    return <div className="editprofile-page"><div style={{ padding: '2rem', textAlign: 'center' }}>Načítání profilu…</div></div>;
+    return <div className="gol-form-page editprofile-page"><div style={{ padding: '2rem', textAlign: 'center' }}>Načítání profilu…</div></div>;
   }
 
   const fullName = `${form.first_name || ''} ${form.last_name || ''}`.trim();
   const avatarInitials = initials(fullName, 'GO');
 
   return (
-    <div className="editprofile-page">
+    <div className="gol-form-page editprofile-page">
       <div className="ep-stage" aria-hidden="true" />
-      <div className="ep-grain" aria-hidden="true" />
+      <div className="gol-grain" aria-hidden="true" />
 
-      <section className="ep-head">
-        <div className="ep-crumb">— <Link to={`/profil/${form.username}`}>Profil</Link> · Upravit —</div>
-        <div className="ep-eyebrow">Tvůj kus stránky</div>
+      <section className="gol-head">
+        <div className="gol-crumb">— <Link to={`/profil/${form.username}`}>Profil</Link> · Upravit —</div>
+        <div className="gol-eyebrow">Tvůj kus stránky</div>
         <h1>Upravit profil</h1>
       </section>
 
-      <main className="ep-main">
+      <main className="gol-main">
         {/* 01 · Základy */}
-        <section className="ep-section">
-          <div className="ep-sec-rule" />
-          <div className="ep-card">
-            <div className="ep-card-head">
-              <div className="ep-sec-eyebrow">— 01 · Základy —</div>
-              <h2 className="ep-sec-heading">Kdo <span className="pink">jsi.</span></h2>
+        <section className="gol-section">
+          <div className="gol-sec-rule" />
+          <div className="gol-card">
+            <div className="gol-card-head">
+              <div className="gol-sec-eyebrow">— 01 · Základy —</div>
+              <h2 className="gol-sec-heading">Kdo <span className="pink">jsi.</span></h2>
               <p className="ep-sec-sub">Tyhle údaje uvidí každý, kdo otevře tvůj profil. E-mail jsou jen pro organizátory.</p>
             </div>
-            <div className="ep-grid-2">
-              <div className="ep-field">
+            <div className="gol-grid-2">
+              <div className="gol-field">
                 <label htmlFor="f-name">Jméno</label>
                 <input className="gol-input" id="f-name" value={form.first_name} onChange={setField('first_name')} />
               </div>
-              <div className="ep-field">
+              <div className="gol-field">
                 <label htmlFor="f-surname">Příjmení</label>
                 <input className="gol-input" id="f-surname" value={form.last_name} onChange={setField('last_name')} />
               </div>
-              <div className="ep-field">
-                <label htmlFor="f-handle">Přezdívka <span className="ep-hint">jen písmena, číslice a _</span></label>
+              <div className="gol-field">
+                <label htmlFor="f-handle">Přezdívka <span className="gol-hint">jen písmena, číslice a _</span></label>
                 <div className="gol-input-prefix"><span className="ep-pre">@</span><input className="gol-input" id="f-handle" value={form.username} onChange={setField('username')} autoComplete="username" /></div>
               </div>
-              <div className="ep-field">
+              <div className="gol-field">
                 <label htmlFor="f-city">Město</label>
                 <input className="gol-input" id="f-city" value={form.city} onChange={setField('city')} placeholder="Brno, CZ" />
               </div>
-              <div className="ep-field">
-                <label htmlFor="f-email">E-mail <span className="ep-hint">jen pro organizátory</span></label>
+              <div className="gol-field">
+                <label htmlFor="f-email">E-mail <span className="gol-hint">jen pro organizátory</span></label>
                 <input className="gol-input" id="f-email" type="email" value={form.email} onChange={setField('email')} />
               </div>
             </div>
@@ -237,12 +237,12 @@ export default function EditProfilePage() {
         </section>
 
         {/* 02 · Avatar */}
-        <section className="ep-section">
-          <div className="ep-sec-rule" />
-          <div className="ep-card ep-avatar-card">
-            <div className="ep-card-head">
-              <div className="ep-sec-eyebrow">— 02 · Avatar &amp; identita —</div>
-              <h2 className="ep-sec-heading">Jak <span className="pink">vypadáš.</span></h2>
+        <section className="gol-section">
+          <div className="gol-sec-rule" />
+          <div className="gol-card ep-avatar-card">
+            <div className="gol-card-head">
+              <div className="gol-sec-eyebrow">— 02 · Avatar &amp; identita —</div>
+              <h2 className="gol-sec-heading">Jak <span className="pink">vypadáš.</span></h2>
               <p className="ep-sec-sub">Tvoje fotka se objeví u tvého jména v leaderboardu, v galerii akcí a vedle každé tvojí RSVP.</p>
             </div>
             <div
@@ -266,15 +266,15 @@ export default function EditProfilePage() {
         </section>
 
         {/* 03 · Bio */}
-        <section className="ep-section">
-          <div className="ep-sec-rule" />
-          <div className="ep-card">
-            <div className="ep-card-head">
-              <div className="ep-sec-eyebrow">— 03 · O mně —</div>
-              <h2 className="ep-sec-heading">Co o sobě <span className="pink">povíš.</span></h2>
+        <section className="gol-section">
+          <div className="gol-sec-rule" />
+          <div className="gol-card">
+            <div className="gol-card-head">
+              <div className="gol-sec-eyebrow">— 03 · O mně —</div>
+              <h2 className="gol-sec-heading">Co o sobě <span className="pink">povíš.</span></h2>
               <p className="ep-sec-sub">Krátký vzkaz, který se objeví v záhlaví tvého profilu. Drž to v jednom dechu — nejvíc 220 znaků.</p>
             </div>
-            <div className="ep-field ep-full">
+            <div className="gol-field gol-full">
               <label htmlFor="f-bio">Bio</label>
               <textarea
                 className="gol-textarea"
@@ -291,12 +291,12 @@ export default function EditProfilePage() {
 
         {/* 04 · Kategorie — hidden entirely when no categories exist to pick */}
         {allCategories.length > 0 && (
-          <section className="ep-section">
-            <div className="ep-sec-rule" />
-            <div className="ep-card">
-              <div className="ep-card-head">
-                <div className="ep-sec-eyebrow">— 04 · Oblíbené kategorie —</div>
-                <h2 className="ep-sec-heading">V čem <span className="pink">jedeš.</span></h2>
+          <section className="gol-section">
+            <div className="gol-sec-rule" />
+            <div className="gol-card">
+              <div className="gol-card-head">
+                <div className="gol-sec-eyebrow">— 04 · Oblíbené kategorie —</div>
+                <h2 className="gol-sec-heading">V čem <span className="pink">jedeš.</span></h2>
                 <p className="ep-sec-sub">Vyber až 3 kategorie, ve kterých se nejvíc realizuješ. Pomůže nám doporučit ti akce na míru.</p>
               </div>
               <ChipSelect options={allCategories.map((c) => c.name)} selected={categories} onChange={handleCategories} max={3} />
@@ -305,12 +305,12 @@ export default function EditProfilePage() {
         )}
 
         {/* 05 · Sociální sítě */}
-        <section className="ep-section">
-          <div className="ep-sec-rule" />
-          <div className="ep-card">
-            <div className="ep-card-head">
-              <div className="ep-sec-eyebrow">— 05 · Sociální sítě —</div>
-              <h2 className="ep-sec-heading">Kde tě <span className="pink">najdou.</span></h2>
+        <section className="gol-section">
+          <div className="gol-sec-rule" />
+          <div className="gol-card">
+            <div className="gol-card-head">
+              <div className="gol-sec-eyebrow">— 05 · Sociální sítě —</div>
+              <h2 className="gol-sec-heading">Kde tě <span className="pink">najdou.</span></h2>
               <p className="ep-sec-sub">Tyhle odkazy se objeví v sekci „O mně“ na tvém profilu. Nech prázdné, co nechceš sdílet.</p>
             </div>
             <div className="ep-social-rows">
@@ -328,61 +328,61 @@ export default function EditProfilePage() {
         </section>
 
         {/* 06 · Soukromí */}
-        <section className="ep-section">
-          <div className="ep-sec-rule" />
-          <div className="ep-card">
-            <div className="ep-card-head">
-              <div className="ep-sec-eyebrow">— 06 · Soukromí —</div>
-              <h2 className="ep-sec-heading">Kdo tě <span className="pink">uvidí.</span></h2>
+        <section className="gol-section">
+          <div className="gol-sec-rule" />
+          <div className="gol-card">
+            <div className="gol-card-head">
+              <div className="gol-sec-eyebrow">— 06 · Soukromí —</div>
+              <h2 className="gol-sec-heading">Kdo tě <span className="pink">uvidí.</span></h2>
               <p className="ep-sec-sub">Profil je veřejný, ale tyhle detaily můžeš zamknout.</p>
             </div>
-            <div className="ep-toggle-row">
-              <div className="ep-txt"><h4>Skrýt body a pořadí</h4><p>Body zmizí z tvého profilu. V žebříčku zůstáváš.</p></div>
+            <div className="gol-toggle-row">
+              <div className="gol-txt"><h4>Skrýt body a pořadí</h4><p>Body zmizí z tvého profilu. V žebříčku zůstáváš.</p></div>
               <Switch checked={privacy.hide_pts} onChange={togglePrivacy('hide_pts')} ariaLabel="Skrýt body a pořadí" />
             </div>
-            <div className="ep-toggle-row">
-              <div className="ep-txt"><h4>Skrýt seznam absolvovaných akcí</h4><p>Tvůj profil ukáže jen highlighty.</p></div>
+            <div className="gol-toggle-row">
+              <div className="gol-txt"><h4>Skrýt seznam absolvovaných akcí</h4><p>Tvůj profil ukáže jen highlighty.</p></div>
               <Switch checked={privacy.hide_events} onChange={togglePrivacy('hide_events')} ariaLabel="Skrýt seznam akcí" />
             </div>
-            <div className="ep-toggle-row">
-              <div className="ep-txt"><h4>Profil pouze pro členy</h4><p>Nepřihlášení návštěvníci tvůj profil vůbec neotevřou.</p></div>
+            <div className="gol-toggle-row">
+              <div className="gol-txt"><h4>Profil pouze pro členy</h4><p>Nepřihlášení návštěvníci tvůj profil vůbec neotevřou.</p></div>
               <Switch checked={privacy.members_only} onChange={togglePrivacy('members_only')} ariaLabel="Profil pouze pro členy" />
             </div>
           </div>
         </section>
 
         {/* 07 · Danger */}
-        <section className="ep-section">
-          <div className="ep-sec-rule" />
-          <div className="ep-card ep-danger-card">
-            <div className="ep-card-head">
-              <div className="ep-sec-eyebrow danger">— 07 · Konec hry —</div>
-              <h2 className="ep-sec-heading">Něco <span className="pink">extrémního.</span></h2>
+        <section className="gol-section">
+          <div className="gol-sec-rule" />
+          <div className="gol-card gol-danger-card">
+            <div className="gol-card-head">
+              <div className="gol-sec-eyebrow danger">— 07 · Konec hry —</div>
+              <h2 className="gol-sec-heading">Něco <span className="pink">extrémního.</span></h2>
               <p className="ep-sec-sub">Tyhle akce jsou nevratné. Body, akce, fotky — všechno zmizí. Mysli si dvakrát.</p>
             </div>
-            <div className="ep-toggle-row">
-              <div className="ep-txt"><h4>Smazat účet</h4><p>Trvalé. Všechny tvoje akce, body i fotky budou ztraceny v čase, jako slzy v dešti.</p></div>
+            <div className="gol-toggle-row">
+              <div className="gol-txt"><h4>Smazat účet</h4><p>Trvalé. Všechny tvoje akce, body i fotky budou ztraceny v čase, jako slzy v dešti.</p></div>
               <button type="button" className="gol-btn danger" onClick={() => setDeleteOpen(true)}>Smazat účet</button>
             </div>
           </div>
         </section>
       </main>
 
-      <section className="ep-commit-zone">
-        <div className="ep-commit-label">— Hotovo? —</div>
+      <section className="gol-commit-zone">
+        <div className="gol-commit-label">— Hotovo? —</div>
         <h2>Uložit změny</h2>
-        <div className="ep-commit-row">
+        <div className="gol-commit-row">
           {/* Cancel navigates back → 3D frost; save is an in-place action → round pill. */}
           <Button as="link" to={`/profil/${form.username}`} variant="frost">Zrušit</Button>
           <Button variant="action" size="lg" onClick={handleSave} busy={saving}>{btnSaved ? '✓ Uloženo' : 'Uložit profil'}</Button>
         </div>
-        <div className="ep-commit-note">{saveError ? `— Chyba: ${saveError} —` : (dirty ? '— Neuložené změny —' : '— Vše uloženo —')}</div>
+        <div className="gol-commit-note">{saveError ? `— Chyba: ${saveError} —` : (dirty ? '— Neuložené změny —' : '— Vše uloženo —')}</div>
       </section>
 
-      <div className={`ep-savebar${barVisible ? ' visible' : ''}`}>
-        <div className="ep-savebar-inner">
-          <div className={`ep-status${saved ? ' saved' : ''}${saveError ? ' error' : ''}`}><span className="ep-pulse" />{saveError ? saveError : (saved ? 'Vše uloženo' : 'Neuložené změny')}</div>
-          <div className="ep-savebar-actions">
+      <div className={`gol-savebar${barVisible ? ' visible' : ''}`}>
+        <div className="gol-savebar-inner">
+          <div className={`gol-status${saved ? ' saved' : ''}${saveError ? ' error' : ''}`}><span className="gol-pulse" />{saveError ? saveError : (saved ? 'Vše uloženo' : 'Neuložené změny')}</div>
+          <div className="gol-savebar-actions">
             <Button as="link" to={`/profil/${form.username}`} variant="frost" size="sm">Zrušit</Button>
             <Button variant="action" onClick={handleSave} busy={saving}>{btnSaved ? '✓ Uloženo' : 'Uložit změny'}</Button>
           </div>
@@ -390,10 +390,10 @@ export default function EditProfilePage() {
       </div>
 
       <Modal open={deleteOpen} onClose={() => setDeleteOpen(false)} labelledBy="ep-delete-title" width={480}>
-        <div className="ep-modal-eyebrow">— Konec hry —</div>
-        <h3 id="ep-delete-title" className="ep-modal-title">Smazat účet <span className="pink">natrvalo?</span></h3>
-        <p className="ep-modal-text">Tato akce je nevratná. Všechny tvoje akce, body i fotky budou ztraceny v čase, jako slzy v dešti.</p>
-        <div className="ep-modal-buttons">
+        <div className="gol-modal-eyebrow">— Konec hry —</div>
+        <h3 id="ep-delete-title" className="gol-modal-title">Smazat účet <span className="pink">natrvalo?</span></h3>
+        <p className="gol-modal-text">Tato akce je nevratná. Všechny tvoje akce, body i fotky budou ztraceny v čase, jako slzy v dešti.</p>
+        <div className="gol-modal-buttons">
           <Button variant="frost" onClick={() => setDeleteOpen(false)}>Zpět</Button>
           <Button variant="action" onClick={confirmDelete}>Smazat natrvalo</Button>
         </div>

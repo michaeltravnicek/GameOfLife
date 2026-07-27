@@ -1,12 +1,10 @@
-/* All selectors scoped under .historie-page to prevent cross-page leaks. */
-.historie-page{min-height:100vh;color:var(--color-cream-light);overflow-x:hidden;background:var(--color-dark-brown)}
+
 
 .historie-page .stage{position:fixed;inset:0;bottom:auto;height:100vh;height:100lvh;z-index:0;background:url('/img/gal7.webp') center 30%/cover no-repeat;filter:saturate(.78) contrast(1.02);transform:scale(1.06)}
 /* Light tint — the cards are opaque posters, the photo can stay alive. */
 .historie-page .stage::after{content:'';position:absolute;inset:0;background:
   radial-gradient(ellipse at 50% 0%, rgba(45,42,142,.18) 0%, transparent 38%),
   linear-gradient(180deg, rgba(26,15,10,.35) 0%, rgba(26,15,10,.50) 38%, rgba(26,15,10,.68) 100%)}
-.historie-page .grain{position:fixed;inset:0;bottom:auto;height:100vh;height:100lvh;z-index:0;pointer-events:none;background:url('/img/Grain_texture_brown.webp') 0 0/var(--tex-size) var(--tex-size) repeat;opacity:var(--grain-opacity);mix-blend-mode:overlay}
 
 
 .historie-page .credits{position:relative;z-index:2;max-width:980px;margin:36px auto 0;padding:34px 24px 0;display:flex;justify-content:center;align-items:flex-start;gap:0}
@@ -19,7 +17,6 @@
 
 .historie-page main.timeline{position:relative;z-index:2;max-width:1080px;margin:0 auto;padding:48px 24px 100px}
 .historie-page .year-mark{display:flex;align-items:center;gap:18px;margin:40px 0 28px;padding:0 6px}
-.historie-page .year-mark::before,.historie-page .year-mark::after{content:'';flex:1;height:1px;background:repeating-linear-gradient(90deg,rgba(255,241,212,.3) 0 6px,transparent 6px 12px)}
 .historie-page .year-mark .y{font-family:var(--font-display);font-size:52px;letter-spacing:.06em;color:var(--color-heading);background:var(--color-pink);padding:4px 22px 0;border-radius:9999px;box-shadow:0 6px 22px var(--alpha-pink-40);transform:rotate(-1.5deg)}
 .historie-page .year-mark.muted .y{background:rgba(80,74,118,.85);box-shadow:0 6px 22px rgba(0,0,0,.4)}
 

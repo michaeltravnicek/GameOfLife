@@ -17,7 +17,7 @@ export default function SectionHeader({
 }) {
   return (
     <div className={className || undefined}>
-      {rule && <div className="sec-hdr-rule" />}
+      {rule && <div className="gol-rule" />}
       {eyebrow && <div className="u-label sec-hdr-eyebrow">{eyebrow}</div>}
       {heading && (
         <h2 className={`sec-hdr-heading sec-hdr-heading-${size}`}>{heading}</h2>

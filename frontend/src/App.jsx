@@ -23,9 +23,6 @@ const ResetPasswordPage = lazy(() => import('./pages/ResetPassword/ResetPassword
 const PlayerPage = lazy(() => import('./pages/Player/PlayerPage'));
 const FeedbacksPage = lazy(() => import('./pages/Admin/FeedbacksPage'));
 const OBodechPage = lazy(() => import('./pages/OBodech/OBodechPage'));
-// PREVIEW — poster-wall redesign of /o-bodech; remove with OBodechAltPage
-// once a winner is picked.
-const OBodechAltPage = lazy(() => import('./pages/OBodech/OBodechAltPage'));
 const HistoriePage = lazy(() => import('./pages/Historie/HistoriePage'));
 
 function ScrollToTop() {
@@ -82,7 +79,6 @@ export default function App() {
           <Route path="/profil/:username" element={<Layout><ProfilePage /></Layout>} />
           <Route path="/upravit-profil" element={<Layout><EditProfilePage /></Layout>} />
           <Route path="/o-bodech" element={<Layout><OBodechPage /></Layout>} />
-          <Route path="/o-bodech-novy" element={<Layout><OBodechAltPage /></Layout>} />
           <Route path="/historie" element={<Layout><HistoriePage /></Layout>} />
           <Route path="/prihlasit" element={<Layout><LoginPage /></Layout>} />
           <Route path="/registrace" element={<Layout><RegisterPage /></Layout>} />

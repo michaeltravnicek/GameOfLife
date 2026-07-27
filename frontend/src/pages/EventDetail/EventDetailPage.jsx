@@ -212,7 +212,7 @@ export default function EventDetailPage() {
 
   if (error) {
     return (
-      <div className="event-detail-page">
+      <div className="gol-page event-detail-page">
         <main className="detail-main">
           <p style={{ textAlign: 'center', padding: '60px 20px' }}>{error}</p>
           <div style={{ textAlign: 'center' }}>
@@ -225,7 +225,7 @@ export default function EventDetailPage() {
 
   if (!event) {
     return (
-      <div className="event-detail-page">
+      <div className="gol-page event-detail-page">
         <p style={{ textAlign: 'center', padding: '120px 20px', color: '#fff' }}>Načítám…</p>
       </div>
     );
@@ -377,7 +377,7 @@ export default function EventDetailPage() {
   const imgCount = Math.min(displayImages.length, 4);
 
   return (
-    <div className="event-detail-page">
+    <div className="gol-page event-detail-page">
 
       {/* POSTER */}
       <section className="poster">
@@ -785,13 +785,13 @@ export default function EventDetailPage() {
       )}
 
       <Modal open={surveyOpen && (!!event.survey_url || !!event.whatsapp_url)} labelledBy="survey-modal-title">
-        <div className="survey-modal-eyebrow">— Ještě jedna věc —</div>
-        <h3 id="survey-modal-title" className="survey-modal-title">
+        <div className="gol-modal-eyebrow">— Ještě jedna věc —</div>
+        <h3 id="survey-modal-title" className="gol-modal-title">
           {event.survey_url
             ? <>Potřebovali bychom od vás <span className="pink">pár informací navíc.</span></>
             : <>Přidej se do <span className="pink">skupiny akce.</span></>}
         </h3>
-        <p className="survey-modal-text">
+        <p className="gol-modal-text survey-modal-text">
           {event.survey_url ? (
             <>
               Otevřete prosím krátký formulář a vyplňte ho.
@@ -824,7 +824,7 @@ export default function EventDetailPage() {
             </a>
           )}
         </div>
-        <div className="survey-modal-buttons">
+        <div className="gol-modal-buttons">
           <Button variant="frost" onClick={handleSurveyCancel} disabled={busy}>Zrušit účast</Button>
           <Button variant="action" onClick={handleSurveyDone} disabled={busy}>Hotovo</Button>
         </div>
@@ -834,8 +834,8 @@ export default function EventDetailPage() {
           automatically for attendees who haven't rated yet, or on demand from
           the "Ohodnotit akci" / "Upravit hodnocení" buttons. */}
       <Modal open={fbOpen} onClose={closeFeedback} labelledBy="fb-modal-title">
-        <div className="survey-modal-eyebrow">— Zpětná vazba —</div>
-        <h3 id="fb-modal-title" className="survey-modal-title">
+        <div className="gol-modal-eyebrow">— Zpětná vazba —</div>
+        <h3 id="fb-modal-title" className="gol-modal-title">
           Jak se ti akce <span className="pink">líbila?</span>
         </h3>
         <form className="fb-form" onSubmit={handleFeedback}>

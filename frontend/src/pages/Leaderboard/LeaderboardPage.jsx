@@ -84,7 +84,7 @@ export default function LeaderboardPage() {
           placeholder="Vyhledat hráče…"
           className="lb-search"
         />
-        <Link to="/o-bodech" className="lb-help-link">Co jsou body?</Link>
+        <Link to="/o-bodech" className="gol-tex lb-help-link">Co jsou body?</Link>
       </section>
 
       <main className="lb-main">
@@ -122,7 +122,7 @@ export default function LeaderboardPage() {
 
         {!loading && rest.length > 0 && (
           <>
-            <div className="list-label">Další hráči</div>
+            <div className="gol-flank list-label">Další hráči</div>
             <div className="list">
               <div className="list-inner">
                 {visibleRest.length === 0 && q ? (
@@ -138,7 +138,7 @@ export default function LeaderboardPage() {
               <div className="load-more-row">
                 <button
                   type="button"
-                  className="loc"
+                  className="gol-pill"
                   onClick={() => setRestCounts((c) => ({ ...c, [seasonId]: restVisible + REST_PAGE_SIZE }))}
                 >
                   Načíst další ({remaining})
