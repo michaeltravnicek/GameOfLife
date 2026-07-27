@@ -4,8 +4,10 @@ Phone photos are often 5-20 MB. Resizing them to reasonable dimensions
 with JPEG quality 85 typically drops them to <500 KB with no visible loss
 at the display sizes we use (cards, hero, avatars).
 """
+import io
 import os
 
+from django.core.files.base import ContentFile
 from PIL import Image, ImageOps
 
 # Pre-resize guard: reject obvious junk before PIL loads the file into memory.
@@ -86,16 +88,47 @@ def variant_name(name, suffix="mobile", ext=".webp"):
     return f"{base}.{suffix}{ext}"
 
 
+def _read_bytes(field_file):
+    """Whole file as bytes via the storage API, or None if unreadable/missing.
+
+    Storage-abstracted (``field_file.storage``) so this works identically for the
+    local filesystem and remote object storage (S3/R2), neither of which is
+    assumed to expose a local ``.path``.
+    """
+    if not field_file or not getattr(field_file, "name", None):
+        return None
+    try:
+        with field_file.storage.open(field_file.name, "rb") as f:
+            return f.read()
+    except (OSError, IOError):
+        return None
+
+
+def _overwrite(field_file, name, data):
+    """Replace the object stored at exactly ``name`` with ``data``.
+
+    ``Storage.save`` picks a fresh, non-colliding name, so a plain save would not
+    overwrite — delete first, then save the exact key. On the local filesystem
+    this reproduces the previous in-place rewrite; on S3/R2 it replaces the key.
+    """
+    storage = field_file.storage
+    if storage.exists(name):
+        storage.delete(name)
+    storage.save(name, ContentFile(data))
+
+
 def variant_url(field_file, request=None, suffix="mobile"):
     """URL of an image's generated variant, or None if it hasn't been produced yet.
 
     Existence-checked so legacy images (before a backfill) simply fall back to the
-    original instead of serving a 404 in a srcset.
+    original instead of serving a 404 in a srcset. NOTE: on remote storage
+    ``exists`` is a network round-trip (a HEAD) per call — fine for the single-
+    object detail endpoint, and the Phase-2 backfill guarantees variants exist so
+    the check can later be dropped for R2.
     """
-    if not field_file:
+    if not field_file or not getattr(field_file, "name", None):
         return None
-    path = getattr(field_file, "path", None)
-    if not path or not os.path.exists(variant_name(path, suffix)):
+    if not field_file.storage.exists(variant_name(field_file.name, suffix)):
         return None
     url = variant_name(field_file.url, suffix)
     return request.build_absolute_uri(url) if request else url
@@ -105,19 +138,19 @@ def make_webp_variant(field_file, max_width=768, quality=55, suffix="mobile"):
     """Write a small WebP sibling next to an uploaded image (for mobile srcset).
 
     Produces ``<name>.<suffix>.webp`` alongside the (already resized) original.
-    Idempotent and best-effort: a failure here must never break a save. Pair the
-    output with ``variant_name`` to build the served URL.
+    Regenerated on every save and best-effort: a failure here must never break a
+    save. Pair the output with ``variant_name`` to build the served URL.
     """
-    if not field_file:
+    name = getattr(field_file, "name", None)
+    if not name:
         return
-    path = getattr(field_file, "path", None)
-    if not path or not os.path.exists(path):
-        return
-    if os.path.splitext(path)[1].lower() in VECTOR_EXTENSIONS:
+    if os.path.splitext(name)[1].lower() in VECTOR_EXTENSIONS:
         return  # SVG is already tiny and PIL can't read it
-    out = variant_name(path, suffix)
+    data = _read_bytes(field_file)
+    if data is None:
+        return
     try:
-        with Image.open(path) as img:
+        with Image.open(io.BytesIO(data)) as img:
             img = ImageOps.exif_transpose(img)
             if img.mode == "P":
                 # Palette images (GIF logos) keep transparency in `info`; going
@@ -127,10 +160,12 @@ def make_webp_variant(field_file, max_width=768, quality=55, suffix="mobile"):
                 img = img.convert("RGB")
             # Cap width; allow tall portraits to keep their aspect ratio.
             img.thumbnail((max_width, max_width * 6), Image.LANCZOS)
+            out = io.BytesIO()
             img.save(out, "WEBP", quality=quality, method=6)
     except (OSError, IOError):
         # Not an image or file is corrupt — leave it alone.
-        pass
+        return
+    _overwrite(field_file, variant_name(name, suffix), out.getvalue())
 
 
 # A correctly-dimensioned file under this size isn't worth re-encoding.
@@ -159,26 +194,32 @@ def is_animated(img):
     return getattr(img, "n_frames", 1) > 1
 
 
-def needs_resize(path, max_width=1200, max_height=1200):
-    """True when ``resize_image`` would actually rewrite the file at `path`.
-
-    Split out of `resize_image` so a bulk backfill can report (or dry-run) what
-    it would touch without writing. Both use this, so the two can't drift.
-    """
-    if not path or not os.path.exists(path):
-        return False
-    extension = os.path.splitext(path)[1].lower()
-    if extension not in RESIZABLE_FORMATS:
+def _needs_resize_bytes(data, name, max_width=1200, max_height=1200):
+    """Core predicate on already-loaded bytes — the single source of truth shared
+    by ``needs_resize`` and ``resize_image`` so the two can't drift."""
+    if os.path.splitext(name)[1].lower() not in RESIZABLE_FORMATS:
         return False
     try:
-        with Image.open(path) as img:
+        with Image.open(io.BytesIO(data)) as img:
             # EXIF-rotated portraits report swapped dimensions until transposed.
             img = ImageOps.exif_transpose(img)
             oversized = img.width > max_width or img.height > max_height
     except (OSError, IOError):
         return False  # not an image or corrupt — leave it alone
-    # Correct dimensions but heavy on disk still earns a re-encode.
-    return oversized or os.path.getsize(path) >= RESIZE_MIN_BYTES
+    # Correct dimensions but heavy still earns a re-encode.
+    return oversized or len(data) >= RESIZE_MIN_BYTES
+
+
+def needs_resize(field_file, max_width=1200, max_height=1200):
+    """True when ``resize_image`` would actually rewrite this file.
+
+    Split out of `resize_image` so a bulk backfill can report (or dry-run) what it
+    would touch without writing. Storage-abstracted: works for local and remote.
+    """
+    data = _read_bytes(field_file)
+    if data is None:
+        return False
+    return _needs_resize_bytes(data, field_file.name, max_width, max_height)
 
 
 def resize_image(field_file, max_width=1200, max_height=1200, quality=85):
@@ -189,20 +230,24 @@ def resize_image(field_file, max_width=1200, max_height=1200, quality=85):
       with alpha and must stay that way).
     - Leaves alone anything it cannot rewrite safely: SVG, GIF, animations, and
       unknown extensions. See RESIZABLE_FORMATS.
+
+    Storage-abstracted (reads/writes via ``field_file.storage``) so it never needs
+    a local ``.path`` — the same code path serves local disk and S3/R2.
     """
-    if not field_file:
+    name = getattr(field_file, "name", None)
+    if not name:
         return
-    path = getattr(field_file, "path", None)
-    if not path or not os.path.exists(path):
-        return
-    target_format = RESIZABLE_FORMATS.get(os.path.splitext(path)[1].lower())
+    target_format = RESIZABLE_FORMATS.get(os.path.splitext(name)[1].lower())
     if target_format is None:
         return
-    if not needs_resize(path, max_width, max_height):
+    data = _read_bytes(field_file)
+    if data is None:
+        return
+    if not _needs_resize_bytes(data, name, max_width, max_height):
         return
 
     try:
-        with Image.open(path) as img:
+        with Image.open(io.BytesIO(data)) as img:
             if is_animated(img):
                 return  # a resize would flatten it to a single frame
             # Fix orientation from EXIF (phone photos)
@@ -210,15 +255,17 @@ def resize_image(field_file, max_width=1200, max_height=1200, quality=85):
 
             img.thumbnail((max_width, max_height), Image.LANCZOS)
 
+            out = io.BytesIO()
             if target_format == "JPEG":
                 # JPEG has no alpha channel; flatten whatever mode we're in.
                 if img.mode != "RGB":
                     img = img.convert("RGB")
-                img.save(path, "JPEG", quality=quality, optimize=True)
+                img.save(out, "JPEG", quality=quality, optimize=True)
             elif target_format == "PNG":
-                img.save(path, "PNG", optimize=True)
+                img.save(out, "PNG", optimize=True)
             else:  # WEBP — keeps RGBA, so nothing to convert
-                img.save(path, "WEBP", quality=quality, method=6)
+                img.save(out, "WEBP", quality=quality, method=6)
     except (OSError, IOError):
         # Not an image or file is corrupt — leave it alone
-        pass
+        return
+    _overwrite(field_file, name, out.getvalue())

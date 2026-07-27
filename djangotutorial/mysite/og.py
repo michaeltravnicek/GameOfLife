@@ -13,15 +13,18 @@ metadata can be attached without adding an SSR runtime.
 Scope: events get real per-event previews (the pages people actually paste into
 group chats). Player and profile pages get a title carrying the player's public
 display name -- full name only where a matching consent is on file, otherwise
-initials, the exact rule leaderboard/privacy.py applies everywhere else -- and
+"Jan N.", the exact rule leaderboard/privacy.py applies everywhere else -- and
 NO personal photo: the card falls back to the site's default image, so a name
 may show but a face never does. Everything else gets a per-page title on top of
 the site defaults.
 """
+import logging
 import os
 import re
 
 from django.utils.html import escape
+
+logger = logging.getLogger(__name__)
 
 SITE_NAME = "Game of Live"
 DEFAULT_TITLE = "Game of Live — Život je hra, tak ho hrej"
@@ -85,19 +88,33 @@ def _event_image_url(request, event):
     Prefers the original (JPEG/PNG is the most broadly supported og:image
     format) and falls back to the generated .mobile.webp only when the original
     is too heavy for the crawlers to accept.
+
+    Goes through the storage API rather than a filesystem path. `FieldFile.path`
+    raises NotImplementedError on S3/R2 (object storage has no local path), and
+    `getattr(..., None)` does not swallow that -- the default only covers
+    AttributeError. Since react_index wraps OG injection in a blanket except, the
+    failure would not surface as an error: link previews would simply stop having
+    images the moment media moved to the bucket, with nothing in the logs.
     """
     from leaderboard.image_utils import variant_name
 
     if not event.image:
         return None
-    path = getattr(event.image, "path", None)
-    if not path or not os.path.exists(path):
-        return None
 
-    if os.path.getsize(path) <= _OG_IMAGE_MAX_BYTES:
+    storage = event.image.storage
+    name = event.image.name
+    try:
+        if not name or not storage.exists(name):
+            return None
+        size = storage.size(name)
+    except Exception:  # noqa: BLE001 -- a storage hiccup must not cost the preview
+        logger.warning("OG image lookup failed for %r", name, exc_info=True)
         return _absolute(request, event.image.url)
 
-    if os.path.exists(variant_name(path)):
+    if size <= _OG_IMAGE_MAX_BYTES:
+        return _absolute(request, event.image.url)
+
+    if storage.exists(variant_name(name)):
         return _absolute(request, variant_name(event.image.url))
     # Oversized with no variant yet: sending it is still better than sending
     # nothing -- some crawlers are more lenient than Facebook's documented cap.

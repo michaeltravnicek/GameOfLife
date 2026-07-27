@@ -1,6 +1,4 @@
 import axios from 'axios';
-import { isNative } from './platform';
-import { getToken, clearToken } from './authToken';
 
 function readCookie(name) {
   const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
@@ -9,24 +7,21 @@ function readCookie(name) {
 
 // Default to the same-origin '/api/v1' (how production serves it, and how the Vite
 // dev server proxies it). Override with VITE_API_URL when running the SPA against
-// a separately-hosted backend. The native app (Capacitor) authenticates with a
-// DRF token instead of session cookies — webview cookies against a remote API
-// are unreliable (WKWebView eviction, CSRF Origin checks).
+// a separately-hosted backend.
+//
+// Session cookies are the only credential. The `Authorization: Token` path that
+// used to live here served the cancelled Capacitor app; the backend no longer
+// accepts token auth at all (see DEFAULT_AUTHENTICATION_CLASSES in settings.py).
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || '/api/v1',
-  withCredentials: !isNative,
+  withCredentials: true,
   xsrfCookieName: 'csrftoken',
   xsrfHeaderName: 'X-CSRFToken',
 });
 
 api.interceptors.request.use((config) => {
-  if (isNative) {
-    const token = getToken();
-    if (token) config.headers.Authorization = `Token ${token}`;
-    return config;
-  }
-  // Web: make sure the CSRF token is sent on every unsafe request, even when
-  // axios's xsrfCookieName fallback isn't enough (e.g., cross-origin in dev).
+  // Make sure the CSRF token is sent on every unsafe request, even when axios's
+  // xsrfCookieName fallback isn't enough (e.g., cross-origin in dev).
   const method = (config.method || 'get').toLowerCase();
   if (['post', 'put', 'patch', 'delete'].includes(method)) {
     const token = readCookie('csrftoken');
@@ -50,14 +45,7 @@ api.interceptors.response.use(
     const onAuthPage = /\/(prihlasit|registrace)/.test(window.location.pathname);
     if (status === 401 && !isProbe && !onAuthPage) {
       const from = window.location.pathname + window.location.search;
-      if (isNative) {
-        // Token was revoked/invalid: drop it so login is a clean slate.
-        clearToken().finally(() =>
-          window.location.assign(`/prihlasit?from=${encodeURIComponent(from)}`),
-        );
-      } else {
-        window.location.assign(`/prihlasit?from=${encodeURIComponent(from)}`);
-      }
+      window.location.assign(`/prihlasit?from=${encodeURIComponent(from)}`);
     }
     return Promise.reject(error);
   },
@@ -72,18 +60,11 @@ const MULTIPART = { headers: { 'Content-Type': 'multipart/form-data' } };
 export const fetchMe = () => api.get('/auth/me/').then((r) => r.data);
 export const apiLogin = (identifier, password, remember = false) =>
   api
-    .post('/auth/login/', {
-      identifier,
-      password,
-      remember,
-      ...(isNative ? { client: 'mobile' } : {}),
-    })
+    .post('/auth/login/', { identifier, password, remember })
     .then((r) => r.data);
 export const apiLogout = () => api.post('/auth/logout/').then((r) => r.data);
 export const apiRegister = (payload) =>
-  api
-    .post('/auth/register/', { ...payload, ...(isNative ? { client: 'mobile' } : {}) })
-    .then((r) => r.data);
+  api.post('/auth/register/', payload).then((r) => r.data);
 export const apiPasswordReset = (email) =>
   api.post('/auth/password-reset/', { email }).then((r) => r.data);
 export const apiPasswordResetConfirm = (uid, token, newPassword) =>
@@ -165,6 +146,12 @@ export const fetchGallery = (params = {}) =>
   api.get('/gallery/', { params }).then((r) => r.data);
 export const fetchCategories = () =>
   api.get('/categories/').then((r) => r.data);
+// Badges double as event logos — the event form picks one instead of uploading
+// artwork, which is what keeps one file from being stored once per edition.
+export const fetchBadges = () =>
+  api.get('/badges/').then((r) => r.data);
+export const createBadge = (formData) =>
+  api.post('/badges/create/', formData).then((r) => r.data);
 export const uploadGalleryPhoto = ({ image, event = '', caption = '' }) => {
   const fd = new FormData();
   fd.append('image', image);

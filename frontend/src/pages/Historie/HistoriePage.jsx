@@ -1,7 +1,12 @@
+import { QRCodeSVG } from 'qrcode.react';
 import PageHero from '../../components/PageHero/PageHero';
 import Reveal from '../../components/Reveal/Reveal';
 import Button from '../../components/Button/Button';
 import './HistoriePage.css';
+
+// Support QR: the whole block only renders when this env var holds a value
+// (a donation link / QR-platba string). Leave it unset to hide the section.
+const SUPPORT_QR = import.meta.env.VITE_SUPPORT_QR;
 
 const credits = [
   { label: '— Rok 0 —', value: '2025', sub: 'První ročník' },
@@ -166,6 +171,29 @@ export default function HistoriePage() {
         <div className="label">— A teď je řada na tobě —</div>
         <Button as="link" to="/events" size="lg">Zobrazit nadcházející akce <span className="arr" /></Button>
       </section>
+
+      {SUPPORT_QR && (
+        <Reveal as="section" className="hist-support" aria-label="Podpoř Game of Life">
+          <div className="hist-support-card">
+            <div className="hist-support-qr">
+              <QRCodeSVG value={SUPPORT_QR} size={196} bgColor="#fff1d4" fgColor="#1a0f0a" level="M" marginSize={2} />
+            </div>
+            <div className="hist-support-body">
+              <div className="hist-support-eyebrow">— Podpoř Game of Life —</div>
+              <p className="hist-support-text">
+                Gameofyolo žije jen díky vám, díky tomu že se zajímáte a chodíte na akce.
+                Připravovat akce nám ale bere hodně úsilí, pokud si i vy ceníte, co pro Vás
+                děláme, podpořte gameofyolo přes QR kód a na příští akci si vyzvedněte
+                odznáček za odměnu.
+              </p>
+              <div className="hist-support-reward">
+                <img src="/img/gg-pin-gold.svg" alt="" aria-hidden="true" />
+                <span>Odznáček za odměnu na příští akci</span>
+              </div>
+            </div>
+          </div>
+        </Reveal>
+      )}
     </div>
   );
 }

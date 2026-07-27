@@ -66,11 +66,17 @@ class AdminFieldCoverageTests(TestCase):
                     f"INTENTIONALLY_OMITTED with a reason.",
                 )
 
-    def test_event_visibility_and_logo_scale_are_editable(self):
-        """Named explicitly — these are the two that were missing."""
+    def test_event_visibility_and_badge_are_editable(self):
+        """Named explicitly — visibility was once missing, and the badge is now
+        the only way to give an event a logo."""
         form_fields = self._form_fields(admin.site._registry[Event])
         self.assertIn("visible_to_close", form_fields)
-        self.assertIn("logo_scale", form_fields)
+        self.assertIn("badge", form_fields)
+
+    def test_badge_image_scale_is_editable(self):
+        """The scale moved from Event to Badge; it must stay reachable somewhere."""
+        from leaderboard.models import Badge
+        self.assertIn("image_scale", self._form_fields(admin.site._registry[Badge]))
 
 
 class AdminPagesLoadTests(TestCase):
@@ -125,7 +131,10 @@ class EventAdminWriteTests(TestCase):
         self.assertFalse(event.visible_to_users)
         self.assertTrue(event.visible_to_close)
 
-    def test_logo_scale_can_be_set(self):
+    def test_badge_can_be_assigned(self):
+        from leaderboard.models import Badge
+        badge = Badge.objects.create(name="Karaoke", image_scale=2.5)
         self.client.post(reverse("admin:leaderboard_event_add"),
-                         self._payload(name="Velké logo", logo_scale="2.5"))
-        self.assertEqual(Event.objects.get(name="Velké logo").logo_scale, 2.5)
+                         self._payload(name="S odznakem", badge=str(badge.id)))
+        event = Event.objects.get(name="S odznakem")
+        self.assertEqual(event.badge_id, badge.id)

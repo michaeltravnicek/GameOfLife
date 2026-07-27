@@ -86,10 +86,15 @@ export default function PlayerPage() {
   const handleShare = () => shareLink(`${player.name} — Game of Life`);
 
   const seasonTabs = player.seasons?.map((s) => ({ key: s.id, label: s.label })) || [];
+  // See ProfilePage: withheld sections are absent, not zero, so their tabs go.
+  const hidden = player.hidden || [];
   const viewTabs = [
-    { key: 'events', label: 'Akce', badge: st.evs.length },
-    { key: 'points', label: 'Body', badge: st.totalPts },
-  ];
+    !hidden.includes('events') && { key: 'events', label: 'Akce', badge: st.evs.length },
+    !hidden.includes('points') && { key: 'points', label: 'Body', badge: st.totalPts },
+  ].filter(Boolean);
+  // The default view ('events') may be one of the hidden ones, which would leave
+  // the body blank. Fall back to whatever tab still exists.
+  const activeView = viewTabs.some((t) => t.key === view) ? view : (viewTabs[0]?.key ?? null);
 
   return (
     <div className="profile-page player-anon">
@@ -108,25 +113,31 @@ export default function PlayerPage() {
           <div className="poster-handle">hráč Game of Life · profil bez účtu</div>
         </div>
 
-        <ProfileCredits st={st} />
+        <ProfileCredits st={st} hidden={hidden} />
       </section>
 
       <div className="action-bar">
         <div className="action-inner">
           <PillTabs tabs={seasonTabs} active={seasonKey} onChange={setPickedSeason} />
-          <PillTabs tabs={viewTabs} active={view} onChange={setView} />
+          <PillTabs tabs={viewTabs} active={activeView} onChange={setView} />
         </div>
       </div>
 
       <div className="body-wrap">
         <main className="profile-main">
-          <section className="profile-view" key={view}>
-            {view === 'events' && (
+          <section className="profile-view" key={activeView}>
+            {activeView === 'events' && (
               <EventsSections st={st} upcoming={upcoming} past={past} startNum={1} />
             )}
 
-            {view === 'points' && (
+            {activeView === 'points' && (
               <PointsSections st={st} cats={cats} today={TODAY} startNum={3} />
+            )}
+
+            {!activeView && (
+              <p className="profile-hidden-note">
+                Tento hráč si své body i akce nechává pro sebe.
+              </p>
             )}
           </section>
         </main>

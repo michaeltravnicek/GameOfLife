@@ -1,5 +1,6 @@
 from unittest import mock
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import default_token_generator
 from django.core import mail
@@ -9,6 +10,7 @@ from django.urls import reverse
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 
+from rest_framework.authtoken.models import Token
 from rest_framework.test import APIClient
 
 from accounts.api.throttles import LoginThrottle
@@ -181,3 +183,53 @@ class AuthThrottleTests(TestCase):
                 self.assertEqual(resp.status_code, 401)  # under the limit: normal auth failure
             blocked = self.client.post(self.url, data=creds, format="json")
             self.assertEqual(blocked.status_code, 429)  # 4th request in the window is throttled
+
+
+class SessionOnlyAuthTests(TestCase):
+    """The API accepts session cookies and nothing else.
+
+    DRF TokenAuthentication was removed with the Capacitor app: a DRF token never
+    expires and does not rotate on password change, so minting one turned a
+    momentary session into a permanent credential. These tests are the regression
+    guard -- they fail loudly if token auth is ever re-enabled by accident.
+    """
+
+    def setUp(self):
+        self.client = APIClient()
+        UserModel = get_user_model()
+        self.user = UserModel.objects.create_user(
+            username="session_only", email="s@example.com", password="pw-12345",
+        )
+
+    def test_login_response_carries_no_token(self):
+        resp = self.client.post(
+            reverse("api-login"),
+            data={"identifier": "session_only", "password": "pw-12345"},
+            format="json",
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assertNotIn("token", resp.json())
+
+    def test_login_ignores_legacy_mobile_client_flag(self):
+        # Old native builds sent client=mobile to request a token. The flag is
+        # now inert -- it must not resurrect token minting.
+        resp = self.client.post(
+            reverse("api-login"),
+            data={"identifier": "session_only", "password": "pw-12345", "client": "mobile"},
+            format="json",
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assertNotIn("token", resp.json())
+        self.assertFalse(Token.objects.filter(user=self.user).exists())
+
+    def test_token_header_does_not_authenticate(self):
+        token = Token.objects.create(user=self.user)
+        self.client.credentials(HTTP_AUTHORIZATION=f"Token {token.key}")
+        resp = self.client.get(reverse("api-me"))
+        self.assertEqual(resp.status_code, 200)
+        # Authenticated *nothing*: the token is not a credential any more.
+        self.assertIsNone(resp.json()["user"])
+
+    def test_token_auth_not_in_drf_defaults(self):
+        configured = settings.REST_FRAMEWORK["DEFAULT_AUTHENTICATION_CLASSES"]
+        self.assertNotIn("rest_framework.authentication.TokenAuthentication", configured)

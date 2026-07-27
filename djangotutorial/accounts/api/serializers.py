@@ -7,11 +7,11 @@ payloads built in accounts.services.
 """
 from rest_framework import serializers
 
-# Privacy flags are stored and returned, but no code hides anything based on
-# them yet. Surfaced in the schema so API consumers don't assume they work.
-_NOT_ENFORCED_NOTE = (
-    "NOT ENFORCED YET — the value is stored and echoed back, but nothing is "
-    "actually hidden based on it."
+# Privacy flags are enforced server-side by leaderboard.privacy.visibility_for.
+_PRIVACY_NOTE = (
+    "Enforced server-side: hidden sections are omitted from profile/player "
+    "payloads and their season sub-resources, and a members-only profile 404s "
+    "for anonymous callers. The owner and admins always see everything."
 )
 
 
@@ -40,9 +40,6 @@ class LoginRequestSerializer(serializers.Serializer):
     remember = serializers.BooleanField(
         required=False, default=False,
         help_text="Keep the session for 30 days instead of until browser close.")
-    client = serializers.ChoiceField(
-        choices=["mobile"], required=False,
-        help_text="Send 'mobile' to also receive a token for native apps.")
 
 
 class RegisterRequestSerializer(serializers.Serializer):
@@ -55,7 +52,6 @@ class RegisterRequestSerializer(serializers.Serializer):
         help_text="Must be true. Records agreement to the privacy policy; the "
                   "server stores the timestamp and policy version.",
     )
-    client = serializers.ChoiceField(choices=["mobile"], required=False)
 
 
 class PasswordResetRequestSerializer(serializers.Serializer):
@@ -84,10 +80,9 @@ class ProfileUpdateRequestSerializer(serializers.Serializer):
     strava = serializers.CharField(required=False, allow_blank=True)
     spotify = serializers.CharField(required=False, allow_blank=True)
     tiktok = serializers.CharField(required=False, allow_blank=True)
-    hide_pts = serializers.BooleanField(
-        required=False, help_text=_NOT_ENFORCED_NOTE + " Also has no UI toggle yet.")
-    hide_events = serializers.BooleanField(required=False, help_text=_NOT_ENFORCED_NOTE)
-    members_only = serializers.BooleanField(required=False, help_text=_NOT_ENFORCED_NOTE)
+    hide_pts = serializers.BooleanField(required=False, help_text=_PRIVACY_NOTE)
+    hide_events = serializers.BooleanField(required=False, help_text=_PRIVACY_NOTE)
+    members_only = serializers.BooleanField(required=False, help_text=_PRIVACY_NOTE)
     favourite_categories = serializers.ListField(
         child=serializers.IntegerField(), required=False,
         help_text="Up to 3 category ids (extras are ignored).")
@@ -99,7 +94,6 @@ class ProfileUpdateRequestSerializer(serializers.Serializer):
 
 class LoginResponseSerializer(serializers.Serializer):
     user = UserSerializer()
-    token = serializers.CharField(required=False, help_text="Present only when client=mobile.")
 
 
 class MeResponseSerializer(serializers.Serializer):
@@ -154,17 +148,24 @@ class _ProfilePastEventSerializer(serializers.Serializer):
 
 
 class _ProfilePrivacySerializer(serializers.Serializer):
-    """Stored privacy preferences. See the per-field note: none are enforced yet,
-    so a client must NOT assume hidden data is actually withheld."""
-    hide_pts = serializers.BooleanField(help_text=_NOT_ENFORCED_NOTE)
-    hide_events = serializers.BooleanField(help_text=_NOT_ENFORCED_NOTE)
-    members_only = serializers.BooleanField(help_text=_NOT_ENFORCED_NOTE)
+    """The owner's own privacy preferences. Returned only on your own profile --
+    which switches someone else flipped is not a visitor's business."""
+    hide_pts = serializers.BooleanField(help_text=_PRIVACY_NOTE)
+    hide_events = serializers.BooleanField(help_text=_PRIVACY_NOTE)
+    members_only = serializers.BooleanField(help_text=_PRIVACY_NOTE)
 
 
 class ProfileSerializer(serializers.Serializer):
     """Public profile core (accounts.services.profile_payload).
 
-    `last_name` and `email` are present only when viewing your own profile.
+    `last_name`, `email` and `privacy` are present only when viewing your own
+    profile.
+
+    Privacy-gated sections are **omitted, not zeroed**: when the owner sets
+    `hide_pts` the payload has no `total_points`/`total_events`/`rank` at all,
+    and `hide_events` removes `upcoming_rsvps`/`past_events`/`seasons`. Read
+    `hidden` to tell "withheld" from "genuinely none" -- defaulting a missing
+    total to 0 would display a real player as having scored nothing.
     """
     username = serializers.CharField()
     first_name = serializers.CharField()
@@ -178,13 +179,16 @@ class ProfileSerializer(serializers.Serializer):
     spotify = serializers.CharField(allow_blank=True)
     tiktok = serializers.CharField(allow_blank=True)
     favourite_categories = _CategoryRefSerializer(many=True)
-    privacy = _ProfilePrivacySerializer()
-    total_points = serializers.IntegerField()
-    total_events = serializers.IntegerField()
-    rank = serializers.IntegerField(allow_null=True)
-    upcoming_rsvps = _ProfileUpcomingRsvpSerializer(many=True)
-    past_events = _ProfilePastEventSerializer(many=True)
-    seasons = _ProfileSeasonSummarySerializer(many=True)
+    hidden = serializers.ListField(
+        child=serializers.ChoiceField(choices=["points", "events"]),
+        help_text='Sections withheld by the owner\'s privacy flags, e.g. ["points"].')
+    privacy = _ProfilePrivacySerializer(required=False)
+    total_points = serializers.IntegerField(required=False)
+    total_events = serializers.IntegerField(required=False)
+    rank = serializers.IntegerField(allow_null=True, required=False)
+    upcoming_rsvps = _ProfileUpcomingRsvpSerializer(many=True, required=False)
+    past_events = _ProfilePastEventSerializer(many=True, required=False)
+    seasons = _ProfileSeasonSummarySerializer(many=True, required=False)
     is_own_profile = serializers.BooleanField()
     last_name = serializers.CharField(required=False)
     email = serializers.EmailField(required=False)

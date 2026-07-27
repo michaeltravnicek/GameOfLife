@@ -2,6 +2,22 @@
    cards, mini-ticket inputs. --frame-gap = dashed-frame-to-panel distance. */
 .event-page{position:relative;padding-bottom:96px;--frame-gap:2px}
 
+/* ── ENTRANCE ── on-mount staggered fade-up (matches the profile / event-detail
+   pattern). Header, then each form card cascades in, then the commit zone.
+   Shared by Create + Edit — both render this same .event-page shell. */
+@keyframes evFade{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+.event-page .ev-head{animation:evFade .6s cubic-bezier(.22,.68,0,1.2) both .05s}
+.event-page .ev-main > .ev-section{animation:evFade .55s cubic-bezier(.22,.68,0,1.2) both}
+.event-page .ev-main > .ev-section:nth-child(1){animation-delay:.14s}
+.event-page .ev-main > .ev-section:nth-child(2){animation-delay:.2s}
+.event-page .ev-main > .ev-section:nth-child(3){animation-delay:.26s}
+.event-page .ev-main > .ev-section:nth-child(4){animation-delay:.32s}
+.event-page .ev-main > .ev-section:nth-child(n+5){animation-delay:.38s}
+.event-page .ev-commit-zone{animation:evFade .6s ease both .44s}
+@media(prefers-reduced-motion:reduce){
+  .event-page .ev-head,.event-page .ev-main > .ev-section,.event-page .ev-commit-zone{animation:none}
+}
+
 .event-page .ev-stage{position:fixed;inset:0;z-index:-2;background:url('/img/gal2.webp') center 30%/cover no-repeat;filter:saturate(.7) contrast(1.02);transform:scale(1.06)}
 .event-page .ev-stage::after{content:'';position:absolute;inset:0;background:
   radial-gradient(ellipse at 50% 0%, var(--alpha-purple-22) 0%, transparent 38%),
@@ -40,13 +56,12 @@
 .event-page .ev-img-preview{width:100%;aspect-ratio:1;border-radius:12px;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 30% 30%,var(--alpha-pink-22),transparent 65%),var(--alpha-dark-62);border:3px dashed var(--alpha-cream-45);font-family:var(--font-mono);font-style:italic;font-size:46px;font-weight:700;color:var(--color-cream-light);box-shadow:0 14px 44px var(--alpha-black-50);background-size:cover;background-position:center}
 .event-page .ev-img-preview.has-img{font-size:0}
 .event-page .ev-img-preview.sm{aspect-ratio:1/1;width:140px;height:140px}
-/* Logo preview: the real logo scaled exactly like the render, clipped to the box. */
+/* Badge preview: the real artwork scaled exactly like the render, clipped to
+   the box. The scale comes from the badge, not the event — one correction for
+   every edition that shares the logo. */
 .event-page .ev-img-preview{overflow:hidden}
 .event-page .ev-logo-preview-img{max-width:100%;max-height:100%;object-fit:contain;transition:transform .12s ease}
-.event-page .ev-logo-scale{width:140px;max-width:100%;margin-top:12px}
-.event-page .ev-logo-scale-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;font-family:var(--font-mono);font-style:italic;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-cream-light)}
-.event-page .ev-logo-scale-val{color:var(--color-pink);font-weight:700;font-style:normal}
-.event-page .ev-logo-scale input[type=range]{width:100%;accent-color:var(--color-pink);cursor:pointer}
+.event-page .ev-hint-block{margin-top:8px;font-family:var(--font-body);font-style:italic;font-size:12.5px;line-height:1.5;color:var(--alpha-cream-65);max-width:34ch}
 .event-page .ev-img-actions{display:flex;gap:10px;flex-wrap:wrap}
 
 .event-page .ev-btn{display:inline-flex;align-items:center;gap:8px;border:0;cursor:pointer;font-family:var(--font-body);font-size:12.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;padding:11px 22px;border-radius:var(--radius-pill);transition:.18s;text-decoration:none}
@@ -87,7 +102,7 @@
 
 .event-page .ev-commit-zone{position:relative;z-index:2;max-width:980px;margin:0 auto;padding:8px 24px 64px;text-align:center}
 .event-page .ev-commit-label{font-family:var(--font-mono);font-style:italic;font-size:13px;letter-spacing:.22em;text-transform:uppercase;color:var(--alpha-cream-65);margin-bottom:14px}
-.event-page .ev-commit-zone h2{font-family:var(--font-display);font-size:clamp(34px,4.6vw,52px);line-height:1;color:var(--color-cream-light);text-transform:uppercase;letter-spacing:.03em;margin-bottom:22px}
+.event-page .ev-commit-zone h2{font-family:var(--font-display);font-size:clamp(34px,4.6vw,52px);line-height:1;color:var(--color-heading);text-transform:uppercase;letter-spacing:.03em;margin-bottom:22px}
 .event-page .ev-commit-row{display:inline-flex;gap:12px;flex-wrap:wrap;justify-content:center;align-items:center}
 .event-page .ev-commit-note{font-family:var(--font-mono);font-style:italic;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--alpha-cream-55);margin-top:18px}
 
@@ -137,7 +152,7 @@
 
 /* Delete confirm modal (shared <Modal> shell; eyebrow → title → text → buttons). */
 .ev-modal-eyebrow{font-family:var(--font-mono);font-style:italic;font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--alpha-cream-55, rgba(255,241,212,.55));margin-bottom:14px}
-.ev-modal-title{font-family:var(--font-display);font-size:clamp(28px,3.6vw,38px);line-height:1.05;color:var(--color-cream-light, #fff1d4);text-transform:uppercase;letter-spacing:.02em;margin:0 0 16px}
+.ev-modal-title{font-family:var(--font-display);font-size:clamp(28px,3.6vw,38px);line-height:1.05;color:var(--color-heading);text-transform:uppercase;letter-spacing:.02em;margin:0 0 16px}
 .ev-modal-title .pink{color:var(--color-pink, #e15463)}
 .ev-modal-text{font-family:var(--font-body);font-size:14px;line-height:1.55;color:var(--alpha-cream-65, rgba(255,241,212,.65));max-width:42ch;margin:0 auto 26px}
 .ev-modal-buttons{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}

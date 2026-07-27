@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import FormInput from '../../components/FormInput/FormInput';
 import Button from '../../components/Button/Button';
 import { extractApiError } from '../../services/errors';
+import GoogleSignInButton from '../../components/GoogleSignInButton/GoogleSignInButton';
 import './AuthPage.css';
 
 export default function LoginPage() {
@@ -78,9 +79,12 @@ export default function LoginPage() {
                 <span>Zůstat přihlášen</span>
               </label>
               <Button type="submit" variant="nav" size="lg" busy={busy} className="pts-btn-wrap">
-                {busy ? 'Přihlašuji…' : 'Přihlásit se →'}
+                {busy ? 'Přihlašuji…' : <>Přihlásit se <span className="arr" aria-hidden="true" /></>}
               </Button>
             </form>
+
+            <GoogleSignInButton />
+
             <p className="auth-foot">Nemáš účet? <Link to={{ pathname: '/registrace', search: location.search }} state={location.state}>Zaregistrovat se</Link></p>
           </div>
         </div>

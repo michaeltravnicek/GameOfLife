@@ -4,6 +4,7 @@ import tempfile
 from datetime import timedelta
 from io import StringIO
 
+from django.core.files.storage import FileSystemStorage
 from django.core.management import call_command
 from django.test import TestCase, override_settings
 from django.utils import timezone
@@ -12,17 +13,28 @@ from PIL import Image
 from leaderboard.image_utils import (
     make_webp_variant, needs_resize, resize_image, variant_name,
 )
-from leaderboard.models import Event
+from leaderboard.models import Badge, Event
 
 
 class _FieldFile:
-    """Minimal stand-in for an ImageFieldFile — the utils only need `.path`."""
+    """Minimal stand-in for an ImageFieldFile backed by local storage.
+
+    The image utils are storage-abstracted (`.storage` + `.name`), never `.path`,
+    so the stub exposes a FileSystemStorage rooted at the file's directory — the
+    same shape a real ImageFieldFile presents to those functions.
+    """
 
     def __init__(self, path):
-        self.path = path
+        directory, filename = os.path.split(path)
+        self.storage = FileSystemStorage(location=directory)
+        self.name = filename
 
     def __bool__(self):
         return True
+
+    @property
+    def url(self):
+        return self.storage.url(self.name)
 
 
 def _write_jpeg(path, width, height, noisy=False):
@@ -46,25 +58,25 @@ class NeedsResizeTests(TestCase):
 
     def test_oversized_dimensions_need_resize(self):
         path = _write_jpeg(self._path("big.jpg"), 3000, 2000)
-        self.assertTrue(needs_resize(path, 1200, 1200))
+        self.assertTrue(needs_resize(_FieldFile(path), 1200, 1200))
 
     def test_small_and_light_image_is_left_alone(self):
         path = _write_jpeg(self._path("small.jpg"), 600, 400)
-        self.assertFalse(needs_resize(path, 1200, 1200))
+        self.assertFalse(needs_resize(_FieldFile(path), 1200, 1200))
 
     def test_correct_dimensions_but_heavy_still_needs_reencode(self):
         path = _write_jpeg(self._path("heavy.jpg"), 1100, 1100, noisy=True)
         self.assertGreater(os.path.getsize(path), 500 * 1024)
-        self.assertTrue(needs_resize(path, 1200, 1200))
+        self.assertTrue(needs_resize(_FieldFile(path), 1200, 1200))
 
     def test_missing_file_is_not_a_candidate(self):
-        self.assertFalse(needs_resize(self._path("nope.jpg"), 1200, 1200))
+        self.assertFalse(needs_resize(_FieldFile(self._path("nope.jpg")), 1200, 1200))
 
     def test_non_image_is_not_a_candidate(self):
         path = self._path("junk.jpg")
         with open(path, "w") as fh:
             fh.write("definitely not a jpeg")
-        self.assertFalse(needs_resize(path, 1200, 1200))
+        self.assertFalse(needs_resize(_FieldFile(path), 1200, 1200))
 
 
 class FormatPreservationTests(TestCase):
@@ -141,8 +153,9 @@ class FormatPreservationTests(TestCase):
         self.assertEqual(os.path.getsize(path), before)
 
 
-class EventLogoTests(TestCase):
-    """Event.logo was never resized or variant-ed, in save() or the backfill."""
+class BadgeArtworkTests(TestCase):
+    """Badge.image is the old event logo: never resized or variant-ed before, in
+    save() or the backfill. Same guarantees, new home."""
 
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
@@ -151,48 +164,42 @@ class EventLogoTests(TestCase):
         override.enable()
         self.addCleanup(override.disable)
 
-    def _event_with_logo(self, name="event_logos/big.png", size=(2000, 2000)):
-        event = Event.objects.create(
-            sheet_id="lg", sheet_list_id="x", name="S logem",
-            place="Brno", points=10, date=timezone.now() + timedelta(days=1),
-        )
+    def _badge_with_image(self, name="badges/big.png", size=(2000, 2000)):
+        badge = Badge.objects.create(name="S logem")
         path = os.path.join(self.tmp.name, name)
         os.makedirs(os.path.dirname(path), exist_ok=True)
         Image.new("RGBA", size, (255, 0, 0, 128)).save(path, "PNG")
-        Event.objects.filter(pk=event.pk).update(logo=name)
-        return Event.objects.get(pk=event.pk), path
+        Badge.objects.filter(pk=badge.pk).update(image=name)
+        return Badge.objects.get(pk=badge.pk), path
 
-    def test_save_downscales_a_new_logo(self):
-        event, path = self._event_with_logo()
-        event.save()
+    def test_save_downscales_new_artwork(self):
+        badge, path = self._badge_with_image()
+        badge.save()
         with Image.open(path) as img:
             self.assertLessEqual(img.width, 512)
             self.assertIn("A", img.mode)
 
-    def test_backfill_downscales_legacy_logos(self):
-        _, path = self._event_with_logo()
+    def test_backfill_downscales_legacy_artwork(self):
+        _, path = self._badge_with_image()
         before = os.path.getsize(path)
         call_command("generate_image_variants", resize=True, stdout=StringIO())
         with Image.open(path) as img:
             self.assertLessEqual(img.width, 512)
         self.assertLess(os.path.getsize(path), before)
 
-    def test_logos_get_no_webp_sibling(self):
+    def test_artwork_gets_no_webp_sibling(self):
         """At 512px a variant would save nothing and only add a file."""
-        _, path = self._event_with_logo()
+        _, path = self._badge_with_image()
         call_command("generate_image_variants", resize=True, stdout=StringIO())
         self.assertFalse(os.path.exists(variant_name(path)))
 
-    def test_svg_logo_survives_the_backfill(self):
-        event = Event.objects.create(
-            sheet_id="lg2", sheet_list_id="x", name="SVG logo",
-            place="Brno", points=10, date=timezone.now() + timedelta(days=1),
-        )
-        path = os.path.join(self.tmp.name, "event_logos/logo.svg")
+    def test_svg_artwork_survives_the_backfill(self):
+        badge = Badge.objects.create(name="SVG logo")
+        path = os.path.join(self.tmp.name, "badges/logo.svg")
         os.makedirs(os.path.dirname(path), exist_ok=True)
         with open(path, "w") as fh:
             fh.write("<svg xmlns='http://www.w3.org/2000/svg'><circle r='5'/></svg>")
-        Event.objects.filter(pk=event.pk).update(logo="event_logos/logo.svg")
+        Badge.objects.filter(pk=badge.pk).update(image="badges/logo.svg")
         before = open(path, "rb").read()
         call_command("generate_image_variants", resize=True, stdout=StringIO())
         self.assertEqual(open(path, "rb").read(), before)

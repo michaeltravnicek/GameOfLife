@@ -17,11 +17,15 @@ export default function EventFormSections({
   setField,
   markDirty,
   poster,
-  logo,
+  badges = [],
   allCategories,
   categories,
   onCategories,
 }) {
+  // form.badge comes off a <select>, so it's a string even though ids are
+  // numbers — compare loosely rather than sprinkling Number() at call sites.
+  const selectedBadge = badges.find((b) => String(b.id) === String(form.badge));
+
   return (
     <>
       {/* 01 · Základy */}
@@ -129,7 +133,7 @@ export default function EventFormSections({
           <div className="ev-card-head">
             <div className="ev-sec-eyebrow">— 04 · Vizuál —</div>
             <h2 className="ev-sec-heading">Jak <span className="pink">vypadá.</span></h2>
-            <p className="ev-sec-sub">Nahraj plakát a logo akce. PNG nebo JPG, alespoň 400×400 px.</p>
+            <p className="ev-sec-sub">Nahraj plakát a vyber odznak — jeho obrázek je zároveň logo akce.</p>
           </div>
           <div className="ev-image-pair">
             <div className="ev-img-section">
@@ -146,43 +150,39 @@ export default function EventFormSections({
               </div>
             </div>
             <div className="ev-img-section">
-              <div className="ev-img-label">Logo</div>
-              {/* The preview renders the logo the same way the site does — an
-                  <img> scaled by logo_scale — so the slider shows the real result. */}
-              <div className={`ev-img-preview sm${logo.preview ? ' has-img' : ''}`}>
-                {logo.preview && (
+              <div className="ev-img-label">Odznak / logo</div>
+              {/* Renders the artwork exactly as the site does — an <img> scaled
+                  by the badge's own image_scale — so what you pick is what the
+                  card shows. */}
+              <div className={`ev-img-preview sm${selectedBadge?.image ? ' has-img' : ''}`}>
+                {selectedBadge?.image && (
                   <img
                     className="ev-logo-preview-img"
-                    src={logo.preview}
-                    alt="Náhled loga"
-                    style={{ transform: `scale(${form.logo_scale})` }}
+                    src={selectedBadge.image}
+                    alt={`Náhled odznaku ${selectedBadge.name}`}
+                    style={{ transform: `scale(${selectedBadge.image_scale ?? 1})` }}
                   />
                 )}
               </div>
-              <div className="ev-img-actions">
-                <label className="ev-btn primary" htmlFor="logo-input">Nahrát logo
-                  <input type="file" id="logo-input" accept="image/*" hidden onChange={logo.onSelect} />
-                </label>
-                {logo.preview && <button type="button" className="ev-btn ghost" onClick={logo.clear}>Odebrat</button>}
+              <div className="ev-field">
+                <label htmlFor="f-badge">Odznak akce</label>
+                <select
+                  className="ev-input"
+                  id="f-badge"
+                  value={form.badge ?? ''}
+                  onChange={(e) => { setForm((f) => ({ ...f, badge: e.target.value })); markDirty(); }}
+                >
+                  <option value="">— bez odznaku —</option>
+                  {badges.map((b) => (
+                    <option key={b.id} value={b.id}>{b.name}</option>
+                  ))}
+                </select>
+                <p className="ev-hint-block">
+                  Účastníci akce odznak dostanou do sbírky. Nové logo se nahrává
+                  jako nový odznak v administraci — díky tomu drží všechny edice
+                  jedné akce jeden soubor.
+                </p>
               </div>
-              {logo.preview && (
-                <div className="ev-logo-scale">
-                  <div className="ev-logo-scale-head">
-                    <label htmlFor="f-logo-scale">Velikost loga</label>
-                    <span className="ev-logo-scale-val">{Number(form.logo_scale).toFixed(2)}×</span>
-                  </div>
-                  <input
-                    id="f-logo-scale"
-                    type="range"
-                    min="0.5"
-                    max="2"
-                    step="0.05"
-                    value={form.logo_scale}
-                    onChange={(e) => { setForm((f) => ({ ...f, logo_scale: Number(e.target.value) })); markDirty(); }}
-                    aria-label="Velikost loga"
-                  />
-                </div>
-              )}
             </div>
           </div>
         </div>

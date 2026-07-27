@@ -1,6 +1,21 @@
+# ── Tajemství ──────────────────────────────────────────────────────────────
+# Google service-account klíče. Vzory níž chytají jen konkrétní názvy, takže
+# celý script/ radši bereme jako "sem patří klíč" — soubor se jmenuje podle
+# projektu a ID (gameoflive-34359340b227.json), na *-service-account*.json
+# nesedí a bez tohohle pravidla by ho `git add -A` commitnul.
 credentials.json
 credentials1.json
 *-service-account*.json
+script/*.json
+*.pem
+*.key
+
+# ── Osobní údaje ───────────────────────────────────────────────────────────
+# Exporty z Google Forms: sloupce Telefon + Jméno reálných členů. Do repa
+# nepatří ani jednou — z historie se nemažou.
+script/data*.csv
+script/actions*/
+
 __pycache__/
 *.__pycache__/
 *.pyc
@@ -11,6 +26,12 @@ __pycache__/
 venv/
 env/
 .env
+# frontend/.env.production a .env.mobile jsou verzované ZÁMĚRNĚ — obsahují jen
+# hodnoty, které stejně končí ve veřejném bundlu (write-only Sentry DSN, QR).
+# Proto tu není žádné .env.* — nové env soubory se musí posoudit jednotlivě.
+
+# frontend/.gitignore řeší jen frontend/node_modules — tenhle je v rootu
+node_modules/
 
 build/
 *.log

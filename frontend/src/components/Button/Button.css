@@ -1,4 +1,4 @@
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;cursor:pointer;border-radius:var(--radius-pill);transition:transform .12s,background .18s,border-color .18s,box-shadow .12s,color .18s;text-decoration:none;font-family:var(--font-hv);font-weight:700;letter-spacing:.04em;line-height:1;white-space:nowrap}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;cursor:pointer;border-radius:var(--radius-pill);transition:transform .12s,background .18s,border-color .18s,box-shadow .12s,color .18s;text-decoration:none;font-family:var(--font-hv-world);font-weight:700;letter-spacing:.04em;line-height:1;white-space:nowrap}
 .btn:disabled,.btn[aria-disabled="true"]{opacity:.55;cursor:not-allowed;transform:none !important;pointer-events:none}
 
 /* Variants — two roles plus a quiet sibling:
@@ -25,15 +25,22 @@
 .btn-frost:hover:not(:disabled){background:rgba(20,13,9,.68);color:var(--color-pink);transform:translateY(4px);box-shadow:0 0 0 0 #504d4d,0 4px 16px rgba(0,0,0,.4)}
 .btn-frost:active:not(:disabled){transform:translateY(4px);box-shadow:0 0 0 0 #504d4d,0 3px 12px rgba(0,0,0,.35)}
 
-/* Arrow affordance: a single connected arrow (shaft + head as one stroke).
-   Drawn as an SVG mask so it inherits the button's text color via currentColor. */
-.btn .arr{display:inline-block;width:30px;height:14px;vertical-align:middle;background-color:currentColor;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='14' viewBox='0 0 30 14'%3E%3Cpath d='M2 7H26M20 2l7 5-7 5' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='14' viewBox='0 0 30 14'%3E%3Cpath d='M2 7H26M20 2l7 5-7 5' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat}
+/* Arrow affordance: shaft + head drawn as two pieces so the shaft can stretch
+   on its own — a single SVG mask would scale the head along with it. Both use
+   currentColor, so the arrow inherits the button's text color.
+   --arr-w is the total arrow length; it is set in em so a smaller button gets a
+   proportionally shorter arrow, and stepped up per size for the big CTAs. */
+.btn .arr{--arr-stroke:2.2px;position:relative;display:inline-block;width:var(--arr-w,3.1em);height:1em;vertical-align:middle;flex-shrink:0}
+/* Shaft: stops short of the head so the two read as one continuous stroke. */
+.btn .arr::before{content:'';position:absolute;left:0;right:calc(.42em - var(--arr-stroke));top:50%;height:var(--arr-stroke);margin-top:calc(var(--arr-stroke) / -2);background:currentColor;border-radius:var(--arr-stroke)}
+/* Head: fixed chevron, always the same size whatever the shaft does. */
+.btn .arr::after{content:'';position:absolute;right:0;top:50%;width:.62em;height:.72em;margin-top:-.36em;background:currentColor;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='11' viewBox='0 0 9 11'%3E%3Cpath d='M1.4 1.4 7 5.5l-5.6 4.1' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='11' viewBox='0 0 9 11'%3E%3Cpath d='M1.4 1.4 7 5.5l-5.6 4.1' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat}
 
-/* Sizes */
-.btn-sm{font-size:11px;padding:7px 16px}
-.btn-md{font-size:13px;padding:11px 24px}
-.btn-lg{font-size:14px;padding:13px 30px}
-@media(max-width:480px){.btn-lg{font-size:13px;padding:11px 22px}}
+/* Sizes — each sets its own arrow length. */
+.btn-sm{font-size:11px;padding:7px 16px;--arr-w:2.4em}
+.btn-md{font-size:13px;padding:11px 24px;--arr-w:3.1em}
+.btn-lg{font-size:14px;padding:13px 30px;--arr-w:3.9em}
+@media(max-width:480px){.btn-lg{font-size:13px;padding:11px 22px;--arr-w:3.2em}}
 
 /* Busy spinner */
 .btn-spinner{width:14px;height:14px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:btn-spin .6s linear infinite;flex-shrink:0}

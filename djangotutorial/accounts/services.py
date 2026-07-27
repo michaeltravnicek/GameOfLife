@@ -5,16 +5,28 @@ from django.contrib.auth.tokens import default_token_generator
 from django.core.exceptions import ValidationError
 from django.db.models import Count, Sum
 from django.db.models.functions import Coalesce
+from django.http import Http404
+from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.utils.http import urlsafe_base64_decode
 
 from leaderboard.image_utils import validate_upload
 from leaderboard.models import Category, Season, User as LeaderboardUser, UserToEvent
+from leaderboard.privacy import visibility_for
 from leaderboard.services import season_rank
 from leaderboard.services.badges import badges_for
 from leaderboard.utils import parse_phone_number
 
 from .models import Profile
+
+
+def _badge_logo_url(event, request=None):
+    """Absolute URL of an event's logo, which lives on its badge. None if unset."""
+    badge = event.badge
+    if not badge or not badge.image:
+        return None
+    url = badge.image.url
+    return request.build_absolute_uri(url) if request else url
 
 
 # ── Auth ───────────────────────────────────────────────────────────────
@@ -109,15 +121,34 @@ def _since(profile_user, lb_user):
     return (first_event_date or profile_user.date_joined).strftime("%Y-%m")
 
 
+def visible_profile_user_or_404(username, request):
+    """Resolve a username to a user the requester is allowed to see.
+
+    A `members_only` profile 404s for anonymous visitors rather than 403s: a 403
+    confirms the account exists, which is precisely what someone hiding their
+    profile from the open internet is trying not to publish.
+    """
+    profile_user = get_object_or_404(AuthUser, username=username)
+    if visibility_for(getattr(profile_user, "profile", None), request.user).members_only:
+        raise Http404("Profile is members-only.")
+    return profile_user
+
+
 def profile_payload(profile_user, request):
-    """Public profile dict: stats, rank, upcoming RSVPs, and per-season history."""
+    """Public profile dict: stats, rank, upcoming RSVPs, and per-season history.
+
+    Honours the owner's privacy flags: hidden sections are *omitted* rather than
+    zeroed, so the client can tell "hidden" from "has none" and say so, instead
+    of rendering a real user as having zero points.
+    """
     profile = getattr(profile_user, "profile", None)
     lb_user = profile.leaderboard_user if profile else None
+    gates = visibility_for(profile, request.user)
 
     total_points = 0
     total_events = 0
     rank = None
-    if lb_user:
+    if lb_user and not gates.hide_pts:
         agg = UserToEvent.objects.filter(user=lb_user).aggregate(
             total_points=Sum("points"),
             total_events=Count("id"),
@@ -132,7 +163,7 @@ def profile_payload(profile_user, request):
             ) + 1
 
     upcoming_rsvps = []
-    if profile:
+    if profile and not gates.hide_events:
         rsvp_qs = (
             profile_user.rsvps.select_related("event")
             .filter(event__date__gte=timezone.now())
@@ -152,11 +183,13 @@ def profile_payload(profile_user, request):
 
     # Attended events, newest first — feeds the profile's "absolvované akce" list.
     past_events = []
-    if lb_user:
+    if lb_user and not gates.hide_events:
         past_qs = (
             UserToEvent.objects
             .filter(user=lb_user, event__date__lt=timezone.now())
-            .select_related("event")
+            # badge too: the logo hangs off it, and 30 rows would otherwise be
+            # 30 extra queries.
+            .select_related("event", "event__badge")
             .order_by("-event__date")[:30]
         )
         past_events = [
@@ -166,7 +199,8 @@ def profile_payload(profile_user, request):
                 "date": u.event.date,
                 "place": u.event.place,
                 "points": u.points,
-                "logo": request.build_absolute_uri(u.event.logo.url) if u.event.logo else None,
+                # The event's logo is its badge's artwork now.
+                "logo": _badge_logo_url(u.event, request),
             }
             for u in past_qs
         ]
@@ -197,25 +231,39 @@ def profile_payload(profile_user, request):
         "spotify":    profile.spotify if profile else "",
         "tiktok":     profile.tiktok if profile else "",
         "favourite_categories": fav_cats,
-        "privacy": {
-            "hide_pts":     profile.hide_pts if profile else False,
-            "hide_events":  profile.hide_events if profile else False,
-            "members_only": profile.members_only if profile else False,
-        },
-        "total_points":   total_points,
-        "total_events":   total_events,
-        "rank":           rank,
-        "upcoming_rsvps": upcoming_rsvps,
-        "past_events":    past_events,
-        "seasons":        season_summaries(lb_user) if lb_user else [],
+        # Badges stay visible under both flags: they are awarded markers the user
+        # chose to display, and they carry no point totals or event dates.
         "badges":         badges_for(lb_user, request),
         "is_own_profile": is_own_profile,
+        # Tells the client which sections were withheld, so it can render
+        # "skryto" instead of silently showing an incomplete profile.
+        "hidden": [
+            name for name, hidden in (
+                ("points", gates.hide_pts),
+                ("events", gates.hide_events),
+            ) if hidden
+        ],
     }
+    if not gates.hide_pts:
+        payload["total_points"] = total_points
+        payload["total_events"] = total_events
+        payload["rank"] = rank
+    if not gates.hide_events:
+        payload["upcoming_rsvps"] = upcoming_rsvps
+        payload["past_events"] = past_events
+        payload["seasons"] = season_summaries(lb_user) if lb_user else []
+
     # Private account fields — only exposed to the owner so the edit form can
-    # prefill them (and not blank them out on save).
+    # prefill them (and not blank them out on save). The privacy block belongs
+    # here too: a visitor has no business reading which switches someone flipped.
     if is_own_profile:
         payload["last_name"] = profile_user.last_name
         payload["email"] = profile_user.email
+        payload["privacy"] = {
+            "hide_pts":     profile.hide_pts if profile else False,
+            "hide_events":  profile.hide_events if profile else False,
+            "members_only": profile.members_only if profile else False,
+        }
     return payload
 
 

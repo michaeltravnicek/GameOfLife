@@ -3,17 +3,7 @@
    ============================================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400;1,700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-
-@font-face {
-  font-family: 'Courier Prime';
-  src: url('/fonts/Courier_Prime_Italic.ttf') format('truetype');
-  font-weight: 400;
-  font-style: italic;
-  font-display: swap;
-}
 
 /* ── Helvetica ── */
 @font-face {
@@ -84,6 +74,33 @@
   font-weight: 600; font-style: italic; font-display: swap;
 }
 
+/* ── IBM Plex Mono ── navigation + every "mono" role (labels, eyebrows, pills) */
+@font-face {
+  font-family: 'IBM Plex Mono';
+  src: url('/fonts/IBMPlexMono-Regular.ttf') format('truetype');
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'IBM Plex Mono';
+  src: url('/fonts/IBMPlexMono-Italic.ttf') format('truetype');
+  font-weight: 400; font-style: italic; font-display: swap;
+}
+@font-face {
+  font-family: 'IBM Plex Mono';
+  src: url('/fonts/IBMPlexMono-SemiBold.ttf') format('truetype');
+  font-weight: 600; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'IBM Plex Mono';
+  src: url('/fonts/IBMPlexMono-Bold.ttf') format('truetype');
+  font-weight: 700; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'IBM Plex Mono';
+  src: url('/fonts/IBMPlexMono-BoldItalic.ttf') format('truetype');
+  font-weight: 700; font-style: italic; font-display: swap;
+}
+
 /* ── Ringold Gym ── */
 @font-face {
   font-family: 'Ringold Gym';
@@ -127,6 +144,14 @@
 
 /* TODO: add when font file is provided:
    @font-face { font-family: 'Ringold Clarendon'; src: url('/fonts/Ringold-Clarendon.ttf') format('truetype'); font-display: swap; }
+*/
+
+/* TODO: buttons are meant to run on Helvetica World, not Helvetica Regular.
+   Drop HelveticaWorld-Regular.ttf + HelveticaWorld-Bold.ttf into public/fonts,
+   uncomment, and point --font-hv-world at it (it already falls back to
+   --font-hv, so .btn picks it up with no further edits):
+   @font-face { font-family: 'Helvetica World'; src: url('/fonts/HelveticaWorld-Regular.ttf') format('truetype'); font-weight: 400; font-style: normal; font-display: swap; }
+   @font-face { font-family: 'Helvetica World'; src: url('/fonts/HelveticaWorld-Bold.ttf') format('truetype'); font-weight: 700; font-style: normal; font-display: swap; }
 */
 
 :root {
@@ -216,17 +241,23 @@
   --border-card-dark:     3px solid rgba(26,26,26,.9);
 
   /* role-based font tokens */
+  /* Headings sit one step whiter than body cream — the manual's #fff4e1. */
+  --color-heading:        var(--color-cream-lighter);
+
   --font-display:         'Ringold Gym', sans-serif;          /* velké nadpisy */
-  --font-event-name:      'Ringold Sans', sans-serif;         /* Název akce */
+  --font-event-name:      'Ringold Gym', sans-serif;          /* Název akce */
   --font-leaderboard:     'Ringold Gym', sans-serif;          /* Top 10 leaderboard (= Ringold Gym) */
   /* TODO: --font-events: 'Ringold Clarendon', sans-serif; — add when Ringold-Clarendon.ttf is provided */
   --font-events:          'Ringold Gym', sans-serif;          /* akce titles — temp fallback until Ringold Clarendon */
-  --font-nav:             'IBM Plex Serif', Georgia, serif;   /* navigation bar */
+  --font-nav:             'IBM Plex Mono', ui-monospace, monospace; /* navigation bar */
   --font-number:          'IBM Plex Serif', Georgia, serif;   /* číslování, čísla */
   --font-body:            'Barlow', Arial, sans-serif;
-  --font-mono:            'Courier Prime', monospace;
+  --font-mono:            'IBM Plex Mono', ui-monospace, monospace;
   --font-serif:           'IBM Plex Serif', Georgia, serif;
-  --font-hv:              'Helvetica', Arial, sans-serif;     /* čitelná, podnadpis, tlačítka */
+  --font-hv:              'Helvetica', Arial, sans-serif;     /* čitelná, podnadpis */
+  /* Button face. 'Helvetica World' is the intended one — see the TODO above;
+     until its file lands the name resolves to nothing and Helvetica wins. */
+  --font-hv-world:        'Helvetica World', 'Helvetica', Arial, sans-serif;
   --font-hv-comp:         'Helvetica Compressed', Arial, sans-serif;
   --font-hv-rnd:          'Helvetica Rounded', Arial, sans-serif;
   --font-gym:             'Ringold Gym', sans-serif;

@@ -8,6 +8,7 @@ import { CACHE_TTL, PAGE_SIZE_GALLERY } from '../../constants/config';
 import PageHero from '../../components/PageHero/PageHero';
 import LazyImg from '../../components/LazyImg/LazyImg';
 import Reveal from '../../components/Reveal/Reveal';
+import PillTabs from '../../components/PillTabs/PillTabs';
 import Button from '../../components/Button/Button';
 import Modal from '../../components/Modal/Modal';
 import { fmtDateShort, monthLabel } from '../../utils/date';
@@ -132,6 +133,12 @@ export default function GalleryPage() {
     return ordered;
   }, [photos, seasons, seasonOf]);
 
+  // Season filter as leaderboard-style pill toggles: "Vše" + one per season.
+  const seasonTabs = useMemo(
+    () => [{ key: 'all', label: 'Vše' }, ...seasonKeys.map((key) => ({ key, label: seasonLabel(key) }))],
+    [seasonKeys, seasonLabel],
+  );
+
   // ── Calendar grouping: filter by season chip, then bucket by YYYY-MM and
   // sort month-buckets newest-first (see `monthLabel` in utils/date). Photos
   // without a usable event_date land in a trailing 'unknown' bucket.
@@ -197,16 +204,7 @@ export default function GalleryPage() {
       {n > 0 && (
         <div id="view-calendar">
           <div className="season-filters">
-            <button className={`sf-chip${activeSeason === 'all' ? ' on' : ''}`} onClick={() => setActiveSeason('all')}>Vše</button>
-            {seasonKeys.map((key) => (
-              <button
-                key={key}
-                className={`sf-chip${activeSeason === key ? ' on' : ''}`}
-                onClick={() => setActiveSeason(key)}
-              >
-                {seasonLabel(key)}
-              </button>
-            ))}
+            <PillTabs tabs={seasonTabs} active={activeSeason} onChange={setActiveSeason} />
           </div>
           {monthGroups.map(({ key, photos: monthPhotos }) => (
             <div key={key} className="season-section">

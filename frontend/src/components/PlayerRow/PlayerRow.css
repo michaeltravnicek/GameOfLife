@@ -11,7 +11,7 @@
 .player-row .pr-nm{display:flex;align-items:center;gap:12px;padding-left:12px;font-family:var(--font-hv);font-size:15px;color:#fff;font-weight:400;min-width:0}
 .player-row .pr-nm .avatar{border-style:solid;border-color:rgba(255,255,255,.9)}
 .player-row .pr-txt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.player-row .pr-pt{text-align:center;font-family:var(--font-display);font-size:24px;letter-spacing:.03em;color:var(--color-cream-light)}
+.player-row .pr-pt{text-align:center;font-family:var(--font-display);font-size:24px;letter-spacing:.03em;color:var(--color-heading)}
 
 @media(max-width:640px){
   .player-row{--lb-pad-x:16px;grid-template-columns:44px 1fr 44px;gap:10px}

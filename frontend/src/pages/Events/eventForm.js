@@ -18,7 +18,8 @@ export const EMPTY_EVENT_FORM = {
   rules: '',
   survey_url: '',
   whatsapp_url: '',
-  logo_scale: 1,
+  // The logo is the linked badge's artwork — an id, not an upload. '' = no badge.
+  badge: '',
   visible_to_users: true,
   visible_to_close: false,
   latitude: '',
@@ -41,7 +42,7 @@ export function eventToForm(event) {
     rules: event.rules || '',
     survey_url: event.survey_url || '',
     whatsapp_url: event.whatsapp_url || '',
-    logo_scale: event.logo_scale ?? 1,
+    badge: event.badge?.id ?? event.badge_id ?? '',
     visible_to_users: event.visible_to_users ?? true,
     visible_to_close: event.visible_to_close ?? false,
     latitude: event.latitude || '',
@@ -55,7 +56,7 @@ export function eventToForm(event) {
  * always sent (empty string clears it) — the write serializer's
  * BlankableDateTimeField accepts a blank value on both create and update.
  */
-export function buildEventFormData(form, { poster, logo, allCategories, categories }) {
+export function buildEventFormData(form, { poster, allCategories, categories }) {
   const fd = new FormData();
   fd.append('name', form.name);
   fd.append('description', form.description);
@@ -68,14 +69,15 @@ export function buildEventFormData(form, { poster, logo, allCategories, categori
   fd.append('rules', form.rules);
   fd.append('survey_url', form.survey_url);
   fd.append('whatsapp_url', form.whatsapp_url);
-  fd.append('logo_scale', form.logo_scale);
+  // Always sent, including as '' — that's how the form clears the badge (and
+  // with it the logo). The write serializer maps '' to null.
+  fd.append('badge', form.badge ?? '');
   fd.append('visible_to_users', form.visible_to_users ? '1' : '0');
   fd.append('visible_to_close', form.visible_to_close ? '1' : '0');
   if (form.latitude) fd.append('latitude', form.latitude);
   if (form.longitude) fd.append('longitude', form.longitude);
   fd.append('checkin_radius', form.checkin_radius);
   if (poster.file) fd.append('image', poster.file);
-  if (logo.file) fd.append('logo', logo.file);
   // ChipSelect works in category names; map them back to ids for the API.
   const nameToId = new Map(allCategories.map((c) => [c.name, c.id]));
   categories.forEach((name) => {
@@ -87,8 +89,11 @@ export function buildEventFormData(form, { poster, logo, allCategories, categori
 
 /**
  * Owns the mechanical form state both pages share: the field values, dirty
- * tracking (with a leave-page guard), the poster/logo image pickers, and the
- * category selection. The save/load flow stays in each page since it differs.
+ * tracking (with a leave-page guard), the poster picker, and the category
+ * selection. The save/load flow stays in each page since it differs.
+ *
+ * There is no logo picker: an event's logo is its badge's artwork, chosen by id
+ * in the badge section. Uploading artwork means creating a badge.
  */
 export function useEventForm() {
   const [form, setForm] = useState(EMPTY_EVENT_FORM);
@@ -104,7 +109,6 @@ export function useEventForm() {
   }, []);
 
   const poster = useImagePreview({ onChange: markDirty });
-  const logo = useImagePreview({ onChange: markDirty });
 
   const setField = useCallback((key) => (e) => {
     const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
@@ -126,6 +130,6 @@ export function useEventForm() {
     allCategories, setAllCategories,
     dirty, saving, setSaving, saveError, setSaveError,
     markDirty, setField, handleCategories,
-    poster, logo,
+    poster,
   };
 }

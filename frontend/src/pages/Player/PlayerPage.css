@@ -17,3 +17,12 @@
   .profile-page.player-anon .back-actions{justify-content:center}
   .profile-page.player-anon .claim-note{width:100%;text-align:center}
 }
+
+/* Shown when the player hid both their points and their event list, so there is
+   no tab left to select. Deliberately quiet: it is a statement of their choice,
+   not an error. */
+.profile-page .profile-hidden-note{
+  margin:var(--space-8,3rem) auto;max-width:38ch;text-align:center;
+  font-family:var(--font-mono,monospace);font-size:.82rem;letter-spacing:.04em;
+  opacity:.62;
+}

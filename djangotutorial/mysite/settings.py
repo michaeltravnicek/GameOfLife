@@ -152,6 +152,85 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_REFERRER_POLICY = "same-origin"
 X_FRAME_OPTIONS = "DENY"
 
+# Where the Django admin is mounted. Override in production, e.g.
+# ADMIN_URL=sprava-x7k2/
+#
+# This is obscurity, not security, and it is worth being precise about why it is
+# still here: it does not make the admin harder to break into, it makes the
+# background noise go away. Every bot on the internet probes /admin/ constantly,
+# so those log lines mean nothing. Move the path and the constant scanning stops
+# -- and then a single hit on the real admin URL is a signal worth reading.
+#
+# The actual protection is the edge auth layer in front of it (Cloudflare
+# Access); see security/RUNBOOK.md. Two things must track this value: the SPA
+# catch-all in urls.py, and robots.txt, which deliberately stops listing the path
+# once it is non-default -- publishing a secret URL in robots.txt would undo the
+# entire point.
+ADMIN_URL = os.getenv("ADMIN_URL", "admin/").strip().lstrip("/")
+if not ADMIN_URL.endswith("/"):
+    ADMIN_URL += "/"
+
+# ---------------------------------------------------------------------------
+# Content-Security-Policy
+#
+# The last line of defence, not the first: if an injection ever does land on the
+# page, the browser refuses to execute it because it isn't from an allowed
+# source. Everything else in this file tries to stop the injection happening;
+# this limits the damage when something slips through.
+#
+# SHIPPED IN REPORT-ONLY. The policy is derived from what the app loads today,
+# and a mistake in it breaks the site for real users with no server-side error to
+# notice — so it reports violations without blocking while the list is confirmed
+# against real traffic. Set CSP_ENFORCE=1 to switch it on for real, once the
+# reports are quiet for a week or so.
+#
+# The allowlist is small and every entry is here for a reason:
+#   fonts.googleapis.com  — the stylesheet linked from index.html
+#   fonts.gstatic.com     — the font files that stylesheet points at
+#   *.tile.openstreetmap.org — Leaflet map tiles on the event detail page
+#   Sentry ingest         — error reports (host varies per DSN, hence the env var)
+#   the media host        — R2/S3 images once MEDIA_S3_CUSTOM_DOMAIN is set
+#
+# 'unsafe-inline' in style-src is the one real compromise. React inline styles
+# and Leaflet's runtime positioning both write style attributes, so removing it
+# means nonce-ing every inline style — a large change for a modest gain, given
+# script-src stays strict. Note that 'unsafe-inline' is NOT in script-src, which
+# is where it would actually matter.
+#
+# ⚠ Before setting CSP_ENFORCE=1, load the Django admin and watch the console.
+# The admin ships inline <script> blocks, so a strict script-src can break its
+# widgets (date pickers, inline formsets) — and unlike the SPA, nothing about
+# that failure is visible server-side. The likely fix is to exempt the admin
+# path rather than to weaken script-src for the whole site.
+_csp_media_host = os.getenv("MEDIA_S3_CUSTOM_DOMAIN", "")
+_csp_extra_connect = [
+    o.strip() for o in os.getenv("CSP_EXTRA_CONNECT_SRC", "").split(",") if o.strip()
+]
+
+_CSP_DIRECTIVES = {
+    "default-src": ["'self'"],
+    "script-src": ["'self'"],
+    "style-src": ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+    "font-src": ["'self'", "https://fonts.gstatic.com", "data:"],
+    "img-src": [
+        "'self'", "data:", "blob:",
+        "https://*.tile.openstreetmap.org",
+        *([f"https://{_csp_media_host}"] if _csp_media_host else []),
+    ],
+    "connect-src": ["'self'", *_csp_extra_connect],
+    # Supersedes X_FRAME_OPTIONS above and blocks clickjacking: nobody may load
+    # the site in an iframe to trick a logged-in user into clicking through it.
+    "frame-ancestors": ["'none'"],
+    "base-uri": ["'self'"],
+    "form-action": ["'self'"],
+    "object-src": ["'none'"],
+}
+
+if os.getenv("CSP_ENFORCE") == "1":
+    CONTENT_SECURITY_POLICY = {"DIRECTIVES": _CSP_DIRECTIVES}
+else:
+    CONTENT_SECURITY_POLICY_REPORT_ONLY = {"DIRECTIVES": _CSP_DIRECTIVES}
+
 # CSRF trusted origins for local dev + any hosted domains.
 # Django 4+ requires this for POST from origins not matching the Host header.
 CSRF_TRUSTED_ORIGINS = [
@@ -177,11 +256,16 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sitemaps',  # /sitemap.xml (no sites framework needed; uses the request host)
     'rest_framework',
     'rest_framework.authtoken',
     'drf_spectacular',
     'corsheaders',
     'axes',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
     'leaderboard',
     'accounts',
 ]
@@ -195,11 +279,16 @@ LOGOUT_REDIRECT_URL = '/'
 AUTHENTICATION_BACKENDS = [
     'axes.backends.AxesStandaloneBackend',
     'django.contrib.auth.backends.ModelBackend',
+    # Social login. Order matters: axes stays first so brute-force lockout still
+    # applies to password attempts.
+    'allauth.account.auth_backends.AuthenticationBackend',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
+    # Stamps the CSP header on every response (report-only unless CSP_ENFORCE=1).
+    'csp.middleware.CSPMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -207,10 +296,73 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
     # Must be last: it turns the PermissionDenied raised by the axes backend
     # into a proper lockout response.
     'axes.middleware.AxesMiddleware',
 ]
+
+# ---------------------------------------------------------------------------
+# Social login (django-allauth) — Google only.
+#
+# The flow is deliberately the boring one: a full-page redirect to Google, a
+# callback that sets the ordinary Django session cookie, and a redirect home.
+# React reboots already logged in. No tokens, no localStorage, no change to the
+# auth model — the SPA cannot tell the difference between this and a password
+# login, which is exactly the point.
+#
+# ⚠ The two settings that matter most are the takeover guards below. Everything
+# else here is plumbing.
+# ---------------------------------------------------------------------------
+SOCIALACCOUNT_PROVIDERS = {
+    "google": {
+        "APP": {
+            "client_id": os.getenv("GOOGLE_CLIENT_ID", ""),
+            "secret": os.getenv("GOOGLE_CLIENT_SECRET", ""),
+            "key": "",
+        },
+        "SCOPE": ["profile", "email"],
+        # "online": we never call Google's APIs on the user's behalf, so a
+        # refresh token would be a stored credential with no purpose.
+        "AUTH_PARAMS": {"access_type": "online"},
+    }
+}
+
+# Credentials come from the environment, never from the SocialApp admin row:
+# a client secret stored in the database is readable by anyone who reaches the
+# admin, which widens a compromise there into a compromise of the OAuth app.
+SOCIALACCOUNT_ONLY = False
+SOCIALACCOUNT_ADAPTER = "accounts.adapters.SocialAccountAdapter"
+ACCOUNT_ADAPTER = "accounts.adapters.AccountAdapter"
+
+# 🔴 Account takeover via e-mail matching — the most important lines in this block.
+#
+# The attack: an existing user has a password account on michael@example.com.
+# An attacker creates a Google account with that same address and signs in. If
+# allauth links the social identity to the existing user because the e-mails
+# match, the attacker has taken over the account without ever knowing the
+# password. Google verifying the address does not help: the question is whether
+# *this* claimant controls the local account, and a matching e-mail does not
+# answer it.
+#
+# So: never authenticate by e-mail alone, and never auto-connect. Linking a
+# Google identity to an existing account may only happen while that account is
+# already logged in and explicitly asks for it.
+SOCIALACCOUNT_EMAIL_AUTHENTICATION = False
+SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = False
+SOCIALACCOUNT_AUTO_SIGNUP = True
+
+# Google has already verified the address it hands us, so re-verifying by e-mail
+# would be asking the user to prove something we were just told by the authority
+# on it. Password signups are unaffected (they don't go through allauth).
+SOCIALACCOUNT_EMAIL_VERIFICATION = "none"
+ACCOUNT_EMAIL_VERIFICATION = "none"
+ACCOUNT_LOGIN_METHODS = {"username", "email"}
+
+LOGIN_REDIRECT_URL = "/"
+ACCOUNT_LOGOUT_REDIRECT_URL = "/"
+ACCOUNT_SIGNUP_REDIRECT_URL = "/"
+SOCIALACCOUNT_LOGIN_ON_GET = True  # no interstitial "continue?" page
 
 # ---------------------------------------------------------------------------
 # django-axes: brute-force lockout on login.
@@ -240,21 +392,29 @@ AXES_USERNAME_CALLABLE = lambda request, credentials: (  # noqa: E731
 AXES_IPWARE_PROXY_COUNT = None if DEBUG else PROXY_COUNT
 AXES_IPWARE_META_PRECEDENCE_ORDER = ["HTTP_X_FORWARDED_FOR", "REMOTE_ADDR"]
 
-# CORS: in dev, React on :5173 hits Django on :8000; same origin in production.
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-]
-CORS_ALLOW_CREDENTIALS = True
-CSRF_TRUSTED_ORIGINS += ["http://localhost:5173", "http://127.0.0.1:5173"]
-
-# Native mobile app (Capacitor webview): capacitor://localhost on iOS,
-# https://localhost on Android. Token-authenticated, so no CSRF entry needed.
-CORS_ALLOWED_ORIGINS += [
-    o.strip()
-    for o in os.getenv("CORS_EXTRA_ORIGINS", "capacitor://localhost,https://localhost").split(",")
-    if o.strip()
-]
+# CORS is a DEVELOPMENT-ONLY concern here.
+#
+# In production React is served same-origin by react_index, so the browser makes
+# no cross-origin requests at all and nothing needs to be allowed. In dev the
+# Vite server on :5173 calls Django on :8000, which does cross origins — hence
+# these two entries, and only these two.
+#
+# Previously this list also carried `capacitor://localhost` and `https://localhost`
+# for the (now cancelled) native app, unconditionally, in production, alongside
+# CORS_ALLOW_CREDENTIALS. `https://localhost` in particular is an origin any
+# process on a visitor's machine can serve from, so it had no business being a
+# production default. If a native client is ever revived, add its origin through
+# an env var scoped to production rather than reinstating a default.
+if DEBUG:
+    CORS_ALLOWED_ORIGINS = [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ]
+    CORS_ALLOW_CREDENTIALS = True
+    CSRF_TRUSTED_ORIGINS += ["http://localhost:5173", "http://127.0.0.1:5173"]
+else:
+    CORS_ALLOWED_ORIGINS = []
+    CORS_ALLOW_CREDENTIALS = False
 
 # Apply CORS handling to the API only.
 #
@@ -265,8 +425,8 @@ CORS_ALLOWED_ORIGINS += [
 # image traffic to the origin no matter what Cache-Control says.
 #
 # Safe: only XHR/fetch calls need CORS, and those all live under /api/. Images
-# rendered in <img> tags (the SPA and the Capacitor webview) are not subject to
-# CORS at all. This would only matter if JS read an image via fetch()/canvas.
+# rendered in <img> tags are not subject to CORS at all. This would only matter
+# if JS read an image via fetch()/canvas.
 CORS_URLS_REGEX = r"^/api/.*$"
 
 # Version of the privacy policy currently in force, stored alongside each
@@ -294,9 +454,20 @@ TEMPLATES = [
 ]
 
 REST_FRAMEWORK = {
+    # Session auth only. The frontend is served same-origin by react_index, so the
+    # session cookie reaches the API on its own and is HttpOnly — script running in
+    # the page cannot read it.
+    #
+    # TokenAuthentication used to sit here for the Capacitor app (a WebView can't
+    # rely on cookies). That app is cancelled, and a DRF token is a worse credential
+    # in every way that matters here: it is returned in a response body, never
+    # expires, and does NOT rotate on password change — so anyone who briefly holds
+    # a session could mint one that outlives both the session and the password reset.
+    #
+    # If a native client is ever revived it needs a token path again, but a
+    # short-lived refreshable one, not this permanent default.
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.SessionAuthentication',
-        'rest_framework.authentication.TokenAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.AllowAny',
@@ -438,16 +609,79 @@ if "test" in sys.argv:
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
 STATIC_URL = '/static/'
+
+# Storage backends (Django 5 STORAGES API). This replaces the legacy
+# STATICFILES_STORAGE / DEFAULT_FILE_STORAGE settings — Django refuses to boot if
+# both the dict and either legacy setting are present, so neither is set below.
+#
+# Media default: local filesystem, UNLESS the MEDIA_S3_* vars are set AND
+# MEDIA_S3_ENABLED is on, in which case uploads and serving move to S3-compatible
+# object storage (Cloudflare R2 by default — zero egress, shares the Cloudflare
+# edge already in front of the site). Serving media off the web worker is the
+# point: Django's own serve view ties up a worker for the whole file transfer
+# (see mysite/urls.py). Leave the MEDIA_S3_* vars unset and behaviour is
+# byte-for-byte the previous local setup.
+#
+# ⚠ MEDIA_S3_ENABLED exists to make the cutover safe, and the two flags are
+# deliberately separate.
+#
+# The database stores each file's key relative to MEDIA_ROOT, and FileField.url
+# resolves it against whichever backend is active *right now*. So the moment the
+# S3 backend goes live, every existing image URL points at the bucket — whether
+# or not the bytes have been copied there yet. Flipping storage and migrating in
+# one step therefore means every photo on the site is broken for as long as the
+# upload takes.
+#
+# Splitting them removes that window entirely:
+#   1. set MEDIA_S3_* + MEDIA_S3_ENABLED=0  → credentials available, app still
+#      serving from disk, nothing user-visible changes
+#   2. run `manage.py migrate_media_to_s3` then `--verify`
+#   3. set MEDIA_S3_ENABLED=1               → files are already there
+_media_s3_options = None
+if os.getenv("MEDIA_S3_BUCKET"):
+    _media_s3_options = {
+        "bucket_name": os.environ["MEDIA_S3_BUCKET"],
+        "endpoint_url": os.environ["MEDIA_S3_ENDPOINT"],       # R2: https://<acct>.r2.cloudflarestorage.com
+        "access_key": os.environ["MEDIA_S3_ACCESS_KEY"],
+        "secret_key": os.environ["MEDIA_S3_SECRET_KEY"],
+        "region_name": os.getenv("MEDIA_S3_REGION", "auto"),   # R2 = "auto"
+        "custom_domain": os.getenv("MEDIA_S3_CUSTOM_DOMAIN") or None,  # e.g. img.gameofyolo.com
+        "querystring_auth": False,   # public bucket, clean immutable URLs
+        "default_acl": None,         # R2 ignores per-object ACLs
+        "file_overwrite": False,     # keep Django's collision suffixes for new uploads
+    }
+
+# Exported for migrate_media_to_s3, which needs to reach the bucket during step 2
+# above — while the active media backend is still the local filesystem.
+MEDIA_S3_OPTIONS = _media_s3_options
+# Default on when credentials exist, so an already-migrated deployment keeps
+# working without adding a second variable. Set it to 0 only during the cutover.
+MEDIA_S3_ENABLED = bool(_media_s3_options) and os.getenv("MEDIA_S3_ENABLED", "1") != "0"
+
+_media_storage = {"BACKEND": "django.core.files.storage.FileSystemStorage"}
+if MEDIA_S3_ENABLED:
+    _media_storage = {
+        "BACKEND": "storages.backends.s3.S3Storage",
+        "OPTIONS": _media_s3_options,
+    }
+
 if not DEBUG:
     STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
     # CompressedStaticFilesStorage (no manifest/hashing): simpler + forgiving.
     # Avoids "Missing staticfiles manifest entry" errors if anything is out of sync.
-    STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
+    _staticfiles_storage = {"BACKEND": "whitenoise.storage.CompressedStaticFilesStorage"}
     # Serve the Vite build at the site root so its root-absolute references
     # (/assets/*, /gallery/*, /logos/*, /fonts/*) resolve. WHITENOISE_INDEX_FILE
     # stays off, so "/" and SPA routes fall through to the react_index view
     # (which sets the CSRF cookie).
     WHITENOISE_ROOT = os.path.join(STATIC_ROOT, 'react')
+else:
+    _staticfiles_storage = {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"}
+
+STORAGES = {
+    "default": _media_storage,
+    "staticfiles": _staticfiles_storage,
+}
 
 WHITENOISE_AUTOREFRESH = True
 

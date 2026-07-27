@@ -20,7 +20,7 @@
 .obodechalt-page .section:last-child{margin-bottom:0}
 .obodechalt-page .sec-eyebrow{font-family:var(--font-mono);font-style:italic;font-size:16px;letter-spacing:.26em;text-transform:uppercase;color:var(--color-pink);margin-bottom:10px;display:flex;align-items:center;gap:14px}
 .obodechalt-page .sec-eyebrow::before{content:'';width:32px;height:1px;background:repeating-linear-gradient(90deg,var(--color-pink) 0 5px,transparent 5px 10px)}
-.obodechalt-page .sec-heading{font-family:var(--font-display);font-weight:400;font-size:clamp(38px,5vw,62px);letter-spacing:.03em;line-height:.95;color:var(--color-cream-light);text-transform:uppercase;margin-bottom:24px}
+.obodechalt-page .sec-heading{font-family:var(--font-display);font-weight:400;font-size:clamp(38px,5vw,62px);letter-spacing:.03em;line-height:.95;color:var(--color-heading);text-transform:uppercase;margin-bottom:24px}
 .obodechalt-page .sec-heading .pink{color:var(--color-pink)}
 .obodechalt-page .intro-quote{font-family:var(--font-body);font-style:italic;font-size:clamp(20px,2.2vw,26px);line-height:1.5;color:var(--alpha-cream-94);max-width:62ch;position:relative;padding-left:24px;border-left:2px dashed var(--alpha-pink-45);margin-bottom:28px}
 .obodechalt-page .intro-quote::before{content:'"';position:absolute;left:-2px;top:-22px;font-family:var(--font-display);font-size:80px;line-height:1;color:var(--alpha-pink-35)}

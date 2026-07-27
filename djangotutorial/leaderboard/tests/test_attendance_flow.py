@@ -86,8 +86,9 @@ class AttendanceLeaderboardFlowTests(TestCase):
         # 2. Board reflects points, ordered desc with 1-based ranks.
         self.assertEqual(
             self._board(),
-            # Public board shows initials for unconsented players.
-            [("B.", 30, 1), ("C.", 20, 2), ("A.", 10, 3)],
+            # Public board shortens unconsented players to "Jméno P." — these
+            # fixtures are single-token names, so there is no surname to drop.
+            [("Bob", 30, 1), ("Cora", 20, 2), ("Alice", 10, 3)],
         )
         # 3. Event detail + attendees list agree.
         self.assertEqual(self._detail()["attendee_count"], 3)
@@ -100,7 +101,7 @@ class AttendanceLeaderboardFlowTests(TestCase):
         self.assertEqual(self._attend(self.alice, 50).status_code, 200)
         self.assertEqual(
             self._board(),
-            [("A.", 50, 1), ("B.", 30, 2), ("C.", 20, 3)],
+            [("Alice", 50, 1), ("Bob", 30, 2), ("Cora", 20, 3)],
         )
         # 5. Player detail for Alice reflects the new total.
         pd = self.client.get(
@@ -109,13 +110,13 @@ class AttendanceLeaderboardFlowTests(TestCase):
 
         # 6. Removing Bob drops him off the (season) board and the count.
         self.assertEqual(self._remove(self.bob).status_code, 200)
-        self.assertEqual(self._board(), [("A.", 50, 1), ("C.", 20, 2)])
+        self.assertEqual(self._board(), [("Alice", 50, 1), ("Cora", 20, 2)])
         self.assertEqual(self._detail()["attendee_count"], 2)
 
         # 7. Re-adding Bob is a fresh create again (201), back on the board.
         self.assertEqual(self._attend(self.bob, 5).status_code, 201)
         self.assertEqual(self._detail()["attendee_count"], 3)
-        self.assertIn(("B.", 5, 3), self._board())
+        self.assertIn(("Bob", 5, 3), self._board())
 
     def test_tied_points_share_rank(self):
         self._attend(self.alice, 20)
@@ -124,8 +125,8 @@ class AttendanceLeaderboardFlowTests(TestCase):
         board = self._board()
         # Alice + Bob tie at 20 → same rank; Cora is rank 3 (ties consume slots).
         ranks = {name: rank for name, _pts, rank in board}
-        self.assertEqual(ranks["A."], ranks["B."])
-        self.assertEqual(ranks["C."], 3)
+        self.assertEqual(ranks["Alice"], ranks["Bob"])
+        self.assertEqual(ranks["Cora"], 3)
 
 
 @override_settings(CACHES=DUMMY_CACHE)
@@ -167,8 +168,8 @@ class SeasonScopedAttendanceFlowTests(TestCase):
             {"points": 15}, format="json",
         )
         # Current season + all-time include Alice; last year's season does not.
-        self.assertEqual(self._board(self.s_this.id), ["A."])
-        self.assertEqual(self._board("all"), ["A."])
+        self.assertEqual(self._board(self.s_this.id), ["Alice"])
+        self.assertEqual(self._board("all"), ["Alice"])
         self.assertEqual(self._board(self.s_last.id), [])
 
 

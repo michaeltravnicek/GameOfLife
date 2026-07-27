@@ -114,21 +114,21 @@ class PlayerMetadataTests(TestCase):
             profile.save()
         return lb
 
-    def test_player_without_consent_shows_initials(self):
+    def test_player_without_consent_shows_short_name(self):
         lb = self._player("Jan Novák", consented=None)
         meta = self._meta(f"/hrac/{lb.id}")
-        self.assertIn("J. N.", meta["title"])
+        self.assertIn("Jan N.", meta["title"])
         self.assertNotIn("Jan Novák", meta["title"])
 
     def test_player_with_consent_shows_full_name(self):
         lb = self._player("Jan Novák", consented=True)
         self.assertIn("Jan Novák", self._meta(f"/hrac/{lb.id}")["title"])
 
-    def test_registered_but_unconsented_player_shows_initials(self):
-        """An account without a current consent is not agreement — initials."""
+    def test_registered_but_unconsented_player_shows_short_name(self):
+        """An account without a current consent is not agreement — shortened."""
         lb = self._player("Jan Novák", consented=False)
         meta = self._meta(f"/hrac/{lb.id}")
-        self.assertIn("J. N.", meta["title"])
+        self.assertIn("Jan N.", meta["title"])
         self.assertNotIn("Jan Novák", meta["title"])
 
     def test_player_card_never_uses_a_personal_photo(self):

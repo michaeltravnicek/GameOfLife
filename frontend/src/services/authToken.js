@@ -1,3 +1,10 @@
+// DORMANT — nothing imports this module.
+//
+// The Capacitor app it served is cancelled and the backend no longer accepts
+// token auth at all (see DEFAULT_AUTHENTICATION_CLASSES in mysite/settings.py),
+// so storing a token here would accomplish nothing. Kept only so a future native
+// client has a starting point; if one is revived, the credential it stores should
+// be short-lived and refreshable, not a permanent DRF token.
 import { Preferences } from '@capacitor/preferences';
 
 const KEY = 'auth_token';

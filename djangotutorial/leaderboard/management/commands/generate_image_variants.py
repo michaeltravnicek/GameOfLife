@@ -16,15 +16,13 @@ in build.sh unless you've decided you never want the originals back.
 Without ``--resize`` the command behaves exactly as before -- variants only,
 nothing destructive.
 """
-import os
-
 from django.core.management.base import BaseCommand
 
 from accounts.models import Profile
 from leaderboard.image_utils import (
     make_webp_variant, needs_resize, resize_image, variant_name,
 )
-from leaderboard.models import Event, ImageToEvent, UserPhoto
+from leaderboard.models import Badge, Event, ImageToEvent, UserPhoto
 
 # (queryset, field name, resize_image kwargs, make_webp_variant kwargs).
 # Mirrors each model's save() — keep the limits in sync with it.
@@ -32,9 +30,10 @@ from leaderboard.models import Event, ImageToEvent, UserPhoto
 TARGETS = [
     (Event.objects.exclude(image="").filter(image__isnull=False), "image",
      {"max_width": 1200, "max_height": 1200, "quality": 85}, {}),
-    # Logos: never processed before this, so 2000x2000 exports accumulated.
-    # resize_image leaves the SVG and GIF ones untouched by design.
-    (Event.objects.exclude(logo="").filter(logo__isnull=False), "logo",
+    # Badge artwork = the event logos, which were never processed before this,
+    # so 2000x2000 exports accumulated. resize_image leaves the SVG and GIF ones
+    # untouched by design.
+    (Badge.objects.exclude(image="").filter(image__isnull=False), "image",
      {"max_width": 512, "max_height": 512, "quality": 90}, None),
     (ImageToEvent.objects.exclude(image="").filter(image__isnull=False), "image",
      {"max_width": 1024, "max_height": 1024, "quality": 75}, {}),
@@ -82,8 +81,8 @@ class Command(BaseCommand):
         for qs, field_name, resize_kwargs, variant_kwargs in TARGETS:
             for obj in qs.iterator():
                 field = getattr(obj, field_name)
-                path = getattr(field, "path", None)
-                if not path or not os.path.exists(path):
+                # Storage-abstracted so backfill runs against local disk or S3/R2.
+                if not field.name or not field.storage.exists(field.name):
                     missing += 1
                     continue
 
@@ -91,17 +90,17 @@ class Command(BaseCommand):
                 # original, exactly as in save().
                 shrunk = False
                 if do_resize and needs_resize(
-                    path,
+                    field,
                     resize_kwargs["max_width"],
                     resize_kwargs["max_height"],
                 ):
-                    before = os.path.getsize(path)
+                    before = field.storage.size(field.name)
                     if dry_run:
                         resized += 1
                         self.stdout.write(f"  ~ would resize {field.name} ({_mb(before)})")
                         continue
                     resize_image(field, **resize_kwargs)
-                    after = os.path.getsize(path)
+                    after = field.storage.size(field.name)
                     if after < before:
                         saved_bytes += before - after
                         resized += 1
@@ -113,7 +112,7 @@ class Command(BaseCommand):
                     continue
                 # A variant built from the pre-resize original is stale, so a
                 # shrink always re-derives it.
-                if not (force or shrunk) and os.path.exists(variant_name(path)):
+                if not (force or shrunk) and field.storage.exists(variant_name(field.name)):
                     skipped += 1
                     continue
                 make_webp_variant(field, **variant_kwargs)

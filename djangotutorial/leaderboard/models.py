@@ -45,16 +45,32 @@ class Category(models.Model):
 class Badge(models.Model):
     """A collectible emblem, shared by the events that award it.
 
-    Event logos repeat across editions of the same event (a Karaoke Tour logo on
-    every karaoke night), so the artwork lives here once and events point at it.
+    This is also the one and only home of event artwork. Events used to carry
+    their own `logo` ImageField, which meant re-uploading the same file for every
+    edition -- 135 logo files on disk turned out to be 7 distinct images, one of
+    them stored 72 times. The artwork lives here once and events point at it.
+
     Attending an event that has a badge earns the attendee a copy in their
-    collection -- see UserBadge and leaderboard.signals.
+    collection -- see UserBadge and leaderboard.signals. So attaching a badge to
+    an event is two decisions at once: which logo it shows, and which emblem its
+    attendees collect.
     """
     name = models.CharField(max_length=255)
     slug = models.SlugField(max_length=280, unique=True)
-    # The emblem artwork. Treated exactly like Event.logo: downscaled to 512px on
-    # save (format preserved, so transparent PNG / SVG / GIF survive).
+    # The emblem artwork, doubling as the logo every event using this badge
+    # renders. Downscaled to 512px on save (format preserved, so transparent
+    # PNG / SVG / GIF survive).
     image = models.ImageField(upload_to="badges/", blank=True, null=True)
+    # Artwork comes in wildly different intrinsic sizes and padding, so the same
+    # CSS box renders some huge and some tiny. This multiplier normalizes the
+    # displayed size (1.0 = unchanged, applied as a CSS scale). It lives on the
+    # artwork rather than on the event: 72 events sharing one logo would
+    # otherwise need the same correction set 72 times.
+    image_scale = models.FloatField(
+        default=1.0,
+        validators=[MinValueValidator(0.1), MaxValueValidator(5.0)],
+        help_text="Zvětšení/zmenšení obrázku při zobrazení. 1.0 = beze změny.",
+    )
     description = models.TextField(
         blank=True, default="",
         help_text="Volitelný popis odznaku (za co se uděluje).",
@@ -75,8 +91,10 @@ class Badge(models.Model):
             self.slug = slug
         super().save(*args, **kwargs)
         if self.image:
-            # Same treatment as Event.logo: a small box, format preserved. No
-            # .mobile.webp sibling — at 512px it would save nothing.
+            # Rendered inside a small box (scaled by image_scale), so 512 is
+            # plenty. No .mobile.webp sibling — at this size it would save
+            # nothing and only add a file. resize_image no-ops on SVG and GIF,
+            # which must keep their original bytes.
             from .image_utils import resize_image
             resize_image(self.image, max_width=512, max_height=512, quality=90)
 
@@ -106,22 +124,15 @@ class Event(models.Model):
     )
     points = models.IntegerField()
     image = models.ImageField(upload_to="event_images/", blank=True, null=True)
-    logo = models.ImageField(upload_to="event_logos/", blank=True, null=True)
-    # Logos come in wildly different intrinsic sizes/padding, so the same CSS box
-    # renders some huge and some tiny. This per-event multiplier lets an admin
-    # normalize the displayed size (1.0 = unchanged, applied as a CSS scale).
-    logo_scale = models.FloatField(
-        default=1.0,
-        validators=[MinValueValidator(0.1), MaxValueValidator(5.0)],
-        help_text="Zvětšení/zmenšení loga při zobrazení. 1.0 = beze změny.",
-    )
-    # Attending this event awards this badge (if set). SET_NULL: deleting a badge
-    # must not cascade-delete events. Separate from `logo` on purpose — an event
-    # can show its own logo and still hand out a shared badge.
+    # The event's logo AND the emblem its attendees collect — one artwork, one
+    # row, however many editions reuse it. Replaced the old per-event `logo`
+    # ImageField, which stored the same file once per event.
+    # SET_NULL: deleting a badge must not cascade-delete events; they just lose
+    # their logo.
     badge = models.ForeignKey(
         "Badge", on_delete=models.SET_NULL, null=True, blank=True,
         related_name="events",
-        help_text="Odznak, který účastníci za tuto akci získají do sbírky.",
+        help_text="Logo akce — zároveň odznak, který účastníci získají do sbírky.",
     )
     rules = models.TextField(blank=True, default="")
     capacity = models.IntegerField(null=True, blank=True)
@@ -207,14 +218,6 @@ class Event(models.Model):
             from .image_utils import resize_image, make_webp_variant
             resize_image(self.image, max_width=1200, max_height=1200, quality=85)
             make_webp_variant(self.image)
-        if self.logo:
-            # Logos were never processed at all, so 2000x2000 PNG exports piled
-            # up. They render inside a small box (scaled by logo_scale), so 512
-            # is plenty. No .mobile.webp sibling: at this size it would save
-            # nothing and only add a file. resize_image no-ops on the SVG and
-            # GIF logos, which must keep their original bytes.
-            from .image_utils import resize_image
-            resize_image(self.logo, max_width=512, max_height=512, quality=90)
         # Best-effort: a cache outage must not break saving an event.
         from .cache_config import invalidate_event_caches
         invalidate_event_caches()

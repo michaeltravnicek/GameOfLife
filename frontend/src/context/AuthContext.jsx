@@ -1,7 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { apiLogin, apiLogout, apiRegister, fetchMe } from '../services/api';
-import { persistToken, clearToken } from '../services/authToken';
-import { isNative } from '../services/platform';
 import { clearCache } from '../services/queryCache';
 import { toast } from '../components/Toast/ToastProvider';
 
@@ -28,7 +26,6 @@ export function AuthProvider({ children }) {
 
   const login = useCallback(async (identifier, password, remember = false) => {
     const data = await apiLogin(identifier, password, remember);
-    if (data.token) await persistToken(data.token);
     // New user identity: drop all cached responses that may have been
     // computed against the anonymous user (RSVPs, profile-specific data).
     clearCache();
@@ -40,7 +37,6 @@ export function AuthProvider({ children }) {
 
   const register = useCallback(async (payload) => {
     const data = await apiRegister(payload);
-    if (data.token) await persistToken(data.token);
     clearCache();
     setUser(data.user);
     const name = data.user?.first_name || data.user?.full_name || data.user?.username || 'nováčku';
@@ -65,7 +61,6 @@ export function AuthProvider({ children }) {
         console.error('Logout request failed:', err);
       }
     }
-    if (isNative) await clearToken();
     clearCache();
     setUser(null);
     toast.info('Byl jsi odhlášen. Brzy nashle!', { title: 'Odhlášení' });

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   fetchHero, fetchCheckinEvents, fetchEvents, fetchLeaderboard,
 } from '../../services/api';
@@ -35,8 +35,6 @@ export default function HomePage() {
     () => fetchLeaderboard('active', { limit: HOME_TOP_PLAYERS }),
     { ttl: CACHE_TTL.LEADERBOARD },
   );
-
-  const [galCur, setGalCur] = useState(0);
 
   // Below-the-fold background images (leaderboard section photo, gallery
   // strip) hold off until the browser is idle, so the first hero image never
@@ -76,14 +74,41 @@ export default function HomePage() {
   );
 
   const galN = galImages.length;
-  const galPrev = useCallback(
-    () => setGalCur((c) => (c - 1 + galN) % galN),
-    [galN],
+
+  // Infinite filmstrip. The images are laid out THREE times in a row
+  // ([…imgs, …imgs, …imgs]); we keep the centred slide inside the middle copy,
+  // so there's always a real neighbour peeking on both sides — even at the
+  // "ends" — which is what makes it a ring buffer. `galPos` is an index into
+  // that tripled row; after each move settles we silently jump (no transition)
+  // back to the equivalent slide in the middle copy, which looks identical.
+  const galLoop = useMemo(
+    () => (galN > 1 ? [...galImages, ...galImages, ...galImages] : galImages),
+    [galImages, galN],
   );
-  const galNext = useCallback(
-    () => setGalCur((c) => (c + 1) % galN),
-    [galN],
-  );
+  const [galPos, setGalPos] = useState(galN > 1 ? galN : 0);
+  const [galAnim, setGalAnim] = useState(true);
+  const galSnapId = useRef(0);
+  const GAL_SLIDE_MS = 600; // slightly over the .55s CSS transition
+
+  // Recentre to the middle copy whenever the image set changes (data loads).
+  useEffect(() => {
+    setGalAnim(false);
+    setGalPos(galN > 1 ? galN : 0);
+  }, [galImages, galN]);
+
+  const galGoTo = useCallback((pos) => {
+    if (galN < 2) return;
+    setGalAnim(true);
+    setGalPos(pos);
+    const id = ++galSnapId.current;
+    // After the slide finishes, snap back into the middle copy (seamless: the
+    // target slide shows the same image). Guarded so a newer click wins.
+    setTimeout(() => {
+      if (id !== galSnapId.current) return;
+      setGalAnim(false);
+      setGalPos((p) => ((p - galN) % galN + galN) % galN + galN);
+    }, GAL_SLIDE_MS);
+  }, [galN]);
 
   return (
     <div className="home-page">
@@ -155,22 +180,28 @@ export default function HomePage() {
         <div ref={galHeadRef} className={`gal-header reveal${galHeadIn ? ' in' : ''}`}>
           <h2 className="gal-title"><span className="gal-cam">📷</span> Galerie <span className="gal-cam">📷</span></h2>
         </div>
-        <div ref={galRef} className={`gal-container reveal${galIn ? ' in' : ''}`}>
-          <button
-            type="button"
-            className="gal-side"
-            onClick={galPrev}
-            aria-label="Předchozí fotka"
-            style={bgReady ? { backgroundImage: `url('${galImages[(galCur - 1 + galN) % galN]}')` } : undefined}
-          />
-          <div className="gal-main" style={bgReady ? { backgroundImage: `url('${galImages[galCur]}')` } : undefined} />
-          <button
-            type="button"
-            className="gal-side"
-            onClick={galNext}
-            aria-label="Další fotka"
-            style={bgReady ? { backgroundImage: `url('${galImages[(galCur + 1) % galN]}')` } : undefined}
-          />
+        {/* One long row of bordered images; the row slides so the current image
+            is centred, its neighbours peeking. Clicking a peeking neighbour
+            moves the row to it. The transform centres slide `galPos`: half the
+            viewport, minus half a slide, minus galPos whole slides (+ gaps). */}
+        <div ref={galRef} className={`gal-viewport reveal${galIn ? ' in' : ''}`}>
+          <div
+            className={`gal-track${galAnim ? '' : ' no-anim'}`}
+            style={{ transform: `translateX(calc(50vw - var(--gal-slide-w) / 2 - ${galPos} * (var(--gal-slide-w) + var(--gal-gap))))` }}
+          >
+            {galLoop.map((src, e) => (
+              <button
+                type="button"
+                key={e}
+                className="gal-slide"
+                data-active={e === galPos}
+                aria-current={e === galPos ? 'true' : undefined}
+                aria-label={`Zobrazit fotku ${(e % galN) + 1} z ${galN}`}
+                onClick={() => galGoTo(e)}
+                style={bgReady ? { backgroundImage: `url('${src}')` } : undefined}
+              />
+            ))}
+          </div>
         </div>
         <div className="gal-footer">
           <Button as="link" to="/galerie" size="lg">Celá galerie <span className="arr" /></Button>

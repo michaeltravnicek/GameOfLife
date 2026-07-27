@@ -1,7 +1,8 @@
 from django.conf import settings
 from django.db import transaction
+from django.http import Http404
 from django.shortcuts import get_object_or_404
-from django.views.decorators.cache import cache_control
+from django.views.decorators.cache import cache_control, never_cache
 
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import (
@@ -19,6 +20,7 @@ from rest_framework.response import Response
 from accounts.permissions import IsAdmin, IsAdminOrPhotographer, is_admin, is_close_or_above, is_staff_role
 from leaderboard.checkin import validate_and_record_checkin
 from leaderboard.models import (
+    Badge,
     Event,
     EventFeedback,
     EventRSVP,
@@ -58,6 +60,8 @@ from .serializers import (
     AttendeeSerializer,
     AttendeesResponseSerializer,
     AttendeeWriteSerializer,
+    BadgeSerializer,
+    BadgeWriteSerializer,
     CategoriesResponseSerializer,
     CategorySerializer,
     CheckinEventsResponseSerializer,
@@ -123,6 +127,7 @@ _SEASON_BOARD_PARAM = OpenApiParameter(
         "categories": CategorySerializer(many=True),
     }),
 )
+@never_cache
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def events_list(request):
@@ -185,6 +190,7 @@ def events_list(request):
 
 
 @extend_schema(tags=['Events'], operation_id="event_detail", responses=EventDetailSerializer)
+@never_cache
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def event_detail(request, slug):
@@ -312,6 +318,7 @@ def seasons_list(request):
 
 
 @extend_schema(tags=["Leaderboard"], responses=PlayerDetailSerializer)
+@never_cache
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def player_detail(request, user_id):
@@ -325,6 +332,7 @@ def player_detail(request, user_id):
 
 
 @extend_schema(tags=["Leaderboard"], responses=SeasonDetailSerializer)
+@never_cache
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def player_season_detail(request, user_id, season_id):
@@ -333,9 +341,15 @@ def player_season_detail(request, user_id, season_id):
     Mirrors the profile season endpoint but keyed by leaderboard-user id, so it
     works for Google-Sheets players who have no account.
     """
+    from accounts.models import Profile
     from accounts.services import season_detail  # local import — avoid app-load cycle
+    from leaderboard.privacy import visibility_for
     lb_user = get_object_or_404(LeaderboardUser, id=user_id)
     season = get_object_or_404(Season, pk=season_id)
+    # Fourth and last way to reach one person's event history — see visibility_for.
+    profile = Profile.objects.filter(leaderboard_user=lb_user).first()
+    if visibility_for(profile, request.user).hide_events:
+        raise Http404("Event history is hidden.")
     return Response(season_detail(lb_user, season), status=status.HTTP_200_OK)
 
 
@@ -393,6 +407,7 @@ def hero_view(request):
 
 
 @extend_schema(tags=["Events"], responses=CheckinEventsResponseSerializer)
+@never_cache
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def checkin_events_view(request):
@@ -562,11 +577,45 @@ def event_images_upload(request, slug):
 
 
 @extend_schema(tags=["Admin"], responses=AdminFeedbacksResponseSerializer)
+@never_cache
 @api_view(["GET"])
 @permission_classes([IsAdmin])
 def admin_feedbacks(request):
     """All event feedback (admin only) with submitter name + attended-event count."""
     return Response({"feedbacks": admin_feedback_list()}, status=status.HTTP_200_OK)
+
+
+@extend_schema(tags=["Events"], responses=BadgeSerializer(many=True))
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def badges_list(request):
+    """Every badge, for the event form's logo picker and the badge overview.
+
+    Public: the artwork is already visible on event cards, and a name+image list
+    is what a collector wants to see before earning one.
+    """
+    badges = Badge.objects.all()  # Meta.ordering = name
+    return Response(
+        {"badges": BadgeSerializer(badges, many=True, context={"request": request}).data},
+        status=status.HTTP_200_OK,
+    )
+
+
+@extend_schema(tags=["Events"], request=BadgeWriteSerializer, responses=BadgeSerializer)
+@api_view(["POST"])
+@permission_classes([IsAdmin])
+def badge_create(request):
+    """Create a badge (admin only). Multipart: name, image, image_scale, description.
+
+    This is the only way new event artwork enters the system now — which is the
+    point: one upload, then every edition of the event points at the same row.
+    """
+    serializer = BadgeWriteSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    with transaction.atomic():
+        badge = serializer.save()
+        payload = BadgeSerializer(badge, context={"request": request}).data
+    return Response(payload, status=status.HTTP_201_CREATED)
 
 
 @extend_schema(tags=['Events'], request=EventWriteSerializer, responses=EventDetailSerializer)
@@ -616,6 +665,7 @@ def event_delete(request, slug):
 
 
 @extend_schema(tags=["Events"], responses=AttendeesResponseSerializer)
+@never_cache
 @api_view(["GET"])
 @permission_classes([IsAdmin])
 def event_attendees(request, slug):
@@ -661,6 +711,7 @@ def event_attendee_detail(request, slug, user_id):
 
 
 @extend_schema(tags=["Events"], responses=RsvpsResponseSerializer)
+@never_cache
 @api_view(["GET"])
 @permission_classes([IsAdmin])
 def event_rsvps(request, slug):

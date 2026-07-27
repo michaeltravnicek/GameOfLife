@@ -97,11 +97,15 @@ export default function ProfilePage() {
   const handleLogout = async () => { await logout(); navigate('/'); };
 
   const seasonTabs = profile.seasons?.map((s) => ({ key: s.id, label: s.label })) || [];
+  // Sections the owner withheld are absent from the payload, so their tabs would
+  // read "Akce 0" / "Body 0" — drop them rather than display a number that isn't
+  // the truth.
+  const hidden = profile.hidden || [];
   const viewTabs = [
     { key: 'about', label: 'O mně' },
-    { key: 'events', label: 'Akce', badge: st.evs.length },
-    { key: 'points', label: 'Body', badge: st.totalPts },
-  ];
+    !hidden.includes('events') && { key: 'events', label: 'Akce', badge: st.evs.length },
+    !hidden.includes('points') && { key: 'points', label: 'Body', badge: st.totalPts },
+  ].filter(Boolean);
 
   return (
     <div className="profile-page">
@@ -122,7 +126,7 @@ export default function ProfilePage() {
           <div className="poster-handle">@{profile.username} · hraje od {profile.since}</div>
         </div>
 
-        <ProfileCredits st={st} />
+        <ProfileCredits st={st} hidden={hidden} />
       </section>
 
       <div className="action-bar">

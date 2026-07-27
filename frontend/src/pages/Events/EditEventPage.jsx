@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import Modal from '../../components/Modal/Modal';
 import Button from '../../components/Button/Button';
 import { useToast } from '../../components/Toast/ToastProvider';
-import { fetchEventDetail, updateEvent, deleteEvent, fetchCategories } from '../../services/api';
+import { fetchEventDetail, updateEvent, deleteEvent, fetchCategories, fetchBadges } from '../../services/api';
 import { invalidateQuery } from '../../services/queryCache';
 import { extractApiError, reportError } from '../../services/errors';
 import { useEventForm, eventToForm, buildEventFormData } from './eventForm';
@@ -15,29 +15,33 @@ export default function EditEventPage() {
   const navigate = useNavigate();
   const toast = useToast();
   const [loading, setLoading] = useState(true);
+  const [badges, setBadges] = useState([]);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const {
     form, setForm, categories, setCategories, allCategories, setAllCategories,
     dirty, saving, setSaving, saveError, setSaveError,
-    markDirty, setField, handleCategories, poster, logo,
+    markDirty, setField, handleCategories, poster,
   } = useEventForm();
 
   useEffect(() => {
     Promise.all([
       fetchEventDetail(slug),
       fetchCategories(),
+      fetchBadges(),
     ])
-      .then(([event, cats]) => {
+      .then(([event, cats, badgeData]) => {
         if (event) {
           setForm(eventToForm(event));
           if (event.image) poster.setPreview(event.image);
-          if (event.logo) logo.setPreview(event.logo);
+          // No logo preview to restore: the artwork belongs to the badge, and
+          // the badge section renders it from the loaded list.
           if (event.category) setCategories([event.category.name]);
         }
         if (cats?.categories) {
           setAllCategories(cats.categories);
         }
+        if (badgeData?.badges) setBadges(badgeData.badges);
         setLoading(false);
       })
       .catch((err) => {
@@ -52,7 +56,7 @@ export default function EditEventPage() {
     setSaving(true);
     setSaveError(null);
     try {
-      const formData = buildEventFormData(form, { poster, logo, allCategories, categories });
+      const formData = buildEventFormData(form, { poster, allCategories, categories });
       await updateEvent(slug, formData);
       navigate(`/events/${slug}`);
     } catch (err) {
@@ -102,7 +106,7 @@ export default function EditEventPage() {
           setField={setField}
           markDirty={markDirty}
           poster={poster}
-          logo={logo}
+          badges={badges}
           allCategories={allCategories}
           categories={categories}
           onCategories={handleCategories}

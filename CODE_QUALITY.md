@@ -1,132 +1,218 @@
-# Code Quality Analysis — GameOfLive Django Project
+# Code Quality Audit — GameOfLive
 
-Generated 2026-05-02. Issues are grouped by file with severity (🔴 high / 🟡 medium / ⚪ low).
+Generated **2026-05-29**. Scope: **backend (Django/DRF API)** + **frontend (React SPA)** +
+**config/deployment/production-readiness**. The `ClaudeDesign/` and `claudedesign/` mockup
+folders are out of scope.
 
----
+Severity: 🔴 high · 🟡 medium · ⚪ low. Each item has a file reference and a one-line fix.
+Execution order lives in `~/.claude/plans/review-the-whole-codebase-tingly-porcupine.md`.
 
-## mysite/settings.py
-
-🔴 **DEBUG hardcoded to True** (line 40)
-`DEBUG = True # if MODE == "PRODUCTION" else False`
-The production check is commented out. Fix: `DEBUG = MODE != "PRODUCTION"`.
-
-🔴 **Duplicate STATIC_URL** (lines 29 and 172)
-`STATIC_URL = '/static/'` is set twice. The second one (line 172) is inside an `if not DEBUG:` block so it's redundant — remove line 29.
-
-🟡 **background_task duplicate INSTALLED_APPS entry** (lines 70, 74)
-`'background_task'` is in `INSTALLED_APPS` and then `"background_task.apps.BackgroundTaskConfig"` is commented out below it. Remove the comment.
-
-🟡 **MIN_LENGTH password validator is 4** (line 143)
-`min_length: 4` is very weak. Increase to at least 8 for production.
-
-⚪ **ALLOWED_HOSTS = ["*"]** (line 41)
-Acceptable for local dev but should be gated on `DEBUG` or use an env var in production. Documented in CLAUDE.md — OK for now.
+> This file replaces the 2026-05-02 audit, which only covered the old Django-template
+> frontend that the React SPA has since replaced.
 
 ---
 
-## mysite/urls.py
+## Backend (Django / DRF)
 
-🟡 **Duplicate media serving** (lines 32–33)
-Both `re_path(r"^media...")` and `+ static(settings.MEDIA_URL, ...)` are present — they serve the same URL pattern twice. The `static()` helper already handles this; the `re_path` line should be removed.
+### leaderboard/api/views.py
+
+🔴 **RSVP capacity race (TOCTOU)** — [views.py:138-141](djangotutorial/leaderboard/api/views.py#L138-L141)
+The `event.rsvps.count() >= event.capacity` check and `EventRSVP.objects.create(...)` run
+inside `@transaction.atomic`, but the event row isn't locked, so two concurrent requests
+both pass the count check and oversell capacity (READ COMMITTED won't see the other tx's
+uncommitted insert). Fix: `Event.objects.select_for_update().get(...)` before counting.
+
+🟡 **Weak event create/update validation** — `event_create` / `event_update`
+`points` and `capacity` accept negative values; `checkin_radius` is unbounded; latitude/
+longitude parse errors are silently swallowed (both set to `None` if either fails). Fix:
+validate bounds explicitly and call `event.full_clean()` before `save()`.
+
+🟡 **Feedback rating default is confusing** — [views.py:152-157](djangotutorial/leaderboard/api/views.py#L152-L157)
+Defaults a missing rating to `0`, then rejects `< 1`. Reject "missing rating" explicitly
+rather than routing it through the range check.
+
+🟡 **Broad `except Exception` exposes internals** — `event_create` / `event_update`
+`return Response({"error": str(exc)}, ...)` leaks internal error text to clients. Catch
+specific exceptions; log the rest and return a generic message.
+
+🟡 **Repeated ISO-datetime parsing** — `event_create` / `event_update`
+The same ISO-string + timezone parsing block is duplicated ~4×. Extract to
+`parse_iso_datetime()` in a new `leaderboard/utils.py`.
+
+⚪ **Repeated `request.build_absolute_uri(field.url)`** across views + serializers.
+Wrap in one `absolute_media_url(request, field)` helper.
+
+### leaderboard/api/serializers.py
+
+✅ **`EventListSerializer` category is not N+1** — `list_events`
+([services/events.py:27](djangotutorial/leaderboard/services/events.py#L27)) already calls
+`.select_related("category")`, so the nested `CategorySerializer` does not fan out. (An
+earlier draft of this audit flagged this incorrectly.)
+
+🟡 **`EventDetailSerializer` per-object query fan-out** — [serializers.py:93-137](djangotutorial/leaderboard/api/serializers.py#L93-L137)
+`get_has_rsvp`, `get_has_attended`, `get_feedback_given`, `get_official_images`,
+`get_user_photos` each issue their own query. This serializer is only used for **single**
+objects (detail view + create/update responses), so it's ~5–7 queries per detail call — not
+the list — but still worth trimming: pass the user's RSVP/feedback existence via context and
+prefetch images/photos. (Not the "120+ on list" some scans claimed.)
+
+⚪ **`from django.utils import timezone` imported inside `get_is_past`** (both serializers).
+Move to module top.
+
+### leaderboard checkin-events endpoint
+
+🟡 **Two pre-existing failing tests** — `leaderboard.tests.test_home.CheckinEventsApiTests`
+`test_anonymous_user_sees_no_active_events` and `test_user_without_profile_link_sees_nothing`
+expect the `/api/checkin-events/` endpoint to return `[]` for anonymous users and users
+without a linked `leaderboard_user`, but it currently returns the active event to everyone.
+Either the endpoint should gate on auth + profile link (the tests' intent) or the tests are
+stale. Verified these fail on `main` too — not introduced by this round of work.
+
+### accounts/api/views.py
+
+🟡 **No rate limiting on auth endpoints** — `login_api`, `register_api`, `password_reset_api`
+have no throttling → brute-force and email-enumeration exposure. Add DRF throttles or
+`django-ratelimit`. (Password reset already returns a generic message — good.)
+
+### accounts/services.py & cross-app serialization
+
+🟡 **Overlapping profile serialization** — `serialize_user()` / `profile_payload()` build
+dicts that overlap with profile assembly in `leaderboard/api/views.py`. Consolidate into one
+shared serializer/helper.
+
+⚪ **Per-profile rank recomputation** — rank is computed by counting all higher-scoring
+users on each profile view (O(n) per view). Cache it or derive from the cached leaderboard.
+
+### leaderboard/tasks.py (Google Sheets sync)
+
+🟡 **Sync not wrapped in a transaction** — `handle_attendance()` / `main()` create many
+`UserToEvent` rows without `transaction.atomic`, so a mid-sync API failure leaves partial
+state. Wrap each event's sync in a transaction.
+
+⚪ **Hardcoded relative credentials path** — `SERVICE_ACCOUNT_FILE = '../credentials.json'`
+is brittle; read the path from an env var with a sane default.
 
 ---
 
-## leaderboard/admin.py
+## Frontend (React)
 
-🟡 **Class named `ImageToEvent` instead of `ImageToEventAdmin`** (line 19)
-The decorator `@admin.register(ImageToEvent)` registers the *model* correctly, but the class itself is also named `ImageToEvent`, shadowing the model import. Rename class to `ImageToEventAdmin`.
+### Duplicated logic (extract into `frontend/src/hooks/`)
 
-🟡 **Missing admin registrations** — these models exist but have no admin UI:
-- `EventFeedback` — useful for moderation
-- `EventRSVP` — useful for attendance management
-- `LastUpdate` — useful for debugging sync issues
+🟡 **Form dirty-tracking + `beforeunload` guard** duplicated in `EditProfilePage`,
+`CreateEventPage`, `EditEventPage`, `LoginPage`, `RegisterPage`. Extract `useForm()`.
 
----
+🟡 **FileReader preview pattern** duplicated in `EditProfilePage` (avatar), `CreateEventPage`
+(image+logo), `GalleryPage` (upload). Extract `useFilePreview()` and add a client-side
+file-size check inside it.
 
-## leaderboard/views.py
+🟡 **Inconsistent API error extraction** — pages unpack `err.response?.data` differently
+(`.error` string vs `.errors` object). `services/errors.js` already has a `reportError`
+helper; extend it to normalize both shapes and use it everywhere.
 
-🟡 **Dead module-level variables `MONTH_DAYS` and `YEAR_DAYS`** (lines 39–40, 45, 52–54)
-Both are set to `None` and never reassigned anywhere. The `if MONTH_DAYS is None:` checks (lines 45, 52) are always True. These were likely meant for feature-flag-style overrides but are unused dead code. Remove them and simplify the two helper functions.
+🟡 **Season-tab build + filter** duplicated in `EventsPage`, `LeaderboardPage`,
+`GalleryPage`, `ProfilePage`. Extract `useSeasonTabs()`.
 
-⚪ **Two different rank-assignment patterns**
-`create_leaderboard()` uses dense ranking with tie handling (lines 91–103). `_top_players()` uses simple enumerate (lines 113–116). They serve different use cases (full leaderboard vs. home top-5), but the inconsistency is surprising. Document the intent or unify.
+⚪ **Long page components** — `EventDetailPage.jsx` (~427 lines), `EditProfilePage.jsx`
+(~382), `ProfilePage.jsx` (~350). Extract presentational sub-components so each reads
+top-down.
 
----
+### Bugs / robustness
 
-## accounts/views.py
+🟡 **No Error Boundary** — any component throw blanks the whole SPA. Add one in
+`App.jsx`/`main.jsx`.
 
-🟡 **Split import from same module** (lines 10–11)
-```python
-from leaderboard.models import EventFeedback, UserToEvent, ProfileAnswer, Season
-from leaderboard.models import User as LeaderboardUser
-```
-Should be one line.
+🟡 **No 401 handling** — `services/api.js` has no response interceptor to redirect to login
+on session expiry.
 
-🟡 **Inline imports inside function bodies** (lines 104–105, 185)
-`from django.utils import timezone as tz` and `from leaderboard.models import ProfileAnswer` are inside `public_profile_view` and `profile_edit_view` respectively. These should be at the top of the file. Inline imports are only justified for avoiding circular imports (not the case here).
+🟡 **Modal focus not trapped** — `components/Modal/Modal.jsx` sets `role="dialog"` +
+`aria-modal` but keyboard focus can escape (A11y, WCAG 2.1 A).
 
-⚪ **`questions_with_answers` variable used before conditional assignment** (line 139)
-`context["questions_with_answers"]` references a variable that is only assigned inside `if profile:` — the fallback `if profile else []` is in the context dict, which is fine, but it reads confusingly. Could be initialized to `[]` before the block.
+⚪ **Logout error swallowed** — `context/AuthContext.jsx:50-59` ignores logout API failures
+silently. Log it (client state still clears).
 
----
+### Config
 
-## leaderboard/static/leaderboard/custom.css
+🟡 **Hardcoded API base URL** — `services/api.js:9` uses `baseURL: '/api'`. Use
+`import.meta.env.VITE_API_URL || '/api'` so a split dev backend works; relative default
+keeps prod unchanged.
 
-🟡 **`--gol-indigo-primary` and `--gol-indigo-dark` are misleading aliases** (lines 195–196)
-Both resolve to pink values (`#e15463`, `#c8404f`) — they're legacy names from an old color scheme. Templates use them but new code should use `--color-pink` / `--gol-pink-dark` instead. Mark for eventual cleanup.
+⚪ **Missing client-side validation** — event `end_date ≥ start_date`, register password
+strength. API rejects with cryptic errors today.
 
-⚪ **Large unused design token scale** (lines 126–170)
-`--text-*`, `--space-*`, `--radius-*`, `--leading-*`, `--tracking-*`, `--weight-*` are declared but not used by any template. These are valid design system tokens for future components — keep them, but be aware that none are currently referenced. Templates use inline values instead.
-
-⚪ **`--font-arcade` and `--font-gym`** (lines 123–124)
-Declared but never used in any template. `--font-arcade` is identical to `--font-display` (both `'Bebas Neue'`). `--font-gym` references `Ringold Gym` font which is loaded but never used. Could be removed in a future cleanup.
+⚪ **Stubbed account actions** — `EditProfilePage.jsx` "pause/delete account" buttons are
+`window.alert`/`confirm` placeholders. Wire up or hide.
 
 ---
 
-## Templates — General (all pages)
+## Config & Deployment
 
-🔴 **Per-page `<style>` blocks instead of CSS classes**
-Every template has 40–100 lines of page-specific CSS in a `<style>` block in `<head>`. This means:
-- Styles can't be cached separately from HTML
-- No reuse between pages — buttons, cards, and hero patterns are redefined per page
-- Hard to maintain as a design system grows
+✅ **Secrets are NOT committed** — `git ls-files` confirms `credentials.json`,
+`credentials1.json`, `djangotutorial/.env` are untracked; `.gitignore` covers
+`credentials.json` and `.env`.
+🟡 **Gap:** add `credentials1.json` to `.gitignore`; rotate the Google service-account key +
+Django secret as a precaution since they sat in a working tree.
 
-**Recommended path:** extract shared patterns into `custom.css` with namespaced classes (`.home-*`, `.profile-*`, `.events-*`). Per-page overrides can stay inline but should be minimal.
+✅ **DEBUG correctly gated** — `DEBUG = MODE != "PRODUCTION"` ([settings.py:38](djangotutorial/mysite/settings.py#L38)).
 
-🟡 **Hardcoded color values in templates** (various)
-Some templates use literal hex values (`#c1394a`, `#1a0f0a`) instead of CSS variables. These drift out of sync when the palette changes. All colors should use `var(--color-pink)`, `var(--gol-dark)`, etc.
+✅ **Email / password reset configured** — [settings.py:210-222](djangotutorial/mysite/settings.py#L210-L222):
+console backend in DEBUG, Gmail SMTP in prod.
 
-🟡 **Mixed CSS variable naming convention**
-Templates use both `var(--color-pink)` (new canonical) and `var(--gol-pink)` (legacy alias). Both work because of the alias bridge in `custom.css`, but new code should consistently use `--color-*` names.
+✅ **build.sh references resolve** — `manage.py ensure_season` and `superuser.py` both exist.
+⚪ `build.sh` uses `python` (not `python3`) and `superuser.py` runs via bare `python` — fine
+on Render if `python` resolves to 3.x; worth pinning.
+
+🟡 **`ALLOWED_HOSTS = ["*"]`** ([settings.py:39](djangotutorial/mysite/settings.py#L39)) —
+fine for dev; set the real domain via env var in prod.
+
+🟡 **No `CONN_MAX_AGE`** on `DATABASES` — connections aren't reused; add `CONN_MAX_AGE` (e.g.
+600) for production.
+
+🟡 **`SECRET_KEY` has an insecure hardcoded fallback** ([settings.py:25](djangotutorial/mysite/settings.py#L25)).
+Acceptable as long as `DJANGO_SECRET_KEY` is always set in prod (Render does).
+
+⚪ **CLAUDE.md is stale** — documents the old Django-template architecture/routes the React
+SPA replaced. Refresh the structure + URL-routing sections.
 
 ---
 
-## accounts/templates/accounts/password_reset_confirm.html
+## Production Readiness (must-do before launch)
 
-🔴 **Uses non-design-system fonts and colors**
-`font-family: 'Poppins'` and `font-family: 'Inter'` (not in the design system), `color: #d32f2f` (hardcoded red). This page was not converted from ClaudeDesign — it still uses the old default Django styling. Needs a design pass to match the rest of the site.
+🔴 **Media files on Render** — user uploads under `/media/` are served by a Django
+`serve_media` view ([mysite/urls.py](djangotutorial/mysite/urls.py)). Render's default
+filesystem is **ephemeral** — uploads vanish on redeploy. Use a Render persistent disk or
+object storage (S3/Cloudinary). Biggest real production risk.
+
+🔴 **Provision email env vars** — `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD` (Gmail app
+password), `DEFAULT_FROM_EMAIL`. They default to `""`; password reset fails silently if
+unset. Consider raising `ImproperlyConfigured` at startup in PROD.
+
+🟡 **Set `MODE=PRODUCTION` + real `DJANGO_SECRET_KEY`** on Render; scope `ALLOWED_HOSTS`.
+
+🟡 **Google Sheets sync cron is commented out** in `build.sh` — decide whether sync is still
+needed in the React era; if yes, re-enable as a Render cron.
+
+🟡 **Add auth rate limiting** (see backend section).
+
+---
+
+## Future Enhancements (good to add later)
+
+- ⚪ Page-level React tests (only `queryCache`/`errors`/`ToastProvider` are covered today).
+- ⚪ Error/log aggregation (Sentry) for SPA + Django.
+- ⚪ CSS scope cleanup: unscoped `.row`/`.list`/`.empty` collisions across page CSS; consider
+  CSS Modules. Standardize on `--color-*` tokens, retire `--gol-*` aliases.
+- ⚪ Loading skeletons on season/tab switches (Leaderboard shows stale data while fetching).
+- ⚪ RSVP/feedback optimistic UI with retry + undo toast.
+- ⚪ Raise password `min_length` 4 → 8.
+- ⚪ Audit logging for admin feedback access.
 
 ---
 
 ## Summary
 
-| Severity | Count | Quick fix? |
-|----------|-------|-----------|
-| 🔴 High  | 4     | 2 yes, 2 need template work |
-| 🟡 Medium | 10   | All yes — simple edits |
-| ⚪ Low    | 6     | Deferred cleanup |
-
-### Immediate fixes (already applied in this session)
-- [x] `settings.py`: Fix DEBUG, remove duplicate STATIC_URL, clean up commented background_task
-- [x] `admin.py`: Rename `ImageToEvent` → `ImageToEventAdmin`, add missing registrations
-- [x] `urls.py`: Remove duplicate media serving
-- [x] `accounts/views.py`: Consolidate split imports, move inline imports to top
-- [x] `leaderboard/views.py`: Remove dead `MONTH_DAYS`/`YEAR_DAYS` variables
-
-### Deferred (need more time / design work)
-- [ ] Extract shared CSS out of per-page `<style>` blocks into `custom.css`
-- [ ] Design pass on `password_reset_confirm.html`
-- [ ] Migrate all template hardcoded colors to CSS variables
-- [ ] Standardize on `--color-*` naming (remove `--gol-*` usage in new code)
-- [ ] Add `EventFeedback`, `EventRSVP`, `LastUpdate` to admin
-- [ ] Password min_length: raise from 4 to 8
+| Area | 🔴 | 🟡 | ⚪ |
+|------|----|----|----|
+| Backend | 1 | 7 | 4 |
+| Frontend | 0 | 7 | 4 |
+| Config & Deployment | 0 | 4 | 3 |
+| Production Readiness | 2 | 3 | 0 |

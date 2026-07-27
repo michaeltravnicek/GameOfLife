@@ -79,7 +79,7 @@ export default function ResetPasswordPage() {
               />
               {error && <div className="auth-error">{error}</div>}
               <Button type="submit" variant="action" size="lg" busy={busy} className="pts-btn-wrap">
-                {busy ? 'Ukládám…' : 'Nastavit heslo →'}
+                {busy ? 'Ukládám…' : <>Nastavit heslo <span className="arr" aria-hidden="true" /></>}
               </Button>
               <p className="auth-foot">
                 <Link to="/prihlasit">← Zpět na přihlášení</Link>

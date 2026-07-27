@@ -7,12 +7,12 @@
 .evcard-dark:hover .evcard-dark-frame rect{stroke:var(--color-pink)}
 .evcard-dark .evcard-dark-frame{inset:1px;width:calc(100% - 2px);height:calc(100% - 2px)}
 .evcard-dark-inner{width:100%;min-height:150px;padding:18px 18px 14px;background:rgba(0,0,0,.20);border-radius:11px;box-sizing:border-box;display:flex;flex-direction:column;gap:10px}
-.evcard-dark .evcard-title{color:var(--color-cream-light);font-size:clamp(22px,5vw,30px);font-family:var(--font-event-name);font-weight:400;text-transform:uppercase;line-height:1;letter-spacing:.015em;margin:0}
-.evcard-dark .evcard-meta{display:flex;flex-direction:column;gap:5px;font-family:'Courier Prime',var(--font-mono),monospace;font-style:italic;font-size:13px;font-weight:400;color:rgba(255,255,255,.92);line-height:1.5}
+.evcard-dark .evcard-title{color:var(--color-heading);font-size:clamp(22px,5vw,30px);font-family:var(--font-event-name);font-weight:400;text-transform:uppercase;line-height:1;letter-spacing:.015em;margin:0}
+.evcard-dark .evcard-meta{display:flex;flex-direction:column;gap:5px;font-family:var(--font-mono);font-style:italic;font-size:13px;font-weight:400;color:rgba(255,255,255,.92);line-height:1.5}
 .evcard-dark .evcard-meta>div{display:flex;align-items:center}
 .evcard-dark .ev-emoji{font-style:normal}
 .evcard-dark .evcard-title-wrap{padding-right:96px;display:flex;flex-direction:column;gap:2px}
-.evcard-dark .evcard-brand{color:var(--color-cream-light);font-size:clamp(22px,5vw,30px);font-family:var(--font-event-name);font-weight:400;text-transform:uppercase;line-height:1;letter-spacing:.015em}
+.evcard-dark .evcard-brand{color:var(--color-heading);font-size:clamp(22px,5vw,30px);font-family:var(--font-event-name);font-weight:400;text-transform:uppercase;line-height:1;letter-spacing:.015em}
 .evcard-dark .evcard-badge{position:absolute;width:126px;height:126px;top:-46px;right:-30px;transform:rotate(12deg) scale(var(--logo-scale,1));object-fit:contain;pointer-events:none;filter:drop-shadow(0px 5px 12px rgba(0,0,0,.4));z-index:4}
 
 /* ── Light theme (Events list — POSTER skin on the LIGHT texture: cream
@@ -26,7 +26,7 @@
 .evcard-light:hover .evcard-detail{color:var(--color-pink);border-bottom-color:var(--color-pink)}
 .evcard-light.is-past{background-image:var(--tex-light)}
 
-.evcard-light .evcard-status{font-family:'Courier Prime',var(--font-mono),monospace;font-style:italic;font-size:9.5px;letter-spacing:1.2px;text-transform:uppercase;padding:4px 9px;border-radius:9999px;background:rgba(255,241,212,.85);color:#1a1a1a;border:1px dashed rgba(26,26,26,.35);line-height:1.5;white-space:nowrap}
+.evcard-light .evcard-status{font-family:var(--font-mono);font-style:italic;font-size:9.5px;letter-spacing:1.2px;text-transform:uppercase;padding:4px 9px;border-radius:9999px;background:rgba(255,241,212,.85);color:#1a1a1a;border:1px dashed rgba(26,26,26,.35);line-height:1.5;white-space:nowrap}
 .evcard-light .evcard-status.done{background:rgba(26,26,26,.55);color:rgba(255,241,212,.85);border-color:rgba(255,241,212,.25)}
 /* Category + status sit together at the bottom, beside the points pill. */
 .evcard-light .evcard-cat{font-family:var(--font-hv);font-weight:600;font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;padding:4px 10px;border-radius:9999px;background:rgba(26,26,26,.06);color:rgba(26,26,26,.72);border:1px dashed rgba(26,26,26,.3);white-space:nowrap}

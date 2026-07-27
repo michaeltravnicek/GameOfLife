@@ -33,9 +33,9 @@ class PlayerDetailApiTests(TestCase):
         resp = self.client.get(url)
         self.assertEqual(resp.status_code, 200)
         data = resp.json()
-        # Initials, not the full name: this player was synced from Sheets and
+        # Shortened, not the full name: this player was synced from Sheets and
         # never registered, so nothing was consented to (leaderboard/privacy.py).
-        self.assertEqual(data["name"], "S. O.")
+        self.assertEqual(data["name"], "Sheet O.")
         self.assertEqual(data["total_points"], 50)
         self.assertEqual(data["events_count"], 2)
         self.assertIsNone(data["profile_username"])  # not registered

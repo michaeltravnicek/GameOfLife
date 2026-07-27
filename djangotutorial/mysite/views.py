@@ -61,6 +61,41 @@ def react_index(request):
     return HttpResponse(html, content_type="text/html")
 
 
+def robots_txt(request):
+    """Serve /robots.txt.
+
+    Tells well-behaved crawlers to skip everything that is either private or a
+    functional dead end (the JSON API, auth screens, create/edit forms, the
+    feedback console) so they spend their crawl budget on real content, and
+    points them at the sitemap. This is guidance, not access control -- anything
+    that must actually be protected is enforced server-side, not here.
+
+    The admin path is listed ONLY while it sits at the default /admin/, which
+    every crawler and scanner already probes anyway. Once ADMIN_URL moves it
+    somewhere non-obvious, naming it here would broadcast the one thing the move
+    was meant to keep quiet -- robots.txt is a world-readable file, so a
+    "Disallow" line is a published address, not a hidden one. Use an
+    `X-Robots-Tag: noindex` response header at the edge instead.
+    """
+    default_admin = settings.ADMIN_URL == "admin/"
+    lines = [
+        "User-agent: *",
+        *(["Disallow: /admin/"] if default_admin else []),
+        "Disallow: /api/",
+        "Disallow: /prihlasit",
+        "Disallow: /registrace",
+        "Disallow: /zapomenute-heslo",
+        "Disallow: /obnova-hesla/",
+        "Disallow: /upravit-profil",
+        "Disallow: /events/vytvorit",
+        "Disallow: /events/*/upravit",
+        "Disallow: /sprava/",
+        "",
+        f"Sitemap: {request.build_absolute_uri('/sitemap.xml')}",
+    ]
+    return HttpResponse("\n".join(lines) + "\n", content_type="text/plain")
+
+
 def sentry_debug(request):
     """Raise on purpose, to confirm errors actually reach Sentry.
 

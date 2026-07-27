@@ -34,7 +34,7 @@ class EventAdmin(admin.ModelAdmin):
     fieldsets = (
         (None, {
             "fields": ("name", "category", "badge", "description", "rules", "date", "time_tbd", "end_date",
-                       "points", "capacity", "image", "logo", "logo_scale",
+                       "points", "capacity", "image",
                        "visible_to_users", "visible_to_close", "survey_url",
                        "whatsapp_url")
         }),

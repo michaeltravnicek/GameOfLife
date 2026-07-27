@@ -128,7 +128,7 @@ def _entry(player):
     from leaderboard.privacy import display_name
     return {
         "id": player.id,
-        # Initials unless the player registered and consented — see
+        # Shortened to "Jan N." unless the player registered and consented — see
         # leaderboard/privacy.py. Defaults to False so any caller that forgets
         # to annotate publishes less, not more.
         "name": display_name(player.name, consented=getattr(player, "name_consented", False)),
@@ -232,35 +232,52 @@ def player_payload(lb_user, request=None):
         Profile.objects.filter(leaderboard_user=lb_user).select_related("user").first()
     )
 
-    events = [
-        {
-            "slug": u.event.slug,
-            "name": u.event.name,
-            "place": u.event.place,
-            "date": u.event.date,
-            "points": u.points,
-            "category": {"id": u.event.category.id, "name": u.event.category.name}
-                        if u.event.category else None,
-        }
-        for u in (
-            UserToEvent.objects
-            .filter(user=lb_user)
-            .select_related("event", "event__category")
-            .order_by("-event__date")
-        )
-    ]
-
-    from leaderboard.privacy import display_name, profile_has_consent
+    from leaderboard.privacy import display_name, profile_has_consent, visibility_for
     from leaderboard.services.badges import badges_for
 
-    return {
+    # Same privacy flags as /profiles/<username>/. This endpoint reaches the same
+    # person by leaderboard id instead of username, so enforcing them only there
+    # would leave the flag trivially bypassable by switching endpoint.
+    # Computed before the event query so a hidden history costs nothing to serve.
+    gates = visibility_for(profile, getattr(request, "user", None))
+
+    events = []
+    if not gates.hide_events:
+        events = [
+            {
+                "slug": u.event.slug,
+                "name": u.event.name,
+                "place": u.event.place,
+                "date": u.event.date,
+                "points": u.points,
+                "category": {"id": u.event.category.id, "name": u.event.category.name}
+                            if u.event.category else None,
+            }
+            for u in (
+                UserToEvent.objects
+                .filter(user=lb_user)
+                .select_related("event", "event__category")
+                .order_by("-event__date")
+            )
+        ]
+
+    payload = {
         "id": lb_user.id,
         "name": display_name(lb_user.name, consented=profile_has_consent(profile)),
-        "total_points": total_points,
-        "events_count": events_count,
-        "rank": rank,
         "profile_username": profile.user.username if profile else None,
-        "events": events,
-        "seasons": season_summaries(lb_user),
         "badges": badges_for(lb_user, request),
+        "hidden": [
+            name for name, hidden in (
+                ("points", gates.hide_pts),
+                ("events", gates.hide_events),
+            ) if hidden
+        ],
     }
+    if not gates.hide_pts:
+        payload["total_points"] = total_points
+        payload["events_count"] = events_count
+        payload["rank"] = rank
+    if not gates.hide_events:
+        payload["events"] = events
+        payload["seasons"] = season_summaries(lb_user)
+    return payload

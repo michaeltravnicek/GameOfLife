@@ -38,23 +38,18 @@ class Profile(models.Model):
     favourite_categories = models.ManyToManyField(
         'leaderboard.Category', blank=True, related_name='fans',
     )
-    # Privacy flags — NOT ENFORCED YET. All three are stored and round-tripped
-    # through the profile API, but nothing reads them to actually hide anything
-    # (profile_payload always returns full data; no display code checks them).
-    #   hide_pts      — no UI toggle either; fully dormant.
-    #   hide_events   — has an edit-page toggle, but display doesn't honor it.
-    #   members_only  — has an edit-page toggle, but display doesn't honor it.
-    # See FRONTEND_TODO.md (privacy flags) before relying on these.
-    _NOT_ENFORCED = "ZATÍM NEVYNUCENO: hodnota se uloží, ale nic podle ní neskrývá."
+    # Privacy flags — enforced server-side by leaderboard.privacy.visibility_for,
+    # which every profile/player payload and season sub-resource routes through.
+    # The owner and admins are never gated; see that function for why.
     hide_pts = models.BooleanField(
         default=False,
-        help_text=f"Skrýt body na profilu. {_NOT_ENFORCED} Navíc nemá přepínač v UI.",
+        help_text="Skrýt body a pořadí na profilu.",
     )
     hide_events = models.BooleanField(
-        default=False, help_text=f"Skrýt seznam akcí na profilu. {_NOT_ENFORCED}",
+        default=False, help_text="Skrýt seznam akcí na profilu.",
     )
     members_only = models.BooleanField(
-        default=False, help_text=f"Profil jen pro přihlášené. {_NOT_ENFORCED}",
+        default=False, help_text="Profil jen pro přihlášené (pro nepřihlášené vrací 404).",
     )
     role = models.CharField(
         max_length=20, choices=ROLE_CHOICES, blank=True, default=ROLE_NONE,

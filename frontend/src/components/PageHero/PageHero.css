@@ -5,7 +5,7 @@
 .page-hero-eyebrow{font-family:var(--font-mono);font-style:italic;font-size:20px;letter-spacing:.3em;text-transform:uppercase;color:var(--color-pink);margin-bottom:10px;display:inline-flex;align-items:center;gap:10px}
 .page-hero-eyebrow::before,.page-hero-eyebrow::after{content:'✦';font-size:13px;opacity:.9}
 
-.page-hero-title{font-family:var(--font-display);font-weight:400;font-size:clamp(70px,10vw,140px);line-height:.92;color:var(--color-cream-light);text-transform:uppercase;letter-spacing:.03em;text-shadow:0 6px 34px var(--alpha-black-60)}
+.page-hero-title{font-family:var(--font-display);font-weight:400;font-size:clamp(70px,10vw,140px);line-height:.92;color:var(--color-heading);text-transform:uppercase;letter-spacing:.03em;text-shadow:0 6px 34px var(--alpha-black-60)}
 
 .page-hero-tagline{font-family:var(--font-body);font-weight:300;font-style:italic;font-size:14px;color:var(--alpha-cream-70);max-width:580px;margin:12px auto 0;line-height:1.5}
 

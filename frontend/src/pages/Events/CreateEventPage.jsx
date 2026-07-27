@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { createEvent, fetchCategories } from '../../services/api';
+import { createEvent, fetchCategories, fetchBadges } from '../../services/api';
 import { extractApiError, reportError } from '../../services/errors';
 import { useEventForm, buildEventFormData } from './eventForm';
 import EventFormSections from './EventFormSections';
@@ -9,20 +9,24 @@ import './EventPage.css';
 export default function CreateEventPage() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const [badges, setBadges] = useState([]);
   const {
     form, setForm, categories, allCategories, setAllCategories,
     dirty, saving, setSaving, saveError, setSaveError,
-    markDirty, setField, handleCategories, poster, logo,
+    markDirty, setField, handleCategories, poster,
   } = useEventForm();
 
   useEffect(() => {
-    fetchCategories()
-      .then((data) => {
-        if (data?.categories) setAllCategories(data.categories);
+    // Badges are the logo picker's options, so they gate the form the same way
+    // categories do — load both before showing it.
+    Promise.all([fetchCategories(), fetchBadges()])
+      .then(([cats, badgeData]) => {
+        if (cats?.categories) setAllCategories(cats.categories);
+        if (badgeData?.badges) setBadges(badgeData.badges);
         setLoading(false);
       })
       .catch((err) => {
-        reportError('Nepodařilo se načíst kategorie.', err);
+        reportError('Nepodařilo se načíst kategorie a odznaky.', err);
         setLoading(false);
       });
   }, [setAllCategories]);
@@ -31,7 +35,7 @@ export default function CreateEventPage() {
     setSaving(true);
     setSaveError(null);
     try {
-      const formData = buildEventFormData(form, { poster, logo, allCategories, categories });
+      const formData = buildEventFormData(form, { poster, allCategories, categories });
       const event = await createEvent(formData);
       navigate(`/events/${event.slug}`);
     } catch (err) {
@@ -63,7 +67,7 @@ export default function CreateEventPage() {
           setField={setField}
           markDirty={markDirty}
           poster={poster}
-          logo={logo}
+          badges={badges}
           allCategories={allCategories}
           categories={categories}
           onCategories={handleCategories}

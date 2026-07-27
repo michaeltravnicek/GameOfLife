@@ -5,6 +5,7 @@ import { toast } from '../../components/Toast/ToastProvider';
 import FormInput from '../../components/FormInput/FormInput';
 import Button from '../../components/Button/Button';
 import { extractApiError } from '../../services/errors';
+import GoogleSignInButton from '../../components/GoogleSignInButton/GoogleSignInButton';
 import '../Login/AuthPage.css';
 
 export default function RegisterPage() {
@@ -156,9 +157,12 @@ export default function RegisterPage() {
               </div>
               {error && <div className="auth-error">{error}</div>}
               <Button type="submit" variant="nav" size="lg" busy={busy} className="pts-btn-wrap">
-                {busy ? 'Registruji…' : 'Registrovat se →'}
+                {busy ? 'Registruji…' : <>Registrovat se <span className="arr" aria-hidden="true" /></>}
               </Button>
             </form>
+
+            <GoogleSignInButton label="Zaregistrovat se přes Google" />
+
             <p className="auth-foot">Už máš účet? <Link to={{ pathname: '/prihlasit', search: location.search }} state={location.state}>Přihlásit se</Link></p>
           </div>
         </div>

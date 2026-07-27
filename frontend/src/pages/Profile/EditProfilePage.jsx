@@ -38,7 +38,9 @@ export default function EditProfilePage() {
   const [avatarFile, setAvatarFile] = useState(null);
   const [categories, setCategories] = useState([]);
   const [socials, setSocials] = useState({ instagram: '', strava: '', spotify: '', tiktok: '' });
-  const [privacy, setPrivacy] = useState({ hide_events: false, members_only: false });
+  const [privacy, setPrivacy] = useState({
+    hide_pts: false, hide_events: false, members_only: false,
+  });
 
   const [dirty, setDirty] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -73,6 +75,7 @@ export default function EditProfilePage() {
             tiktok: profile.tiktok || '',
           });
           setPrivacy({
+            hide_pts: profile.privacy?.hide_pts || false,
             hide_events: profile.privacy?.hide_events || false,
             members_only: profile.privacy?.members_only || false,
           });
@@ -119,6 +122,7 @@ export default function EditProfilePage() {
         const id = nameToId.get(name);
         if (id != null) formData.append('favourite_categories', id);
       });
+      formData.append('hide_pts', privacy.hide_pts ? '1' : '0');
       formData.append('hide_events', privacy.hide_events ? '1' : '0');
       formData.append('members_only', privacy.members_only ? '1' : '0');
       formData.append('instagram', socials.instagram);
@@ -333,11 +337,15 @@ export default function EditProfilePage() {
               <p className="ep-sec-sub">Profil je veřejný, ale tyhle detaily můžeš zamknout.</p>
             </div>
             <div className="ep-toggle-row">
+              <div className="ep-txt"><h4>Skrýt body a pořadí</h4><p>Body zmizí z tvého profilu. V žebříčku zůstáváš.</p></div>
+              <Switch checked={privacy.hide_pts} onChange={togglePrivacy('hide_pts')} ariaLabel="Skrýt body a pořadí" />
+            </div>
+            <div className="ep-toggle-row">
               <div className="ep-txt"><h4>Skrýt seznam absolvovaných akcí</h4><p>Tvůj profil ukáže jen highlighty.</p></div>
               <Switch checked={privacy.hide_events} onChange={togglePrivacy('hide_events')} ariaLabel="Skrýt seznam akcí" />
             </div>
             <div className="ep-toggle-row">
-              <div className="ep-txt"><h4>Profil pouze pro členy</h4><p>Nepřihlášení návštěvníci uvidí jen jméno a fotku.</p></div>
+              <div className="ep-txt"><h4>Profil pouze pro členy</h4><p>Nepřihlášení návštěvníci tvůj profil vůbec neotevřou.</p></div>
               <Switch checked={privacy.members_only} onChange={togglePrivacy('members_only')} ariaLabel="Profil pouze pro členy" />
             </div>
           </div>

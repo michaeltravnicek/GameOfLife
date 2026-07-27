@@ -2,17 +2,18 @@ from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from leaderboard.image_utils import ALLOWED_IMAGE_CONTENT_TYPES, MAX_UPLOAD_BYTES, variant_url
-from leaderboard.models import Category, Event, EventFeedback, EventRSVP, ImageToEvent, UserPhoto
+from leaderboard.models import Badge, Category, Event, EventFeedback, EventRSVP, ImageToEvent, UserPhoto
 
-# Logos may be SVG (vector) as well as raster — unlike the poster `image`, which
-# is downscaled by Pillow on save and so must stay a raster format.
+# Badge artwork may be SVG (vector) as well as raster — unlike the poster
+# `image`, which is downscaled by Pillow on save and so must stay a raster
+# format.
 _ALLOWED_LOGO_CONTENT_TYPES = ALLOWED_IMAGE_CONTENT_TYPES | {"image/svg+xml"}
 
 
 def validate_logo_file(uploaded):
-    """Content-type + size guard for a logo upload — no Pillow decode, so SVG passes.
+    """Content-type + size guard for badge artwork — no Pillow decode, so SVG passes.
 
-    ModelSerializer would otherwise map Event.logo to an ImageField that
+    ModelSerializer would otherwise map Badge.image to an ImageField that
     Pillow-verifies the file and rejects SVG.
     """
     content_type = (getattr(uploaded, "content_type", "") or "").lower()
@@ -21,6 +22,53 @@ def validate_logo_file(uploaded):
             "Logo musí být PNG, JPG, WEBP, GIF nebo SVG.")
     if (getattr(uploaded, "size", 0) or 0) > MAX_UPLOAD_BYTES:
         raise serializers.ValidationError("Logo je příliš velké (max 15 MB).")
+
+
+def _badge_image_url(obj, request):
+    """Absolute URL of the event's badge artwork — the event's logo.
+
+    Events no longer own artwork; it hangs off `Event.badge`. Kept as a helper so
+    the list and detail serializers cannot drift apart, and so the response keeps
+    the `logo` key the frontend already reads.
+    """
+    badge = obj.badge
+    if not badge or not badge.image:
+        return None
+    url = badge.image.url
+    return request.build_absolute_uri(url) if request else url
+
+
+class BadgeSerializer(serializers.ModelSerializer):
+    """A badge as the event form's logo picker and the profile collection see it."""
+    image = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Badge
+        fields = ["id", "name", "slug", "image", "image_scale", "description"]
+
+    def get_image(self, obj) -> str | None:
+        if not obj.image:
+            return None
+        request = self.context.get("request")
+        url = obj.image.url
+        return request.build_absolute_uri(url) if request else url
+
+
+class BadgeWriteSerializer(serializers.ModelSerializer):
+    """Input side of badge creation — the one place event artwork is uploaded now.
+
+    `image` is a FileField rather than the auto ImageField for the same reason
+    the old event logo was: Pillow-verification rejects SVG, and a good half of
+    the logos are vector.
+    """
+    name = serializers.CharField(max_length=255)
+    image = serializers.FileField(required=False, allow_null=True,
+                                  validators=[validate_logo_file])
+    image_scale = serializers.FloatField(min_value=0.1, max_value=5.0, required=False)
+
+    class Meta:
+        model = Badge
+        fields = ["name", "image", "image_scale", "description"]
 
 
 class UserPhotoOutSerializer(serializers.Serializer):
@@ -38,7 +86,10 @@ class CategorySerializer(serializers.ModelSerializer):
 
 class EventListSerializer(serializers.ModelSerializer):
     image = serializers.SerializerMethodField()
+    # `logo` / `logo_scale` are now derived from the linked badge. The keys stay
+    # in the response on purpose: the artwork moved, what a card renders did not.
     logo = serializers.SerializerMethodField()
+    logo_scale = serializers.SerializerMethodField()
     is_past = serializers.SerializerMethodField()
     category = CategorySerializer(read_only=True)
 
@@ -47,7 +98,7 @@ class EventListSerializer(serializers.ModelSerializer):
         fields = [
             "id", "slug", "name", "description", "place",
             "date", "time_tbd", "points", "image", "logo", "logo_scale",
-            "capacity", "is_past", "category",
+            "badge_id", "capacity", "is_past", "category",
             "visible_to_users", "visible_to_close",
         ]
 
@@ -59,11 +110,10 @@ class EventListSerializer(serializers.ModelSerializer):
         return request.build_absolute_uri(url) if request else url
 
     def get_logo(self, obj) -> str | None:
-        if not obj.logo:
-            return None
-        request = self.context.get("request")
-        url = obj.logo.url
-        return request.build_absolute_uri(url) if request else url
+        return _badge_image_url(obj, self.context.get("request"))
+
+    def get_logo_scale(self, obj) -> float:
+        return obj.badge.image_scale if obj.badge else 1.0
 
     def get_is_past(self, obj) -> bool:
         from django.utils import timezone
@@ -74,6 +124,8 @@ class EventDetailSerializer(serializers.ModelSerializer):
     image = serializers.SerializerMethodField()
     image_mobile = serializers.SerializerMethodField()
     logo = serializers.SerializerMethodField()
+    logo_scale = serializers.SerializerMethodField()
+    badge = BadgeSerializer(read_only=True)
     is_past = serializers.SerializerMethodField()
     rsvp_count = serializers.SerializerMethodField()
     attendee_count = serializers.SerializerMethodField()
@@ -89,7 +141,8 @@ class EventDetailSerializer(serializers.ModelSerializer):
         model = Event
         fields = [
             "id", "slug", "name", "description", "place", "date", "time_tbd", "end_date",
-            "points", "image", "image_mobile", "logo", "logo_scale", "rules", "capacity",
+            "points", "image", "image_mobile", "logo", "logo_scale", "badge",
+            "rules", "capacity",
             "latitude", "longitude", "category",
             "survey_url", "whatsapp_url", "visible_to_users", "visible_to_close",
             "is_past", "rsvp_count", "attendee_count", "is_full", "has_rsvp",
@@ -111,7 +164,10 @@ class EventDetailSerializer(serializers.ModelSerializer):
         return variant_url(obj.image, self.context.get("request"))
 
     def get_logo(self, obj) -> str | None:
-        return self._abs(obj.logo)
+        return _badge_image_url(obj, self.context.get("request"))
+
+    def get_logo_scale(self, obj) -> float:
+        return obj.badge.image_scale if obj.badge else 1.0
 
     def get_is_past(self, obj) -> bool:
         from django.utils import timezone
@@ -247,7 +303,12 @@ class EventWriteSerializer(serializers.ModelSerializer):
     model: `name` is required here (the model has a default), `date` is
     optional here (the model requires it but the UI treats it as optional),
     and nullable fields accept "" as "clear". Everything else (rules,
-    survey_url, visibility flags, image/logo) is derived from the model.
+    survey_url, visibility flags, image) is derived from the model.
+
+    There is no `logo` upload any more: the logo is the linked badge's artwork,
+    so the form picks a `badge` id. Creating new artwork means creating a badge
+    (POST /badges/), which is what keeps one file from being stored once per
+    event.
     """
     name = serializers.CharField(max_length=255)
     date = BlankableDateTimeField(required=False, allow_null=True)
@@ -260,12 +321,11 @@ class EventWriteSerializer(serializers.ModelSerializer):
                                     required=False, allow_null=True)
     checkin_radius = serializers.IntegerField(min_value=10, max_value=50000,
                                               required=False)
-    # FileField (not the auto ImageField): accepts SVG logos. The poster `image`
-    # stays the default ImageField — it's raster-only because Event.save()
-    # downscales it. validate_logo_file keeps it to image/SVG types + a size cap.
-    logo = serializers.FileField(required=False, allow_null=True,
-                                 validators=[validate_logo_file])
-    logo_scale = serializers.FloatField(min_value=0.1, max_value=5.0, required=False)
+    # allow_null so the form can clear the logo; the multipart form sends "" for
+    # an empty select, which BlankableIntegerField-style coercion doesn't cover
+    # for relations — hence the explicit empty-string handling in to_internal_value.
+    badge = serializers.PrimaryKeyRelatedField(
+        queryset=Badge.objects.all(), required=False, allow_null=True)
 
     class Meta:
         model = Event
@@ -273,8 +333,16 @@ class EventWriteSerializer(serializers.ModelSerializer):
             "name", "description", "place", "date", "time_tbd", "end_date", "points",
             "capacity", "rules", "survey_url", "whatsapp_url", "visible_to_users",
             "visible_to_close", "latitude", "longitude", "checkin_radius",
-            "category", "image", "logo", "logo_scale",
+            "category", "image", "badge",
         ]
+
+    def to_internal_value(self, data):
+        # A <select> with nothing chosen posts "" in multipart form data, which
+        # PrimaryKeyRelatedField rejects as an invalid pk. Treat it as "clear".
+        if hasattr(data, "copy") and data.get("badge", None) == "":
+            data = data.copy()
+            data["badge"] = None
+        return super().to_internal_value(data)
 
     def validate(self, attrs):
         # Same pairing rule as Event.clean() — DRF never calls model.clean(),
@@ -376,15 +444,23 @@ class _PlayerSeasonSummarySerializer(serializers.Serializer):
 
 
 class PlayerDetailSerializer(serializers.Serializer):
-    """Public leaderboard-player profile (leaderboard.services.player_payload)."""
+    """Public leaderboard-player profile (leaderboard.services.player_payload).
+
+    Honours the linked account's privacy flags exactly as `/profiles/<username>/`
+    does -- same person, different lookup key. Gated sections are omitted rather
+    than zeroed; read `hidden` to tell "withheld" from "genuinely none".
+    """
     id = serializers.IntegerField()
     name = serializers.CharField()
-    total_points = serializers.IntegerField()
-    events_count = serializers.IntegerField()
-    rank = serializers.IntegerField(allow_null=True)
     profile_username = serializers.CharField(allow_null=True, help_text="Linked account, if any.")
-    events = _PlayerEventSerializer(many=True)
-    seasons = _PlayerSeasonSummarySerializer(many=True)
+    hidden = serializers.ListField(
+        child=serializers.ChoiceField(choices=["points", "events"]),
+        help_text='Sections withheld by the player\'s privacy flags.')
+    total_points = serializers.IntegerField(required=False)
+    events_count = serializers.IntegerField(required=False)
+    rank = serializers.IntegerField(allow_null=True, required=False)
+    events = _PlayerEventSerializer(many=True, required=False)
+    seasons = _PlayerSeasonSummarySerializer(many=True, required=False)
 
 
 class GalleryPhotoSerializer(serializers.Serializer):

@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect } from 'react';
+import { lazy, Suspense, useEffect, useRef } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import Nav from './components/Nav/Nav';
 import Footer from './components/Footer/Footer';
@@ -30,10 +30,21 @@ const OBodechAltPage = lazy(() => import('./pages/OBodech/OBodechAltPage'));
 const HistoriePage = lazy(() => import('./pages/Historie/HistoriePage'));
 
 function ScrollToTop() {
-  const { pathname } = useLocation();
+  const location = useLocation();
+  const prevPath = useRef(location.pathname);
   useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [pathname]);
+    // Leave in-page anchor links (#section) to the browser.
+    if (location.hash) { prevPath.current = location.pathname; return; }
+    // Depending on the whole location (not just pathname) means this also runs
+    // when you click the current page's own nav link — React Router emits a
+    // fresh location key even for a same-path navigation. Smooth-scroll when
+    // we're already on the page (a visible ride to the top); jump instantly for
+    // real page-to-page navigation so new content starts at the top at once.
+    const samePage = prevPath.current === location.pathname;
+    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    window.scrollTo({ top: 0, behavior: samePage && !reduce ? 'smooth' : 'auto' });
+    prevPath.current = location.pathname;
+  }, [location]);
   return null;
 }
 

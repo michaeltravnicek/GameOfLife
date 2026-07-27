@@ -1,6 +1,15 @@
 /* All selectors scoped under .profile-page to prevent cross-page leaks. */
 .profile-page{min-height:100vh;color:var(--color-cream-light);-webkit-font-smoothing:antialiased;background:#1a0f0a;overflow-x:hidden}
 
+/* ── ENTRANCE ── subtle on-mount fade-up for the poster identity (matches the
+   event detail poster). Shared by the anonymous PlayerPage, which reuses this
+   whole skin. Only static text/avatar — nothing with a hover transform. */
+@keyframes profilePosterFade{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+.profile-page .poster-avatar{animation:profilePosterFade .6s cubic-bezier(.22,.68,0,1.2) both .1s}
+.profile-page .poster-name{animation:profilePosterFade .7s cubic-bezier(.22,.68,0,1.2) both .22s}
+.profile-page .poster-handle{animation:profilePosterFade .6s ease both .34s}
+@media(prefers-reduced-motion:reduce){.profile-page .poster-avatar,.profile-page .poster-name,.profile-page .poster-handle{animation:none}}
+
 /* ── POSTER HERO ── */
 .profile-page .poster{position:relative;min-height:88vh;display:flex;flex-direction:column;justify-content:flex-end;overflow:hidden;z-index:1}
 .profile-page .poster-img{position:absolute;inset:0;background:url('/img/gal14-mobile.webp') center 45%/cover no-repeat;filter:saturate(.85) contrast(1.06);transform:scale(1.04);z-index:0}
@@ -32,15 +41,24 @@
 /* ── BODY ── */
 .profile-page .body-wrap{background:#1a0f0a url('/img/Grain_texture_brown.webp') 0 0/var(--tex-size) var(--tex-size) repeat;position:relative;z-index:1}
 .profile-page .profile-main{position:relative;z-index:1;max-width:920px;margin:0 auto;padding:64px 24px 24px}
-.profile-page .profile-view{animation:profileFade .35s ease}
-@keyframes profileFade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+/* Tab content (O mně / Akce / Body) — the view remounts on tab change
+   (key={view} in ProfilePage.jsx), so this staggered fade-up replays every
+   time you switch tabs. Each view's direct children are .section blocks
+   (about + EventsSections + PointsSections all emit them), so they cascade in. */
+.profile-page .profile-view>.section{animation:profileFade .5s cubic-bezier(.22,.68,0,1.1) both}
+.profile-page .profile-view>.section:nth-child(1){animation-delay:.03s}
+.profile-page .profile-view>.section:nth-child(2){animation-delay:.11s}
+.profile-page .profile-view>.section:nth-child(3){animation-delay:.19s}
+.profile-page .profile-view>.section:nth-child(n+4){animation-delay:.26s}
+@keyframes profileFade{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.profile-page .profile-view>.section{animation:none}}
 
 .profile-page .section{margin-bottom:56px}
 .profile-page .section:last-child{margin-bottom:0}
 .profile-page .sec-rule{height:1px;background:repeating-linear-gradient(90deg,rgba(255,241,212,.5) 0 6px,transparent 6px 12px);margin-bottom:14px}
 .profile-page .sec-eyebrow{font-family:var(--font-mono);font-style:italic;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--color-pink);margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;gap:14px}
 .profile-page .sec-eyebrow .meta{color:rgba(255,241,212,.55);font-size:10.5px;letter-spacing:.16em;font-weight:400;font-style:italic}
-.profile-page .sec-heading{font-family:var(--font-display);font-weight:400;font-size:clamp(38px,4.4vw,54px);letter-spacing:.04em;color:var(--color-cream-light);text-transform:uppercase;line-height:.95;margin-bottom:22px}
+.profile-page .sec-heading{font-family:var(--font-display);font-weight:400;font-size:clamp(38px,4.4vw,54px);letter-spacing:.04em;color:var(--color-heading);text-transform:uppercase;line-height:.95;margin-bottom:22px}
 .profile-page .sec-heading .pink{color:var(--color-pink)}
 
 /* ── O MNĚ ── */
@@ -117,17 +135,17 @@
 .profile-page .chart-meta .legend i.dashed{background:repeating-linear-gradient(90deg,var(--color-pink) 0 4px,transparent 4px 7px)}
 .profile-page .chart-svg{width:100%;height:auto;display:block;aspect-ratio:3.2 / 1}
 .profile-page .chart-grid line{stroke:rgba(255,241,212,.08);stroke-width:1}
-.profile-page .chart-axis text{font-family:'Courier Prime',monospace;font-style:italic;font-size:9.5px;fill:rgba(255,241,212,.5);letter-spacing:.16em}
+.profile-page .chart-axis text{font-family:var(--font-mono);font-style:italic;font-size:9.5px;fill:rgba(255,241,212,.5);letter-spacing:.16em}
 .profile-page .chart-area{fill:url(#chart-grad)}
 .profile-page .chart-line-past{fill:none;stroke:var(--color-pink);stroke-width:2.2;stroke-linejoin:round;stroke-linecap:round}
 .profile-page .chart-line-future{fill:none;stroke:rgba(225,84,99,.7);stroke-width:2;stroke-dasharray:6 5;stroke-linejoin:round;stroke-linecap:round}
 .profile-page .chart-today{stroke:#f5c842;stroke-width:1.4;stroke-dasharray:3 4;opacity:.7}
-.profile-page .chart-today-label{font-family:'Courier Prime',monospace;font-style:italic;font-size:9.5px;fill:#f5c842;letter-spacing:.14em}
+.profile-page .chart-today-label{font-family:var(--font-mono);font-style:italic;font-size:9.5px;fill:#f5c842;letter-spacing:.14em}
 .profile-page .dot{cursor:pointer;transition:.18s}
 .profile-page .dot.past{fill:var(--color-pink);stroke:#fff;stroke-width:1.5}
 .profile-page .dot.future{fill:#0a0604;stroke:var(--color-pink);stroke-width:2}
 .profile-page .dot:hover{r:8;filter:drop-shadow(0 0 6px rgba(225,84,99,.7))}
-.profile-page .dot-tip{position:absolute;background:#0d0805;border:1px dashed rgba(255,241,212,.4);border-radius:6px;padding:7px 10px;font-family:'Courier Prime',monospace;font-style:italic;font-size:11px;color:#fff;letter-spacing:.06em;pointer-events:none;transform:translate(-50%,-100%);opacity:0;transition:.18s;z-index:5;white-space:nowrap;line-height:1.5}
+.profile-page .dot-tip{position:absolute;background:#0d0805;border:1px dashed rgba(255,241,212,.4);border-radius:6px;padding:7px 10px;font-family:var(--font-mono);font-style:italic;font-size:11px;color:#fff;letter-spacing:.06em;pointer-events:none;transform:translate(-50%,-100%);opacity:0;transition:.18s;z-index:5;white-space:nowrap;line-height:1.5}
 .profile-page .dot-tip.show{opacity:1}
 .profile-page .dot-tip b{font-family:var(--font-display);font-style:normal;color:#f5c842;font-size:14px;letter-spacing:.04em;margin-left:4px}
 

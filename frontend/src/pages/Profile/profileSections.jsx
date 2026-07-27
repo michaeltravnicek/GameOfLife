@@ -12,24 +12,40 @@ import PointsChart from './PointsChart';
 const pad = (n) => String(n).padStart(2, '0');
 
 /** The three poster credit blocks (Body / Akcí / Pozice). */
-export function ProfileCredits({ st }) {
+// `hidden` comes straight from the API (e.g. ["points"]) and lists the sections
+// the profile's owner chose to withhold. Those values are absent from the
+// payload, not zero — rendering the usual 0 / "—" would read as "never scored"
+// and quietly misrepresent the player, so say "skryto" instead.
+export function ProfileCredits({ st, hidden = [] }) {
+  const pointsHidden = hidden.includes('points');
+  const eventsHidden = hidden.includes('events');
   return (
     <div className="credits">
       <span className="credits-rule" />
       <div className="credit">
         <div className="credit-label">— Body —</div>
-        <div className="credit-value">{st.totalPts}</div>
-        <div className="credit-sub"><strong>{st.cities.length} měst</strong> · {st.future.length ? 'aktivní sezóna' : 'sezóna ukončena'}</div>
+        <div className="credit-value">{pointsHidden ? '·' : st.totalPts}</div>
+        <div className="credit-sub">
+          {pointsHidden
+            ? 'skryto'
+            : <><strong>{st.cities.length} měst</strong> · {st.future.length ? 'aktivní sezóna' : 'sezóna ukončena'}</>}
+        </div>
       </div>
       <div className="credit">
         <div className="credit-label">— Akcí —</div>
-        <div className="credit-value">{st.evs.length}</div>
-        <div className="credit-sub"><strong>{st.past.length} absolv.</strong> · {st.future.length} nadch.</div>
+        <div className="credit-value">{eventsHidden ? '·' : st.evs.length}</div>
+        <div className="credit-sub">
+          {eventsHidden
+            ? 'skryto'
+            : <><strong>{st.past.length} absolv.</strong> · {st.future.length} nadch.</>}
+        </div>
       </div>
       <div className="credit">
         <div className="credit-label">— Pozice —</div>
-        <div className="credit-value">{st.rank ? `#${st.rank}` : '—'}</div>
-        <div className="credit-sub">{st.rank ? 'v sezóně' : 'zatím bez bodů'}</div>
+        <div className="credit-value">{pointsHidden ? '·' : (st.rank ? `#${st.rank}` : '—')}</div>
+        <div className="credit-sub">
+          {pointsHidden ? 'skryto' : (st.rank ? 'v sezóně' : 'zatím bez bodů')}
+        </div>
       </div>
     </div>
   );

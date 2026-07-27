@@ -10,17 +10,25 @@ The frontend is a React SPA. Django serves:
   - everything else → React index.html (client routing)
 """
 import os
+import re
 
 from django.conf import settings
 from django.contrib import admin
+from django.contrib.sitemaps.views import sitemap
 from django.urls import include, path, re_path
 from django.views.decorators.cache import cache_control
 from django.views.static import serve as serve_media
 
 from . import views as react_views
+from .sitemaps import SITEMAPS
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
+    path(settings.ADMIN_URL, admin.site.urls),
+
+    # Crawler-facing files. Must be declared before the React catch-all, which
+    # would otherwise serve the SPA shell for these paths.
+    path("sitemap.xml", sitemap, {"sitemaps": SITEMAPS}, name="sitemap"),
+    path("robots.txt", react_views.robots_txt, name="robots"),
 
     # Deliberate 500 for verifying the Sentry pipeline. Superuser-only —
     # see the view's docstring for why it isn't the open route Sentry suggests.
@@ -33,6 +41,11 @@ urlpatterns = [
     # JSON API for the React frontend. Versioned so installed mobile app
     # builds can keep calling v1 after the contract changes (a future v2
     # mounts alongside; v1 routes stay until no clients use them).
+    # Social login (Google). Full-page server routes, never React Router links —
+    # a client-side <Link> here would 404 inside the SPA instead of redirecting
+    # to Google. Reserved from the catch-all below via _reserved.
+    path("accounts/", include("allauth.urls")),
+
     path("api/v1/", include("leaderboard.api.urls")),
     path("api/v1/auth/", include("accounts.api.urls")),
     path("api/v1/profiles/", include("accounts.api.profiles_urls")),
@@ -78,9 +91,16 @@ if settings.DEBUG:
         path("api/schema/redoc/", SpectacularRedocView.as_view(url_name="schema"), name="redoc"),
     ]
 
-# React catch-all: must come last so /api/*, /admin/*, /media/*, /static/* match first.
-# The (/|$) lets us also reserve the bare prefixes (e.g. /admin with no trailing
-# slash) for Django — otherwise React would serve them and show a blank screen.
+# React catch-all: must come last so /api/*, the admin, /media/*, /static/* match
+# first. The (/|$) lets us also reserve the bare prefixes (e.g. /admin with no
+# trailing slash) for Django — otherwise React would serve them and show a blank
+# screen.
+#
+# The admin segment is read from settings rather than hardcoded: with a custom
+# ADMIN_URL a literal "admin" here would let the SPA swallow the real admin path
+# and serve a blank page instead of the login form.
+_admin_segment = re.escape(settings.ADMIN_URL.strip("/").split("/")[0])
+_reserved = "|".join(["api", _admin_segment, "media", "static", "accounts"])
 urlpatterns += [
-    re_path(r"^(?!(?:api|admin|media|static)(?:/|$)).*$", react_views.react_index, name="react-index"),
+    re_path(rf"^(?!(?:{_reserved})(?:/|$)).*$", react_views.react_index, name="react-index"),
 ]

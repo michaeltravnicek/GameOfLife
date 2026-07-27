@@ -84,8 +84,12 @@ class EventsListPaginationTests(TestCase):
 
 
 class EventsListLogoTests(TestCase):
-    """The list endpoint must surface each event's own logo so the homepage
-    cards stop falling back to the generic C50 badge."""
+    """The list endpoint must surface each event's logo so the homepage cards
+    stop falling back to the generic C50 badge.
+
+    The artwork lives on the linked Badge now, but the response keeps the `logo`
+    key — the cards did not change, only where the file hangs.
+    """
 
     def setUp(self):
         self.client = APIClient()
@@ -93,6 +97,7 @@ class EventsListLogoTests(TestCase):
 
     def test_logo_present_in_list_payload(self):
         from django.core.files.uploadedfile import SimpleUploadedFile
+        from leaderboard.models import Badge
 
         # 1x1 transparent GIF — enough for an ImageField to accept it.
         gif = (
@@ -100,17 +105,23 @@ class EventsListLogoTests(TestCase):
             b"\xf9\x04\x01\x00\x00\x00\x00,\x00\x00\x00\x00\x01\x00\x01\x00"
             b"\x00\x02\x02D\x01\x00;"
         )
+        badge = Badge.objects.create(
+            name="Karaoke", image_scale=1.5,
+            image=SimpleUploadedFile("logo.gif", gif, content_type="image/gif"),
+        )
         Event.objects.create(
             name="With Logo", place="Brno", points=10,
-            date=timezone.now() + timedelta(days=1),
-            logo=SimpleUploadedFile("logo.gif", gif, content_type="image/gif"),
+            date=timezone.now() + timedelta(days=1), badge=badge,
         )
         events = self.client.get(self.url).json()["events"]
         self.assertEqual(len(events), 1)
         ev = events[0]
         self.assertIn("logo", ev)
         self.assertTrue(ev["logo"], "logo URL should be a non-empty absolute URL")
-        self.assertIn("event_logos/", ev["logo"])
+        self.assertIn("badges/", ev["logo"])
+        # The scale travels with the artwork, not with the event.
+        self.assertEqual(ev["logo_scale"], 1.5)
+        self.assertEqual(ev["badge_id"], badge.id)
 
     def test_logo_is_null_when_unset(self):
         Event.objects.create(
@@ -119,6 +130,21 @@ class EventsListLogoTests(TestCase):
         )
         ev = self.client.get(self.url).json()["events"][0]
         self.assertIsNone(ev["logo"])
+        # A badgeless event still renders at 1x rather than blowing up the card.
+        self.assertEqual(ev["logo_scale"], 1.0)
+
+    def test_one_badge_serves_many_events(self):
+        """The whole point: N events, one artwork row, one file."""
+        from leaderboard.models import Badge
+
+        badge = Badge.objects.create(name="Sdílené logo")
+        for i in range(3):
+            Event.objects.create(
+                name=f"Edice {i}", place="Brno", points=10,
+                date=timezone.now() + timedelta(days=i + 1), badge=badge,
+            )
+        events = self.client.get(self.url).json()["events"]
+        self.assertEqual({ev["badge_id"] for ev in events}, {badge.id})
 
 
 class EventsSeasonFilterTests(TestCase):

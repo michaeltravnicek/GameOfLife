@@ -5,11 +5,14 @@ from django.utils import timezone
 from leaderboard.image_utils import validate_upload
 from leaderboard.models import Event, ImageToEvent
 
-# Columns the events list / home cards actually serialize.
+# Columns the events list / home cards actually serialize. The logo lives on the
+# linked badge now, so its columns are pulled through the select_related below —
+# leaving them out of `only()` would cost one query per card.
 EVENTS_LIST_FIELDS = (
     "id", "slug", "name", "description", "place",
-    "date", "points", "image", "logo", "logo_scale", "capacity", "category_id",
+    "date", "points", "image", "capacity", "category_id",
     "visible_to_users", "visible_to_close",
+    "badge_id", "badge__image", "badge__image_scale",
 )
 
 
@@ -24,7 +27,7 @@ def list_events(period="all", city="", category="", q="", season=None,
     """
     qs = (
         Event.objects
-        .select_related("category")
+        .select_related("category", "badge")
         .only(*EVENTS_LIST_FIELDS)
         # nulls_last: Postgres sorts NULL first on DESC, which would pin
         # dateless events to the top of the list.

@@ -32,6 +32,17 @@ const COLUMNS = [
 ];
 const FB_GRID = 'minmax(110px,1fr) 124px 2fr';
 
+// Mean rating of a set of feedbacks, to one decimal. Null when there is nothing
+// to average, so the caller can skip the badge entirely.
+const avgRating = (items) => {
+  const nums = items.map((f) => f.rating).filter((r) => typeof r === 'number');
+  if (nums.length === 0) return null;
+  return nums.reduce((a, b) => a + b, 0) / nums.length;
+};
+
+// Czech decimals use a comma.
+const fmtAvg = (n) => n.toFixed(1).replace('.', ',');
+
 // True if an event datetime falls within a season's (inclusive) date range.
 const inSeason = (dateStr, s) => {
   if (!dateStr) return false;
@@ -71,7 +82,9 @@ export default function FeedbacksPage() {
       if (!map.has(key)) map.set(key, { event: f.event, items: [] });
       map.get(key).items.push(f);
     }
-    return [...map.values()].sort((a, b) => new Date(b.event.date) - new Date(a.event.date));
+    return [...map.values()]
+      .map((g) => ({ ...g, avg: avgRating(g.items) }))
+      .sort((a, b) => new Date(b.event.date) - new Date(a.event.date));
   }, [data, eventSlug, season, seasons]);
 
   if (authLoading) return null;
@@ -104,8 +117,16 @@ export default function FeedbacksPage() {
           groups.map((g) => (
             <section className="fb-group" key={g.event.slug}>
               <div className="fb-event-head">
-                <Link to={`/events/${g.event.slug}`} className="fb-event-name">{g.event.name}</Link>
-                <div className="fb-event-date">{fmtDate(g.event.date) || '—'}</div>
+                <div className="fb-event-id">
+                  <Link to={`/events/${g.event.slug}`} className="fb-event-name">{g.event.name}</Link>
+                  <div className="fb-event-date">{fmtDate(g.event.date) || '—'}</div>
+                </div>
+                {g.avg !== null && (
+                  <div className="fb-avg" title={`Průměr z ${g.items.length} hodnocení`}>
+                    <div className="fb-avg-score"><span className="fb-avg-star">★</span> {fmtAvg(g.avg)}<span className="fb-avg-max">/10</span></div>
+                    <div className="fb-avg-label">průměr · {g.items.length} hodnocení</div>
+                  </div>
+                )}
               </div>
               <StatList
                 className="poster"

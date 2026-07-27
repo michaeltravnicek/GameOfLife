@@ -1,6 +1,28 @@
 /* All selectors scoped under .event-detail-page to prevent cross-page leaks. */
 .event-detail-page{min-height:100vh;color:var(--color-cream-light);overflow-x:hidden;background:#1a0f0a}
 
+/* ── ENTRANCE ── on-mount, above-the-fold. Mirrors PageHero's heroFade so the
+   poster "shows up" with the same staggered fade-up the rest of the site uses
+   (below-the-fold body sections reveal on scroll via the shared .reveal classes).
+   The poster image lands from a touch further zoomed in (a slow Ken Burns settle)
+   toward its resting scale(1.04) — matching .poster-img's static transform so
+   animation-fill-mode:both leaves it exactly where the layout expects. */
+@keyframes edFade{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
+@keyframes edPoster{from{opacity:0;transform:scale(1.12)}to{opacity:1;transform:scale(1.04)}}
+.event-detail-page .poster-img{animation:edPoster 1.4s cubic-bezier(.22,.68,0,1.1) both}
+.event-detail-page .badges{animation:edFade .6s cubic-bezier(.22,.68,0,1.2) both .15s}
+.event-detail-page .poster-logo{animation:edFade .8s cubic-bezier(.22,.68,0,1.2) both .28s}
+.event-detail-page .credits-rule{animation:edFade .6s ease both .4s}
+.event-detail-page .credit{animation:edFade .6s cubic-bezier(.22,.68,0,1.2) both}
+.event-detail-page .credit:nth-child(2){animation-delay:.46s}
+.event-detail-page .credit:nth-child(3){animation-delay:.54s}
+.event-detail-page .credit:nth-child(4){animation-delay:.62s}
+.event-detail-page .rsvp-bar{animation:edFade .6s ease both .7s}
+@media(prefers-reduced-motion:reduce){
+  .event-detail-page .poster-img,.event-detail-page .badges,.event-detail-page .poster-logo,
+  .event-detail-page .credits-rule,.event-detail-page .credit,.event-detail-page .rsvp-bar{animation:none}
+}
+
 /* ── POSTER ── */
 .event-detail-page .poster{position:relative;height:100vh;display:flex;flex-direction:column;justify-content:flex-end;overflow:hidden;background:#1a0f0a;z-index:2}
 .event-detail-page .poster-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 30%;filter:saturate(.85) contrast(1.06);transform:scale(1.04)}
@@ -43,7 +65,7 @@
 .event-detail-page .section{margin-bottom:56px}
 .event-detail-page .sec-rule{height:1px;background:repeating-linear-gradient(90deg,rgba(255,241,212,.5) 0 6px,transparent 6px 12px);margin-bottom:14px}
 .event-detail-page .sec-eyebrow{font-family:var(--font-mono);font-style:italic;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--color-pink);margin-bottom:8px}
-.event-detail-page .sec-heading{font-family:var(--font-display);font-size:clamp(38px,4.4vw,54px);letter-spacing:.04em;color:var(--color-cream-light);text-transform:uppercase;line-height:.95;margin-bottom:22px}
+.event-detail-page .sec-heading{font-family:var(--font-display);font-size:clamp(38px,4.4vw,54px);letter-spacing:.04em;color:var(--color-heading);text-transform:uppercase;line-height:.95;margin-bottom:22px}
 .event-detail-page .desc-text{font-family:var(--font-body);font-size:16px;line-height:1.78;color:rgba(255,241,212,.86);max-width:64ch}
 
 /* ── RULES ── */
@@ -311,7 +333,7 @@
 .event-detail-page .fb-edit-btn:hover{color:rgba(255,241,212,.75)}
 
 .survey-modal-eyebrow{font-family:var(--font-mono);font-style:italic;font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--alpha-cream-55, rgba(255,241,212,.55));margin-bottom:14px}
-.survey-modal-title{font-family:var(--font-display);font-size:clamp(28px,3.6vw,38px);line-height:1.05;color:var(--color-cream-light, #fff1d4);text-transform:uppercase;letter-spacing:.02em;margin:0 0 16px}
+.survey-modal-title{font-family:var(--font-display);font-size:clamp(28px,3.6vw,38px);line-height:1.05;color:var(--color-heading);text-transform:uppercase;letter-spacing:.02em;margin:0 0 16px}
 .survey-modal-title .pink{color:var(--color-pink, #e15463)}
 .survey-modal-text{font-family:var(--font-body);font-size:14px;line-height:1.55;color:var(--alpha-cream-65, rgba(255,241,212,.65));max-width:42ch;margin:0 auto 22px}
 .survey-modal-links{display:flex;flex-direction:column;align-items:center;gap:12px;margin-bottom:28px}

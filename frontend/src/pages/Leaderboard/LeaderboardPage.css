@@ -61,7 +61,7 @@
 /* Name + points follow the o-bodech "credits" typography: mono italic label,
    big display value with a soft shadow — same data, poster voice. */
 .leaderboard-page .pod .nm{font-family:var(--font-mono);font-style:italic;font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,241,212,.92);margin-bottom:5px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 2px 10px rgba(0,0,0,.6)}
-.leaderboard-page .pod .pts{font-family:var(--font-display);font-size:26px;letter-spacing:.03em;color:var(--color-cream-light);line-height:1;margin-bottom:14px;text-shadow:0 4px 22px rgba(0,0,0,.6)}
+.leaderboard-page .pod .pts{font-family:var(--font-display);font-size:26px;letter-spacing:.03em;color:var(--color-heading);line-height:1;margin-bottom:14px;text-shadow:0 4px 22px rgba(0,0,0,.6)}
 .leaderboard-page .pod.p1 .pts{font-size:36px;color:var(--color-pink)}
 .leaderboard-page .pod .pts-u{font-family:var(--font-mono);font-style:italic;font-size:10px;color:rgba(255,241,212,.72);letter-spacing:.16em;margin-left:4px}
 /* Poster pedestal: grain slab with the standard poster border + 3D ledge

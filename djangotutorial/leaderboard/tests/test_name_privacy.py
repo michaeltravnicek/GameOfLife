@@ -16,29 +16,32 @@ from rest_framework.test import APIClient
 
 from accounts.models import Profile
 from leaderboard.models import Event, Season, User as LeaderboardUser, UserToEvent
-from leaderboard.privacy import display_name, initials
+from leaderboard.privacy import display_name, short_name
 
 
-class InitialsTests(TestCase):
+class ShortNameTests(TestCase):
     def test_two_part_name(self):
-        self.assertEqual(initials("Jan Novák"), "J. N.")
+        self.assertEqual(short_name("Jan Novák"), "Jan N.")
 
-    def test_single_name(self):
-        self.assertEqual(initials("Madonna"), "M.")
+    def test_single_name_is_kept(self):
+        self.assertEqual(short_name("Madonna"), "Madonna")
 
     def test_extra_whitespace_is_ignored(self):
-        self.assertEqual(initials("  Jan   Novák  "), "J. N.")
+        self.assertEqual(short_name("  Jan   Novák  "), "Jan N.")
 
     def test_empty_name_falls_back_to_label(self):
-        self.assertEqual(initials(""), "Hráč")
-        self.assertEqual(initials(None), "Hráč")
+        self.assertEqual(short_name(""), "Hráč")
+        self.assertEqual(short_name(None), "Hráč")
 
-    def test_long_name_is_capped(self):
-        self.assertEqual(initials("Jan Evangelista Purkyně Novák"), "J. E. P.")
+    def test_middle_names_are_dropped_not_abbreviated(self):
+        self.assertEqual(short_name("Jan Evangelista Purkyně Novák"), "Jan N.")
+
+    def test_lowercase_surname_initial_is_upper_cased(self):
+        self.assertEqual(short_name("jan novák"), "jan N.")
 
     def test_display_name_respects_consent(self):
         self.assertEqual(display_name("Jan Novák", consented=True), "Jan Novák")
-        self.assertEqual(display_name("Jan Novák", consented=False), "J. N.")
+        self.assertEqual(display_name("Jan Novák", consented=False), "Jan N.")
 
 
 class LeaderboardNamePrivacyTests(TestCase):
@@ -81,25 +84,25 @@ class LeaderboardNamePrivacyTests(TestCase):
         self.assertEqual(resp.status_code, 200)
         return {e["name"] for e in resp.json()["entries"]}
 
-    def test_unregistered_player_shows_initials(self):
+    def test_unregistered_player_shows_short_name(self):
         names = self._names()
-        self.assertIn("N. H.", names)
+        self.assertIn("Neznámý H.", names)
         self.assertNotIn("Neznámý Hráč", names)
 
     def test_consented_player_shows_full_name(self):
         self.assertIn("Souhlas Dal", self._names())
 
-    def test_registered_without_consent_shows_initials(self):
+    def test_registered_without_consent_shows_short_name(self):
         # An account alone is not agreement — the consent record is what counts.
         names = self._names()
-        self.assertIn("S. U.", names)
+        self.assertIn("Stary U.", names)
         self.assertNotIn("Stary Ucet", names)
 
     def test_player_detail_hides_unconsented_name(self):
         url = reverse("api-player", kwargs={"user_id": self.stranger.id})
         resp = self.client.get(url)
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(resp.json()["name"], "N. H.")
+        self.assertEqual(resp.json()["name"], "Neznámý H.")
 
     def test_player_detail_shows_consented_name(self):
         url = reverse("api-player", kwargs={"user_id": self.consented.id})

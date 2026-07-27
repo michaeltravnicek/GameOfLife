@@ -4,13 +4,14 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.forms import PasswordResetForm
 from django.contrib.auth.models import User as AuthUser
 from django.db import transaction
+from django.http import Http404
 from django.shortcuts import get_object_or_404
+from django.views.decorators.cache import never_cache
 
 logger = logging.getLogger(__name__)
 
 from drf_spectacular.utils import OpenApiExample, extend_schema
 from rest_framework import status
-from rest_framework.authtoken.models import Token
 from rest_framework.decorators import api_view, permission_classes, throttle_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -35,8 +36,11 @@ from .throttles import LoginThrottle, PasswordResetThrottle, RegisterThrottle
 from leaderboard.models import Season
 
 from accounts.forms import CustomUserCreationForm
+from leaderboard.privacy import visibility_for
+
 from accounts.services import (
     profile_payload,
+    visible_profile_user_or_404,
     reset_password,
     resolve_login_username,
     season_detail,
@@ -47,6 +51,7 @@ from accounts.services import (
 
 
 @extend_schema(tags=["Auth"], responses=MeResponseSerializer)
+@never_cache
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def me_view(request):
@@ -66,8 +71,8 @@ def me_view(request):
             request_only=True,
         ),
         OpenApiExample(
-            "Mobile login (returns a token)",
-            value={"identifier": "603123456", "password": "s3cret", "client": "mobile"},
+            "Login by phone number",
+            value={"identifier": "603123456", "password": "s3cret"},
             request_only=True,
         ),
     ],
@@ -100,23 +105,16 @@ def login_api(request):
     remember = bool(request.data.get("remember", False))
     request.session.set_expiry(60 * 60 * 24 * 30 if remember else 0)
 
-    payload = {"user": serialize_user(user, request)}
-    # Native app can't rely on webview cookies; it authenticates with a DRF token.
-    if request.data.get("client") == "mobile":
-        with transaction.atomic():
-            token, _ = Token.objects.get_or_create(user=user)
-        payload["token"] = token.key
-    return Response(payload, status=status.HTTP_200_OK)
+    # Session cookie only — see DEFAULT_AUTHENTICATION_CLASSES in settings.py for why
+    # the `client: "mobile"` token branch that used to live here was removed.
+    return Response({"user": serialize_user(user, request)}, status=status.HTTP_200_OK)
 
 
 @extend_schema(tags=["Auth"], request=None, responses=OkResponseSerializer)
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def logout_api(request):
-    """Log out the current session. Revokes the mobile token when used."""
-    if isinstance(request.auth, Token):
-        with transaction.atomic():
-            request.auth.delete()
+    """Log out the current session."""
     logout(request)
     return Response({"ok": True}, status=status.HTTP_200_OK)
 
@@ -225,13 +223,11 @@ def register_api(request):
     )
 
     payload = {"user": serialize_user(user, request), "possible_link": possible_link}
-    if request.data.get("client") == "mobile":
-        token, _ = Token.objects.get_or_create(user=user)
-        payload["token"] = token.key
     return Response(payload, status=status.HTTP_201_CREATED)
 
 
 @extend_schema(tags=["Profile"], responses=ProfileSerializer)
+@never_cache
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def profile_view(request, username):
@@ -239,18 +235,23 @@ def profile_view(request, username):
 
     Per-season event detail is loaded lazily via `profile_season_view`.
     """
-    profile_user = get_object_or_404(AuthUser, username=username)
+    profile_user = visible_profile_user_or_404(username, request)
     return Response(profile_payload(profile_user, request), status=status.HTTP_200_OK)
 
 
 @extend_schema(tags=["Profile"], responses=SeasonDetailSerializer)
+@never_cache
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def profile_season_view(request, username, season_id):
     """One season's events/points/rank for a user (lazy-loaded per profile tab)."""
-    profile_user = get_object_or_404(AuthUser, username=username)
+    profile_user = visible_profile_user_or_404(username, request)
     season = get_object_or_404(Season, pk=season_id)
     profile = getattr(profile_user, "profile", None)
+    # Without this the flag would be cosmetic: hiding the event list on the main
+    # payload means nothing while the per-season endpoint still serves it.
+    if visibility_for(profile, request.user).hide_events:
+        raise Http404("Event history is hidden.")
     lb_user = profile.leaderboard_user if profile else None
     return Response(season_detail(lb_user, season), status=status.HTTP_200_OK)
 

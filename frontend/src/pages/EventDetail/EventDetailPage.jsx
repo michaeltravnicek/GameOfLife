@@ -17,6 +17,7 @@ import { CACHE_TTL } from '../../constants/config';
 import { useAuth } from '../../context/AuthContext';
 import Button from '../../components/Button/Button';
 import SectionHeader from '../../components/SectionHeader/SectionHeader';
+import Reveal from '../../components/Reveal/Reveal';
 import EventLocationMap from '../../components/EventLocationMap/EventLocationMap';
 import Modal from '../../components/Modal/Modal';
 import PillTabs from '../../components/PillTabs/PillTabs';
@@ -26,7 +27,6 @@ import SearchInput from '../../components/SearchInput/SearchInput';
 import { fmtDateShort, fmtTime, dayName } from '../../utils/date';
 import { isMobileViewport } from '../../utils/img';
 import { shareLink } from '../../utils/shareUrl';
-import { addEventToCalendar } from '../../utils/calendar';
 import { toast } from '../../components/Toast/ToastProvider';
 import './EventDetailPage.css';
 
@@ -466,7 +466,7 @@ export default function EventDetailPage() {
                   disabled={event.is_full && !event.has_rsvp}
                   busy={busy}
                 >
-                  {event.has_rsvp ? '✓ Jsi přihlášen/a' : event.is_full ? 'Plně obsazeno' : 'Přihlásit se ➤'}
+                  {event.has_rsvp ? '✓ Jsi přihlášen/a' : event.is_full ? 'Plně obsazeno' : <>Přihlásit se <span className="arr" aria-hidden="true" /></>}
                 </Button>
               </div>
             </>
@@ -477,9 +477,10 @@ export default function EventDetailPage() {
                   page's action bar. */}
               <div className={`rsvp-recap${isAdmin ? ' with-tabs' : ''}`}>
                 <span className="recap-eyebrow">— Proběhlo —</span>
-                {/* Real attendance, not sign-ups: after the event only the people
-                    who were actually counted (and scored) are worth reporting. */}
-                <span className="recap-text">{event.attendee_count ?? 0} dorazilo · +{event.points} pts</span>
+                {/* Deliberately no turnout figure: a public "8 dorazilo" is a
+                    verdict on the event that nobody asked for. Admins still see
+                    the real attendance in the Účast tab. */}
+                <span className="recap-text">+{event.points} pts</span>
               </div>
               {isAdmin && (
                 <PillTabs
@@ -503,36 +504,36 @@ export default function EventDetailPage() {
           {(!isAdmin || adminView === 'popis') && (
           <>
           {event.description && (
-            <section className="section">
+            <Reveal as="section" className="section">
               <SectionHeader eyebrow="— Popis —" heading={event.name} />
               <p className="desc-text">{event.description}</p>
-            </section>
+            </Reveal>
           )}
 
           {event.latitude != null && event.longitude != null && (
-            <section className="section">
+            <Reveal as="section" className="section">
               <SectionHeader eyebrow="— Místo —" heading="Kde nás najdeš" />
               <EventLocationMap
                 latitude={event.latitude}
                 longitude={event.longitude}
                 popupLabel={event.place}
               />
-            </section>
+            </Reveal>
           )}
 
           {rules.length > 0 && (
-            <section className="section">
+            <Reveal as="section" className="section">
               <SectionHeader eyebrow="— Pravidla —" heading="Hrajme férově" />
               <ol className="rules">
                 {rules.map((r, i) => (
                   <li key={i}><span>{r}</span></li>
                 ))}
               </ol>
-            </section>
+            </Reveal>
           )}
 
           {(displayImages.length > 0 || canUpload) && (
-            <section className="section">
+            <Reveal as="section" className="section">
               <SectionHeader eyebrow="— Galerie —" heading="Z této akce" />
               {displayImages.length > 0 && (
                 <div className="collage" data-count={imgCount}>
@@ -551,11 +552,11 @@ export default function EventDetailPage() {
                   </label>
                 </div>
               )}
-            </section>
+            </Reveal>
           )}
 
           {event.is_past && (
-            <section className="section fb-section">
+            <Reveal as="section" className="section fb-section">
               <SectionHeader eyebrow="— Zpětná vazba —" heading="Jak se ti akce líbila?" />
               {isAdmin && (
                 <div className="admin-btns">
@@ -581,7 +582,7 @@ export default function EventDetailPage() {
                   <Button variant="action" onClick={openFeedback}>★ Ohodnotit akci</Button>
                 </div>
               )}
-            </section>
+            </Reveal>
           )}
           </>
           )}
@@ -761,24 +762,6 @@ export default function EventDetailPage() {
             {isAdmin && (
               <Button as="link" to={`/events/${slug}/upravit`}>
                 ✏️ Upravit akci
-              </Button>
-            )}
-            {!event.is_past && (
-              <Button
-                variant="ghost"
-                onClick={async () => {
-                  try {
-                    await addEventToCalendar(event);
-                  } catch {
-                    // Cancelled prompt isn't an error; real failures (e.g.
-                    // calendar access denied) get one generic toast.
-                    toast.error('Akci se nepodařilo přidat do kalendáře.', {
-                      title: 'Kalendář',
-                    });
-                  }
-                }}
-              >
-                📅 Přidat do kalendáře
               </Button>
             )}
             <Button variant="ghost" onClick={() => shareLink(event.name)}>
