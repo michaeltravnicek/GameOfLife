@@ -64,6 +64,53 @@ class ProfileApiTests(TestCase):
         url = reverse("api-profile-season", kwargs={"username": "ghost", "season_id": self.season.id})
         self.assertEqual(self.client.get(url).status_code, 404)
 
+    def test_email_username_not_echoed_in_public_profile(self):
+        """A social-login account's username IS the e-mail; the public profile
+        must not publish it as the @handle or as the display name."""
+        email = "pat.novak@icloud.com"
+        social = AuthUser.objects.create_user(username=email, password="x")
+        lb = LeaderboardUser.objects.create(number=700000009, name="Pat Novak")
+        Profile.objects.create(user=social, leaderboard_user=lb)
+        resp = self.client.get(reverse("api-profile", kwargs={"username": email}))
+        self.assertEqual(resp.status_code, 200)
+        self.assertNotIn(email, resp.content.decode())
+        self.assertIsNone(resp.json()["username"])
+
+
+class ProfileUpdateSecurityTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.url = reverse("api-profile-update")
+        self.user = AuthUser.objects.create_user(
+            username="pat", password="x", email="pat@example.com",
+        )
+        Profile.objects.create(user=self.user)
+        self.client.force_authenticate(user=self.user)
+
+    def test_username_cannot_contain_at_sign(self):
+        # "victim@example.com" as a handle would shadow that victim's e-mail login
+        # (resolve_login_username matches username before e-mail).
+        resp = self.client.patch(self.url, {"username": "victim@example.com"}, format="multipart")
+        self.assertEqual(resp.status_code, 400)
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.username, "pat")
+
+    def test_email_cannot_duplicate_another_account(self):
+        AuthUser.objects.create_user(username="victim", password="x", email="victim@example.com")
+        resp = self.client.patch(self.url, {"email": "victim@example.com"}, format="multipart")
+        self.assertEqual(resp.status_code, 400)
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.email, "pat@example.com")
+
+    def test_valid_handle_and_email_still_update(self):
+        resp = self.client.patch(
+            self.url, {"username": "patnovak", "email": "new@example.com"}, format="multipart",
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.username, "patnovak")
+        self.assertEqual(self.user.email, "new@example.com")
+
 
 @override_settings(MEDIA_ROOT=tempfile.mkdtemp())
 class ProfilePhotoUploadApiTests(TestCase):

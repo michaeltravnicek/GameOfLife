@@ -142,6 +142,17 @@ class PlayerMetadataTests(TestCase):
     def test_unknown_player_id_falls_back_to_defaults(self):
         self.assertEqual(self._meta("/hrac/999999")["title"], og.DEFAULT_TITLE)
 
+    def test_members_only_player_is_withheld_from_previews(self):
+        """A members-only profile 404s for anonymous browsers; the anonymous
+        link-preview crawler must not leak the name either."""
+        from accounts.models import Profile
+
+        lb = self._player("Jan Novák", consented=True, username="tajny")
+        Profile.objects.filter(leaderboard_user=lb).update(members_only=True)
+        # Reachable both by /hrac/<id> and /profil/<username> — neither may show it.
+        self.assertEqual(self._meta(f"/hrac/{lb.id}")["title"], og.DEFAULT_TITLE)
+        self.assertEqual(self._meta("/profil/tajny")["title"], og.DEFAULT_TITLE)
+
 
 class RenderAndInjectTests(TestCase):
     def setUp(self):

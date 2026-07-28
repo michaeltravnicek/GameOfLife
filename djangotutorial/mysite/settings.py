@@ -496,8 +496,13 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.SessionAuthentication',
     ],
+    # Fail closed: an endpoint that forgets to declare permission_classes is
+    # locked to authenticated users, not silently public. Every genuinely public
+    # endpoint already declares AllowAny explicitly (a request without a session
+    # still reaches them), so this only affects a future view that forgets its
+    # guard — which should 403, not leak.
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.AllowAny',
+        'rest_framework.permissions.IsAuthenticated',
     ],
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'EXCEPTION_HANDLER': 'mysite.drf.api_exception_handler',

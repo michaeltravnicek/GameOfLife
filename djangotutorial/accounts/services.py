@@ -12,7 +12,7 @@ from django.utils.http import urlsafe_base64_decode
 
 from leaderboard.image_utils import validate_upload
 from leaderboard.models import Category, Season, User as LeaderboardUser, UserToEvent
-from leaderboard.privacy import visibility_for
+from leaderboard.privacy import public_handle, visibility_for
 from leaderboard.services import season_rank
 from leaderboard.services.badges import badges_for
 from leaderboard.utils import parse_phone_number
@@ -216,12 +216,18 @@ def profile_payload(profile_user, request):
     is_own_profile = request.user.is_authenticated and request.user == profile_user
 
     payload = {
-        "username":   profile_user.username,
+        # public_handle withholds e-mail-shaped usernames (social logins default
+        # the username to the e-mail): the frontend shows this as the "@handle"
+        # on a public page, so a raw e-mail here would be published. None -> the
+        # UI omits the handle line.
+        "username":   public_handle(profile_user.username),
         "first_name": profile_user.first_name,
         # Single display name: the leaderboard row is the source of truth for
         # linked players (update_profile writes account name changes through).
+        # Never fall back to the raw username — it's the e-mail for social logins.
         "full_name":  (lb_user.name if lb_user and lb_user.name
-                       else (profile_user.get_full_name() or profile_user.username)),
+                       else (profile_user.get_full_name()
+                             or public_handle(profile_user.username) or "Hráč")),
         "photo":      photo_url,
         "bio":        profile.bio if profile else "",
         "city":       profile.city if profile else "",
@@ -283,12 +289,27 @@ def update_profile(user, data, files):
     """Apply account + profile updates. Raises ValueError if the username is taken."""
     profile, _ = Profile.objects.get_or_create(user=user)
 
-    for field in ("first_name", "last_name", "email"):
+    for field in ("first_name", "last_name"):
         if field in data:
             setattr(user, field, data[field])
+    # E-mail is a login identifier, so it has to stay unique and well-formed.
+    # Without the uniqueness check two accounts could share an address, and
+    # login-by-e-mail (resolve_login_username) would then resolve to an arbitrary
+    # one of them. Case-insensitive, excluding self.
+    if "email" in data:
+        new_email = (data["email"] or "").strip()
+        if new_email and new_email.casefold() != (user.email or "").casefold():
+            if AuthUser.objects.filter(email__iexact=new_email).exclude(pk=user.pk).exists():
+                raise ValueError("Tento e-mail už používá jiný účet.")
+        user.email = new_email
     new_handle = (data.get("username") or "").strip()
     if new_handle and new_handle != user.username:
-        if AuthUser.objects.filter(username=new_handle).exclude(pk=user.pk).exists():
+        # Reject '@' in handles: usernames double as login identifiers, and
+        # resolve_login_username matches a username before an e-mail. A handle
+        # like "victim@example.com" would shadow that victim's e-mail login.
+        if "@" in new_handle:
+            raise ValueError("Přezdívka nesmí obsahovat znak @.")
+        if AuthUser.objects.filter(username__iexact=new_handle).exclude(pk=user.pk).exists():
             raise ValueError("Přezdívka je obsazena.")
         user.username = new_handle
     user.save()

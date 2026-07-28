@@ -96,6 +96,26 @@ class EventCheckinApiTests(TestCase):
         self.assertIn("distance_m", data)
         self.assertFalse(UserToEvent.objects.filter(user=self.lb_user, event=self.event).exists())
 
+    def test_nan_or_out_of_range_coordinates_award_no_points(self):
+        # Whatever the error shape (serializer field error vs. service error), the
+        # security property is: rejected, and no attendance row created.
+        for lat, lon in (("nan", "nan"), ("inf", "inf"), (999, 999)):
+            resp = self.client.post(
+                self.url, data={"latitude": lat, "longitude": lon}, format="json",
+            )
+            self.assertEqual(resp.status_code, 400, (lat, lon))
+        self.assertFalse(UserToEvent.objects.filter(user=self.lb_user, event=self.event).exists())
+
+    def test_service_rejects_nan_coordinates_directly(self):
+        # checkin.py is the documented single source of truth; a caller that
+        # doesn't go through the serializer must still not be able to pass NaN
+        # (every comparison with which is False) straight through the geo-fence.
+        from leaderboard.checkin import validate_and_record_checkin
+        result = validate_and_record_checkin(self.event, self.user, float("nan"), float("nan"))
+        self.assertFalse(result.ok)
+        self.assertEqual(result.status, 400)
+        self.assertFalse(UserToEvent.objects.filter(user=self.lb_user, event=self.event).exists())
+
     def test_outside_time_window_returns_400(self):
         self.event.date = timezone.now() - timedelta(days=1)
         self.event.end_date = timezone.now() - timedelta(hours=20)

@@ -6,7 +6,7 @@ Tests target this function directly; the API view is a thin shim over it.
 
 from dataclasses import dataclass
 from datetime import timedelta
-from math import asin, cos, radians, sin, sqrt
+from math import asin, cos, isfinite, radians, sin, sqrt
 from typing import Optional
 
 from django.utils import timezone
@@ -59,6 +59,14 @@ def validate_and_record_checkin(event, auth_user, latitude, longitude) -> Checki
         lat = float(latitude)
         lon = float(longitude)
     except (TypeError, ValueError):
+        return CheckinResult(ok=False, status=400, error="Neplatné souřadnice.")
+
+    # Reject NaN/Infinity and out-of-range coordinates. This is a real gate, not
+    # just input hygiene: float("nan") parses fine, and every comparison with NaN
+    # is False — so `distance > radius` below would be False for NaN, letting a
+    # client send latitude=nan to sail straight through the geo-fence and claim
+    # points without being anywhere near the event. isfinite + range closes that.
+    if not (isfinite(lat) and isfinite(lon)) or not (-90 <= lat <= 90) or not (-180 <= lon <= 180):
         return CheckinResult(ok=False, status=400, error="Neplatné souřadnice.")
 
     distance = haversine_distance_m(lat, lon, event.latitude, event.longitude)

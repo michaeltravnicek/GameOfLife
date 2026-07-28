@@ -123,7 +123,7 @@ export default function ProfilePage() {
             {profile.photo ? <img src={profile.photo} alt={profile.full_name} /> : avatarInitials}
           </div>
           <h1 className="poster-name">{profile.full_name}</h1>
-          <div className="poster-handle">@{profile.username} · hraje od {profile.since}</div>
+          <div className="poster-handle">{profile.username ? `@${profile.username} · ` : ''}hraje od {profile.since}</div>
         </div>
 
         <ProfileCredits st={st} hidden={hidden} />

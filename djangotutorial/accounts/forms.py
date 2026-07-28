@@ -71,6 +71,11 @@ class CustomUserCreationForm(UserCreationForm):
 
     def clean_username(self):
         username = self.cleaned_data["username"].strip()
+        # No '@': a handle doubles as a login identifier, and login matches a
+        # username before an e-mail — so "victim@example.com" as a handle would
+        # shadow that victim's e-mail login. Keep handles e-mail-free.
+        if "@" in username:
+            raise forms.ValidationError("Přezdívka nesmí obsahovat znak @.")
         if User.objects.filter(username__iexact=username).exists():
             raise forms.ValidationError("Tato přezdívka je už obsazená.")
         return username

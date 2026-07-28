@@ -1,3 +1,5 @@
+import re
+
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
@@ -9,6 +11,31 @@ from leaderboard.privacy import public_handle
 # `image`, which is downscaled by Pillow on save and so must stay a raster
 # format.
 _ALLOWED_LOGO_CONTENT_TYPES = ALLOWED_IMAGE_CONTENT_TYPES | {"image/svg+xml"}
+
+
+# SVG is XML, and a browser rendering it as a top-level document will execute
+# any <script>, on*= handler, javascript: URL or <foreignObject> HTML it carries
+# — i.e. stored XSS on our origin if the file is ever opened directly. Badges are
+# admin-only, and media is ideally served off a separate origin, but this is
+# cheap defence in depth. Denylist, not a full sanitiser: it blocks the known
+# active-content vectors rather than proving the file inert.
+_SVG_ACTIVE_CONTENT_RE = re.compile(
+    r"<\s*script\b|<\s*foreignobject\b|javascript\s*:|\bon\w+\s*=|<!ENTITY\b",
+    re.IGNORECASE,
+)
+
+
+def _svg_looks_active(uploaded):
+    """True if an uploaded SVG carries script / event-handler / entity content."""
+    try:
+        uploaded.seek(0)
+        data = uploaded.read()
+        uploaded.seek(0)
+    except Exception:  # noqa: BLE001 — unreadable stream: let the caller reject it elsewhere
+        return False
+    if isinstance(data, bytes):
+        data = data.decode("utf-8", "ignore")
+    return bool(_SVG_ACTIVE_CONTENT_RE.search(data))
 
 
 def validate_logo_file(uploaded):
@@ -23,6 +50,10 @@ def validate_logo_file(uploaded):
             "Logo musí být PNG, JPG, WEBP, GIF nebo SVG.")
     if (getattr(uploaded, "size", 0) or 0) > MAX_UPLOAD_BYTES:
         raise serializers.ValidationError("Logo je příliš velké (max 15 MB).")
+    name = (getattr(uploaded, "name", "") or "").lower()
+    if (content_type == "image/svg+xml" or name.endswith(".svg")) and _svg_looks_active(uploaded):
+        raise serializers.ValidationError(
+            "SVG nesmí obsahovat skripty ani aktivní obsah.")
 
 
 def _badge_image_url(obj, request):

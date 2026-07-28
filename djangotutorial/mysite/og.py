@@ -166,9 +166,22 @@ def _event_metadata(request, slug):
 
 
 def _public_player_name(lb_user, profile):
-    """The name to show for a player, gated by consent exactly like the site."""
+    """The name to show for a player, or None when it must not be shown.
+
+    Two gates, both applied for anonymous viewers (a link-preview crawler is
+    always anonymous):
+
+    * ``members_only`` — a self-service "signed-in visitors only" flag. The
+      profile page itself 404s for anonymous requests (visible_profile_user_or_404);
+      the preview card has to withhold the name for the same reason, or the flag
+      is bypassable by pasting the URL into a chat instead of a browser.
+    * consent — full name only where a matching GDPR consent is on file,
+      otherwise the shortened "Jan N." form, exactly as the site renders it.
+    """
     from leaderboard.privacy import display_name, profile_has_consent
 
+    if profile is not None and profile.members_only:
+        return None
     return display_name(lb_user.name, consented=profile_has_consent(profile))
 
 
@@ -193,7 +206,10 @@ def _player_metadata(request, user_id):
     profile = (
         Profile.objects.filter(leaderboard_user=lb_user).select_related("user").first()
     )
-    return _player_card(request, _public_player_name(lb_user, profile))
+    name = _public_player_name(lb_user, profile)
+    # members_only (name is None): withhold the card so anonymous crawlers get the
+    # site defaults, not this player's name.
+    return _player_card(request, name) if name else None
 
 
 def _profile_metadata(request, username):
@@ -213,7 +229,9 @@ def _profile_metadata(request, username):
     )
     if profile is None or profile.leaderboard_user is None:
         return None
-    return _player_card(request, _public_player_name(profile.leaderboard_user, profile))
+    name = _public_player_name(profile.leaderboard_user, profile)
+    # members_only (name is None) -> withhold the card, fall through to defaults.
+    return _player_card(request, name) if name else None
 
 
 def metadata_for(request):

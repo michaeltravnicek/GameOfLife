@@ -44,6 +44,27 @@ class BadgeArtworkUploadTests(TestCase):
         self.assertFalse(s.is_valid())
         self.assertIn("image", s.errors)
 
+    def test_svg_with_script_is_rejected(self):
+        # A rendered SVG runs its <script>; stored XSS on our origin. Must reject.
+        evil = SimpleUploadedFile(
+            "evil.svg",
+            b'<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>',
+            content_type="image/svg+xml",
+        )
+        s = BadgeWriteSerializer(data={"name": "Karaoke", "image": evil})
+        self.assertFalse(s.is_valid())
+        self.assertIn("image", s.errors)
+
+    def test_svg_with_event_handler_is_rejected(self):
+        evil = SimpleUploadedFile(
+            "evil.svg",
+            b'<svg xmlns="http://www.w3.org/2000/svg" onload="alert(1)"><rect/></svg>',
+            content_type="image/svg+xml",
+        )
+        s = BadgeWriteSerializer(data={"name": "Karaoke", "image": evil})
+        self.assertFalse(s.is_valid())
+        self.assertIn("image", s.errors)
+
     def test_svg_artwork_saves_and_serves_url(self):
         # End-to-end through save(): the SVG must persist and expose a URL.
         s = BadgeWriteSerializer(data={"name": "Karaoke", "image": _svg()})
