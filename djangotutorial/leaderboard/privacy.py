@@ -48,6 +48,25 @@ def display_name(name, *, consented):
     return name if consented else short_name(name)
 
 
+def public_handle(username):
+    """The public profile slug for `username`, or None when it isn't safe to publish.
+
+    `auth.User.username` doubles as the /profil/<slug> handle, but for accounts
+    created through allauth / Google login it defaults to the person's e-mail
+    address. Emitting that on any public endpoint (leaderboard, player detail,
+    gallery credits) hands out a contactable e-mail to anyone — a PII leak, and
+    one that slips past the name-consent rules above, which only gate the display
+    name, not this field.
+
+    So anything e-mail-shaped is withheld: callers already treat None as "no
+    linked handle" and fall back to the /hrac/<id> route, which exposes no e-mail.
+    Real chosen handles (no '@') pass through unchanged.
+    """
+    if not username or "@" in username:
+        return None
+    return username
+
+
 def profile_has_consent(profile):
     """True when a linked profile carries a consent matching the current policy.
 

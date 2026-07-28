@@ -167,6 +167,17 @@ ADMIN_URL = os.getenv("ADMIN_URL", "admin/").strip().lstrip("/")
 if not ADMIN_URL.endswith("/"):
     ADMIN_URL += "/"
 
+# Leaving the admin at the default /admin/ in production defeats the point above:
+# it's the one path every bot on the internet already hammers, so a real
+# break-in attempt is indistinguishable from the constant background scanning.
+# Refuse to boot on the default in production — same fail-loud stance as
+# DJANGO_SECRET_KEY / ALLOWED_HOSTS. Set ADMIN_URL (e.g. ADMIN_URL=sprava-x7k2/).
+if not DEBUG and ADMIN_URL == "admin/":
+    raise ImproperlyConfigured(
+        "ADMIN_URL must be overridden when MODE=PRODUCTION "
+        "(e.g. 'sprava-x7k2/'); the default '/admin/' must not be used."
+    )
+
 # ---------------------------------------------------------------------------
 # Content-Security-Policy
 #
@@ -175,11 +186,14 @@ if not ADMIN_URL.endswith("/"):
 # source. Everything else in this file tries to stop the injection happening;
 # this limits the damage when something slips through.
 #
-# SHIPPED IN REPORT-ONLY. The policy is derived from what the app loads today,
-# and a mistake in it breaks the site for real users with no server-side error to
-# notice — so it reports violations without blocking while the list is confirmed
-# against real traffic. Set CSP_ENFORCE=1 to switch it on for real, once the
-# reports are quiet for a week or so.
+# ENFORCED by default (report-only ships the header but blocks nothing, so it
+# stops no XSS). The policy is derived from what the app loads today; the
+# allowlist below is asserted in tests against the real asset inventory so it
+# can't silently drift and start blocking legitimate resources. For a cautious
+# first-week rollout on a new domain, set CSP_REPORT_ONLY=1 to watch the
+# violation reports first, then drop the flag. In DEBUG it's report-only so local
+# tooling isn't blocked. The enforce/report-only switch lives at the bottom of
+# this block.
 #
 # The allowlist is small and every entry is here for a reason:
 #   fonts.googleapis.com  — the stylesheet linked from index.html
@@ -194,11 +208,11 @@ if not ADMIN_URL.endswith("/"):
 # script-src stays strict. Note that 'unsafe-inline' is NOT in script-src, which
 # is where it would actually matter.
 #
-# ⚠ Before setting CSP_ENFORCE=1, load the Django admin and watch the console.
 # The admin ships inline <script> blocks, so a strict script-src can break its
 # widgets (date pickers, inline formsets) — and unlike the SPA, nothing about
-# that failure is visible server-side. The likely fix is to exempt the admin
-# path rather than to weaken script-src for the whole site.
+# that failure is visible server-side. Rather than weaken script-src site-wide,
+# AdminCSPExemptMiddleware adds 'unsafe-inline' to script-src for the admin path
+# only (see mysite/middleware.py), so enforcement is safe for the admin too.
 _csp_media_host = os.getenv("MEDIA_S3_CUSTOM_DOMAIN", "")
 _csp_extra_connect = [
     o.strip() for o in os.getenv("CSP_EXTRA_CONNECT_SRC", "").split(",") if o.strip()
@@ -223,10 +237,23 @@ _CSP_DIRECTIVES = {
     "object-src": ["'none'"],
 }
 
-if os.getenv("CSP_ENFORCE") == "1":
-    CONTENT_SECURITY_POLICY = {"DIRECTIVES": _CSP_DIRECTIVES}
-else:
+# Enforced by default: report-only ships the header but blocks nothing, so an
+# XSS that lands runs freely — the policy has to actually enforce to be worth
+# having. The admin's inline scripts (the reason enforcement was held back) are
+# handled by AdminCSPExemptMiddleware, which adds 'unsafe-inline' to script-src
+# for the admin path only, so a strict site-wide policy can't break its widgets.
+#
+# Set CSP_REPORT_ONLY=1 for a cautious first-week rollout on a new domain —
+# watch the violation reports, then drop the flag to enforce. In DEBUG the
+# policy is report-only so local tooling isn't blocked. (Legacy CSP_ENFORCE=1
+# still forces enforcement.)
+_csp_report_only = os.getenv("CSP_REPORT_ONLY") == "1" or (
+    DEBUG and os.getenv("CSP_ENFORCE") != "1"
+)
+if _csp_report_only:
     CONTENT_SECURITY_POLICY_REPORT_ONLY = {"DIRECTIVES": _CSP_DIRECTIVES}
+else:
+    CONTENT_SECURITY_POLICY = {"DIRECTIVES": _CSP_DIRECTIVES}
 
 # CSRF trusted origins for local dev + any hosted domains.
 # Django 4+ requires this for POST from origins not matching the Host header.
@@ -284,8 +311,11 @@ AUTHENTICATION_BACKENDS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
-    # Stamps the CSP header on every response (report-only unless CSP_ENFORCE=1).
+    # Stamps the CSP header on every response (enforced unless CSP_REPORT_ONLY=1).
     'csp.middleware.CSPMiddleware',
+    # Must sit AFTER CSPMiddleware: on the response leg (bottom-up) it relaxes
+    # script-src for the admin path before CSP builds the header.
+    'mysite.middleware.AdminCSPExemptMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',

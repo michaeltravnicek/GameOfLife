@@ -16,7 +16,6 @@
 .fb-head{text-align:center;margin-bottom:28px}
 .fb-eyebrow{letter-spacing:.16em;font-size:var(--text-xs)}
 .fb-head h1{font-family:var(--font-display);font-size:var(--text-5xl);line-height:.95;margin:6px 0 4px;letter-spacing:.02em}
-.fb-sub{color:var(--alpha-cream-55);font-size:var(--text-sm)}
 .fb-status{text-align:center;padding:40px;color:var(--alpha-cream-55);font-family:var(--font-mono);font-style:italic}
 
 .fb-controls{display:flex;justify-content:center;margin-bottom:30px}
@@ -40,8 +39,6 @@
 .fb-stars{color:var(--color-gold);letter-spacing:2px;text-align:center;font-size:14px}
 .fb-comment{font-family:var(--font-body);font-size:13.5px;line-height:1.5;color:var(--alpha-cream-80)}
 .fb-muted{color:var(--fg-muted-dark)}
-.fb-event-link{color:var(--color-pink);text-decoration:none}
-.fb-event-link:hover{text-decoration:underline}
 
 @media(max-width:600px){
   .feedbacks-page{padding:100px 14px 60px}

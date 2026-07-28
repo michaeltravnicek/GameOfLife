@@ -3,6 +3,7 @@ from rest_framework import serializers
 
 from leaderboard.image_utils import ALLOWED_IMAGE_CONTENT_TYPES, MAX_UPLOAD_BYTES, variant_url
 from leaderboard.models import Badge, Category, Event, EventFeedback, EventRSVP, ImageToEvent, UserPhoto
+from leaderboard.privacy import public_handle
 
 # Badge artwork may be SVG (vector) as well as raster — unlike the poster
 # `image`, which is downscaled by Pillow on save and so must stay a raster
@@ -241,7 +242,13 @@ class EventDetailSerializer(serializers.ModelSerializer):
         return [
             {
                 "url": request.build_absolute_uri(p.image.url) if request else p.image.url,
-                "uploaded_by": p.auth_user.get_full_name() or p.auth_user.username,
+                # Never fall back to the raw username — it's the e-mail for social
+                # logins. Real name, then a safe handle, then a neutral label.
+                "uploaded_by": (
+                    p.auth_user.get_full_name()
+                    or public_handle(p.auth_user.username)
+                    or "Hráč"
+                ),
                 "caption": p.caption,
             }
             for p in UserPhoto.objects.filter(event=obj).select_related("auth_user")

@@ -23,10 +23,6 @@
 .reveal-stagger.in>*:nth-child(11){transition-delay:.64s}
 .reveal-stagger.in>*:nth-child(12){transition-delay:.70s}
 .reveal-stagger.in>*:nth-child(n+13){transition-delay:.76s}
-
-/* Directional variants — slide in from the side instead of straight up. */
-.reveal-left{opacity:0;transform:translateX(-44px);transition:opacity .7s cubic-bezier(.22,.68,0,1.1),transform .7s cubic-bezier(.22,.68,0,1.1)}
-.reveal-right{opacity:0;transform:translateX(44px);transition:opacity .7s cubic-bezier(.22,.68,0,1.1),transform .7s cubic-bezier(.22,.68,0,1.1)}
 .reveal-left.in,.reveal-right.in{opacity:1;transform:none}
 
 @media(prefers-reduced-motion:reduce){

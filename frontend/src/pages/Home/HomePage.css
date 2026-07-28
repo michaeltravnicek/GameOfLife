@@ -12,7 +12,6 @@
 .home-page .sec-title .star{color:var(--color-pink);font-size:.7em}
 .home-page .sec-title .star.sparkle{font-size:.62em;transform:translateY(-.04em)}
 .home-page .events-grid{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr);column-gap:22px;row-gap:64px;padding-top:44px}
-.home-page .see-all{text-align:center;margin-top:44px}
 
 /* ── LEADERBOARD ── */
 .home-page .lb-section{position:relative;padding:64px 24px 80px;overflow:hidden}
@@ -31,9 +30,6 @@
 .home-page .lb-head>div:first-child{text-align:center}
 .home-page .lb-head>div:nth-child(2){padding-left:16px}
 .home-page .lb-head-pts{text-align:center}
-.home-page .lb-cta{text-align:center;margin-top:28px}
-.home-page .lb-link{font-family:var(--font-hv);font-weight:300;font-style:italic;font-size:12px;color:rgba(255,255,255,.65);text-decoration:none;border-bottom:1px dashed var(--alpha-white-45);padding-bottom:2px;transition:color .2s}
-.home-page .lb-link:hover{color:rgba(255,255,255,.9)}
 
 /* ── ABOUT ── */
 .home-page .about-section{background-color:var(--color-brown);background-image:var(--tex-brown);background-size:var(--tex-size) var(--tex-size);background-repeat:repeat;padding:72px 24px}

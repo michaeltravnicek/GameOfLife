@@ -3,22 +3,6 @@ import Reveal from '../../components/Reveal/Reveal';
 import Button from '../../components/Button/Button';
 import './OBodechPage.css';
 
-const sources = [
-  { pts: '+25–250', num: '01', tag: 'Účast', title: 'Akce Game of Life', text: 'Hlavní zdroj bodů. Každá akce má svoji hodnotu — od ranní pětky po vícedenní expedici. Body se připisují za samotnou účast, nepočítá se umístění.' },
-  { pts: '+50–500', num: '02', tag: 'Bonus', title: 'Speciální výzvy', text: 'Extra body za vybrané challenges mezi akcemi — solo úkoly, sezónní mise, skryté questy. Vyhlašujeme je nepravidelně, vyplatí se sledovat IG.' },
-  { pts: '+10–80', num: '03', tag: 'Komunita', title: 'Aktivita v komunitě', text: 'Body za to, že tu fyzicky držíš věci pohromadě. Pomoc s organizací, přivedený nový hráč, fotka z akce do galerie, ranní příprava ohně.' },
-];
-
-const examples = [
-  { name: 'Ranní pětka v Lužánkách', sub: '5 km · 1 hod', type: 'sport', typeLabel: 'Sport', diff: '★ ★', pts: 25 },
-  { name: 'Dance Class · Karlín', sub: '2 hod · live DJ', type: 'body', typeLabel: 'Tělo', diff: '★ ★ ★', pts: 50 },
-  { name: 'Frog Jumps', sub: '18 km na čtyřech', type: 'sport', typeLabel: 'Sport', diff: '★ ★ ★ ★', pts: 50 },
-  { name: 'Táborák na náměstí Svobody', sub: '6 hod zpívání + přespání', type: 'game', typeLabel: 'Hra', diff: '★ ★ ★', pts: 80 },
-  { name: 'Nahá Míle', sub: '1 609 m · bez triček', type: 'sport', typeLabel: 'Sport', diff: '★ ★ ★ ★ ★', pts: 120 },
-  { name: 'C50', sub: '50 km na kole · Brno → Vranov', type: 'sport', typeLabel: 'Sport', diff: '★ ★ ★ ★', pts: 150 },
-  { name: 'Sázava splav', sub: '3 dny · 4 jezy · 7 raftů', type: 'game', typeLabel: 'Hra', diff: '★ ★ ★', pts: 250 },
-];
-
 const rewards = [
   { ico: '★', title: 'Úrovně podle leaderboardu', text: 'Bronz · Stříbro · Zlato · Legenda. Každá úroveň otevírá vlastní okruh akcí, čepic a vnitřních vtipů, kterým venku nikdo nerozumí.' },
   { ico: '%', title: 'Slevy na vstupné', text: 'Body půjde uplatnit jako slevu na vstupné na placené akce. Čím víc hraješ, tím levnější další hra. Logické.' },

@@ -5,6 +5,7 @@ from django.db.models import F
 
 from leaderboard.image_utils import validate_upload, variant_url
 from leaderboard.models import Event, ImageToEvent, UserPhoto
+from leaderboard.privacy import public_handle
 
 # Sort key for photos with no event date — they sink to the bottom.
 _SORT_FALLBACK = datetime.min.replace(tzinfo=_tz.utc)
@@ -90,7 +91,13 @@ def gallery_page(offset, limit, request, season=None):
             "event_slug": up.event.slug if up.event else "",
             "event_date": up.event.date if up.event else None,
             "is_user_photo": True,
-            "uploaded_by": up.auth_user.get_full_name() or up.auth_user.username,
+            # Never fall back to the raw username — it's the e-mail for social
+            # logins. Prefer a real name, then a safe handle, then a neutral label.
+            "uploaded_by": (
+                up.auth_user.get_full_name()
+                or public_handle(up.auth_user.username)
+                or "Hráč"
+            ),
         })
 
     photos.sort(key=lambda p: p["event_date"] or _SORT_FALLBACK, reverse=True)

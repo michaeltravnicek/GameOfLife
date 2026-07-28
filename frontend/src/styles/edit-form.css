@@ -39,7 +39,6 @@
 .gol-crumb a{color:var(--alpha-cream-70);border-bottom:1px dashed var(--alpha-cream-45)}
 .gol-crumb a:hover{color:var(--color-pink);border-color:var(--color-pink)}
 .gol-head h1{font-family:var(--font-display);font-size:clamp(60px,8.4vw,116px);line-height:.92;color:var(--color-white);text-transform:uppercase;letter-spacing:.04em;text-shadow:0 6px 38px var(--alpha-black-60);margin-bottom:10px}
-.gol-lede{font-family:var(--font-body);font-style:italic;font-size:16px;color:var(--alpha-cream-80);max-width:540px;margin:0 auto;line-height:1.55}
 
 /* ── Sections ── */
 .gol-main{position:relative;z-index:2;max-width:980px;margin:0 auto;padding:48px 24px 28px}
@@ -84,7 +83,6 @@
 .gol-status{font-family:var(--font-mono);font-style:italic;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--alpha-cream-65);display:inline-flex;align-items:center;gap:10px}
 .gol-status .gol-pulse{width:8px;height:8px;border-radius:50%;background:var(--color-gold);display:inline-block;box-shadow:0 0 10px var(--alpha-gold-60)}
 .gol-status.saved .gol-pulse{background:var(--color-success);box-shadow:0 0 10px var(--alpha-success-60)}
-
 
 /* ── Buttons ────────────────────────────────────────────────────────────────
    The pill button used by these forms (save, cancel, delete, upload).

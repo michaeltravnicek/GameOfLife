@@ -103,13 +103,14 @@ def attach_profile_usernames(players):
         return players
     ids = [p.pk for p in players]
     from accounts.models import Profile
-    from leaderboard.privacy import profile_has_consent
+    from leaderboard.privacy import profile_has_consent, public_handle
     # Consent is resolved in this same query rather than per player — the
     # leaderboard renders hundreds of rows and a lookup inside _entry would be
     # one query each.
     info_by_lb_user = {
         prof.leaderboard_user_id: (
-            prof.user.username,
+            # public_handle withholds e-mail-shaped usernames — see privacy.py.
+            public_handle(prof.user.username),
             prof.photo.url if prof.photo else None,
             profile_has_consent(prof),
         )
@@ -232,7 +233,9 @@ def player_payload(lb_user, request=None):
         Profile.objects.filter(leaderboard_user=lb_user).select_related("user").first()
     )
 
-    from leaderboard.privacy import display_name, profile_has_consent, visibility_for
+    from leaderboard.privacy import (
+        display_name, profile_has_consent, public_handle, visibility_for,
+    )
     from leaderboard.services.badges import badges_for
 
     # Same privacy flags as /profiles/<username>/. This endpoint reaches the same
@@ -264,7 +267,8 @@ def player_payload(lb_user, request=None):
     payload = {
         "id": lb_user.id,
         "name": display_name(lb_user.name, consented=profile_has_consent(profile)),
-        "profile_username": profile.user.username if profile else None,
+        # public_handle withholds e-mail-shaped usernames — see privacy.py.
+        "profile_username": public_handle(profile.user.username) if profile else None,
         "badges": badges_for(lb_user, request),
         "hidden": [
             name for name, hidden in (

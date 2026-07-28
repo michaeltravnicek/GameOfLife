@@ -7,9 +7,6 @@
    every auth page — Login, Register, Forgot, Reset all share this shell. */
 @keyframes authFade{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
 .auth-page .auth-card{animation:authFade .7s cubic-bezier(.22,.68,0,1.2) both .22s}
-.auth-page .hero-eyebrow{font-family:var(--font-mono);font-style:italic;font-size:12px;letter-spacing:.3em;text-transform:uppercase;color:var(--color-gold);margin-bottom:10px;display:inline-flex;align-items:center;gap:10px}
-.auth-page .hero-eyebrow::before,.auth-page .hero-eyebrow::after{content:'✦';font-size:11px;opacity:.9}
-.auth-page .hero-title{font-family:var(--font-display);font-size:clamp(40px,6.5vw,72px);line-height:.96;letter-spacing:.02em;color:var(--color-heading);text-transform:uppercase;text-shadow:0 4px 24px var(--alpha-black-35);margin-bottom:8px;font-weight:400}
 
 /* ── AUTH CARD — unified across all auth pages. The homepage evcard-dark
    ticket: white dashed SVG frame (TicketFrame) + translucent dark panel
@@ -65,8 +62,6 @@
 .auth-page .remember-row input{appearance:none;-webkit-appearance:none;width:15px;height:15px;border-radius:3px;border:1.5px solid rgba(255,241,212,.4);background:rgba(255,255,255,.05);cursor:pointer;position:relative;flex-shrink:0;transition:background .2s,border-color .2s}
 .auth-page .remember-row input:checked{background:var(--color-pink);border-color:var(--color-pink)}
 .auth-page .remember-row input:checked::after{content:'';position:absolute;left:4px;top:1px;width:5px;height:8px;border:solid var(--color-white);border-width:0 2px 2px 0;transform:rotate(45deg)}
-.auth-page .pts-btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;width:100%;background:var(--color-pink);color:var(--color-white);border:0;cursor:pointer;font-family:var(--font-mono);font-size:14px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;padding:17px 28px;border-radius:9999px;box-shadow:0 6px 22px var(--alpha-pink-40);transition:transform .18s,background .18s;margin-top:8px}
-.auth-page .pts-btn:hover{background:#cf4453;transform:translateY(-1px)}
 .auth-page .auth-foot{margin-top:26px;text-align:center;font-family:var(--font-mono);font-size:13px;color:var(--alpha-cream-65);letter-spacing:.04em}
 .auth-page .auth-foot a{color:var(--color-cream-light);font-weight:600;font-style:italic;border-bottom:1px solid var(--alpha-cream-30);transition:color .2s,border-color .2s;text-decoration:none}
 .auth-page .auth-foot a:hover{color:var(--color-pink);border-color:var(--color-pink)}
@@ -82,7 +77,6 @@
 }
 
 @media(max-width:480px){
-  .auth-page .hero-title{font-size:clamp(32px,9vw,52px)}
   .auth-page .auth-container{padding:0 12px 48px}
   .auth-page .auth-card-inner{padding:24px 18px 28px}
   .auth-page .auth-card-sub{font-size:12.5px;margin-bottom:18px}
@@ -93,9 +87,6 @@
 }
 
 @media(max-width:375px){
-  .auth-page .hero-title{font-size:clamp(28px,10vw,44px)}
-  .auth-page .hero-eyebrow{font-size:11px;letter-spacing:.18em}
-  .auth-page .hero-eyebrow::before,.auth-page .hero-eyebrow::after{display:none}
   .auth-page .auth-container{padding:0 10px 40px}
   .auth-page .auth-card-inner{padding:20px 14px 24px}
   .auth-page .auth-card-title{font-size:28px}
@@ -103,7 +94,6 @@
 }
 
 @media(max-width:320px){
-  .auth-page .hero-title{font-size:26px}
   .auth-page .auth-card-title{font-size:24px}
   .auth-page .auth-card-inner{padding:18px 12px 22px}
 }

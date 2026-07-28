@@ -90,8 +90,6 @@
 .event-detail-page .lightbox{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.95);display:none;align-items:center;justify-content:center;padding:40px}
 .event-detail-page .lightbox.open{display:flex}
 .event-detail-page .lightbox img{max-width:92vw;max-height:88vh;border:5px solid var(--color-cream-light)}
-.event-detail-page .lightbox-close{position:absolute;top:20px;right:30px;background:transparent;border:0;color:var(--color-white);font-size:40px;cursor:pointer;line-height:1}
-.event-detail-page .lightbox-nav{position:absolute;top:50%;transform:translateY(-50%);width:50px;height:50px;border-radius:50%;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:var(--color-white);font-size:24px;cursor:pointer;display:flex;align-items:center;justify-content:center}
 .event-detail-page .lightbox-nav.prev{left:30px}
 .event-detail-page .lightbox-nav.next{right:30px}
 
