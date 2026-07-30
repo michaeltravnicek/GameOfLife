@@ -64,6 +64,7 @@ from .serializers import (
     BadgeWriteSerializer,
     CategoriesResponseSerializer,
     CategorySerializer,
+    CategoryWriteSerializer,
     CheckinEventsResponseSerializer,
     CheckinSerializer,
     EventDetailSerializer,
@@ -457,12 +458,32 @@ def event_checkin(request, slug):
 
 
 @extend_schema(tags=["Events"], responses=CategoriesResponseSerializer)
-@cache_control(public=True, max_age=3600)
+# 5 min, not an hour: categories are now created from the event form, and a
+# browser/CDN copy outliving the server-side cache would hide a category the
+# author just added from the next page load.
+@cache_control(public=True, max_age=300)
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def categories_list(request):
     """All event categories. Response: `{categories: [{id, name}]}`."""
     return Response({"categories": categories_cached()}, status=status.HTTP_200_OK)
+
+
+@extend_schema(tags=["Events"], request=CategoryWriteSerializer, responses=CategorySerializer)
+@api_view(["POST"])
+@permission_classes([IsAdmin])
+def category_create(request):
+    """Create an event category (admin only). Body: `{name}`.
+
+    Exists so the event form can add a missing category inline instead of
+    sending the author to the Django admin mid-edit — same reason as
+    `badge_create`. Category.save() drops the cached list.
+    """
+    serializer = CategoryWriteSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    with transaction.atomic():
+        category = serializer.save()
+    return Response(CategorySerializer(category).data, status=status.HTTP_201_CREATED)
 
 
 @extend_schema(tags=['Gallery'],

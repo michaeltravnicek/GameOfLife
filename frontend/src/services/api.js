@@ -150,6 +150,10 @@ export const fetchGallery = (params = {}) =>
   api.get('/gallery/', { params }).then((r) => r.data);
 export const fetchCategories = () =>
   api.get('/categories/').then((r) => r.data);
+// Admin-only. Returns the created `{id, name}` so the event form can select it
+// without re-fetching the list.
+export const createCategory = (name) =>
+  api.post('/categories/create/', { name }).then((r) => r.data);
 // Badges double as event logos — the event form picks one instead of uploading
 // artwork, which is what keeps one file from being stored once per edition.
 export const fetchBadges = () =>

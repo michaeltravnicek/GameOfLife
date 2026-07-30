@@ -99,6 +99,15 @@ def invalidate_event_caches():
     _evict(EVENT_DEPENDENT_CACHE_KEYS)
 
 
+def invalidate_category_cache():
+    """Drop the category list cache (called from Category.save()/delete()).
+
+    The list is cached for an hour, which is fine until someone adds a category
+    from the event form and expects to pick it in the next breath.
+    """
+    _evict((CACHE_KEY_CATEGORIES,))
+
+
 def invalidate_hero_cache():
     """Drop the hero-carousel cache (called from ImageToEvent.save())."""
     _evict((CACHE_KEY_HERO_IMAGES,))

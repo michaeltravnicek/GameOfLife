@@ -101,6 +101,23 @@ class SocialAccountAdapterTests(TestCase):
         saved = self._save(self.user)
         self.assertEqual(Profile.objects.get(user=saved).role, Profile.ROLE_NONE)
 
+    def test_google_signup_is_open(self):
+        # Regression: this used to be inherited, and allauth's default delegates
+        # to the *account* adapter — which closes signup for the password path.
+        # The result was that no new user could ever sign in with Google: they
+        # got as far as the callback and were shown allauth's unstyled
+        # signup_closed.html. Only pre-existing accounts worked, which is why it
+        # looked fine in testing.
+        self.assertTrue(self.adapter.is_open_for_signup(self._request(), None))
+
+    def test_google_signup_does_not_follow_the_account_adapter(self):
+        # Pins the trap itself rather than the symptom: dropping the override
+        # would make this equal AccountAdapter's False again.
+        self.assertNotEqual(
+            self.adapter.is_open_for_signup(self._request(), None),
+            AccountAdapter().is_open_for_signup(None),
+        )
+
 
 class AccountAdapterTests(TestCase):
     def test_allauth_signup_is_closed(self):

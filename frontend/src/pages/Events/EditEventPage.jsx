@@ -15,13 +15,14 @@ export default function EditEventPage() {
   const navigate = useNavigate();
   const toast = useToast();
   const [loading, setLoading] = useState(true);
-  const [badges, setBadges] = useState([]);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const {
     form, setForm, categories, setCategories, allCategories, setAllCategories,
+    badges, setBadges,
     dirty, saving, setSaving, saveError, setSaveError,
-    markDirty, setField, handleCategories, poster,
+    markDirty, setField, handleCategories,
+    handleBadgeCreated, handleCategoryCreated, poster,
   } = useEventForm();
 
   useEffect(() => {
@@ -110,6 +111,8 @@ export default function EditEventPage() {
           allCategories={allCategories}
           categories={categories}
           onCategories={handleCategories}
+          onBadgeCreated={handleBadgeCreated}
+          onCategoryCreated={handleCategoryCreated}
         />
 
         {/* 08 · Konec akce */}

@@ -38,6 +38,20 @@ class Category(models.Model):
         verbose_name_plural = "categories"
         ordering = ["name"]
 
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        # The category list is cached for an hour, and both the event form and
+        # the events filter read it — a category added here must be pickable now,
+        # not next hour. Best-effort: a cache outage must not break the write.
+        from .cache_config import invalidate_category_cache
+        invalidate_category_cache()
+
+    def delete(self, *args, **kwargs):
+        result = super().delete(*args, **kwargs)
+        from .cache_config import invalidate_category_cache
+        invalidate_category_cache()
+        return result
+
     def __str__(self):
         return self.name
 

@@ -116,6 +116,29 @@ class CategorySerializer(serializers.ModelSerializer):
         fields = ["id", "name"]
 
 
+class CategoryWriteSerializer(serializers.ModelSerializer):
+    """Input side of category creation — the event form's "new category" field.
+
+    `name` is unique on the model, but the model's uniqueness is case-sensitive
+    while people aren't: "Sport" and "sport" would become two chips that mean the
+    same thing. So the check here is case-insensitive, and a duplicate is a 400
+    telling the author to pick the chip that already exists.
+    """
+    name = serializers.CharField(max_length=50, trim_whitespace=True)
+
+    class Meta:
+        model = Category
+        fields = ["name"]
+
+    def validate_name(self, value):
+        name = value.strip()
+        if not name:
+            raise serializers.ValidationError("Zadej název kategorie.")
+        if Category.objects.filter(name__iexact=name).exists():
+            raise serializers.ValidationError("Kategorie s tímto názvem už existuje.")
+        return name
+
+
 class EventListSerializer(serializers.ModelSerializer):
     image = serializers.SerializerMethodField()
     # `logo` / `logo_scale` are now derived from the linked badge. The keys stay

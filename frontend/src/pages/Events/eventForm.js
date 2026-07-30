@@ -99,6 +99,7 @@ export function useEventForm() {
   const [form, setForm] = useState(EMPTY_EVENT_FORM);
   const [categories, setCategories] = useState([]);
   const [allCategories, setAllCategories] = useState([]);
+  const [badges, setBadges] = useState([]);
   const [dirty, setDirty] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
@@ -121,6 +122,24 @@ export function useEventForm() {
     markDirty();
   }, [markDirty]);
 
+  // A badge/category created from inside the form is always meant for the event
+  // being written, so both handlers select what they just added. Inserting into
+  // the local list (rather than re-fetching) keeps the half-typed form intact —
+  // `byName` mirrors the models' Meta.ordering so the option lands where a
+  // reload would put it.
+  const handleBadgeCreated = useCallback((badge) => {
+    setBadges((prev) => [...prev, badge].sort(byName));
+    setForm((f) => ({ ...f, badge: String(badge.id) }));
+    markDirty();
+  }, [markDirty]);
+
+  const handleCategoryCreated = useCallback((category) => {
+    setAllCategories((prev) => [...prev, category].sort(byName));
+    // ChipSelect is capped at one category, so this replaces rather than adds.
+    setCategories([category.name]);
+    markDirty();
+  }, [markDirty]);
+
   // Warn before leaving with unsaved edits (native beforeunload prompt).
   useBeforeUnload(dirty);
 
@@ -128,8 +147,15 @@ export function useEventForm() {
     form, setForm,
     categories, setCategories,
     allCategories, setAllCategories,
+    badges, setBadges,
     dirty, saving, setSaving, saveError, setSaveError,
     markDirty, setField, handleCategories,
+    handleBadgeCreated, handleCategoryCreated,
     poster,
   };
+}
+
+/** Czech-aware name sort, matching Badge/Category `Meta.ordering = ["name"]`. */
+function byName(a, b) {
+  return a.name.localeCompare(b.name, 'cs');
 }

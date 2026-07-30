@@ -26,15 +26,15 @@ from django.utils.html import escape
 
 logger = logging.getLogger(__name__)
 
-SITE_NAME = "Game of Live"
-DEFAULT_TITLE = "Game of Live — Život je hra, tak ho hrej"
+SITE_NAME = "Game of Life"
+DEFAULT_TITLE = "👾 Život je hra."
 DEFAULT_DESCRIPTION = (
-    "Sbírej body za zážitky, ne za lajky. Přidej se k hráčům, "
-    "kteří místo scrollování žijí."
+    "✨ Žijeme naplno a děláme, co nás baví."
+    "💖 Přidej se taky a vytvoř si nejkrásnější vzpomínky. 🙂‍↔️"
 )
 # Player/profile cards: a generic, non-identifying line. The name lives in the
 # title (consent-gated); the description stays deliberately anonymous.
-PLAYER_DESCRIPTION = "Profil hráče v žebříčku Game of Live."
+PLAYER_DESCRIPTION = "Profil hráče v leaderboardu Game of Life."
 # Served by WhiteNoise from the React build (WHITENOISE_ROOT = staticfiles/react).
 # Swap for a purpose-made 1200x630 card if you ever cut one.
 DEFAULT_IMAGE = "/img/home-onas-desktop.webp"

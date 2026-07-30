@@ -7,6 +7,10 @@ credentials.json
 credentials1.json
 *-service-account*.json
 script/*.json
+# OAuth client, jak ho stáhne Google Cloud Console (client_secret_<id>.apps.
+# googleusercontent.com.json). Aplikace ho nečte — bere client_id/secret z env —
+# ale stažený soubor snadno skončí v repu.
+client_secret*.json
 *.pem
 *.key
 

@@ -1,6 +1,7 @@
 import Switch from '../../components/Switch/Switch';
 import ChipSelect from '../../components/ChipSelect/ChipSelect';
 import EventLocationMap from '../../components/EventLocationMap/EventLocationMap';
+import { NewBadgeForm, NewCategoryForm } from './EventFormCreators';
 
 /**
  * The shared body of the create/edit event forms — sections 01–07 (Základy,
@@ -21,6 +22,8 @@ export default function EventFormSections({
   allCategories,
   categories,
   onCategories,
+  onBadgeCreated,
+  onCategoryCreated,
 }) {
   // form.badge comes off a <select>, so it's a string even though ids are
   // numbers — compare loosely rather than sprinkling Number() at call sites.
@@ -178,10 +181,11 @@ export default function EventFormSections({
                   ))}
                 </select>
                 <p className="ev-hint-block">
-                  Účastníci akce odznak dostanou do sbírky. Nové logo se nahrává
-                  jako nový odznak v administraci — díky tomu drží všechny edice
-                  jedné akce jeden soubor.
+                  Účastníci akce odznak dostanou do sbírky. Nemáš ten správný?
+                  Vytvoř nový — obrázek se nahraje jednou a všechny edice akce
+                  pak sdílí stejný soubor.
                 </p>
+                <NewBadgeForm onCreated={onBadgeCreated} />
               </div>
             </div>
           </div>
@@ -198,6 +202,7 @@ export default function EventFormSections({
             <p className="ev-sec-sub">Vyber kategorii, do které akce patří.</p>
           </div>
           <ChipSelect options={allCategories.map((c) => c.name)} selected={categories} onChange={onCategories} max={1} />
+          <NewCategoryForm onCreated={onCategoryCreated} />
         </div>
       </section>
 

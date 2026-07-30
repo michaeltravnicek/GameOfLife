@@ -25,6 +25,7 @@ urlpatterns = [
     path("players/<int:user_id>/seasons/<int:season_id>/", views.player_season_detail, name="api-player-season"),
     path("gallery/", views.gallery_view, name="api-gallery"),
     path("categories/", views.categories_list, name="api-categories"),
+    path("categories/create/", views.category_create, name="api-category-create"),
     path("badges/", views.badges_list, name="api-badges"),
     path("badges/create/", views.badge_create, name="api-badge-create"),
     path("photos/", views.photo_upload, name="api-photo-upload"),

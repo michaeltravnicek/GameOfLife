@@ -26,13 +26,20 @@ class AdminUrlTests(TestCase):
     def tearDown(self):
         _reload_urlconf()
 
+    # Force the default path rather than trusting the ambient environment: a
+    # local .env (or CI) that sets ADMIN_URL would otherwise make these assert
+    # against a moved admin and fail spuriously.
+    @override_settings(ADMIN_URL="admin/")
     def test_default_admin_path_serves_the_admin(self):
-        resp = self.client.get("/admin/", follow=False)
-        # Redirect to the admin login, not the SPA shell.
-        self.assertIn(resp.status_code, (200, 302))
-        if resp.status_code == 302:
-            self.assertIn("login", resp["Location"])
+        _reload_urlconf()
+        with self.settings(ROOT_URLCONF="mysite.urls"):
+            resp = self.client.get("/admin/", follow=False)
+            # Redirect to the admin login, not the SPA shell.
+            self.assertIn(resp.status_code, (200, 302))
+            if resp.status_code == 302:
+                self.assertIn("login", resp["Location"])
 
+    @override_settings(ADMIN_URL="admin/")
     def test_robots_lists_admin_while_it_is_default(self):
         body = self.client.get(reverse("robots")).content.decode()
         self.assertIn("Disallow: /admin/", body)

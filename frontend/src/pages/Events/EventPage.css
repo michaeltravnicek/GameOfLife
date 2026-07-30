@@ -31,6 +31,19 @@
    previous input's dashed outline (drawn outside the box) crosses the label. */
 .event-page .gol-card > .gol-field + .gol-field{margin-top:18px}
 
+/* ── Inline "add a missing option" panels (new badge / new category) ──
+   Deliberately quiet: picking an existing option is the common path, so the
+   trigger reads as a link next to the picker rather than a second CTA. */
+.event-page .ev-inline-add{margin-top:12px;align-self:flex-start;background:none;border:1.5px dashed var(--alpha-cream-45);border-radius:8px;padding:7px 14px;font-family:var(--font-mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--color-pink);cursor:pointer}
+.event-page .ev-inline-add:hover{border-style:solid;color:var(--color-cream-light)}
+.event-page .ev-inline-form{margin-top:16px;padding:18px;border:1.5px dashed var(--alpha-pink-45);border-radius:12px;background:var(--alpha-dark-60)}
+.event-page .ev-inline-form .gol-field + .gol-field{margin-top:18px}
+.event-page .ev-inline-head{font-family:var(--font-mono);font-style:italic;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--color-pink);margin-bottom:14px}
+.event-page .ev-inline-preview{margin-top:16px;height:120px;display:flex;align-items:center;justify-content:center;overflow:hidden;border-radius:10px;background:var(--alpha-dark-60)}
+.event-page .ev-inline-preview img{max-width:100%;max-height:100%;object-fit:contain}
+.event-page .ev-inline-error{margin-top:14px;font-family:var(--font-mono);font-size:12px;line-height:1.5;color:var(--color-pink)}
+.event-page .ev-inline-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+
 /* ── Map picker meta ── */
 .event-page .ev-map-meta{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:12px;font-family:var(--font-mono);font-size:12px;color:var(--alpha-cream-65);letter-spacing:.04em}
 .event-page .ev-map-clear{background:none;border:none;color:var(--color-pink);font:inherit;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;padding:4px 6px}

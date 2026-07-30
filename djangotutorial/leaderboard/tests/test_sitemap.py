@@ -1,7 +1,7 @@
 """/sitemap.xml and /robots.txt — the crawler-facing surface (mysite.sitemaps)."""
 from datetime import timedelta
 
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.utils import timezone
 
 from leaderboard.models import Event
@@ -43,7 +43,10 @@ class RobotsTxtTests(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp["Content-Type"], "text/plain")
 
+    @override_settings(ADMIN_URL="admin/")
     def test_blocks_private_paths_and_points_at_the_sitemap(self):
+        # Force the default admin path — robots only lists /admin/ while it's
+        # the default, and a local .env / CI may have moved ADMIN_URL.
         body = self.client.get("/robots.txt").content.decode()
         self.assertIn("Disallow: /admin/", body)
         self.assertIn("Disallow: /api/", body)

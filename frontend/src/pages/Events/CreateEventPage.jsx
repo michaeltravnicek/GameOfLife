@@ -9,11 +9,12 @@ import './EventPage.css';
 export default function CreateEventPage() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [badges, setBadges] = useState([]);
   const {
     form, setForm, categories, allCategories, setAllCategories,
+    badges, setBadges,
     dirty, saving, setSaving, saveError, setSaveError,
-    markDirty, setField, handleCategories, poster,
+    markDirty, setField, handleCategories,
+    handleBadgeCreated, handleCategoryCreated, poster,
   } = useEventForm();
 
   useEffect(() => {
@@ -29,7 +30,7 @@ export default function CreateEventPage() {
         reportError('Nepodařilo se načíst kategorie a odznaky.', err);
         setLoading(false);
       });
-  }, [setAllCategories]);
+  }, [setAllCategories, setBadges]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -71,6 +72,8 @@ export default function CreateEventPage() {
           allCategories={allCategories}
           categories={categories}
           onCategories={handleCategories}
+          onBadgeCreated={handleBadgeCreated}
+          onCategoryCreated={handleCategoryCreated}
         />
       </main>
 
