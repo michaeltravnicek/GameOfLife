@@ -199,6 +199,7 @@ if not DEBUG and ADMIN_URL == "admin/":
 #   fonts.googleapis.com  — the stylesheet linked from index.html
 #   fonts.gstatic.com     — the font files that stylesheet points at
 #   *.tile.openstreetmap.org — Leaflet map tiles on the event detail page
+#   docs.google.com/forms.gle — the embedded event sign-up form (frame-src only)
 #   Sentry ingest         — error reports (host varies per DSN, hence the env var)
 #   the media host        — R2/S3 images once MEDIA_S3_CUSTOM_DOMAIN is set
 #
@@ -229,6 +230,11 @@ _CSP_DIRECTIVES = {
         *([f"https://{_csp_media_host}"] if _csp_media_host else []),
     ],
     "connect-src": ["'self'", *_csp_extra_connect],
+    # The event sign-up page (/events/<slug>/prihlaska) embeds the event's
+    # Google Form in an iframe. forms.gle is the short-link host — it 302s to
+    # docs.google.com, and CSP checks *every* hop, so both must be listed or a
+    # shortened survey_url renders an empty frame.
+    "frame-src": ["'self'", "https://docs.google.com", "https://forms.gle"],
     # Supersedes X_FRAME_OPTIONS above and blocks clickjacking: nobody may load
     # the site in an iframe to trick a logged-in user into clicking through it.
     "frame-ancestors": ["'none'"],
@@ -518,6 +524,10 @@ REST_FRAMEWORK = {
         'login': '10/min',
         'register': '10/hour',
         'password_reset': '5/hour',
+        # Each call makes us POST to Google, so this one is rate-limited well
+        # below the generic 'user' rate — a hot loop here is an outbound flood
+        # from our IP, not just load on us.
+        'form_submit': '20/hour',
         # Generous: one SPA page load fans out into several requests, and
         # visitors on shared/mobile NAT share an IP. Tune down once you've
         # seen real traffic.

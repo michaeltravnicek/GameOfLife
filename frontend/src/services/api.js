@@ -100,6 +100,13 @@ export const setRsvp = (slug, attending) =>
     ? api.put(`/events/${slug}/rsvp/`)
     : api.delete(`/events/${slug}/rsvp/`)
   ).then((r) => r.data);
+// The event's Google Form, as a question list we render with our own inputs.
+// `{embed_only:true}` comes back when the form can't be read — the page then
+// falls back to an iframe.
+export const fetchSignupForm = (slug) =>
+  api.get(`/events/${slug}/signup-form/`).then((r) => r.data);
+export const submitSignupForm = (slug, answers) =>
+  api.post(`/events/${slug}/signup-form/submit/`, answers).then((r) => r.data);
 export const submitFeedback = (slug, rating, comment) =>
   api.post(`/events/${slug}/feedback/`, { rating, comment }).then((r) => r.data);
 export const apiCheckin = (slug, latitude, longitude) =>

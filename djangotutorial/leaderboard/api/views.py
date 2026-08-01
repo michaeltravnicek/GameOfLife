@@ -13,12 +13,14 @@ from drf_spectacular.utils import (
 )
 from rest_framework import serializers as drf_serializers
 from rest_framework import status
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, throttle_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.throttling import UserRateThrottle
 
 from accounts.permissions import IsAdmin, IsAdminOrPhotographer, is_admin, is_close_or_above, is_staff_role
 from leaderboard.checkin import validate_and_record_checkin
+from leaderboard.google_form import fetch_schema, submit as submit_form
 from leaderboard.models import (
     Badge,
     Event,
@@ -743,3 +745,83 @@ def event_rsvps(request, slug):
     """
     event = get_object_or_404(Event, slug=slug)
     return Response({"rsvps": rsvps_for_event(event)}, status=status.HTTP_200_OK)
+
+
+class FormSubmitThrottle(UserRateThrottle):
+    """Rate for the one endpoint that makes an outbound POST per call."""
+    scope = "form_submit"
+
+
+@extend_schema(tags=["Events"], responses=OpenApiTypes.OBJECT)
+@never_cache
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def event_signup_form(request, slug):
+    """The event's Google Form, as a question list we can render ourselves.
+
+    Returns `{"embed_only": true, "url": …}` when the form can't be read — the
+    page then falls back to an iframe. That is a worse-looking page, not a
+    broken one, so it is deliberately not an error status.
+    """
+    event = get_object_or_404(Event, slug=slug)
+    if not event.survey_url:
+        raise Http404("Tato akce nemá dotazník.")
+
+    schema = fetch_schema(event.survey_url)
+    if schema is None:
+        return Response({"embed_only": True, "url": event.survey_url},
+                        status=status.HTTP_200_OK)
+    return Response({"embed_only": False, **schema}, status=status.HTTP_200_OK)
+
+
+@extend_schema(tags=["Events"], request=OpenApiTypes.OBJECT, responses=OpenApiTypes.OBJECT)
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+@throttle_classes([FormSubmitThrottle])
+def event_signup_form_submit(request, slug):
+    """Forward the user's answers to the event's Google Form.
+
+    Validated against the form's own schema first: Google accepts more or less
+    anything posted at it, including answers to questions that no longer exist,
+    so a stale page would otherwise write junk into the response sheet and
+    report success.
+    """
+    event = get_object_or_404(Event, slug=slug)
+    if not event.survey_url:
+        raise Http404("Tato akce nemá dotazník.")
+
+    schema = fetch_schema(event.survey_url)
+    if schema is None:
+        return Response({"error": "Formulář se nepodařilo načíst."},
+                        status=status.HTTP_503_SERVICE_UNAVAILABLE)
+
+    submitted = request.data if isinstance(request.data, dict) else {}
+    payload, errors = {}, {}
+    for field in schema["fields"]:
+        raw = submitted.get(field["entry_id"])
+        values = [str(v) for v in raw] if isinstance(raw, list) else ([str(raw)] if raw not in (None, "") else [])
+        values = [v for v in values if v != ""]
+
+        if not values:
+            if field["required"]:
+                errors[field["entry_id"]] = "Toto pole je povinné."
+            continue
+        if field["options"]:
+            unknown = [v for v in values if v not in field["options"]]
+            if unknown:
+                errors[field["entry_id"]] = "Neplatná volba."
+                continue
+        if field["type"] != "checkboxes" and len(values) > 1:
+            errors[field["entry_id"]] = "Očekávána jediná odpověď."
+            continue
+        payload[field["entry_id"]] = values
+
+    if errors:
+        return Response({"errors": errors}, status=status.HTTP_400_BAD_REQUEST)
+
+    if not submit_form(schema["form_id"], payload):
+        # The answers are still in the user's browser; telling them the truth
+        # lets them retry, which is better than a cheerful lie plus a lost row.
+        return Response({"error": "Google formulář odpověď nepřijal. Zkus to prosím znovu."},
+                        status=status.HTTP_502_BAD_GATEWAY)
+    return Response({"ok": True}, status=status.HTTP_201_CREATED)

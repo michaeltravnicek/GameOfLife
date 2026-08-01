@@ -15,8 +15,17 @@ from django.urls import reverse
 
 
 class ContentSecurityPolicyTests(TestCase):
-    def _policy(self, header="Content-Security-Policy-Report-Only"):
-        return self.client.get(reverse("robots")).headers.get(header, "")
+    def _policy(self):
+        # Read whichever header the current settings ship. test_settings sets
+        # DEBUG=False, so the policy is *enforced* there and the report-only
+        # header is absent — reading only that one returned "" and made every
+        # assertIn below silently vacuous. The directive values are identical
+        # either way, which is what these tests are actually about.
+        resp = self.client.get(reverse("robots"))
+        return (
+            resp.headers.get("Content-Security-Policy")
+            or resp.headers.get("Content-Security-Policy-Report-Only", "")
+        )
 
     def test_a_csp_header_is_always_present(self):
         resp = self.client.get(reverse("robots"))
@@ -44,6 +53,18 @@ class ContentSecurityPolicyTests(TestCase):
     def test_map_tiles_are_allowed(self):
         # Leaflet on the event detail page; without this the map renders blank.
         self.assertIn("https://*.tile.openstreetmap.org", self._policy())
+
+    def test_google_forms_may_be_embedded(self):
+        # The sign-up page iframes the event's Google Form; forms.gle short
+        # links redirect to docs.google.com and CSP checks both hops.
+        frame_src = self._policy().split("frame-src")[1].split(";")[0]
+        self.assertIn("https://docs.google.com", frame_src)
+        self.assertIn("https://forms.gle", frame_src)
+
+    def test_frame_src_does_not_leak_into_script_src(self):
+        # Allowing Google to be framed must never allow Google to ship script.
+        policy = self._policy()
+        self.assertNotIn("docs.google.com", policy.split("script-src")[1].split(";")[0])
 
     @override_settings(X_FRAME_OPTIONS="DENY")
     def test_base_uri_and_object_src_are_locked_down(self):

@@ -96,7 +96,6 @@ export default function EventDetailPage() {
   const [fbDone, setFbDone] = useState(false);
   const [fbOpen, setFbOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [surveyOpen, setSurveyOpen] = useState(false);
 
   // Admin-only "Popis" / "Účast a body" toggle — same page, same URL, just a
   // different body section, exactly like the profile page's season/view tabs.
@@ -245,26 +244,14 @@ export default function EventDetailPage() {
       invalidateQuery((k) => k.startsWith('events:'));
       await refetchEvent();
       // Just joined and the event has a follow-up form and/or a WhatsApp group?
-      // Prompt for whichever exists.
-      if (!wasJoined && (event.survey_url || event.whatsapp_url)) setSurveyOpen(true);
+      // The RSVP is already saved — hand the user over to the sign-up page,
+      // which hosts the form in our own chrome instead of throwing them out to
+      // a Google tab.
+      if (!wasJoined && (event.survey_url || event.whatsapp_url)) {
+        navigate(`/events/${slug}/prihlaska`);
+      }
     } catch (err) {
       reportError('RSVP se nepodařilo. Zkus to prosím znovu.', err);
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  // Survey modal: "Hotovo" keeps the RSVP, "Zrušit" cancels it.
-  const handleSurveyDone = () => setSurveyOpen(false);
-  const handleSurveyCancel = async () => {
-    setSurveyOpen(false);
-    setBusy(true);
-    try {
-      await setRsvp(slug, false);
-      invalidateQuery((k) => k.startsWith('events:'));
-      await refetchEvent();
-    } catch (err) {
-      reportError('Zrušení účasti se nepodařilo.', err);
     } finally {
       setBusy(false);
     }
@@ -457,6 +444,14 @@ export default function EventDetailPage() {
                     active={adminView}
                     onChange={setAdminView}
                   />
+                )}
+                {/* Already signed up, but the form is one page over — someone
+                    who skipped it (or came back) needs a way back to it that
+                    isn't "un-RSVP, then RSVP again". */}
+                {event.has_rsvp && (event.survey_url || event.whatsapp_url) && (
+                  <Button as="link" to={`/events/${slug}/prihlaska`} variant="ghost">
+                    Formulář akce
+                  </Button>
                 )}
                 <Button
                   variant="action"
@@ -783,53 +778,7 @@ export default function EventDetailPage() {
         </Suspense>
       )}
 
-      <Modal open={surveyOpen && (!!event.survey_url || !!event.whatsapp_url)} labelledBy="survey-modal-title">
-        <div className="gol-modal-eyebrow">— Ještě jedna věc —</div>
-        <h3 id="survey-modal-title" className="gol-modal-title">
-          {event.survey_url
-            ? <>Potřebovali bychom od vás <span className="pink">pár informací navíc.</span></>
-            : <>Přidej se do <span className="pink">skupiny akce.</span></>}
-        </h3>
-        <p className="gol-modal-text survey-modal-text">
-          {event.survey_url ? (
-            <>
-              Otevřete prosím krátký formulář a vyplňte ho.
-              {event.whatsapp_url && ' Přidejte se i do WhatsApp skupiny, ať vám nic neuteče.'}
-              {' '}Pak se vraťte sem a klikněte na <strong>Hotovo</strong>.
-            </>
-          ) : (
-            <>Přidejte se do WhatsApp skupiny akce, ať vám neuniknou žádné informace. Pak klikněte na <strong>Hotovo</strong>.</>
-          )}
-        </p>
-        <div className="survey-modal-links">
-          {event.survey_url && (
-            <a
-              className="survey-modal-link"
-              href={event.survey_url}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Otevřít formulář ↗
-            </a>
-          )}
-          {event.whatsapp_url && (
-            <a
-              className="survey-modal-link"
-              href={event.whatsapp_url}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Přidat se do WhatsApp skupiny ↗
-            </a>
-          )}
-        </div>
-        <div className="gol-modal-buttons">
-          <Button variant="frost" onClick={handleSurveyCancel} disabled={busy}>Zrušit účast</Button>
-          <Button variant="action" onClick={handleSurveyDone} disabled={busy}>Hotovo</Button>
-        </div>
-      </Modal>
-
-      {/* Feedback pop-up — the same modal shell as the survey prompt. Opens
+      {/* Feedback pop-up. Opens
           automatically for attendees who haven't rated yet, or on demand from
           the "Ohodnotit akci" / "Upravit hodnocení" buttons. */}
       <Modal open={fbOpen} onClose={closeFeedback} labelledBy="fb-modal-title">

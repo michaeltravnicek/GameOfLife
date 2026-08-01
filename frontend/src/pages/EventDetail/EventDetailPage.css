@@ -295,8 +295,6 @@
 .event-detail-page .fb-thanks{font-family:var(--font-mono);color:var(--color-gold);font-size:var(--text-lg);margin:0}
 .event-detail-page .fb-edit-btn{background:none;border:none;font-family:var(--font-mono);font-style:italic;font-size:12px;color:var(--fg-muted-dark);cursor:pointer;letter-spacing:.08em;text-decoration:underline;text-underline-offset:3px;transition:color .15s}
 .event-detail-page .fb-edit-btn:hover{color:rgba(255,241,212,.75)}
-.survey-modal-text{margin-bottom:22px}
-.survey-modal-links{display:flex;flex-direction:column;align-items:center;gap:12px;margin-bottom:28px}
-.survey-modal-link{display:inline-block;font-family:var(--font-mono);font-style:italic;font-size:13px;letter-spacing:.06em;color:var(--color-pink);text-decoration:underline;text-underline-offset:4px}
-.survey-modal-link:hover{color:var(--color-cream-light)}
+/* The post-RSVP survey prompt used to be a modal here; it is now its own page
+   (pages/EventSignup), so its styles left with it. */
 

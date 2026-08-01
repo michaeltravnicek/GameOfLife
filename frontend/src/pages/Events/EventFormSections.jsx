@@ -220,8 +220,11 @@ export default function EventFormSections({
             <textarea className="gol-textarea" id="f-rules" placeholder="Každé pravidlo na nový řádek…" value={form.rules} onChange={setField('rules')} />
           </div>
           <div className="gol-field gol-full">
-            <label htmlFor="f-survey">URL dotazníku (Google Forms)</label>
-            <input className="gol-input" id="f-survey" type="url" placeholder="https://forms.google.com/…" value={form.survey_url} onChange={setField('survey_url')} />
+            <label htmlFor="f-survey">
+              URL dotazníku (Google Forms)
+              <span className="gol-hint">zobrazí se přímo na webu · v Google dej Odeslat → 🔗 · vzhled nastav na pink #e15463</span>
+            </label>
+            <input className="gol-input" id="f-survey" type="url" placeholder="https://docs.google.com/forms/d/e/…/viewform" value={form.survey_url} onChange={setField('survey_url')} />
           </div>
           <div className="gol-field gol-full">
             <label htmlFor="f-whatsapp">Odkaz na WhatsApp skupinu <span className="gol-hint">nepovinné · nabídne se po přihlášení</span></label>
