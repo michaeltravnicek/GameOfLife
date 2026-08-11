@@ -1,10 +1,10 @@
 """Combined gallery (official + user photos) with bounded merge-pagination."""
 from datetime import datetime, timezone as _tz
 
-from django.db.models import F
+from django.db.models import Count, F
 
 from leaderboard.image_utils import validate_upload, variant_url
-from leaderboard.models import Event, ImageToEvent, UserPhoto
+from leaderboard.models import Event, ImageToEvent, PhotoLike, UserPhoto
 from leaderboard.privacy import public_handle
 
 # Sort key for photos with no event date — they sink to the bottom.
@@ -57,6 +57,9 @@ def gallery_page(offset, limit, request, season=None):
         .filter(image__isnull=False)
         .only("image", "event__name", "event__slug", "event__date",
               "auth_user__first_name", "auth_user__last_name", "auth_user__username")
+        # Counted in the same query rather than per photo: a 60-photo page would
+        # otherwise issue 60 extra COUNT(*)s just to draw the hearts.
+        .annotate(like_count=Count("likes"))
         .order_by(F("event__date").desc(nulls_last=True))
     )
 
@@ -75,6 +78,11 @@ def gallery_page(offset, limit, request, season=None):
     photos = []
     for img in official[:upper]:
         photos.append({
+            # Official event photos carry no id and no like state: PhotoLike
+            # hangs off UserPhoto, so there is nothing for a heart to point at.
+            # `None` (not 0) is what tells the client "not likeable" apart from
+            # "likeable, nobody has yet".
+            "id": None,
             "url": request.build_absolute_uri(img.image.url),
             "url_mobile": variant_url(img.image, request),
             "event_name": img.event.name if img.event else "",
@@ -82,9 +90,12 @@ def gallery_page(offset, limit, request, season=None):
             "event_date": img.event.date if img.event else None,
             "is_user_photo": False,
             "uploaded_by": "",
+            "like_count": None,
+            "liked_by_me": False,
         })
     for up in user_photos[:upper]:
         photos.append({
+            "id": up.pk,
             "url": request.build_absolute_uri(up.image.url),
             "url_mobile": variant_url(up.image, request),
             "event_name": up.event.name if up.event else "",
@@ -98,7 +109,35 @@ def gallery_page(offset, limit, request, season=None):
                 or public_handle(up.auth_user.username)
                 or "Hráč"
             ),
+            "like_count": up.like_count,
+            "liked_by_me": False,  # filled in below for the sliced page only
         })
 
     photos.sort(key=lambda p: p["event_date"] or _SORT_FALLBACK, reverse=True)
-    return photos[offset:upper], total
+    page = photos[offset:upper]
+    _mark_liked_by(page, getattr(request, "user", None))
+    return page, total
+
+
+def _mark_liked_by(page, user):
+    """Set ``liked_by_me`` on the page's user photos, in one query.
+
+    Deliberately runs *after* the slice: the merge above builds up to
+    ``offset+limit`` rows from each source, but only the sliced page is ever
+    rendered, so asking about the rest would be work thrown away. Anonymous
+    visitors skip the query entirely — they still see the counts, which is what
+    makes the login prompt on tap worth following.
+    """
+    if user is None or not user.is_authenticated:
+        return
+    ids = [p["id"] for p in page if p["id"] is not None]
+    if not ids:
+        return
+    liked = set(
+        PhotoLike.objects
+        .filter(auth_user=user, photo_id__in=ids)
+        .values_list("photo_id", flat=True)
+    )
+    for p in page:
+        if p["id"] in liked:
+            p["liked_by_me"] = True

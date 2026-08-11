@@ -1,5 +1,8 @@
 import { lazy, Suspense, useCallback, useMemo, useState } from 'react';
-import { fetchEvents, fetchGallery, fetchSeasons, uploadGalleryPhoto } from '../../services/api';
+import { useNavigate } from 'react-router-dom';
+import {
+  fetchEvents, fetchGallery, fetchSeasons, setPhotoLike, uploadGalleryPhoto,
+} from '../../services/api';
 import { usePaginatedQuery } from '../../services/usePaginatedQuery';
 import { prefetchQuery, invalidateQuery, useCachedQuery } from '../../services/queryCache';
 import { useAuth } from '../../context/AuthContext';
@@ -24,7 +27,13 @@ const extractHasMore = (r) => !!r.has_more;
 const extractCount = (r) => r.count ?? 0;
 
 export default function GalleryPage() {
-  const { canUpload } = useAuth();
+  const { canUpload, user } = useAuth();
+  const navigate = useNavigate();
+  // Like state the user has changed since the page loaded, keyed by photo id.
+  // The photo list itself is owned by usePaginatedQuery's cache, so overriding
+  // here is what lets a tap paint instantly without invalidating the page (and
+  // re-fetching 60 photos) on every heart.
+  const [likeOverrides, setLikeOverrides] = useState({});
   const [activeSeason, setActiveSeason] = useState('all'); // 'all', a season id (string), or 'unknown'
   const [lbOpen, setLbOpen] = useState(false);
   const [lbPhotos, setLbPhotos] = useState([]);
@@ -100,6 +109,48 @@ export default function GalleryPage() {
       setUploading(false);
     }
   };
+
+  // A photo as it should render right now: the server's state, with any local
+  // override laid over it.
+  const withLikes = useCallback(
+    (p) => (likeOverrides[p.id] ? { ...p, ...likeOverrides[p.id] } : p),
+    [likeOverrides],
+  );
+
+  const toggleLike = useCallback(async (photo) => {
+    // Official event photos have no id — PhotoLike hangs off UserPhoto only.
+    if (photo.id == null) return;
+    if (!user) {
+      navigate(`/prihlasit?from=${encodeURIComponent('/galerie')}`);
+      return;
+    }
+    const current = likeOverrides[photo.id] ?? photo;
+    const next = !current.liked_by_me;
+    // Paint first: a heart that waits for the network feels broken.
+    setLikeOverrides((prev) => ({
+      ...prev,
+      [photo.id]: {
+        liked_by_me: next,
+        like_count: Math.max(0, (current.like_count ?? 0) + (next ? 1 : -1)),
+      },
+    }));
+    try {
+      // PUT/DELETE are idempotent, so a double-tap settles on the real state
+      // rather than inverting it.
+      const data = await setPhotoLike(photo.id, next);
+      setLikeOverrides((prev) => ({
+        ...prev,
+        [photo.id]: { liked_by_me: data.liked, like_count: data.count },
+      }));
+    } catch (err) {
+      // Roll back to whatever we knew before the tap.
+      setLikeOverrides((prev) => ({
+        ...prev,
+        [photo.id]: { liked_by_me: current.liked_by_me, like_count: current.like_count },
+      }));
+      reportError('Lajk se nepodařilo uložit.', err);
+    }
+  }, [likeOverrides, navigate, user]);
 
   // Seasons drive the calendar grouping (replaces the old per-month buckets).
   // Newest season first so the most recent photos lead.
@@ -213,18 +264,37 @@ export default function GalleryPage() {
                 {monthPhotos.length} {monthPhotos.length === 1 ? 'fotografie' : 'fotografií'}
               </div>
               <Reveal stagger className="photo-grid">
-                {monthPhotos.map((p, i) => (
-                  <div key={i} className="photo-item" onClick={() => openLb(monthPhotos, i)}>
-                    {/* Grid tiles are ~330px wide — the 768px variant is enough
-                        on every viewport; the lightbox opens the original.
-                        LazyImg fetches only on-screen tiles + ~one row ahead. */}
-                    <LazyImg src={p.url_mobile || p.url} alt={p.event_name} />
-                    <div className="photo-item-caption">
-                      <div className="photo-item-label">{p.is_user_photo ? 'Komunita' : 'Akce'}</div>
-                      <div className="photo-item-title">{p.event_name}</div>
+                {monthPhotos.map((raw, i) => {
+                  const p = withLikes(raw);
+                  return (
+                    <div key={i} className="photo-item" onClick={() => openLb(monthPhotos, i)}>
+                      {/* Grid tiles are ~330px wide — the 768px variant is enough
+                          on every viewport; the lightbox opens the original.
+                          LazyImg fetches only on-screen tiles + ~one row ahead. */}
+                      <LazyImg src={p.url_mobile || p.url} alt={p.event_name} />
+                      {p.id != null && (
+                        <button
+                          type="button"
+                          className={`photo-like${p.liked_by_me ? ' is-liked' : ''}`}
+                          aria-pressed={p.liked_by_me}
+                          aria-label={p.liked_by_me ? 'Zrušit lajk' : 'Líbí se mi'}
+                          // The tile itself opens the lightbox; without this the
+                          // heart would do both.
+                          onClick={(e) => { e.stopPropagation(); toggleLike(p); }}
+                        >
+                          <span className="photo-like-ico" aria-hidden="true">♥</span>
+                          {p.like_count > 0 && (
+                            <span className="photo-like-n">{p.like_count}</span>
+                          )}
+                        </button>
+                      )}
+                      <div className="photo-item-caption">
+                        <div className="photo-item-label">{p.is_user_photo ? 'Komunita' : 'Akce'}</div>
+                        <div className="photo-item-title">{p.event_name}</div>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </Reveal>
             </div>
           ))}
@@ -252,9 +322,12 @@ export default function GalleryPage() {
         <Suspense fallback={null}>
           <Lightbox
             open={lbOpen}
-            photos={lbPhotos}
+            // Same override merge as the grid, so a heart tapped in the
+            // lightbox stays lit when you step to the next photo and back.
+            photos={lbPhotos.map(withLikes)}
             index={lbIndex}
             showInfo
+            onToggleLike={toggleLike}
             onClose={() => setLbOpen(false)}
             onPrev={() => lbStep(-1)}
             onNext={() => lbStep(1)}

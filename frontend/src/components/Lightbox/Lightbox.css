@@ -42,3 +42,13 @@
 .lb-info-cam{font-size:14px;line-height:1}
 .lb-info-credit-label{font-size:11px;letter-spacing:.18em;color:rgba(255,241,212,.6)}
 .lb-info-credit-name{font-family:var(--font-body);font-weight:700;font-size:13.5px;letter-spacing:.02em;color:var(--color-cream-light)}
+
+/* Like button — same pill as the credit chip, so the info bar keeps one shape.
+   .lb-info is pointer-events:none (it must not eat backdrop clicks that close
+   the lightbox), so the button opts itself back in. */
+.lb-like{display:inline-flex;align-items:center;gap:8px;padding:7px 16px;background:var(--alpha-dark-80);border:1.5px dashed var(--alpha-cream-55);border-radius:9999px;color:var(--alpha-cream-80);font-family:var(--font-mono);font-size:13px;line-height:1;cursor:pointer;pointer-events:auto;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);box-shadow:0 6px 20px var(--alpha-black-45);transition:border-color .18s,color .18s,transform .12s}
+.lb-like:hover{border-color:var(--color-pink);color:var(--color-cream-light)}
+.lb-like:active{transform:scale(.94)}
+.lb-like.is-liked{border-style:solid;border-color:var(--color-pink);color:var(--color-pink)}
+.lb-like-ico{font-size:14px}
+.lb-like-n{font-variant-numeric:tabular-nums}

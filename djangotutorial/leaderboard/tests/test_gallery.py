@@ -4,14 +4,16 @@ from datetime import date, datetime, timedelta
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.db import connection
 from django.test import TestCase, override_settings
+from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from django.utils import timezone
 
 from rest_framework.test import APIClient
 
 from accounts.models import Profile
-from leaderboard.models import Event, PhotoLike, Season, UserPhoto
+from leaderboard.models import Event, ImageToEvent, PhotoLike, Season, UserPhoto
 from leaderboard.tests.helpers import make_image_upload
 
 
@@ -90,6 +92,97 @@ class GalleryPaginationApiTests(TestCase):
         resp = self.client.get(self.url, {"limit": 4, "offset": 0})
         names = [p["event_name"] for p in resp.json()["photos"]]
         self.assertEqual(names, ["E0", "E1", "E2", "E3"])
+
+
+@override_settings(MEDIA_ROOT=tempfile.mkdtemp())
+class GalleryLikeStateTests(TestCase):
+    """The gallery payload has to carry enough for the client to draw a heart.
+
+    Without `id` there is nothing to like, and without `liked_by_me` the button
+    can't show whether *you* already did — the endpoint existed for months with
+    no way to render its own state.
+    """
+
+    def setUp(self):
+        cache.clear()
+        self.client = APIClient()
+        self.url = reverse("api-gallery")
+        UserModel = get_user_model()
+        self.owner = UserModel.objects.create_user(username="owner", password="x")
+        self.other = UserModel.objects.create_user(username="other", password="x")
+        now = timezone.now()
+        self.event = Event.objects.create(
+            sheet_id="lk", sheet_list_id="x", name="Likeable", place="Brno",
+            points=10, date=now,
+        )
+        self.photo = UserPhoto.objects.create(
+            auth_user=self.owner, event=self.event,
+            image=SimpleUploadedFile("l.png", b"dummy", content_type="image/png"),
+        )
+        # An official event photo — no id, never likeable.
+        self.official = ImageToEvent.objects.create(
+            event=self.event,
+            image=SimpleUploadedFile("o.png", b"dummy", content_type="image/png"),
+        )
+
+    def _photo_of(self, data, user_photo):
+        return next(p for p in data["photos"] if p["is_user_photo"] is user_photo)
+
+    def test_user_photo_carries_id_and_zero_count(self):
+        row = self._photo_of(self.client.get(self.url).json(), True)
+        self.assertEqual(row["id"], self.photo.id)
+        self.assertEqual(row["like_count"], 0)
+        self.assertFalse(row["liked_by_me"])
+
+    def test_official_photo_is_not_likeable(self):
+        # `None` rather than 0: the client uses it to hide the control entirely,
+        # which it could not do if "no likes" and "cannot be liked" looked alike.
+        row = self._photo_of(self.client.get(self.url).json(), False)
+        self.assertIsNone(row["id"])
+        self.assertIsNone(row["like_count"])
+        self.assertFalse(row["liked_by_me"])
+
+    def test_like_count_is_everyones_liked_by_me_is_yours(self):
+        PhotoLike.objects.create(photo=self.photo, auth_user=self.other)
+
+        # Anonymous: sees the count, but is nobody's "me".
+        row = self._photo_of(self.client.get(self.url).json(), True)
+        self.assertEqual(row["like_count"], 1)
+        self.assertFalse(row["liked_by_me"])
+
+        # The owner hasn't liked it — someone else did.
+        self.client.force_authenticate(user=self.owner)
+        row = self._photo_of(self.client.get(self.url).json(), True)
+        self.assertEqual(row["like_count"], 1)
+        self.assertFalse(row["liked_by_me"])
+
+        # The person who liked it sees their own like.
+        self.client.force_authenticate(user=self.other)
+        row = self._photo_of(self.client.get(self.url).json(), True)
+        self.assertEqual(row["like_count"], 1)
+        self.assertTrue(row["liked_by_me"])
+
+    def test_like_state_costs_the_same_whatever_the_page_size(self):
+        # The whole point of resolving `liked_by_me` through one `photo_id__in`
+        # set instead of asking per photo. If this regresses, a 60-photo page
+        # quietly becomes 60 extra queries and only ever shows up as "the
+        # gallery got slow".
+        for i in range(9):
+            UserPhoto.objects.create(
+                auth_user=self.owner, event=self.event,
+                image=SimpleUploadedFile(f"n{i}.png", b"dummy", content_type="image/png"),
+            )
+        self.client.force_authenticate(user=self.owner)
+
+        two = self._query_count(limit=2)
+        ten = self._query_count(limit=10)
+        self.assertEqual(two, ten, "gallery query count grows with the page size")
+
+    def _query_count(self, *, limit):
+        with CaptureQueriesContext(connection) as ctx:
+            resp = self.client.get(self.url, {"limit": limit, "offset": 0})
+        self.assertEqual(resp.status_code, 200)
+        return len(ctx)
 
 
 @override_settings(MEDIA_ROOT=tempfile.mkdtemp())

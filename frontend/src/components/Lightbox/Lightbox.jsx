@@ -30,6 +30,9 @@ export default function Lightbox({
   onNext,
   onPrev,
   showInfo = false,
+  // Optional: when given, photos carrying an `id` show a like button in the
+  // info bar. Callers that don't pass it (event galleries) render as before.
+  onToggleLike,
 }) {
   const list = photos || images || [];
   const total = list.length;
@@ -93,6 +96,9 @@ export default function Lightbox({
 
   const meta = showInfo && current && typeof current === 'object' ? current : null;
   const photographer = meta?.is_user_photo && meta?.uploaded_by ? meta.uploaded_by : null;
+  // Only community photos are likeable; official event photos arrive with a
+  // null id (see leaderboard/services/gallery.py).
+  const likeable = !!onToggleLike && meta?.id != null;
   const altText = [meta?.event_name, photographer ? `foto: ${photographer}` : null].filter(Boolean).join(' · ');
 
   // No direction yet (first open) → the incoming image gets the zoom-in open
@@ -127,7 +133,7 @@ export default function Lightbox({
         <img key={`in-${index}-${motion.id}`} className={`lb-img ${enterClass}`} src={imgSrc} alt={altText} />
       </div>
 
-      {meta && (meta.event_name || photographer) && (
+      {meta && (meta.event_name || photographer || likeable) && (
         <div className="lb-info">
           {meta.event_name && <div className="u-label lb-info-title">{meta.event_name}</div>}
           {photographer && (
@@ -136,6 +142,18 @@ export default function Lightbox({
               <span className="u-label lb-info-credit-label">Foto:</span>
               <span className="lb-info-credit-name">{photographer}</span>
             </div>
+          )}
+          {likeable && (
+            <button
+              type="button"
+              className={`lb-like${meta.liked_by_me ? ' is-liked' : ''}`}
+              aria-pressed={!!meta.liked_by_me}
+              aria-label={meta.liked_by_me ? 'Zrušit lajk' : 'Líbí se mi'}
+              onClick={() => onToggleLike(meta)}
+            >
+              <span className="lb-like-ico" aria-hidden="true">♥</span>
+              {meta.like_count > 0 && <span className="lb-like-n">{meta.like_count}</span>}
+            </button>
           )}
         </div>
       )}
