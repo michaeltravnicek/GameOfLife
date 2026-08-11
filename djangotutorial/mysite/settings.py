@@ -230,10 +230,12 @@ _CSP_DIRECTIVES = {
         *([f"https://{_csp_media_host}"] if _csp_media_host else []),
     ],
     "connect-src": ["'self'", *_csp_extra_connect],
-    # The event sign-up page (/events/<slug>/prihlaska) embeds the event's
-    # Google Form in an iframe. forms.gle is the short-link host — it 302s to
-    # docs.google.com, and CSP checks *every* hop, so both must be listed or a
-    # shortened survey_url renders an empty frame.
+    # Nothing frames a Google Form today — sign-up links out to it. Kept so the
+    # iframe fallback works the moment GOOGLE_FORM_NATIVE is turned back on,
+    # and because listing a frame source we never frame costs nothing.
+    # forms.gle is the short-link host: it 302s to docs.google.com, and CSP
+    # checks *every* hop, so both must be listed or a shortened survey_url
+    # renders an empty frame.
     "frame-src": ["'self'", "https://docs.google.com", "https://forms.gle"],
     # Supersedes X_FRAME_OPTIONS above and blocks clickjacking: nobody may load
     # the site in an iframe to trick a logged-in user into clicking through it.
@@ -577,6 +579,21 @@ REST_FRAMEWORK = {
     # throttle keys on the wrong address.
     'NUM_PROXIES': PROXY_COUNT,
 }
+
+# ── Google Forms: native rendering ────────────────────────────────────
+# OFF. Event sign-up hands out a plain link to Google (the survey modal on the
+# event page), which is where it started and where it is again.
+#
+# When on, leaderboard/google_form.py reads the form's questions off the public
+# respondent page and we draw them with our own inputs, posting answers back to
+# Google. That is nicer to look at and rests on two undocumented endpoints
+# Google can change without warning.
+#
+# Turning this back to "1" revives the BACKEND only. The sign-up page that
+# consumed it (frontend/src/pages/EventSignup/) was deleted, so a full revival
+# is: set this flag AND restore that directory plus its route in App.jsx from
+# commit 7d1ba78. Without the frontend half, nothing calls these endpoints.
+GOOGLE_FORM_NATIVE = os.getenv("GOOGLE_FORM_NATIVE", "") == "1"
 
 # The browsable API renders every endpoint as an HTML page listing its fields
 # and serializer forms. Handy locally, free API documentation for strangers in

@@ -786,6 +786,13 @@ def event_signup_form(request, slug):
     if not event.survey_url:
         raise Http404("Tato akce nemá dotazník.")
 
+    # Native rendering is off by default (settings.GOOGLE_FORM_NATIVE). Reuse
+    # the existing parse-failure shape rather than inventing a second one: the
+    # client already knows "embed_only means link them out".
+    if not settings.GOOGLE_FORM_NATIVE:
+        return Response({"embed_only": True, "url": event.survey_url},
+                        status=status.HTTP_200_OK)
+
     schema = fetch_schema(event.survey_url)
     if schema is None:
         return Response({"embed_only": True, "url": event.survey_url},
@@ -808,6 +815,13 @@ def event_signup_form_submit(request, slug):
     event = get_object_or_404(Event, slug=slug)
     if not event.survey_url:
         raise Http404("Tato akce nemá dotazník.")
+
+    # 410, not 404: the endpoint exists and used to work. Accepting answers we
+    # would not forward is the one outcome worth ruling out — the member would
+    # be told their sign-up landed when it went nowhere.
+    if not settings.GOOGLE_FORM_NATIVE:
+        return Response({"error": "Dotazník se vyplňuje přímo u Googlu."},
+                        status=status.HTTP_410_GONE)
 
     schema = fetch_schema(event.survey_url)
     if schema is None:

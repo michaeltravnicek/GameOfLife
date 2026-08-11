@@ -89,8 +89,6 @@ def robots_txt(request):
         "Disallow: /upravit-profil",
         "Disallow: /events/vytvorit",
         "Disallow: /events/*/upravit",
-        # Logged-in-only follow-up form; nothing there for a crawler to index.
-        "Disallow: /events/*/prihlaska",
         "Disallow: /sprava/",
         "",
         f"Sitemap: {request.build_absolute_uri('/sitemap.xml')}",

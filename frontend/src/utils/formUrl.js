@@ -1,6 +1,5 @@
 /**
- * Turn an event's `survey_url` into the two URLs the sign-up page needs:
- * one to put in the <iframe src>, one for the "open in a new window" link.
+ * Repair an event's `survey_url` into something safe to hand a member.
  *
  * Admins paste whatever Google's address bar happens to be showing, and in
  * practice that is the **editor** URL — `/forms/d/<id>/edit?usp=forms_home&
@@ -11,9 +10,13 @@
  * and preserves the query string while doing it, so we don't need to know the
  * responder id ourselves.
  *
- * Returns null when the URL is not a Google Form at all, which is the page's
- * signal to fall back to a plain link-out rather than frame something CSP will
- * blank out anyway (see mysite/settings.py frame-src).
+ * Returns `{open, embed}`, or null when the URL is not a Google Form at all —
+ * the caller's signal to use the raw value rather than a rewritten one.
+ *
+ * `open` is the live half: sign-up is link-only, so this is the href behind
+ * "Otevřít formulář" in the survey modal. `embed` (with `embedded=true`, which
+ * strips Google's chrome) is only meaningful when GOOGLE_FORM_NATIVE is on and
+ * the iframe fallback comes back — see mysite/settings.py.
  */
 const FORM_HOSTS = ['docs.google.com', 'forms.gle'];
 

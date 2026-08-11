@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { toFormUrls } from './embedUrl';
+import { toFormUrls } from './formUrl';
 
 const RESPONDER = 'https://docs.google.com/forms/d/e/1FAIpQLSabc123/viewform';
 // The shape admins actually paste — straight out of the Google Forms editor.

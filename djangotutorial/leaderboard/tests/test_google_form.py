@@ -12,7 +12,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from django.core.cache import cache
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
@@ -144,6 +144,10 @@ class SubmitTests(TestCase):
         self.assertFalse(google_form.submit("FORMID", {}))
 
 
+# Native rendering is off in production (see settings.GOOGLE_FORM_NATIVE); this
+# class is what still proves the parser and the submit path work, so that
+# turning the flag back on is a decision rather than a gamble.
+@override_settings(GOOGLE_FORM_NATIVE=True)
 class SignupFormEndpointTests(TestCase):
     def setUp(self):
         cache.clear()
@@ -255,3 +259,55 @@ class SignupFormEndpointTests(TestCase):
             "entry.1076937767": "8",
         }, content_type="application/json")
         self.assertEqual(resp.status_code, 502)
+
+
+@override_settings(GOOGLE_FORM_NATIVE=False)
+class NativeRenderingDisabledTests(TestCase):
+    """The shipped default: sign-up hands out a link, we render nothing.
+
+    The parser rests on two undocumented Google endpoints. With the flag off,
+    neither is touched — these tests assert we don't call Google at all, which
+    is the actual reason the flag exists.
+    """
+
+    def setUp(self):
+        cache.clear()
+        self.user = AuthUser.objects.create_user("linkuser", password="pw12345678")
+        self.event = Event.objects.create(
+            name="Kokosy", place="Kouty", points=50, date=timezone.now(),
+            survey_url=SURVEY_URL,
+        )
+        self.url = reverse("api-event-signup-form", args=[self.event.slug])
+        self.submit_url = reverse("api-event-signup-form-submit", args=[self.event.slug])
+
+    @patch("leaderboard.api.views.fetch_schema")
+    def test_returns_embed_only_without_asking_google(self, fetch):
+        self.client.force_login(self.user)
+        resp = self.client.get(self.url)
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json(), {"embed_only": True, "url": SURVEY_URL})
+        fetch.assert_not_called()
+
+    @patch("leaderboard.api.views.submit_form")
+    @patch("leaderboard.api.views.fetch_schema")
+    def test_submitting_is_gone_not_silently_accepted(self, fetch, submit):
+        # The one outcome worth ruling out: telling a member their sign-up
+        # landed when nothing was forwarded anywhere.
+        self.client.force_login(self.user)
+        resp = self.client.post(self.submit_url, {
+            "entry.1092879836": "Michael",
+        }, content_type="application/json")
+        self.assertEqual(resp.status_code, 410)
+        submit.assert_not_called()
+        fetch.assert_not_called()
+
+    def test_an_event_without_a_form_still_404s(self):
+        no_form = Event.objects.create(
+            name="Bez dotazníku", place="Brno", points=10, date=timezone.now(),
+        )
+        self.client.force_login(self.user)
+        resp = self.client.get(reverse("api-event-signup-form", args=[no_form.slug]))
+        self.assertEqual(resp.status_code, 404)
+
+    def test_still_requires_login(self):
+        self.assertEqual(self.client.get(self.url).status_code, 403)
