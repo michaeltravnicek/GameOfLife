@@ -50,7 +50,6 @@ export default function PrivacyPage() {
             <tbody>
               <tr><td>Jméno a přezdívka</td><td>zadáš při registraci</td></tr>
               <tr><td>E-mail</td><td>zadáš při registraci</td></tr>
-              <tr><td>Telefonní číslo</td><td>zadáš při registraci; slouží k propojení s tvými body</td></tr>
               <tr><td>Heslo</td><td>ukládáme jen jako nevratný otisk (hash), nikdy v čitelné podobě</td></tr>
               <tr><td>Profilová fotka, bio, město</td><td>volitelně vyplníš v profilu</td></tr>
               <tr><td>Odkazy na sociální sítě</td><td>volitelně vyplníš (Instagram, Strava, Spotify, TikTok)</td></tr>
@@ -72,11 +71,13 @@ export default function PrivacyPage() {
             jsou veřejně viditelné — v tom je celý smysl žebříčku.
           </p>
 
-          <h3>b) Telefonní číslo</h3>
+          <h3>b) Propojení účtu s body z akcí</h3>
           <p>
-            Právní základ: <em>plnění smlouvy</em>. Používáme ho k propojení
-            tvého účtu s body, které jsi nasbíral na akcích ještě před
-            registrací. Telefon <strong>nezveřejňujeme</strong>.
+            Právní základ: <em>plnění smlouvy</em>. Body z akcí evidujeme podle
+            údaje z formuláře k akci — dřív to bylo telefonní číslo, dnes e-mail,
+            případně jméno. <strong>Telefonní čísla už nesbíráme a ta dříve
+            uložená jsme z databáze smazali.</strong> E-mail
+            <strong> nezveřejňujeme</strong>.
           </p>
 
           <h3>c) Fotky z akcí</h3>
@@ -143,8 +144,8 @@ export default function PrivacyPage() {
 
           <h3>Jak funguje smazání účtu</h3>
           <p>
-            Smažeme tvoje osobní údaje — jméno, přezdívku, e-mail, telefon,
-            fotku, bio a odkazy na sítě. <strong>Body a záznam o účasti na
+            Smažeme tvoje osobní údaje — jméno, přezdívku, e-mail, fotku, bio a
+            odkazy na sítě. <strong>Body a záznam o účasti na
             akcích ale zůstanou v anonymizované podobě</strong>, bez vazby na
             tvoji osobu.
           </p>

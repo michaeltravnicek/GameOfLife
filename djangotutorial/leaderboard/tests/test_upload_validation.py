@@ -37,7 +37,10 @@ class ValidateUploadTests(TestCase):
     def test_rejects_oversized_resolution_below_pils_own_guard(self):
         # Between 1x and 2x MAX_IMAGE_PIXELS, PIL only warns — this range is
         # caught by our explicit width*height check, not by DecompressionBombError.
-        data = _png_bytes((9000, 9000))  # 81 MP
+        # The fixture has to stay inside that band: at 2x it is PIL that raises,
+        # and this test would pass while exercising the other code path.
+        data = _png_bytes((6000, 6000))  # 36 MP — above 30, below 2x
+        self.assertLess(36_000_000, 2 * MAX_IMAGE_PIXELS)
         upload = SimpleUploadedFile("big.png", data, content_type="image/png")
         with self.assertRaises(ValueError) as ctx:
             validate_upload(upload)
@@ -74,6 +77,26 @@ class ValidateUploadTests(TestCase):
         validate_upload(upload)
         self.assertEqual(upload.read(8), b"\x89PNG\r\n\x1a\n")
 
-    def test_limit_is_above_phone_camera_resolution(self):
-        # A 48 MP phone photo must not be caught by the bomb guard.
-        self.assertGreater(MAX_IMAGE_PIXELS, 48_000_000)
+    def test_limit_clears_what_phones_actually_produce(self):
+        # This used to demand headroom above a 48 MP sensor. It was lowered
+        # deliberately: on the 512 MB instance a 48 MP decode costs ~192 MB, and
+        # two at once OOM the process — a hard failure for everyone, traded
+        # against a rejected upload for the rare person shooting full-res.
+        # 12 MP is what phones bin down to by default, and what the gallery
+        # actually receives.
+        self.assertGreater(MAX_IMAGE_PIXELS, 12_000_000)
+
+    def test_a_default_phone_photo_is_accepted(self):
+        buf = io.BytesIO()
+        Image.new("RGB", (4032, 3024), "green").save(buf, format="JPEG", quality=85)
+        upload = SimpleUploadedFile("phone.jpg", buf.getvalue(), content_type="image/jpeg")
+        validate_upload(upload)  # 12.2 MP — must not raise
+
+    def test_the_ceiling_keeps_a_single_decode_inside_the_ram_budget(self):
+        """The number exists for one reason: RAM. Pin the arithmetic.
+
+        Decoded bitmap = pixels × 4 bytes. Two concurrent uploads plus the
+        ~80 MB the loaded app occupies must fit in a 512 MB instance.
+        """
+        decode_mb = MAX_IMAGE_PIXELS * 4 / 1024 / 1024
+        self.assertLess(80 + 2 * decode_mb, 512)

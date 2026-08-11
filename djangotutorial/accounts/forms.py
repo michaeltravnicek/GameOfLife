@@ -17,7 +17,7 @@ def _input_attrs(placeholder="", autocomplete=""):
 
 
 class CustomUserCreationForm(UserCreationForm):
-    """Registration form: email as username, phone links to a leaderboard user."""
+    """Registration form: name, username, e-mail, password. Nothing else."""
     first_name = forms.CharField(
         label="Jméno",
         max_length=150,
@@ -27,11 +27,13 @@ class CustomUserCreationForm(UserCreationForm):
         label="E-mail",
         widget=forms.EmailInput(attrs=_input_attrs("tvuj@email.cz", "email")),
     )
-    # No phone field any more. It used to be the exact key that matched an
-    # account to its LeaderboardUser (number == phone), but that meant collecting
-    # a phone number from everyone up front. Linking is now a name-based
-    # suggestion an admin confirms (see accounts.matching + admin), so a fresh
-    # account starts UNLINKED and claims its history later.
+    # No phone field, and no phone anywhere else either — the number was dropped
+    # from LeaderboardUser in migration 0026. It used to be the exact key that
+    # matched an account to its player row, which meant collecting a number from
+    # everyone for no other purpose. The e-mail is that key now: it creates the
+    # account's own player, and adopts an archive player carrying the same
+    # address. Anything less exact than that is an admin merge
+    # (accounts.matching + leaderboard.merging).
 
     # Enforced here, not only in React: a client-side checkbox is a UX nicety,
     # but the record of consent has to be trustworthy, and anything posting
@@ -94,10 +96,6 @@ class CustomUserCreationForm(UserCreationForm):
             password=self.cleaned_data["password1"],
             first_name=self.cleaned_data["first_name"],
         )
-        # Unlinked on purpose: no LeaderboardUser is created or attached here.
-        # A brand-new player has no points yet, and someone who already has a
-        # history gets matched to their existing row by an admin (never
-        # auto-claimed — that would let anyone inherit a namesake's points).
         Profile.objects.create(
             user=user,
             # Recorded from the server clock, not from anything the client sent
@@ -105,4 +103,10 @@ class CustomUserCreationForm(UserCreationForm):
             gdpr_consent_at=timezone.now(),
             gdpr_consent_version=settings.PRIVACY_POLICY_VERSION,
         )
+        # Every account is a player from the start: check-in refuses an account
+        # with no leaderboard row, so postponing this would silently cost the
+        # newcomer the points from their first event. Adopts an archive player
+        # when the e-mail matches one — see ensure_leaderboard_user.
+        from .services import ensure_leaderboard_user
+        ensure_leaderboard_user(user)
         return user

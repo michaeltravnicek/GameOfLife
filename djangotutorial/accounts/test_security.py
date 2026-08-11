@@ -77,7 +77,7 @@ class ProfilePiiExposureTests(TestCase):
     def test_email_username_not_published(self):
         email = "someone@icloud.com"
         account = AuthUser.objects.create_user(username=email, password="x")
-        lb = LeaderboardUser.objects.create(number=700000905, name="Some One")
+        lb = LeaderboardUser.objects.create(name="Some One")
         Profile.objects.create(user=account, leaderboard_user=lb)
         resp = APIClient().get(reverse("api-profile", kwargs={"username": email}))
         self.assertEqual(resp.status_code, 200)

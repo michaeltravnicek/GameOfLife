@@ -19,8 +19,8 @@ class SeasonLeaderboardApiTests(TestCase):
             name="2025/26", start_date=date(2025, 9, 1), end_date=date(2026, 6, 30),
             is_active=True,
         )
-        self.alice = LeaderboardUser.objects.create(number=700000001, name="Alice")
-        self.bob = LeaderboardUser.objects.create(number=700000002, name="Bob")
+        self.alice = LeaderboardUser.objects.create(name="Alice")
+        self.bob = LeaderboardUser.objects.create(name="Bob")
         self.in_event = Event.objects.create(
             sheet_id="in", sheet_list_id="x", name="In Season", place="Brno", points=100,
             date=timezone.make_aware(datetime(2025, 10, 1, 12, 0)),

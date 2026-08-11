@@ -18,7 +18,7 @@ from leaderboard.tests.helpers import make_image_upload
 class ProfileApiTests(TestCase):
     def setUp(self):
         self.client = APIClient()
-        self.lb_user = LeaderboardUser.objects.create(number=700000005, name="Pat")
+        self.lb_user = LeaderboardUser.objects.create(name="Pat")
         self.auth = AuthUser.objects.create_user(username="pat", password="x", first_name="Pat")
         Profile.objects.create(user=self.auth, leaderboard_user=self.lb_user)
         self.season = Season.objects.create(
@@ -69,7 +69,7 @@ class ProfileApiTests(TestCase):
         must not publish it as the @handle or as the display name."""
         email = "pat.novak@icloud.com"
         social = AuthUser.objects.create_user(username=email, password="x")
-        lb = LeaderboardUser.objects.create(number=700000009, name="Pat Novak")
+        lb = LeaderboardUser.objects.create(name="Pat Novak")
         Profile.objects.create(user=social, leaderboard_user=lb)
         resp = self.client.get(reverse("api-profile", kwargs={"username": email}))
         self.assertEqual(resp.status_code, 200)
@@ -172,28 +172,29 @@ class RegisterApiTests(TestCase):
         me = self.client.get(reverse("api-me"))
         self.assertEqual(me.json()["user"]["username"], "novacek")
 
-    def test_new_account_starts_unlinked(self):
-        # No phone means no automatic link and no placeholder LeaderboardUser —
-        # linking is an admin action (accounts.matching + admin).
+    def test_new_account_gets_its_own_player(self):
+        # An account with no player cannot check in (leaderboard/checkin.py), so
+        # one is created at signup. Claiming an *archive* player is still an
+        # admin merge — see accounts/test_player_creation.py for the whole rule.
         before = LeaderboardUser.objects.count()
         self.client.post(self.url, self.payload, format="json")
         profile = Profile.objects.get(user__username="novacek")
-        self.assertIsNone(profile.leaderboard_user)
-        self.assertEqual(LeaderboardUser.objects.count(), before)
+        self.assertIsNotNone(profile.leaderboard_user)
+        self.assertEqual(LeaderboardUser.objects.count(), before + 1)
 
     def test_possible_link_flagged_when_name_matches_unclaimed_player(self):
-        LeaderboardUser.objects.create(number=700000301, name="Nova Nováková")
+        LeaderboardUser.objects.create(name="Nova Nováková")
         resp = self.client.post(self.url, self.payload, format="json")
         self.assertTrue(resp.json()["possible_link"])
 
     def test_possible_link_false_when_no_similar_player(self):
-        LeaderboardUser.objects.create(number=700000302, name="Úplně Jiný")
+        LeaderboardUser.objects.create(name="Úplně Jiný")
         resp = self.client.post(self.url, self.payload, format="json")
         self.assertFalse(resp.json()["possible_link"])
 
     def test_possible_link_ignores_already_claimed_players(self):
         # A namesake whose row is already taken must not be offered again.
-        lb = LeaderboardUser.objects.create(number=700000303, name="Nova Nováková")
+        lb = LeaderboardUser.objects.create(name="Nova Nováková")
         taken = AuthUser.objects.create_user(username="drzitel", password="x")
         Profile.objects.create(user=taken, leaderboard_user=lb)
         resp = self.client.post(self.url, self.payload, format="json")

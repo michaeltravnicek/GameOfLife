@@ -7,6 +7,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import path, reverse
 from django.utils.html import format_html
 
+from leaderboard import merging
 from leaderboard.models import User as LeaderboardUser
 
 from . import matching
@@ -26,7 +27,7 @@ def _player_stats(queryset):
 class ProfileAdmin(admin.ModelAdmin):
     list_display = ("user", "leaderboard_user", "role", "created_at")
     list_filter = ("role",)
-    search_fields = ("user__username", "user__email", "leaderboard_user__name", "leaderboard_user__number")
+    search_fields = ("user__username", "user__email", "leaderboard_user__name")
     raw_id_fields = ("user", "leaderboard_user")
 
     def save_model(self, request, obj, form, change):
@@ -42,18 +43,22 @@ class ProfileAdmin(admin.ModelAdmin):
                 messages.WARNING,
             )
 
-    # ── Account ↔ player linking ──────────────────────────────────────────
-    # Replaces the phone number as the way an account finds its points. The
-    # suggestions come from accounts.matching; every write below is an explicit
-    # admin action, never automatic — a wrong link hands someone another
-    # person's points *and* their event history.
+    # ── Archive player → account merging ──────────────────────────────────
+    # The queue runs from the archive side: every account owns a player from
+    # registration, so what is left over is Google-Forms rows waiting for their
+    # human. Confirming one folds it into the account's player
+    # (leaderboard.merging). Suggestions come from accounts.matching; the write
+    # is always an explicit admin action, because a wrong merge moves another
+    # person's points *and* their event history onto a stranger.
 
     def get_urls(self):
         own = [
-            path("link/", self.admin_site.admin_view(self.link_list_view),
+            path("merge/", self.admin_site.admin_view(self.merge_list_view),
                  name="accounts_profile_link_list"),
-            path("link/<int:user_id>/", self.admin_site.admin_view(self.link_detail_view),
+            path("merge/<int:player_id>/", self.admin_site.admin_view(self.merge_detail_view),
                  name="accounts_profile_link_detail"),
+            path("merge/<int:player_id>/undo/", self.admin_site.admin_view(self.unmerge_view),
+                 name="accounts_profile_unmerge"),
             path("link/<int:user_id>/unlink/", self.admin_site.admin_view(self.unlink_view),
                  name="accounts_profile_unlink"),
         ]
@@ -67,71 +72,82 @@ class ProfileAdmin(admin.ModelAdmin):
         return {**self.admin_site.each_context(request),
                 "opts": self.model._meta, **extra}
 
-    def link_list_view(self, request):
-        """Accounts with no leaderboard player, each with its best suggestion."""
+    def merge_list_view(self, request):
+        """Archive players waiting for an owner, each with its best suggestion."""
         self._check_perm(request)
-        players = list(_player_stats(matching.unlinked_players()))
+        accounts = list(matching.mergeable_accounts()[:500])
         rows = []
-        for user in matching.unlinked_accounts()[:200]:
-            candidates = matching.suggest_players(user, players, limit=1)
-            rows.append({"account": user,
+        for player in _player_stats(matching.archive_players())[:200]:
+            candidates = matching.suggest_accounts(player, accounts, limit=1)
+            rows.append({"player": player,
                          "top": candidates[0] if candidates else None})
         return render(request, "admin/accounts/link_list.html", self._context(
-            request, title="Propojit účty s hráči", rows=rows,
-            unlinked_players=len(players),
+            request, title="Přiřadit archivní hráče k účtům", rows=rows,
+            account_count=len(accounts),
+            merged=LeaderboardUser.all_objects.filter(
+                merged_into__isnull=False).select_related("merged_into")[:50],
+            orphan_accounts=matching.accounts_without_player().count(),
         ))
 
-    def link_detail_view(self, request, user_id):
-        """Ranked candidates for one account; POST confirms the chosen player."""
+    def merge_detail_view(self, request, player_id):
+        """Ranked accounts for one archive player; POST confirms the merge."""
         self._check_perm(request)
-        account = get_object_or_404(matching.unlinked_accounts(), pk=user_id)
+        player = get_object_or_404(_player_stats(matching.archive_players()), pk=player_id)
 
         if request.method == "POST":
-            return self._do_link(request, account)
+            return self._do_merge(request, player)
 
-        candidates = matching.suggest_players(
-            account, list(_player_stats(matching.unlinked_players())), limit=8)
+        candidates = matching.suggest_accounts(
+            player, list(matching.mergeable_accounts()[:500]), limit=8)
         return render(request, "admin/accounts/link_detail.html", self._context(
-            request, title=f"Propojit účet {account.username}",
-            account=account, candidates=candidates,
-            signals=matching.account_signals(account),
+            request, title=f"Přiřadit hráče {player.name}",
+            player=player, candidates=candidates,
         ))
 
-    def _do_link(self, request, account):
-        player_id = request.POST.get("player_id")
+    def _do_merge(self, request, player):
+        account_id = request.POST.get("account_id")
+        account = (
+            matching.mergeable_accounts().filter(pk=account_id).first()
+            if account_id else None
+        )
+        if account is None:
+            raise Http404("Účet neexistuje nebo nemá hráče.")
+
+        target = account.profile.leaderboard_user
         try:
-            player = LeaderboardUser.objects.get(pk=player_id)
-        except (LeaderboardUser.DoesNotExist, ValueError, TypeError):
-            raise Http404("Hráč neexistuje.")
-
-        with transaction.atomic():
-            # Re-check inside the transaction: two admins on this screen at once
-            # would otherwise both pass the "unclaimed" test and the second write
-            # would surface as a raw IntegrityError on the OneToOne.
-            taken = (Profile.objects.select_for_update()
-                     .filter(leaderboard_user=player).exclude(user=account).first())
-            if taken is not None:
-                self.message_user(
-                    request,
-                    f"Hráč {player.name} už patří účtu {taken.user.username}. "
-                    f"Nejdřív ho odpoj.",
-                    messages.ERROR,
-                )
-                return redirect(reverse("admin:accounts_profile_link_detail",
-                                        args=[account.pk]))
-            profile, _ = Profile.objects.get_or_create(user=account)
-            profile.leaderboard_user = player
-            profile.save(update_fields=["leaderboard_user"])
-
-        # The leaderboard payload carries profile_username, so a fresh link
-        # changes what /api/v1/leaderboard/ returns.
-        from leaderboard.cache_config import invalidate_points_dependent_caches
-        invalidate_points_dependent_caches()
+            moved = merging.merge_players(
+                player, target, performed_by=request.user.username)
+        except merging.MergeError as exc:
+            self.message_user(request, str(exc), messages.ERROR)
+            return redirect(reverse("admin:accounts_profile_link_detail",
+                                    args=[player.pk]))
 
         self.message_user(
             request,
-            f"Účet {account.username} propojen s hráčem {player.name}.",
+            f"Hráč {player.name} sloučen do účtu {account.username}: "
+            f"{moved['attendance']} účastí, {moved['badges']} odznaků, "
+            f"{moved['feedback']} hodnocení. Sloučení jde vrátit.",
             messages.SUCCESS,
+        )
+        return redirect(reverse("admin:accounts_profile_link_list"))
+
+    def unmerge_view(self, request, player_id):
+        """Undo a merge. POST only — it changes the leaderboard."""
+        self._check_perm(request)
+        if request.method != "POST":
+            raise Http404
+        player = get_object_or_404(
+            LeaderboardUser.all_objects, pk=player_id, merged_into__isnull=False)
+        try:
+            merging.unmerge_players(player)
+        except merging.MergeError as exc:
+            self.message_user(request, str(exc), messages.ERROR)
+            return redirect(reverse("admin:accounts_profile_link_list"))
+        self.message_user(
+            request,
+            f"Hráč {player.name} je zpátky v žebříčku. Body a odznaky, které "
+            f"sloučení přesunulo, ale zůstaly u cílového účtu — zkontroluj je.",
+            messages.WARNING,
         )
         return redirect(reverse("admin:accounts_profile_link_list"))
 
@@ -153,8 +169,8 @@ class ProfileAdmin(admin.ModelAdmin):
         return redirect(reverse("admin:accounts_profile_changelist"))
 
     def changelist_view(self, request, extra_context=None):
-        """Surface the linking tool from the Profile changelist."""
-        pending = matching.unlinked_accounts().count()
+        """Surface the merge tool from the Profile changelist."""
+        pending = matching.archive_players().count()
         extra_context = {
             **(extra_context or {}),
             "link_tool_url": reverse("admin:accounts_profile_link_list"),
@@ -162,7 +178,7 @@ class ProfileAdmin(admin.ModelAdmin):
         }
         if pending:
             self.message_user(request, format_html(
-                'Nepropojených účtů: {} — <a href="{}">propojit</a>',
+                'Archivních hráčů bez účtu: {} — <a href="{}">přiřadit</a>',
                 pending, reverse("admin:accounts_profile_link_list"),
             ), messages.INFO)
         return super().changelist_view(request, extra_context)

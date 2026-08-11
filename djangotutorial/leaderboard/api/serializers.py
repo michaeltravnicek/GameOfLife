@@ -57,12 +57,7 @@ def validate_logo_file(uploaded):
 
 
 def _badge_image_url(obj, request):
-    """Absolute URL of the event's badge artwork — the event's logo.
-
-    Events no longer own artwork; it hangs off `Event.badge`. Kept as a helper so
-    the list and detail serializers cannot drift apart, and so the response keeps
-    the `logo` key the frontend already reads.
-    """
+    """Absolute URL of the event's badge artwork — the event's logo."""
     badge = obj.badge
     if not badge or not badge.image:
         return None

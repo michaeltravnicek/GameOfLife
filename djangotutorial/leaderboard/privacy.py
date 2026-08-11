@@ -85,6 +85,32 @@ Visibility = namedtuple("Visibility", "members_only hide_pts hide_events")
 ALL_VISIBLE = Visibility(False, False, False)
 
 
+def points_hidden_player_ids():
+    """LeaderboardUser ids whose owner switched `hide_pts` on.
+
+    `hide_pts` has to mean more than "omit the total from my profile": a total is
+    trivially rebuilt by adding up the per-event points, and it is stated outright
+    by the season payloads and by the leaderboard row. So the flag also takes the
+    player off the rankings entirely -- see leaderboard.services.leaderboard.
+
+    `leaderboard_user__isnull=False` is not cosmetic: this feeds `pk__in`, and in
+    SQL a NULL inside a NOT IN list makes the whole predicate NULL, which would
+    silently empty the leaderboard.
+    """
+    from accounts.models import Profile
+
+    return (
+        Profile.objects
+        .filter(hide_pts=True, leaderboard_user__isnull=False)
+        .values_list("leaderboard_user_id", flat=True)
+    )
+
+
+def exclude_points_hidden(queryset):
+    """Drop players who withheld their points from a ranking queryset."""
+    return queryset.exclude(pk__in=points_hidden_player_ids())
+
+
 def visibility_for(profile, viewer):
     """Which of `profile`'s privacy flags actually apply to `viewer`.
 

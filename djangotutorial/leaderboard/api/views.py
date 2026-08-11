@@ -351,9 +351,11 @@ def player_season_detail(request, user_id, season_id):
     season = get_object_or_404(Season, pk=season_id)
     # Fourth and last way to reach one person's event history — see visibility_for.
     profile = Profile.objects.filter(leaderboard_user=lb_user).first()
-    if visibility_for(profile, request.user).hide_events:
+    gates = visibility_for(profile, request.user)
+    if gates.hide_events:
         raise Http404("Event history is hidden.")
-    return Response(season_detail(lb_user, season), status=status.HTTP_200_OK)
+    return Response(season_detail(lb_user, season, hide_pts=gates.hide_pts),
+                    status=status.HTTP_200_OK)
 
 
 @extend_schema(

@@ -57,7 +57,8 @@ class ImageToEventAdmin(admin.ModelAdmin):
 
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
-    list_display = ("number", "name")
+    list_display = ("name", "email")
+    search_fields = ("name", "email")
 
 
 @admin.register(UserToEvent)

@@ -265,29 +265,85 @@ class ImageToEvent(models.Model):
         invalidate_hero_cache()
 
 
+class ActivePlayerManager(models.Manager):
+    """Players that still stand on their own — merged-away rows excluded.
+
+    This is `User.objects`, so every query written in app code is merge-safe by
+    default. Code that genuinely needs the merged rows (the admin, the merge
+    tool itself, `dumpdata`) asks for `User.all_objects`.
+    """
+
+    def get_queryset(self):
+        return super().get_queryset().filter(merged_into__isnull=True)
+
+
 class User(models.Model):
-    # Czech mobile numbers are exactly 9 digits with no leading zero, so the
-    # valid integer range is 100000000-999999999. Enforced both in Python
-    # (forms/admin) and in the DB, since the Sheets sync writes in bulk.
-    number = models.IntegerField(
-        unique=True,
-        validators=[MinValueValidator(100_000_000), MaxValueValidator(999_999_999)],
-        help_text="Telefon bez předvolby — přesně 9 číslic.",
-    )
+    """A player on the leaderboard. Exists with or without a site account.
+
+    Identity used to be the phone number: the Google Form asked for one and
+    ``number`` was the key the sheet sync matched on. That field is gone
+    (migration 0026) — a phone number collected only to act as a join key is
+    data with no purpose, which is exactly what data minimisation forbids.
+
+    Since registration creates a player (accounts.services.ensure_leaderboard_user),
+    an account *is* a player and the identity is exact for everyone who signed up.
+    What is left over is the pre-registration archive: rows imported from the
+    Google Forms era whose human later made an account. Attaching those is a
+    merge of two players, not a link -- see ``leaderboard/merging.py``.
+    """
+
     name = models.CharField(max_length=255)
+    # Null, not blank: players imported from older sheets have no e-mail at all,
+    # and `unique` must not collapse them into one row. Postgres allows many
+    # NULLs in a unique column but only one "". Always store None, never "".
+    email = models.EmailField(
+        null=True, blank=True, unique=True,
+        help_text="E-mail z formuláře — spojuje odpovědi téhož člověka. Prázdné u starších hráčů.",
+    )
+    # Soft merge: the row survives its own merge so a mistake is one UPDATE away
+    # from being undone. A hard delete would need a database restore instead.
+    # PROTECT, not SET_NULL: clearing this on the target's deletion would silently
+    # resurrect the archive row into the leaderboard, points and all.
+    merged_into = models.ForeignKey(
+        "self", null=True, blank=True, on_delete=models.PROTECT,
+        related_name="merged_from",
+        help_text="Vyplněné = tento hráč byl sloučen do jiného a nezobrazuje se.",
+    )
+    merged_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, null=True)
     updated_at = models.DateTimeField(auto_now=True, null=True)
 
+    objects = ActivePlayerManager()
+    all_objects = models.Manager()
+
     class Meta:
-        constraints = [
-            models.CheckConstraint(
-                condition=models.Q(number__gte=100_000_000, number__lte=999_999_999),
-                name="user_number_9_digits",
-            ),
-        ]
+        # Both point at the unfiltered manager on purpose. `base_manager_name`
+        # keeps `profile.leaderboard_user` resolvable after a merge (a filtered
+        # base manager raises DoesNotExist instead). `default_manager_name` is
+        # what the admin and `dumpdata` use -- a backup that quietly omitted
+        # merged players would lose exactly the rows a merge might need undoing.
+        base_manager_name = "all_objects"
+        default_manager_name = "all_objects"
 
     def __str__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        # The cached leaderboard stores the *rendered* name (shortened to
+        # "Jan N." unless consented), so a rename that skipped this would leave
+        # the old name on the board until the TTL expired. Only on a real change:
+        # the Sheets sync saves players constantly without touching the name.
+        renamed = False
+        if self.pk:
+            previous = type(self).all_objects.filter(pk=self.pk).values_list(
+                "name", flat=True).first()
+            renamed = previous is not None and previous != self.name
+
+        super().save(*args, **kwargs)
+
+        if renamed:
+            from .cache_config import invalidate_points_dependent_caches
+            invalidate_points_dependent_caches()
 
 
 class UserToEvent(models.Model):
@@ -300,6 +356,23 @@ class UserToEvent(models.Model):
 
     def __str__(self):
         return f"{self.user} → {self.event}"
+
+    # Attendance is the leaderboard's only input, so every write has to evict it.
+    # The four *callers* that create attendance (check-in, the sync, the award
+    # command, the admin attendance editor) used to each remember this on their
+    # own -- and the admin, which is the documented way to top up somebody whose
+    # phone failed, did not. Doing it here means a row cannot be written from
+    # anywhere without the board following.
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        from .cache_config import invalidate_points_dependent_caches
+        invalidate_points_dependent_caches()
+
+    def delete(self, *args, **kwargs):
+        result = super().delete(*args, **kwargs)
+        from .cache_config import invalidate_points_dependent_caches
+        invalidate_points_dependent_caches()
+        return result
 
 
 class UserBadge(models.Model):

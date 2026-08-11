@@ -33,7 +33,7 @@ export function useSeasonView(seasonData, today) {
       if (!cat) return;
       if (!buckets[cat]) buckets[cat] = { n: 0, p: 0 };
       buckets[cat].n += 1;
-      buckets[cat].p += e.pts;
+      buckets[cat].p += e.pts || 0;
     });
     const sorted = Object.entries(buckets).sort((a, b) => b[1].p - a[1].p);
     const max = Math.max(...sorted.map(([, b]) => b.p), 1);

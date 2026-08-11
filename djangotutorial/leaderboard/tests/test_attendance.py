@@ -30,8 +30,8 @@ class AttendanceAdminApiTests(TestCase):
             date=timezone.now() - timedelta(days=1),
         )
         # Two leaderboard players; one attended.
-        self.lb1 = LeaderboardUser.objects.create(number=700000111, name="Alice")
-        self.lb2 = LeaderboardUser.objects.create(number=700000222, name="Bob")
+        self.lb1 = LeaderboardUser.objects.create(name="Alice")
+        self.lb2 = LeaderboardUser.objects.create(name="Bob")
         UserToEvent.objects.create(user=self.lb1, event=self.event, points=10)
 
     # --- attendee_count on the public detail ---

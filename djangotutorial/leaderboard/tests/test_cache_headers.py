@@ -22,7 +22,7 @@ from leaderboard.models import Event, Season, User as LeaderboardUser
 class NoStoreOnPersonalisedEndpointsTests(TestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.lb_user = LeaderboardUser.objects.create(number=700000601, name="Cache Carl")
+        cls.lb_user = LeaderboardUser.objects.create(name="Cache Carl")
         cls.event = Event.objects.create(
             sheet_id="ch1", sheet_list_id="x", name="Cache Event", place="Praha",
             points=5, date=timezone.now(), visible_to_users=True, slug="cache-event",

@@ -14,6 +14,21 @@ import re
 
 # "Timestamp | Telefon (bez předvolby) | Jméno a příjmení | Zúčastnil/a ses
 #  této akce? | Jak hodnotíš tuto akci? | Pokud máš ještě něco na srdci, ..."
+#
+# Newer forms have "Collect email addresses" switched on, which prepends an
+# "Email Address" column, and no longer ask for a phone number at all.
+EMAIL_HEADERS = {
+    "email address",
+    "e-mail address",
+    "emailová adresa",
+    "e-mailová adresa",
+    "email",
+    "e-mail",
+}
+NAME_HEADERS = {
+    "jméno a příjmení",
+    "jméno",
+}
 ATTENDED_HEADERS = {
     "zúčastnil/a ses této akce?",
 }
@@ -41,10 +56,13 @@ def normalize_header(raw) -> str:
 def header_map(header_row) -> dict[str, int]:
     """Map role name -> column index for the roles present in ``header_row``.
 
-    Roles: ``attended``, ``rating``, ``comment``, ``points``. Absent roles are
-    simply missing from the result. On duplicate headers the first wins.
+    Roles: ``email``, ``name``, ``attended``, ``rating``, ``comment``,
+    ``points``. Absent roles are simply missing from the result. On duplicate
+    headers the first wins.
     """
     roles = (
+        ("email", EMAIL_HEADERS),
+        ("name", NAME_HEADERS),
         ("attended", ATTENDED_HEADERS),
         ("rating", RATING_HEADERS),
         ("comment", COMMENT_HEADERS),

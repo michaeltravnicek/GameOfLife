@@ -27,13 +27,20 @@ const OUT = path.join(root, 'public', 'img');
 
 // Photographic backgrounds: one mid file for decorative stages, plus a
 // mobile/desktop pair for the prominent/interactive surfaces.
+// `height` matters as much as `width`. Capping only the width bounds nothing on
+// a portrait photo: the gallery shoots 3:4, so a 1920-wide export came out
+// 1920x2879 — 5.5 megapixels, 1.5 MB, the four heaviest files on the site. The
+// cap below applies to whichever side is longer (`fit: 'inside'`), which takes
+// that same file to 1280x1920 and 545 kB at *unchanged* quality. Dropping
+// quality instead barely helped (q78→q62 saved 200 kB and looked worse) — the
+// pixel count was the problem, not the compression.
 const GALLERY_VARIANTS = [
   // Decorative full-screen page backgrounds — always behind dark overlays +
   // grain, so a small, heavily-compressed file is invisible-quality but light
   // enough to also serve to phones.
-  { suffix: '', width: 1100, quality: 50 },
-  { suffix: '-mobile', width: 768, quality: 52 },
-  { suffix: '-desktop', width: 1920, quality: 78 },
+  { suffix: '', width: 1100, height: 1100, quality: 50 },
+  { suffix: '-mobile', width: 768, height: 768, quality: 52 },
+  { suffix: '-desktop', width: 1920, height: 1920, quality: 78 },
 ];
 
 async function isStale(src, out) {
@@ -58,7 +65,11 @@ async function processGallery(dir) {
       const made = await emit(src, out, () =>
         sharp(src)
           .rotate() // honor EXIF orientation
-          .resize({ width: v.width, withoutEnlargement: true })
+          .resize({
+            width: v.width, height: v.height,
+            // 'inside' = fit within the box, keep aspect ratio, never crop.
+            fit: 'inside', withoutEnlargement: true,
+          })
           .webp({ quality: v.quality })
           .toFile(out));
       if (made) console.log('  img/%s%s.webp (w%d q%d)', base, v.suffix, v.width, v.quality);

@@ -1,0 +1,48 @@
+/* 404 — text sits straight on a dimmed photo, the same treatment as /o-bodech.
+   No card: there is nothing here to frame, and a ticket or poster would promise
+   content that doesn't exist. */
+
+.notfound-page{position:relative;min-height:100vh;min-height:100lvh;display:flex;align-items:center;justify-content:center;overflow:hidden}
+
+.notfound-page .nf-stage{position:fixed;inset:0;bottom:auto;height:100vh;height:100lvh;z-index:0;background:url('/img/gal6-mobile.webp') center 32%/cover no-repeat;filter:saturate(.8) contrast(1.02);transform:scale(1.06)}
+@media(min-width:769px){.notfound-page .nf-stage{background-image:url('/img/gal6-desktop.webp')}}
+
+/* Heavy dim, weighted to the bottom: the photo's lower half is bright cobble
+   and the buttons live down there. Cream on stone needs the contrast. */
+.notfound-page .nf-stage::after{content:'';position:absolute;inset:0;background:
+  radial-gradient(ellipse at 50% 0%, var(--alpha-purple-20) 0%, transparent 42%),
+  linear-gradient(180deg, var(--alpha-dark-55) 0%, var(--alpha-dark-80) 40%, var(--alpha-dark-95) 100%)}
+
+.notfound-page .nf-body{position:relative;z-index:2;width:100%;max-width:680px;margin:0 auto;padding:132px 24px 88px;text-align:center}
+
+/* The 404 itself sits behind the heading as a watermark — big enough to read as
+   a graphic, faint enough not to compete with the sentence that explains it. */
+.notfound-page .nf-code{font-family:var(--font-display);font-weight:400;font-size:clamp(150px,26vw,300px);line-height:.8;letter-spacing:.02em;color:var(--alpha-cream-20);margin-bottom:-.28em;pointer-events:none;user-select:none;text-shadow:0 8px 44px var(--alpha-black-60)}
+
+.notfound-page .nf-eyebrow{font-size:15px;letter-spacing:.3em;color:var(--color-pink);display:inline-block;margin-bottom:12px}
+
+.notfound-page .nf-title{font-family:var(--font-display);font-weight:400;font-size:clamp(40px,7vw,80px);line-height:.95;letter-spacing:.03em;text-transform:uppercase;color:var(--color-heading);text-shadow:0 6px 34px var(--alpha-black-60)}
+.notfound-page .nf-title .pink{color:var(--color-pink)}
+
+.notfound-page .nf-tagline{font-family:var(--font-body);font-weight:300;font-style:italic;font-size:15px;line-height:1.6;color:var(--alpha-cream-70);max-width:46ch;margin:16px auto 0;text-shadow:0 2px 12px rgba(0,0,0,.6)}
+
+.notfound-page .nf-actions{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:14px;margin-top:36px}
+
+/* ── Entrance (matches PageHero's stagger) ── */
+@keyframes nfFade{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
+.notfound-page .nf-code{animation:nfFade .8s cubic-bezier(.22,.68,0,1.2) both .12s}
+.notfound-page .nf-title{animation:nfFade .8s cubic-bezier(.22,.68,0,1.2) both .24s}
+.notfound-page .nf-tagline{animation:nfFade .6s ease both .38s}
+.notfound-page .nf-actions{animation:nfFade .6s ease both .5s}
+
+@media(prefers-reduced-motion:reduce){
+  .notfound-page .nf-code,.notfound-page .nf-title,
+  .notfound-page .nf-tagline,.notfound-page .nf-actions{animation:none}
+  .notfound-page .nf-stage{transform:none}
+}
+
+@media(max-width:768px){
+  .notfound-page .nf-body{padding:108px 20px 72px}
+  .notfound-page .nf-tagline{font-size:14px}
+  .notfound-page .nf-actions{flex-direction:column;align-items:stretch}
+}

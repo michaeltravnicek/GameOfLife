@@ -88,12 +88,6 @@ class Profile(models.Model):
         )
 
     @property
-    def phone(self):
-        if self.leaderboard_user_id is None:
-            return None
-        return self.leaderboard_user.number
-
-    @property
     def is_admin(self):
         return self.role == self.ROLE_ADMIN
 
@@ -106,7 +100,29 @@ class Profile(models.Model):
         return self.role == self.ROLE_CLOSE
 
     def save(self, *args, **kwargs):
+        # Read the stored values before writing. Both of these end up inside the
+        # *cached* leaderboard payload — hide_pts decides whether this player is
+        # on the board at all, and the avatar is rendered into their row. Without
+        # this the change appears to do nothing until the TTL expires, which
+        # reads as "the setting is broken".
+        previous = None
+        if self.pk:
+            previous = (
+                Profile.objects.filter(pk=self.pk)
+                .values_list("hide_pts", "photo").first()
+            )
+        previous_hide_pts, previous_photo = previous if previous else (None, None)
+
         super().save(*args, **kwargs)
+
+        # `or ""` on both sides: an unset ImageField reads back as "" from the
+        # database but as None on the instance, so a bare != would call every
+        # single profile save a photo change and evict the board each time.
+        photo_changed = (previous_photo or "") != (self.photo.name or "")
+        if previous_hide_pts != self.hide_pts or photo_changed:
+            from leaderboard.cache_config import invalidate_points_dependent_caches
+            invalidate_points_dependent_caches()
+
         if self.photo:
             from leaderboard.image_utils import resize_image, make_webp_variant
             resize_image(self.photo, max_width=400, max_height=400, quality=85)

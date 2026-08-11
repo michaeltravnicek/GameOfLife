@@ -18,7 +18,7 @@ class EventFeedbackApiTests(TestCase):
         UserModel = get_user_model()
         self.user = UserModel.objects.create_user(username="fb_tester", password="x")
         # Feedback is keyed on the leaderboard user, so the account needs a link.
-        self.lb_user = LeaderboardUser.objects.create(number=777123456, name="FB Tester")
+        self.lb_user = LeaderboardUser.objects.create(name="FB Tester")
         Profile.objects.create(user=self.user, leaderboard_user=self.lb_user)
         self.event = Event.objects.create(
             sheet_id="fb", sheet_list_id="x",

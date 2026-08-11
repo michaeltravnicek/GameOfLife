@@ -25,6 +25,7 @@ const PlayerPage = lazy(() => import('./pages/Player/PlayerPage'));
 const FeedbacksPage = lazy(() => import('./pages/Admin/FeedbacksPage'));
 const OBodechPage = lazy(() => import('./pages/OBodech/OBodechPage'));
 const HistoriePage = lazy(() => import('./pages/Historie/HistoriePage'));
+const NotFoundPage = lazy(() => import('./pages/NotFound/NotFoundPage'));
 
 function ScrollToTop() {
   const location = useLocation();
@@ -90,6 +91,10 @@ export default function App() {
           <Route path="/obnova-hesla/:uid/:token" element={<Layout><ResetPasswordPage /></Layout>} />
           <Route path="/hrac/:userId" element={<Layout><PlayerPage /></Layout>} />
           <Route path="/sprava/zpetna-vazba" element={<Layout><FeedbacksPage /></Layout>} />
+          {/* Catch-all. Django serves index.html for every path it doesn't own,
+              so all dead links arrive here; without this the router matches
+              nothing and renders an empty page under the nav. */}
+          <Route path="*" element={<Layout><NotFoundPage /></Layout>} />
         </Routes>
       </Suspense>
     </>

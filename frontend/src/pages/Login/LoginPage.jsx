@@ -50,9 +50,9 @@ export default function LoginPage() {
             <form onSubmit={handleSubmit} noValidate>
               <FormInput
                 id="login-id"
-                label="Telefon nebo e-mail"
+                label="Přezdívka nebo e-mail"
                 type="text"
-                placeholder="731 005 976 nebo jan@example.com"
+                placeholder="jannovak nebo jan@example.com"
                 autoComplete="username"
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}

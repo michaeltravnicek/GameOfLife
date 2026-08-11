@@ -35,7 +35,7 @@ class UserSerializer(serializers.Serializer):
 # --- Requests ---
 
 class LoginRequestSerializer(serializers.Serializer):
-    identifier = serializers.CharField(help_text="Phone number, username or e-mail.")
+    identifier = serializers.CharField(help_text="Username or e-mail.")
     password = serializers.CharField(style={"input_type": "password"})
     remember = serializers.BooleanField(
         required=False, default=False,

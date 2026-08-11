@@ -25,7 +25,7 @@ class BadgeAwardingTests(TestCase):
             sheet_id="k", sheet_list_id="x", name="Karaoke", place="Brno",
             points=10, date=timezone.now(), badge=self.badge,
         )
-        self.player = LeaderboardUser.objects.create(number=700000401, name="Zpěvák")
+        self.player = LeaderboardUser.objects.create(name="Zpěvák")
 
     def test_attendance_awards_the_events_badge(self):
         UserToEvent.objects.create(user=self.player, event=self.event, points=10)
@@ -71,7 +71,7 @@ class BadgeApiExposureTests(TestCase):
             sheet_id="nm", sheet_list_id="x", name="Nahá míle", place="Brno",
             points=10, date=timezone.now(), badge=self.badge,
         )
-        self.player = LeaderboardUser.objects.create(number=700000402, name="Běžec Odvážný")
+        self.player = LeaderboardUser.objects.create(name="Běžec Odvážný")
         UserToEvent.objects.create(user=self.player, event=self.event, points=10)
 
     def test_player_detail_lists_badges(self):
@@ -83,7 +83,7 @@ class BadgeApiExposureTests(TestCase):
         self.assertEqual(badges[0]["description"], "Za odvahu")
 
     def test_player_without_badges_gets_empty_list(self):
-        loner = LeaderboardUser.objects.create(number=700000403, name="Nikdo")
+        loner = LeaderboardUser.objects.create(name="Nikdo")
         resp = self.client.get(reverse("api-player", kwargs={"user_id": loner.id}))
         self.assertEqual(resp.json()["badges"], [])
 

@@ -65,22 +65,6 @@ def parse_event_date_from_name(name, today=None):
         return None
 
 
-def parse_phone_number(raw):
-    """Normalize a Czech phone number to the 9-digit int used by ``User.number``.
-
-    Strips non-digits, drops a leading ``420`` country code, and returns an int
-    only when exactly 9 digits remain — otherwise ``None``.
-    """
-    if not raw:
-        return None
-    digits = re.sub(r"\D", "", str(raw))
-    if digits.startswith("420") and len(digits) == 12:
-        digits = digits[3:]
-    if len(digits) != 9:
-        return None
-    return int(digits)
-
-
 def parse_int_param(raw, default, *, min_val=None, max_val=None):
     """Parse an int query/body param with a default and optional clamping.
 

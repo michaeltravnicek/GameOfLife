@@ -19,10 +19,21 @@ MAX_UPLOAD_BYTES = 15 * 1024 * 1024  # 15 MB
 
 # Decompression-bomb ceiling. Bytes on disk say nothing about memory cost: a
 # ~1 MB PNG can declare 50000x50000 px, and PIL allocates the *decoded* bitmap
-# (w * h * 4 bytes ≈ 10 GB) the moment resize_image() touches it — one request
-# is enough to OOM the dyno. 60 MP leaves headroom above 48 MP phone cameras
-# while capping a single decode at roughly a quarter gigabyte.
-MAX_IMAGE_PIXELS = 60_000_000
+# (w * h * 4 bytes) the moment resize_image() touches it — one request is enough
+# to OOM the dyno.
+#
+# Sized against the 512 MB instance, measured rather than guessed: the loaded
+# app sits at ~80 MB RSS, so the whole decode budget is what is left of 512.
+#
+#   30 MP × 4 B = 120 MB per decode → two concurrent uploads ≈ 320 MB, survives
+#   60 MP × 4 B = 240 MB per decode → two concurrent uploads ≈ 560 MB, OOM
+#
+# The cost of this number: a phone shooting at its full 48 MP sensor resolution
+# is now rejected. Most phones bin down to 12 MP by default, and the 15 MB
+# MAX_UPLOAD_BYTES already turns away most true 48 MP files, so this bites
+# rarely — but it does bite, and the fix if it starts to is `Image.draft()` in
+# resize_image (decode JPEGs at 1/2–1/8 scale), not a bigger number here.
+MAX_IMAGE_PIXELS = 30_000_000
 
 # Belt and braces: make PIL itself raise instead of merely warning if anything
 # slips past validate_upload (e.g. an image already on disk being re-processed

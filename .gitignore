@@ -19,6 +19,9 @@ client_secret*.json
 # nepatří ani jednou — z historie se nemažou.
 script/data*.csv
 script/actions*/
+# Výstup `manage.py export_player_numbers` — záloha telefonních čísel pořízená
+# před migrací 0026, která je z databáze odstranila.
+player_numbers_*.csv
 
 __pycache__/
 *.__pycache__/
@@ -50,3 +53,8 @@ djangotutorial/media
 djangotutorial/staticfiles
 # load-test tooling (isolated venv, not part of the app)
 loadtest/.venv/
+
+# Exportovaný manuál (86 MB). Do gitu nepatří — repo už tak nese 139 MB
+# originálů v frontend/image-src/. Kdyby ho `git add -A` jednou zabral, z
+# historie se nesmaže bez přepsání historie.
+GOL_Web_Manual_2026.pdf

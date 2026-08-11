@@ -20,7 +20,7 @@ class CheckinEventsApiTests(TestCase):
         self.url = reverse("api-checkin-events")
         UserModel = get_user_model()
         self.user = UserModel.objects.create_user(username="home_test", password="x")
-        self.lb_user = make_profile_for(self.user, number=700000099)
+        self.lb_user = make_profile_for(self.user)
 
         now = timezone.now()
         self.active = Event.objects.create(
@@ -75,7 +75,7 @@ class StatsApiTests(TestCase):
         cache.clear()
         self.client = APIClient()
         self.url = reverse("api-stats")
-        lb_user = LeaderboardUser.objects.create(number=700000001, name="A")
+        lb_user = LeaderboardUser.objects.create(name="A")
         ev = Event.objects.create(
             sheet_id="s", sheet_list_id="x", name="E", place="Brno", points=10,
             date=timezone.now() - timedelta(days=1),

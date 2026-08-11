@@ -24,10 +24,27 @@ def create_leaderboard(leaderboard):
     return leaderboard_list
 
 
+def ranked_players():
+    """The players a ranking may contain.
+
+    Anyone with `hide_pts` on is off every board. Leaving them on it with the
+    number blanked would still publish the total by position -- and the flag is
+    read by its owner as "keep my points to myself", not "hide one label".
+
+    Note this hides them from *themselves* too. The board is cached under one key
+    for all viewers (cache_config), so a per-viewer variant would mean either a
+    cache per user or no cache at all; their own profile still shows them
+    everything. That trade is deliberate.
+    """
+    from leaderboard.privacy import exclude_points_hidden
+
+    return exclude_points_hidden(User.objects)
+
+
 def leaderboard_total():
     """All-time ranking: every user annotated with event count + total points."""
     return (
-        User.objects
+        ranked_players()
         .annotate(
             events_count=Count("usertoevent", distinct=True),
             total_points=Coalesce(Sum("usertoevent__points"), 0),
@@ -48,7 +65,7 @@ def leaderboard_for_season(season):
     """Ranked users scored only on events within `[season.start, season.end]`."""
     window = _season_window(season)
     ranked = (
-        User.objects
+        ranked_players()
         .annotate(
             events_count=Count("usertoevent", filter=window, distinct=True),
             total_points=Coalesce(Sum("usertoevent__points", filter=window), 0),
@@ -60,7 +77,14 @@ def leaderboard_for_season(season):
 
 
 def season_rank(season, season_pts):
-    """1-based rank for a points total within a season, or None if no points."""
+    """1-based rank for a points total within a season, or None if no points.
+
+    Counts only players the board shows: a hidden player still sitting in this
+    count would push everyone below them down a place, so the rank on a profile
+    and the position on the leaderboard would disagree.
+    """
+    from leaderboard.privacy import points_hidden_player_ids
+
     if season_pts <= 0:
         return None
     higher = (
@@ -69,6 +93,7 @@ def season_rank(season, season_pts):
             event__date__date__gte=season.start_date,
             event__date__date__lte=season.end_date,
         )
+        .exclude(user_id__in=points_hidden_player_ids())
         .values("user")
         .annotate(pts=Sum("points"))
         .filter(pts__gt=season_pts)
@@ -80,7 +105,7 @@ def season_rank(season, season_pts):
 def top_players(limit=5):
     """Top `limit` users by total points, each annotated with a 1-based rank."""
     players = (
-        User.objects
+        ranked_players()
         .annotate(
             total_points=Coalesce(Sum("usertoevent__points"), 0),
             events_count=Count("usertoevent", distinct=True),
@@ -221,7 +246,7 @@ def player_payload(lb_user, request=None):
     rank = None
     if total_points > 0:
         rank = (
-            User.objects
+            ranked_players()
             .annotate(tp=Coalesce(Sum("usertoevent__points"), 0))
             .filter(tp__gt=total_points).count()
         ) + 1
@@ -252,7 +277,10 @@ def player_payload(lb_user, request=None):
                 "name": u.event.name,
                 "place": u.event.place,
                 "date": u.event.date,
-                "points": u.points,
+                # Omitted, not zeroed, under hide_pts: the per-event numbers add
+                # up to exactly the total the flag withholds, so publishing them
+                # would make the whole flag decorative.
+                **({} if gates.hide_pts else {"points": u.points}),
                 "category": {"id": u.event.category.id, "name": u.event.category.name}
                             if u.event.category else None,
             }
@@ -283,5 +311,5 @@ def player_payload(lb_user, request=None):
         payload["rank"] = rank
     if not gates.hide_events:
         payload["events"] = events
-        payload["seasons"] = season_summaries(lb_user)
+        payload["seasons"] = season_summaries(lb_user, hide_pts=gates.hide_pts)
     return payload

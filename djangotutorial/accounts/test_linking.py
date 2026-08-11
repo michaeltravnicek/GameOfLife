@@ -1,4 +1,4 @@
-"""Account ↔ leaderboard-player linking: the matching logic and the admin tool."""
+"""Archive player ↔ account matching: the scoring logic and the admin merge tool."""
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from django.test import TestCase
@@ -6,16 +6,14 @@ from django.urls import reverse
 
 from accounts import matching
 from accounts.models import Profile
+from leaderboard import merging
 from leaderboard.cache_config import CACHE_KEY_LEADERBOARD_TOTAL
 from leaderboard.models import User as LeaderboardUser
 
 User = get_user_model()
 
-_next_number = iter(range(100_000_001, 100_001_000))
-
-
 def make_player(name):
-    return LeaderboardUser.objects.create(number=next(_next_number), name=name)
+    return LeaderboardUser.objects.create(name=name)
 
 
 def make_account(username, first_name="", last_name="", email="", linked=None):
@@ -110,86 +108,141 @@ class SuggestionTests(TestCase):
         self.assertFalse(matching.suggest_players(
             account, LeaderboardUser.objects.all())[0]["ambiguous"])
 
-    def test_claimed_players_are_not_offered(self):
+    def test_ranks_the_right_account_first(self):
+        """The queue runs archive-player → account; same scoring, other way."""
+        right = make_account("kdokoliv", first_name="Jan", last_name="Novák",
+                             linked=make_player("Jan Novák"))
+        wrong = make_account("petr", first_name="Petr", last_name="Svoboda",
+                             linked=make_player("Petr Svoboda"))
+        ranked = matching.suggest_accounts(
+            make_player("Jan Novák"), [wrong, right])
+        self.assertEqual(ranked[0]["account"], right)
+
+
+class MergeQueueTests(TestCase):
+    def test_claimed_players_are_not_in_the_archive_queue(self):
         claimed = make_player("Jan Novák")
         make_account("owner", linked=claimed)
-        self.assertNotIn(claimed, matching.unlinked_players())
+        self.assertNotIn(claimed, matching.archive_players())
 
-    def test_linked_accounts_are_not_listed(self):
-        player = make_player("Jan Novák")
-        linked = make_account("linked", linked=player)
-        unlinked = make_account("unlinked")
-        accounts = list(matching.unlinked_accounts())
-        self.assertIn(unlinked, accounts)
-        self.assertNotIn(linked, accounts)
+    def test_merged_players_leave_the_queue(self):
+        archive = make_player("Jan Novák")
+        target = make_player("Jan Novak")
+        make_account("honza", linked=target)
+        self.assertIn(archive, matching.archive_players())
+        merging.merge_players(archive, target)
+        self.assertNotIn(archive, matching.archive_players())
 
-    def test_account_without_a_profile_counts_as_unlinked(self):
+    def test_only_accounts_with_a_player_can_receive_a_merge(self):
+        with_player = make_account("linked", linked=make_player("Jan Novák"))
+        without = make_account("orphan")
+        accounts = list(matching.mergeable_accounts())
+        self.assertIn(with_player, accounts)
+        self.assertNotIn(without, accounts)
+
+    def test_accounts_without_a_player_are_surfaced_separately(self):
         account = make_account("noprofile")
         self.assertFalse(Profile.objects.filter(user=account).exists())
-        self.assertIn(account, matching.unlinked_accounts())
+        self.assertIn(account, matching.accounts_without_player())
 
 
-class LinkingAdminTests(TestCase):
+class MergeAdminTests(TestCase):
     def setUp(self):
         self.staff = User.objects.create_superuser("root", "r@x.cz", "pw12345!")
         self.client.force_login(self.staff)
-        self.player = make_player("Jan Novák")
+        # The archive row (Google Forms) and the account that should own it.
+        self.archive = make_player("Jan Novák")
+        self.own_player = make_player("Jan Novák")
         self.account = make_account("honza", first_name="Jan", last_name="Novák",
-                                    email="jan.novak@gmail.com")
+                                    email="jan.novak@gmail.com",
+                                    linked=self.own_player)
 
-    def test_list_view_shows_an_unlinked_account(self):
+    def _merge(self, follow=False, **extra):
+        return self.client.post(
+            reverse("admin:accounts_profile_link_detail", args=[self.archive.pk]),
+            {"account_id": self.account.pk, **extra}, follow=follow)
+
+    def test_list_view_shows_an_archive_player(self):
         response = self.client.get(reverse("admin:accounts_profile_link_list"))
         self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Jan Novák")
         self.assertContains(response, "honza")
-        self.assertContains(response, "Jan Novák")
 
-    def test_detail_view_lists_candidates(self):
+    def test_detail_view_lists_candidate_accounts(self):
         response = self.client.get(
-            reverse("admin:accounts_profile_link_detail", args=[self.account.pk]))
+            reverse("admin:accounts_profile_link_detail", args=[self.archive.pk]))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Jan Novák")
+        self.assertContains(response, "honza")
 
-    def test_post_links_the_account(self):
-        self.client.post(
-            reverse("admin:accounts_profile_link_detail", args=[self.account.pk]),
-            {"player_id": self.player.pk})
+    def test_post_merges_the_archive_player_into_the_account(self):
+        self._merge()
+        self.archive.refresh_from_db()
+        self.assertEqual(self.archive.merged_into, self.own_player)
+        self.assertIsNotNone(self.archive.merged_at)
+        # The account keeps its own player — the merge never repoints the profile.
         self.assertEqual(Profile.objects.get(user=self.account).leaderboard_user,
-                         self.player)
+                         self.own_player)
 
-    def test_linking_evicts_the_leaderboard_cache(self):
-        """The board carries profile_username, so a new link changes its output."""
+    def test_merging_evicts_the_leaderboard_cache(self):
         cache.set(CACHE_KEY_LEADERBOARD_TOTAL, "SENTINEL", 60)
-        self.client.post(
-            reverse("admin:accounts_profile_link_detail", args=[self.account.pk]),
-            {"player_id": self.player.pk})
+        self._merge()
         self.assertIsNone(cache.get(CACHE_KEY_LEADERBOARD_TOTAL))
 
-    def test_claiming_an_already_linked_player_is_refused(self):
-        """Must be a readable message, not a raw IntegrityError on the OneToOne."""
-        make_account("first_owner", linked=self.player)
-        response = self.client.post(
-            reverse("admin:accounts_profile_link_detail", args=[self.account.pk]),
-            {"player_id": self.player.pk}, follow=True)
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "už patří účtu")
-        self.assertFalse(
-            Profile.objects.filter(user=self.account,
-                                   leaderboard_user=self.player).exists())
+    def test_merged_player_disappears_from_the_queue(self):
+        self._merge()
+        response = self.client.get(reverse("admin:accounts_profile_link_list"))
+        self.assertContains(response, "Nedávno sloučení")
 
-    def test_unknown_player_id_is_404(self):
+    def test_a_player_that_owns_an_account_is_not_offered_at_all(self):
+        """Two gates: it leaves the queue, and the POST 404s even if guessed.
+
+        The service refuses it as well (test_merging.MergeRefusalTests) — this
+        one pins that the admin never gets that far, because the failure mode is
+        a stranger silently losing their whole history.
+        """
+        make_account("someone_else", linked=self.archive)
+        self.assertNotIn(self.archive, matching.archive_players())
+        response = self._merge()
+        self.assertEqual(response.status_code, 404)
+        self.archive.refresh_from_db()
+        self.assertIsNone(self.archive.merged_into)
+
+    def test_unknown_account_id_is_404(self):
         response = self.client.post(
-            reverse("admin:accounts_profile_link_detail", args=[self.account.pk]),
-            {"player_id": 999999})
+            reverse("admin:accounts_profile_link_detail", args=[self.archive.pk]),
+            {"account_id": 999999})
         self.assertEqual(response.status_code, 404)
 
+    def test_account_without_a_player_cannot_be_a_target(self):
+        orphan = make_account("orphan")
+        response = self.client.post(
+            reverse("admin:accounts_profile_link_detail", args=[self.archive.pk]),
+            {"account_id": orphan.pk})
+        self.assertEqual(response.status_code, 404)
+
+    def test_unmerge_puts_the_player_back(self):
+        self._merge()
+        self.client.post(
+            reverse("admin:accounts_profile_unmerge", args=[self.archive.pk]))
+        self.archive.refresh_from_db()
+        self.assertIsNone(self.archive.merged_into)
+        self.assertIn(self.archive, LeaderboardUser.objects.all())
+
+    def test_unmerge_rejects_get(self):
+        """Undoing a merge changes the leaderboard — never on a GET."""
+        self._merge()
+        response = self.client.get(
+            reverse("admin:accounts_profile_unmerge", args=[self.archive.pk]))
+        self.assertEqual(response.status_code, 404)
+        self.archive.refresh_from_db()
+        self.assertIsNotNone(self.archive.merged_into)
+
     def test_unlink_clears_the_link(self):
-        Profile.objects.create(user=self.account, leaderboard_user=self.player)
         self.client.post(reverse("admin:accounts_profile_unlink", args=[self.account.pk]))
         self.assertIsNone(Profile.objects.get(user=self.account).leaderboard_user)
 
     def test_unlink_rejects_get(self):
         """Undoing a link changes what a person can see — never on a GET."""
-        Profile.objects.create(user=self.account, leaderboard_user=self.player)
         response = self.client.get(
             reverse("admin:accounts_profile_unlink", args=[self.account.pk]))
         self.assertEqual(response.status_code, 404)

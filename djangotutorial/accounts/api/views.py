@@ -71,8 +71,8 @@ def me_view(request):
             request_only=True,
         ),
         OpenApiExample(
-            "Login by phone number",
-            value={"identifier": "603123456", "password": "s3cret"},
+            "Login by username",
+            value={"identifier": "jannovak", "password": "s3cret"},
             request_only=True,
         ),
     ],
@@ -81,12 +81,12 @@ def me_view(request):
 @permission_classes([AllowAny])
 @throttle_classes([LoginThrottle])
 def login_api(request):
-    """Log in via phone / username / email + password. Optional `remember`.
+    """Log in via username / email + password. Optional `remember`.
 
     Bad credentials → one generic 401 for both unknown identifier and wrong
-    password: distinct messages would let anyone probe which phone numbers /
-    e-mails have an account (the password-reset endpoint hides this the same
-    way). ModelBackend already refuses inactive users inside authenticate().
+    password: distinct messages would let anyone probe which e-mails have an
+    account (the password-reset endpoint hides this the same way). ModelBackend
+    already refuses inactive users inside authenticate().
     """
     identifier = (request.data.get("identifier") or request.data.get("username") or "").strip()
     password = request.data.get("password") or ""
@@ -183,7 +183,7 @@ def password_reset_confirm_api(request):
             "New account",
             value={
                 "first_name": "Jan", "username": "jannovak",
-                "email": "jan.novak@example.com", "phone": "603123456",
+                "email": "jan.novak@example.com",
                 "password1": "s3cret-pass", "password2": "s3cret-pass",
             },
             request_only=True,
@@ -195,13 +195,16 @@ def password_reset_confirm_api(request):
 @throttle_classes([RegisterThrottle])
 @transaction.atomic
 def register_api(request):
-    """Create an unlinked account, log in, and hint if points may already exist.
+    """Create an account with its own player, log in, and hint at old points.
 
-    No phone number: the account starts with no LeaderboardUser attached. If the
-    name resembles an existing unclaimed player, the response carries a neutral
-    `possible_link` flag so the UI can say "we may already have your points" —
-    but the actual link is only ever made by an admin (matching.suggest_players
-    is a ranking, never a write), because self-service claiming would let anyone
+    The account gets a LeaderboardUser of its own (form.save →
+    ensure_leaderboard_user), which is what lets it check in from day one. An
+    exact e-mail match against the archive is settled there too.
+
+    A *name* that resembles an unclaimed archive player only sets the neutral
+    `possible_link` flag, so the UI can say "we may already have your points".
+    Merging that history in stays an admin action (matching.suggest_accounts is
+    a ranking, never a write), because self-service claiming would let anyone
     inherit a namesake's history.
     """
     form = CustomUserCreationForm(request.data)
@@ -219,7 +222,7 @@ def register_api(request):
     # a link is likely coming.
     from accounts import matching
     possible_link = bool(
-        matching.suggest_players(user, list(matching.unlinked_players()), limit=1)
+        matching.suggest_players(user, list(matching.archive_players()), limit=1)
     )
 
     payload = {"user": serialize_user(user, request), "possible_link": possible_link}
@@ -250,10 +253,14 @@ def profile_season_view(request, username, season_id):
     profile = getattr(profile_user, "profile", None)
     # Without this the flag would be cosmetic: hiding the event list on the main
     # payload means nothing while the per-season endpoint still serves it.
-    if visibility_for(profile, request.user).hide_events:
+    gates = visibility_for(profile, request.user)
+    if gates.hide_events:
         raise Http404("Event history is hidden.")
     lb_user = profile.leaderboard_user if profile else None
-    return Response(season_detail(lb_user, season), status=status.HTTP_200_OK)
+    # Same for the points: this endpoint states `season_pts` outright, so
+    # enforcing hide_pts only on the main payload would hand out the total here.
+    return Response(season_detail(lb_user, season, hide_pts=gates.hide_pts),
+                    status=status.HTTP_200_OK)
 
 
 @extend_schema(

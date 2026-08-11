@@ -45,9 +45,9 @@ class AttendanceLeaderboardFlowTests(TestCase):
             sheet_id="e", sheet_list_id="x", name="Turnaj", place="Brno", points=10,
             date=now,
         )
-        self.alice = LeaderboardUser.objects.create(number=700000001, name="Alice")
-        self.bob = LeaderboardUser.objects.create(number=700000002, name="Bob")
-        self.cora = LeaderboardUser.objects.create(number=700000003, name="Cora")
+        self.alice = LeaderboardUser.objects.create(name="Alice")
+        self.bob = LeaderboardUser.objects.create(name="Bob")
+        self.cora = LeaderboardUser.objects.create(name="Cora")
         self.client.force_authenticate(user=self.admin)
 
     # helpers -----------------------------------------------------------------
@@ -155,7 +155,7 @@ class SeasonScopedAttendanceFlowTests(TestCase):
             sheet_id="e", sheet_list_id="x", name="Akce", place="Brno", points=10,
             date=now,  # falls inside this year's season only
         )
-        self.player = LeaderboardUser.objects.create(number=700000001, name="Alice")
+        self.player = LeaderboardUser.objects.create(name="Alice")
 
     def _board(self, season_id):
         resp = self.client.get(reverse("api-leaderboard"), {"season_id": season_id})
@@ -185,7 +185,7 @@ class RsvpAttendanceIndependenceFlowTests(TestCase):
         # A runner with a linked leaderboard account.
         self.runner = UserModel.objects.create_user(
             username="runner", password="x", first_name="Runner", last_name="One")
-        self.runner_lb = LeaderboardUser.objects.create(number=700000099, name="Runner One")
+        self.runner_lb = LeaderboardUser.objects.create(name="Runner One")
         Profile.objects.create(user=self.runner, leaderboard_user=self.runner_lb)
 
         self.event = Event.objects.create(

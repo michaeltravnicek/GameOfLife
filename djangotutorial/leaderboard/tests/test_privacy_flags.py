@@ -9,6 +9,7 @@ honoured at all.
 from datetime import timedelta
 
 from django.contrib.auth import get_user_model
+from django.core.cache import cache
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
@@ -32,7 +33,7 @@ class PrivacyFlagTests(TestCase):
             user=cls.admin_user, defaults={"role": Profile.ROLE_ADMIN},
         )
 
-        cls.lb_user = LeaderboardUser.objects.create(number=700000501, name="Hana Hidden")
+        cls.lb_user = LeaderboardUser.objects.create(name="Hana Hidden")
         cls.profile, _ = Profile.objects.update_or_create(
             user=cls.owner, defaults={"leaderboard_user": cls.lb_user},
         )
@@ -49,6 +50,11 @@ class PrivacyFlagTests(TestCase):
 
     def setUp(self):
         self.client = APIClient()
+        # The leaderboard endpoint is cached, and the per-season keys are evicted
+        # by pattern — which LocMemCache (the test backend) cannot do, so a board
+        # cached by an earlier test class would survive into this one and the
+        # assertions here would be reading someone else's data.
+        cache.clear()
 
     # --- helpers ---------------------------------------------------------
 
@@ -118,6 +124,56 @@ class PrivacyFlagTests(TestCase):
         data = self.client.get(self.profile_url()).json()
         self.assertEqual(data["total_points"], 10)
 
+    # --- hide_pts must not be reconstructable ----------------------------
+    # Omitting `total_points` is not enough on its own. The same number is
+    # recoverable by adding up the per-event points, and it is stated outright by
+    # the season payloads and by the player's row on the leaderboard. Each test
+    # below closes one of those routes.
+
+    def test_hide_pts_strips_per_event_points(self):
+        self.set_flags(hide_pts=True)
+        data = self.client.get(self.profile_url()).json()
+        for event in data["past_events"]:
+            self.assertNotIn("points", event)
+
+    def test_hide_pts_strips_season_totals_from_the_summaries(self):
+        self.set_flags(hide_pts=True)
+        data = self.client.get(self.profile_url()).json()
+        for season in data["seasons"]:
+            self.assertNotIn("season_pts", season)
+            self.assertNotIn("rank", season)
+
+    def test_hide_pts_strips_the_season_sub_resource(self):
+        """The endpoint states season_pts outright — the shortest route of all."""
+        self.set_flags(hide_pts=True)
+        url = reverse("api-profile-season", args=[self.owner.username, self.season.id])
+        data = self.client.get(url).json()
+        self.assertNotIn("season_pts", data)
+        self.assertNotIn("rank", data)
+        for event in data["events"]:
+            self.assertNotIn("pts", event)
+
+    def test_hide_pts_strips_the_player_season_sub_resource(self):
+        self.set_flags(hide_pts=True)
+        url = reverse("api-player-season", args=[self.lb_user.id, self.season.id])
+        data = self.client.get(url).json()
+        self.assertNotIn("season_pts", data)
+        for event in data["events"]:
+            self.assertNotIn("pts", event)
+
+    def test_hide_pts_strips_per_event_points_on_the_player_endpoint(self):
+        self.set_flags(hide_pts=True)
+        data = self.client.get(self.player_url()).json()
+        for event in data["events"]:
+            self.assertNotIn("points", event)
+
+    def test_the_owner_can_still_reconstruct_their_own(self):
+        """Everything above is withheld from visitors, never from the person."""
+        self.set_flags(hide_pts=True)
+        self.client.force_authenticate(user=self.owner)
+        data = self.client.get(self.profile_url()).json()
+        self.assertEqual([e["points"] for e in data["past_events"]], [10])
+
     # --- hide_events -----------------------------------------------------
 
     def test_hide_events_omits_event_sections(self):
@@ -163,6 +219,60 @@ class PrivacyFlagTests(TestCase):
         self.client.force_authenticate(user=self.owner)
         data = self.client.get(self.profile_url()).json()
         self.assertIn("privacy", data)
+
+    # --- hide_pts takes the player off the rankings -----------------------
+
+    def test_hide_pts_removes_the_player_from_the_leaderboard(self):
+        from leaderboard.services.leaderboard import leaderboard_total
+
+        self.assertIn(self.lb_user, list(leaderboard_total()))
+        self.set_flags(hide_pts=True)
+        self.assertNotIn(self.lb_user, list(leaderboard_total()))
+
+    def test_hide_pts_removes_the_player_from_the_home_top_players(self):
+        from leaderboard.services.leaderboard import top_players
+
+        self.set_flags(hide_pts=True)
+        self.assertNotIn(self.lb_user, list(top_players()))
+
+    def test_hide_pts_removes_the_player_from_the_season_board(self):
+        from leaderboard.services.leaderboard import leaderboard_for_season
+
+        self.set_flags(hide_pts=True)
+        self.assertNotIn(
+            self.lb_user, list(leaderboard_for_season(self.season)))
+
+    def test_the_leaderboard_endpoint_does_not_list_them(self):
+        self.set_flags(hide_pts=True)
+        data = self.client.get(reverse("api-leaderboard")).json()
+        self.assertNotIn(self.lb_user.id, [e["id"] for e in data["entries"]])
+
+    def test_a_hidden_player_does_not_push_others_down_the_ranking(self):
+        """Their rank must agree with the board they are missing from."""
+        from leaderboard.services.leaderboard import season_rank
+
+        rival = LeaderboardUser.objects.create(name="Rival Rivalový")
+        UserToEvent.objects.create(user=rival, event=self.event, points=5)
+        # Hana has 10 and sits above the rival's 5 → rival is 2nd.
+        self.assertEqual(season_rank(self.season, 5), 2)
+        self.set_flags(hide_pts=True)
+        # With Hana off the board the rival is top, not runner-up to nobody.
+        self.assertEqual(season_rank(self.season, 5), 1)
+
+    def test_toggling_the_flag_evicts_the_cached_board(self):
+        """Otherwise the switch looks broken until the TTL runs out."""
+        from leaderboard.cache_config import CACHE_KEY_LEADERBOARD_TOTAL
+
+        cache.set(CACHE_KEY_LEADERBOARD_TOTAL, "SENTINEL", 60)
+        self.set_flags(hide_pts=True)
+        self.assertIsNone(cache.get(CACHE_KEY_LEADERBOARD_TOTAL))
+
+    def test_saving_a_profile_without_touching_the_flag_leaves_the_cache(self):
+        from leaderboard.cache_config import CACHE_KEY_LEADERBOARD_TOTAL
+
+        cache.set(CACHE_KEY_LEADERBOARD_TOTAL, "SENTINEL", 60)
+        self.set_flags(bio="jen popis")
+        self.assertEqual(cache.get(CACHE_KEY_LEADERBOARD_TOTAL), "SENTINEL")
 
     # --- default state ---------------------------------------------------
 

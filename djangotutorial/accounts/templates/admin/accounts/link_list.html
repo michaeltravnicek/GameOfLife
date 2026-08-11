@@ -3,18 +3,28 @@
 {% block content %}
 <div id="content-main">
   <p>
-    Účty bez hráče v žebříčku. Nabídka vpravo je jen návrh — potvrzuje se ručně.
-    Volných hráčů k propojení: <strong>{{ unlinked_players }}</strong>.
+    Hráči z archivu (Google Formuláře), kteří zatím nepatří žádnému účtu.
+    Přiřazením se hráč <strong>sloučí</strong> do účtu — účty ke srovnání:
+    <strong>{{ account_count }}</strong>.
   </p>
+
+  {% if orphan_accounts %}
+  <p style="padding:.7em 1em;background:#fdf2f2;border-left:4px solid #b32d2e">
+    ⚠ Účtů bez hráče: <strong>{{ orphan_accounts }}</strong>. Ty vznikly před
+    zavedením automatického zakládání hráče a nemůžou se checkinovat — spusť
+    <code>manage.py backfill_player_accounts</code>.
+  </p>
+  {% endif %}
 
   {% if rows %}
   <table style="width:100%">
     <thead>
       <tr>
-        <th>Účet</th>
-        <th>E-mail</th>
-        <th>Registrace</th>
-        <th>Nejlepší návrh</th>
+        <th>Hráč v archivu</th>
+        <th>Body</th>
+        <th>Akcí</th>
+        <th>Naposledy</th>
+        <th>Nejlepší návrh účtu</th>
         <th></th>
       </tr>
     </thead>
@@ -22,28 +32,29 @@
       {% for row in rows %}
       <tr>
         <td>
-          <strong>{{ row.account.username }}</strong>
-          {% if row.account.get_full_name %}<br><small>{{ row.account.get_full_name }}</small>{% endif %}
+          <strong>{{ row.player.name }}</strong>
+          {% if row.player.email %}<br><small>{{ row.player.email }}</small>{% endif %}
         </td>
-        <td>{{ row.account.email|default:"—" }}</td>
-        <td>{{ row.account.date_joined|date:"j. n. Y" }}</td>
+        <td>{{ row.player.total_points|default:0 }}</td>
+        <td>{{ row.player.events_count|default:0 }}</td>
+        <td>{{ row.player.last_event_at|date:"j. n. Y"|default:"—" }}</td>
         <td>
           {% if row.top %}
-            {{ row.top.player.name }}
+            {{ row.top.account.username }}
             <small>
-              — {{ row.top.percent }} % podle {{ row.top.signal_label }}{% if row.top.player.total_points %},
-              {{ row.top.player.total_points }} b. / {{ row.top.player.events_count }} akcí{% endif %}
+              — {{ row.top.percent }} % podle {{ row.top.signal_label }}
+              {% if row.top.account.get_full_name %}, {{ row.top.account.get_full_name }}{% endif %}
             </small>
             {% if row.top.ambiguous %}
               <br><small style="color:#b32d2e">⚠ víc podobných shod</small>
             {% endif %}
           {% else %}
-            <small style="color:#666">žádný podobný hráč</small>
+            <small style="color:#666">žádný podobný účet</small>
           {% endif %}
         </td>
         <td>
-          <a class="button" href="{% url 'admin:accounts_profile_link_detail' row.account.pk %}">
-            Vybrat hráče
+          <a class="button" href="{% url 'admin:accounts_profile_link_detail' row.player.pk %}">
+            Vybrat účet
           </a>
         </td>
       </tr>
@@ -51,7 +62,35 @@
     </tbody>
   </table>
   {% else %}
-  <p>Všechny účty jsou propojené. 🎉</p>
+  <p>Archiv je vyřízený — každý hráč patří k účtu. 🎉</p>
+  {% endif %}
+
+  {% if merged %}
+  <h2 style="margin-top:2.5em">Nedávno sloučení</h2>
+  <p><small>
+    Vrácení zruší jen sloučení: hráč se vrátí do žebříčku, ale body a odznaky,
+    které se přesunuly, zůstanou u cílového účtu. Po vrácení je zkontroluj.
+  </small></p>
+  <table style="width:100%">
+    <thead>
+      <tr><th>Hráč</th><th>Sloučen do</th><th>Kdy</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for player in merged %}
+      <tr>
+        <td>{{ player.name }}</td>
+        <td>{{ player.merged_into.name }}</td>
+        <td>{{ player.merged_at|date:"j. n. Y H:i"|default:"—" }}</td>
+        <td>
+          <form method="post" action="{% url 'admin:accounts_profile_unmerge' player.pk %}" style="margin:0">
+            {% csrf_token %}
+            <button type="submit" class="button">Vrátit</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
   {% endif %}
 </div>
 {% endblock %}

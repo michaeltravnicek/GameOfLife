@@ -85,8 +85,8 @@ class ObjectLevelAuthTests(TestCase):
         )
         self.alice = _user("alice")
         self.bob = _user("bob")
-        make_profile_for(self.alice, number=700000801)
-        make_profile_for(self.bob, number=700000802)
+        make_profile_for(self.alice)
+        make_profile_for(self.bob)
         # A photo Bob liked.
         self.photo = UserPhoto.objects.create(
             auth_user=self.bob, event=self.event, image="user_photos/x.png",

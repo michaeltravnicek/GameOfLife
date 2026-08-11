@@ -423,6 +423,21 @@ AXES_USERNAME_CALLABLE = lambda request, credentials: (  # noqa: E731
 # Must agree with REST_FRAMEWORK["NUM_PROXIES"] — both derive from PROXY_COUNT
 # so they cannot drift apart. None in DEBUG (no proxy in front locally).
 AXES_IPWARE_PROXY_COUNT = None if DEBUG else PROXY_COUNT
+
+# Second layer: a failure counter for the *account*, over all IPs.
+#
+# The (IP, username) pair above — and the per-IP DRF throttles — only bound how
+# fast one attacker can guess. A stuffing run spread over 200 hosts, five guesses
+# each, trips neither. This counter does. See accounts/axes_handler.py.
+AXES_HANDLER = "accounts.axes_handler.AccountAwareAxesHandler"
+# Deliberately far above AXES_FAILURE_LIMIT: only cooperating hosts get here, and
+# a lockout that a real user can reach by fumbling would be a DoS on themselves.
+# 40 guesses/hour against one account is hopeless for an attacker.
+ACCOUNT_FAILURE_LIMIT = 40
+# An account lockout is a DoS lever by nature. Blunt it: an IP that logged in as
+# this user in the last 30 days keeps getting through while the flood runs, so the
+# victim's own device/network is unaffected.
+ACCOUNT_TRUSTED_IP_DAYS = 30
 AXES_IPWARE_META_PRECEDENCE_ORDER = ["HTTP_X_FORWARDED_FOR", "REMOTE_ADDR"]
 
 # CORS is a DEVELOPMENT-ONLY concern here.
@@ -486,6 +501,30 @@ TEMPLATES = [
     },
 ]
 
+# The two generic throttle rates are env-overridable, the auth ones are not.
+#
+# Why: a load test from one machine hits `anon` (120/min = 2 req/s) long before
+# it hits the server, so measuring API capacity means lifting that ceiling for a
+# few minutes. Doing it by env means no code change and no new deploy — Render
+# restarts the service when the variable changes, and changing it back is the
+# same click. See loadtest/R2_BASELINE.md.
+#
+#   ANON_THROTTLE_RATE=600/min   raise it
+#   ANON_THROTTLE_RATE=off       disable that class of throttling entirely
+#
+# ⚠ While it is raised, the site's brute-force/scraping ceiling is raised for
+# EVERYONE, not just for the test. Put it back the moment the run finishes. The
+# auth endpoints (login/register/password reset) deliberately have no env knob —
+# those limits are a security control, not a tuning parameter, and there is no
+# load-testing reason to touch them.
+def _throttle_rate(env_name, default):
+    raw = (os.getenv(env_name) or default).strip()
+    return None if raw.lower() in {"off", "none", "0", ""} else raw
+
+
+ANON_THROTTLE_RATE = _throttle_rate("ANON_THROTTLE_RATE", "120/min")
+USER_THROTTLE_RATE = _throttle_rate("USER_THROTTLE_RATE", "300/min")
+
 REST_FRAMEWORK = {
     # Session auth only. The frontend is served same-origin by react_index, so the
     # session cookie reaches the API on its own and is HttpOnly — script running in
@@ -530,9 +569,9 @@ REST_FRAMEWORK = {
         'form_submit': '20/hour',
         # Generous: one SPA page load fans out into several requests, and
         # visitors on shared/mobile NAT share an IP. Tune down once you've
-        # seen real traffic.
-        'anon': '120/min',
-        'user': '300/min',
+        # seen real traffic. Both are env-overridable — see _throttle_rate above.
+        'anon': ANON_THROTTLE_RATE,
+        'user': USER_THROTTLE_RATE,
     },
     # See PROXY_COUNT above — must match the real number of proxy hops, or the
     # throttle keys on the wrong address.

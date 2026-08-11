@@ -1,6 +1,6 @@
 from django.test import TestCase
 
-from leaderboard.utils import parse_int_param, parse_phone_number
+from leaderboard.utils import parse_int_param
 
 
 class ParseIntParamTests(TestCase):
@@ -19,19 +19,3 @@ class ParseIntParamTests(TestCase):
 
     def test_no_clamp_without_bounds(self):
         self.assertEqual(parse_int_param("999", 10), 999)
-
-
-class ParsePhoneNumberTests(TestCase):
-    def test_valid_9_digits(self):
-        self.assertEqual(parse_phone_number("731005976"), 731005976)
-
-    def test_strips_formatting(self):
-        self.assertEqual(parse_phone_number("731 005 976"), 731005976)
-
-    def test_drops_420_prefix(self):
-        self.assertEqual(parse_phone_number("+420 731 005 976"), 731005976)
-
-    def test_invalid_returns_none(self):
-        self.assertIsNone(parse_phone_number("12345"))
-        self.assertIsNone(parse_phone_number(""))
-        self.assertIsNone(parse_phone_number(None))

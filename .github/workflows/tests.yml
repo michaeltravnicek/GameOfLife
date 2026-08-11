@@ -1,0 +1,93 @@
+name: Tests
+
+# Run on every push to any branch, and on every pull request. A red check here
+# blocks nothing by itself — configure branch protection on `main` to require
+# the "Django", "Vitest" and "Security" checks if you want merges gated.
+on:
+  push:
+  pull_request:
+
+# A newer push to the same branch/PR cancels the older, still-running one.
+concurrency:
+  group: tests-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  # test_settings.py forces in-memory SQLite, skips migrations, and captures
+  # mail — no real secrets needed. Deliberately does NOT set ADMIN_URL/MODE so
+  # the suite runs against defaults; tests that care force their own values.
+  DJANGO_SETTINGS_MODULE: mysite.test_settings
+  DJANGO_SECRET_KEY: ci-test-secret-not-used-anywhere
+
+jobs:
+  # ── Security contract ─────────────────────────────────────────────
+  # Runs the suites that encode the security guarantees (auth,
+  # permissions/IDOR, privacy/PII, CSP, uploads, checkin, admin). A failure
+  # here is a security regression, surfaced as its own named check.
+  security:
+    name: Security
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+      - name: Run security test suites
+        working-directory: djangotutorial
+        run: |
+          python manage.py test \
+            accounts.test_security \
+            accounts.tests \
+            leaderboard.tests.test_security \
+            leaderboard.tests.test_name_privacy \
+            leaderboard.tests.test_privacy_flags \
+            leaderboard.tests.test_csp \
+            leaderboard.tests.test_auth \
+            leaderboard.tests.test_axes_lockout \
+            leaderboard.tests.test_admin_url \
+            leaderboard.tests.test_upload_validation \
+            leaderboard.tests.test_event_logo \
+            leaderboard.tests.test_checkin \
+            leaderboard.tests.test_og \
+            leaderboard.tests.test_sitemap
+
+  # ── Django (full backend suite) ───────────────────────────────────
+  backend:
+    name: Django
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+      - name: Run tests
+        working-directory: djangotutorial
+        run: python manage.py test leaderboard accounts
+
+  # ── React (frontend) ──────────────────────────────────────────────
+  frontend:
+    name: Vitest
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install npm dependencies
+        run: npm ci
+      - name: Run tests
+        run: npm run test:run

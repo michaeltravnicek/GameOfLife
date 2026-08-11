@@ -1,4 +1,6 @@
 """Business logic for the accounts app: auth resolution + profile payloads."""
+import logging
+
 from django.contrib.auth.models import User as AuthUser
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.tokens import default_token_generator
@@ -15,9 +17,10 @@ from leaderboard.models import Category, Season, User as LeaderboardUser, UserTo
 from leaderboard.privacy import public_handle, visibility_for
 from leaderboard.services import season_rank
 from leaderboard.services.badges import badges_for
-from leaderboard.utils import parse_phone_number
 
 from .models import Profile
+
+logger = logging.getLogger(__name__)
 
 
 def _badge_logo_url(event, request=None):
@@ -32,22 +35,88 @@ def _badge_logo_url(event, request=None):
 # ── Auth ───────────────────────────────────────────────────────────────
 
 def resolve_login_username(identifier):
-    """Map a login identifier (phone | username | email) to an auth username.
+    """Map a login identifier (username | email) to an auth username.
 
     Returns the matching `auth.User.username`, or None if nothing matches.
     """
-    phone = parse_phone_number(identifier)
-    if phone is not None:
-        lb_user = LeaderboardUser.objects.filter(number=phone).first()
-        profile = getattr(lb_user, "profile", None) if lb_user else None
-        if profile is not None:
-            return profile.user.username
-
     if AuthUser.objects.filter(username=identifier).exists():
         return identifier
 
     candidate = AuthUser.objects.filter(email__iexact=identifier).first()
     return candidate.username if candidate else None
+
+
+# ── Account ↔ player ───────────────────────────────────────────────────
+
+def ensure_leaderboard_user(user):
+    """Give `user` a leaderboard player. Called by every signup path.
+
+    An account without a player cannot check in at all (leaderboard/checkin.py),
+    so the player is created up front rather than waited for. Registration is the
+    only place a player appears automatically; everything else is an admin merge.
+
+    The e-mail short-circuits that: if an archive player already carries this
+    address, the account adopts that row instead of starting a second one, and
+    the person's history is there from their first login.
+
+    NOTE: this trusts an unverified e-mail. Local registration does not confirm
+    the address, so someone who knows an archive player's e-mail can register
+    with it and inherit that player's points. 
+
+    Returns the LeaderboardUser. Reentrant.
+    """
+    from leaderboard.merging import resolve_player_id
+
+    profile, _ = Profile.objects.get_or_create(user=user)
+
+    # Already attached. If that player has since been merged away, follow the
+    # chain -- otherwise the account points at a row that is off the leaderboard.
+    if profile.leaderboard_user_id is not None:
+        live = resolve_player_id(profile.leaderboard_user_id)
+        if live is not None and live.pk != profile.leaderboard_user_id:
+            profile.leaderboard_user = live
+            profile.save(update_fields=["leaderboard_user"])
+        return profile.leaderboard_user
+
+    email = (user.email or "").strip().lower()
+    name = user.get_full_name().strip() or user.username
+
+    adopted = None
+    if email:
+        # all_objects + resolve: an archive row may already have been merged
+        # into somebody, and the live target is what we would be adopting.
+        existing = LeaderboardUser.all_objects.filter(email__iexact=email).first()
+        candidate = resolve_player_id(existing.pk) if existing else None
+        # Claimed by someone else -> not ours to take. Two accounts sharing one
+        # address should be impossible (update_profile enforces it), but a stale
+        # archive row can still collide, and silently handing over another
+        # person's history is the one outcome worth writing code to prevent.
+        if candidate is not None and not Profile.objects.filter(
+            leaderboard_user=candidate
+        ).exclude(user=user).exists():
+            adopted = candidate
+
+    if adopted is not None:
+        profile.leaderboard_user = adopted
+        profile.save(update_fields=["leaderboard_user"])
+        logger.info(
+            "Account %s adopted archive player #%s (%s) on e-mail match [automatic]",
+            user.username, adopted.pk, adopted.name,
+        )
+        return adopted
+
+    # None, never "": the column is unique and Postgres collapses empty strings
+    # but not NULLs (see LeaderboardUser.email). Dropped entirely when the
+    # address already sits on a player we may not adopt -- registration must not
+    # die on a unique-constraint error because of an archive row.
+    taken = bool(email) and LeaderboardUser.all_objects.filter(email__iexact=email).exists()
+    lb_user = LeaderboardUser.objects.create(
+        name=name,
+        email=email if (email and not taken) else None,
+    )
+    profile.leaderboard_user = lb_user
+    profile.save(update_fields=["leaderboard_user"])
+    return lb_user
 
 
 def reset_password(uid, token, new_password):
@@ -106,8 +175,7 @@ def _since(profile_user, lb_user):
     """'Hraje od' month: the player's FIRST event, not the account signup.
 
     Many players attended events (via the Google Sheets leaderboard) long
-    before registering on the web; falls back to date_joined for players
-    with no recorded events.
+    before registering on the web
     """
     first_event_date = None
     if lb_user:
@@ -198,7 +266,9 @@ def profile_payload(profile_user, request):
                 "name": u.event.name,
                 "date": u.event.date,
                 "place": u.event.place,
-                "points": u.points,
+                # See player_payload: per-event points are the hidden total in
+                # instalments, so hide_pts drops them here too.
+                **({} if gates.hide_pts else {"points": u.points}),
                 # The event's logo is its badge's artwork now.
                 "logo": _badge_logo_url(u.event, request),
             }
@@ -257,7 +327,9 @@ def profile_payload(profile_user, request):
     if not gates.hide_events:
         payload["upcoming_rsvps"] = upcoming_rsvps
         payload["past_events"] = past_events
-        payload["seasons"] = season_summaries(lb_user) if lb_user else []
+        payload["seasons"] = (
+            season_summaries(lb_user, hide_pts=gates.hide_pts) if lb_user else []
+        )
 
     # Private account fields — only exposed to the owner so the edit form can
     # prefill them (and not blank them out on save). The privacy block belongs
@@ -288,6 +360,7 @@ def set_profile_photo(user, photo):
 def update_profile(user, data, files):
     """Apply account + profile updates. Raises ValueError if the username is taken."""
     profile, _ = Profile.objects.get_or_create(user=user)
+    handle_changed = False
 
     for field in ("first_name", "last_name"):
         if field in data:
@@ -312,18 +385,24 @@ def update_profile(user, data, files):
         if AuthUser.objects.filter(username__iexact=new_handle).exclude(pk=user.pk).exists():
             raise ValueError("Přezdívka je obsazena.")
         user.username = new_handle
+        handle_changed = True
     user.save()
 
+    # The cached leaderboard row carries `profile_username`, so a rename that
+    # skipped this would keep linking to the old handle until the TTL expired.
+    if handle_changed:
+        from leaderboard.cache_config import invalidate_points_dependent_caches
+        invalidate_points_dependent_caches()
+
     # ONE display name: the linked leaderboard row mirrors the account name,
-    # so profile and leaderboard can never drift apart.
+    # so profile and leaderboard can never drift apart. The board caches the
+    # rendered name; LeaderboardUser.save() evicts it on a real rename.
     lb_user = profile.leaderboard_user
     if lb_user is not None:
         full_name = user.get_full_name().strip()
         if full_name and lb_user.name != full_name:
             lb_user.name = full_name
             lb_user.save(update_fields=["name"])
-            from leaderboard.cache_config import invalidate_points_dependent_caches
-            invalidate_points_dependent_caches()
 
     for field in ("bio", "city", "instagram", "strava", "spotify", "tiktok"):
         if field in data:
@@ -355,14 +434,21 @@ def _season_base(season):
     }
 
 
-def season_summaries(lb_user):
+def season_summaries(lb_user, hide_pts=False):
     """Lightweight per-season points + rank for a user (no event lists).
 
     Feeds the profile's season selector; the heavy per-event data is fetched
     lazily per season via `season_detail`.
+
+    Under `hide_pts` the season keeps its label and dates but loses its points
+    and rank — a per-season total is still the total this flag withholds, only
+    sliced by year.
     """
     result = []
     for season in Season.objects.all():
+        if hide_pts:
+            result.append(_season_base(season))
+            continue
         season_pts = (
             UserToEvent.objects
             .filter(user=lb_user,
@@ -378,8 +464,13 @@ def season_summaries(lb_user):
     return result
 
 
-def season_detail(lb_user, season):
-    """Full breakdown for one season: points, rank, and the event list."""
+def season_detail(lb_user, season, hide_pts=False):
+    """Full breakdown for one season: points, rank, and the event list.
+
+    `hide_pts` strips every number the events could be added up into — the
+    season total, the rank, and the per-event points — while leaving the list of
+    events itself, which is what the separate `hide_events` flag governs.
+    """
     if lb_user is None:
         return {**_season_base(season), "season_pts": 0, "rank": None, "events": []}
 
@@ -392,20 +483,22 @@ def season_detail(lb_user, season):
         .order_by("event__date")
     )
     season_pts = sum(u.points for u in utes)
-    return {
+    payload = {
         **_season_base(season),
-        "season_pts": season_pts,
-        "rank": season_rank(season, season_pts),
         "events": [
             {
                 "slug":     u.event.slug,
                 "name":     u.event.name,
                 "place":    u.event.place,
                 "date":     u.event.date,
-                "pts":      u.points,
+                **({} if hide_pts else {"pts": u.points}),
                 "category": {"id": u.event.category.id, "name": u.event.category.name}
                             if u.event.category else None,
             }
             for u in utes
         ],
     }
+    if not hide_pts:
+        payload["season_pts"] = season_pts
+        payload["rank"] = season_rank(season, season_pts)
+    return payload

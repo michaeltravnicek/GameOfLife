@@ -76,11 +76,11 @@ class LeaderboardNamePrivacyTests(TestCase):
             date=timezone.now(),
         )
         # Synced from Sheets, never registered — the common case.
-        self.stranger = LeaderboardUser.objects.create(number=700000201, name="Neznámý Hráč")
+        self.stranger = LeaderboardUser.objects.create(name="Neznámý Hráč")
         UserToEvent.objects.create(user=self.stranger, event=self.event, points=10)
 
         # Registered and consented.
-        self.consented = LeaderboardUser.objects.create(number=700000202, name="Souhlas Dal")
+        self.consented = LeaderboardUser.objects.create(name="Souhlas Dal")
         auth = get_user_model().objects.create_user(username="souhlasil", password="x")
         Profile.objects.create(
             user=auth, leaderboard_user=self.consented,
@@ -90,7 +90,7 @@ class LeaderboardNamePrivacyTests(TestCase):
         UserToEvent.objects.create(user=self.consented, event=self.event, points=20)
 
         # Registered before the policy existed — no consent on record.
-        self.no_consent = LeaderboardUser.objects.create(number=700000203, name="Stary Ucet")
+        self.no_consent = LeaderboardUser.objects.create(name="Stary Ucet")
         auth2 = get_user_model().objects.create_user(username="stary", password="x")
         Profile.objects.create(user=auth2, leaderboard_user=self.no_consent)
         UserToEvent.objects.create(user=self.no_consent, event=self.event, points=5)
@@ -124,10 +124,16 @@ class LeaderboardNamePrivacyTests(TestCase):
         url = reverse("api-player", kwargs={"user_id": self.consented.id})
         self.assertEqual(self.client.get(url).json()["name"], "Souhlas Dal")
 
-    def test_no_phone_number_is_ever_exposed(self):
+    def test_no_player_email_is_ever_exposed(self):
+        # Phone numbers are gone from the model (migration 0026); the e-mail the
+        # form collects took over as the player's identity, so it inherits the
+        # rule the number had — it exists to join rows, never to be published.
+        for lb_user in (self.stranger, self.consented, self.no_consent):
+            lb_user.email = f"{lb_user.id}@example.com"
+            lb_user.save(update_fields=["email"])
         body = self.client.get(reverse("api-leaderboard")).content.decode()
         for lb_user in (self.stranger, self.consented, self.no_consent):
-            self.assertNotIn(str(lb_user.number), body)
+            self.assertNotIn(lb_user.email, body)
 
 
 class EmailUsernameNotLeakedTests(TestCase):
@@ -147,7 +153,7 @@ class EmailUsernameNotLeakedTests(TestCase):
             sheet_id="e", sheet_list_id="x", name="Akce", place="Brno", points=10,
             date=timezone.now(),
         )
-        self.player = LeaderboardUser.objects.create(number=700000301, name="Anna Culka")
+        self.player = LeaderboardUser.objects.create(name="Anna Culka")
         self.email = "anna.culka@icloud.com"
         auth = get_user_model().objects.create_user(username=self.email, password="x")
         Profile.objects.create(user=auth, leaderboard_user=self.player)

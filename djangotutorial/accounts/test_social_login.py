@@ -91,11 +91,21 @@ class SocialAccountAdapterTests(TestCase):
         self.assertEqual(profile.gdpr_consent_version, settings.PRIVACY_POLICY_VERSION)
         self.assertTrue(profile.has_current_gdpr_consent)
 
-    def test_social_user_is_not_auto_linked_to_a_leaderboard_player(self):
-        # Claiming an existing player's points must stay an admin action --
-        # otherwise social signup becomes a way to inherit a namesake's history.
+    def test_social_user_gets_a_leaderboard_player(self):
+        # Same as the password path: without a player the account cannot check
+        # in at all, so it gets one at signup.
         saved = self._save(self.user)
-        self.assertIsNone(Profile.objects.get(user=saved).leaderboard_user)
+        self.assertIsNotNone(Profile.objects.get(user=saved).leaderboard_user)
+
+    def test_social_user_is_not_linked_to_a_namesake(self):
+        # Claiming a player on a *name* must stay an admin merge -- otherwise
+        # social signup becomes a way to inherit a namesake's history. Only an
+        # exact e-mail match links automatically, and Google verified this one.
+        from leaderboard.models import User as LeaderboardUser
+        namesake = LeaderboardUser.objects.create(name=self.user.get_full_name())
+        saved = self._save(self.user)
+        self.assertNotEqual(
+            Profile.objects.get(user=saved).leaderboard_user, namesake)
 
     def test_role_is_not_granted(self):
         saved = self._save(self.user)

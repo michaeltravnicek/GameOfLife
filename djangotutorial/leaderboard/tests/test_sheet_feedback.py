@@ -4,6 +4,7 @@ from datetime import timedelta
 from django.test import SimpleTestCase, TestCase
 from django.utils import timezone
 
+from leaderboard import merging
 from leaderboard.models import Event, EventFeedback, User, UserToEvent
 from leaderboard.sheet_columns import (
     cell,
@@ -11,12 +12,23 @@ from leaderboard.sheet_columns import (
     is_negative_attendance,
     parse_rating,
 )
-from leaderboard.tasks import insert_rec
+from leaderboard.tasks import insert_rec, resolve_player
 
-# The real form export header.
+# The header of the older forms: they ask for a phone number, which the sync no
+# longer reads (LeaderboardUser.number is gone), and carry no e-mail column.
 HEADER = [
     "Timestamp",
     "Telefon (bez předvolby)",
+    "Jméno a příjmení",
+    "Zúčastnil/a ses této akce?",
+    "Jak hodnotíš tuto akci?",
+    "Pokud máš ještě něco na srdci, tady je prostor.",
+]
+
+# Newer forms have "Collect email addresses" on and drop the phone question.
+HEADER_WITH_EMAIL = [
+    "Timestamp",
+    "Email Address",
     "Jméno a příjmení",
     "Zúčastnil/a ses této akce?",
     "Jak hodnotíš tuto akci?",
@@ -28,7 +40,13 @@ class HeaderMapTests(SimpleTestCase):
     def test_recognises_the_real_form_header(self):
         self.assertEqual(
             header_map(HEADER),
-            {"attended": 3, "rating": 4, "comment": 5},
+            {"name": 2, "attended": 3, "rating": 4, "comment": 5},
+        )
+
+    def test_recognises_the_email_column(self):
+        self.assertEqual(
+            header_map(HEADER_WITH_EMAIL),
+            {"email": 1, "name": 2, "attended": 3, "rating": 4, "comment": 5},
         )
 
     def test_tolerates_sheets_whitespace_and_case(self):
@@ -36,7 +54,7 @@ class HeaderMapTests(SimpleTestCase):
         self.assertEqual(header_map(noisy), {"rating": 1})
 
     def test_finds_points_column_by_name(self):
-        self.assertEqual(header_map(["Jméno", "Body"]), {"points": 1})
+        self.assertEqual(header_map(["Jméno", "Body"]), {"name": 0, "points": 1})
 
     def test_unknown_headers_are_ignored(self):
         self.assertEqual(header_map(["Timestamp", "Něco jiného"]), {})
@@ -95,6 +113,7 @@ class SyncFeedbackTests(TestCase):
         self.cols = header_map(HEADER)
 
     def row(self, phone="777123456", name="Jan Novák", attended="Ano", rating="", comment=""):
+        """A row in the legacy layout. `phone` is still in the sheet, and ignored."""
         return ["2026-01-01", phone, name, attended, rating, comment]
 
     def test_stores_rating_and_comment(self):
@@ -141,7 +160,7 @@ class SyncFeedbackTests(TestCase):
         self.assertEqual(rows[0].rating, 9)
 
     def test_form_sync_does_not_overwrite_web_feedback(self):
-        user = User.objects.create(number=777123456, name="Jan Novák")
+        user = User.objects.create(name="Jan Novák")
         EventFeedback.objects.create(
             user=user, event=self.event, rating=10, comment="na webu",
             source=EventFeedback.SOURCE_WEB,
@@ -153,10 +172,13 @@ class SyncFeedbackTests(TestCase):
         self.assertEqual(fb.rating, 10)
         self.assertEqual(fb.comment, "na webu")
 
-    def test_invalid_phone_row_is_skipped(self):
-        insert_rec(self.event, self.row(phone="123", rating="8"), self.cols)
+    def test_nameless_row_is_skipped(self):
+        # Nothing identifies this response, so it belongs to nobody. Guessing
+        # would attach someone else's rating to a real player.
+        insert_rec(self.event, self.row(name="", rating="8"), self.cols)
 
         self.assertFalse(EventFeedback.objects.filter(event=self.event).exists())
+        self.assertFalse(UserToEvent.objects.filter(event=self.event).exists())
 
     def test_sheet_without_feedback_columns_still_syncs_attendance(self):
         cols = header_map(["Timestamp", "Telefon (bez předvolby)", "Jméno a příjmení"])
@@ -164,3 +186,115 @@ class SyncFeedbackTests(TestCase):
 
         self.assertTrue(UserToEvent.objects.filter(event=self.event).exists())
         self.assertFalse(EventFeedback.objects.filter(event=self.event).exists())
+
+
+class ResolvePlayerTests(TestCase):
+    """Who a form response belongs to, now that the phone number is gone.
+
+    Order matters: e-mail is exact, name is a guess. See tasks.resolve_player.
+    """
+
+    LEGACY = header_map(HEADER)
+    WITH_EMAIL = header_map(HEADER_WITH_EMAIL)
+
+    def legacy_row(self, name="Jan Novák"):
+        return ["2026-01-01", "777123456", name, "Ano", "", ""]
+
+    def email_row(self, email="jan@example.com", name="Jan Novák"):
+        return ["2026-01-01", email, name, "Ano", "", ""]
+
+    def test_email_row_creates_a_player_with_that_email(self):
+        user = resolve_player(self.email_row(), self.WITH_EMAIL)
+        self.assertEqual(user.email, "jan@example.com")
+        self.assertEqual(user.name, "Jan Novák")
+
+    def test_same_email_returns_the_same_player(self):
+        first = resolve_player(self.email_row(), self.WITH_EMAIL)
+        second = resolve_player(self.email_row(name="Jan Novak"), self.WITH_EMAIL)
+        self.assertEqual(first.pk, second.pk)
+        self.assertEqual(User.objects.count(), 1)
+
+    def test_email_is_matched_case_insensitively(self):
+        first = resolve_player(self.email_row(), self.WITH_EMAIL)
+        second = resolve_player(self.email_row(email="JAN@Example.com"), self.WITH_EMAIL)
+        self.assertEqual(first.pk, second.pk)
+
+    def test_email_row_adopts_the_player_created_from_an_older_sheet(self):
+        # The whole point: a person who attended before the form collected
+        # e-mails must not end up with two rows and split points.
+        old = resolve_player(self.legacy_row(), self.LEGACY)
+        new = resolve_player(self.email_row(), self.WITH_EMAIL)
+        self.assertEqual(old.pk, new.pk)
+        old.refresh_from_db()
+        self.assertEqual(old.email, "jan@example.com")
+
+    def test_adoption_does_not_steal_a_player_who_already_has_an_email(self):
+        taken = User.objects.create(name="Jan Novák", email="jiny@example.com")
+        fresh = resolve_player(self.email_row(), self.WITH_EMAIL)
+        self.assertNotEqual(taken.pk, fresh.pk)
+        taken.refresh_from_db()
+        self.assertEqual(taken.email, "jiny@example.com")
+
+    def test_name_matching_tolerates_case_and_spacing(self):
+        first = resolve_player(self.legacy_row(), self.LEGACY)
+        second = resolve_player(self.legacy_row(name="  jan   novák "), self.LEGACY)
+        self.assertEqual(first.pk, second.pk)
+
+    def test_namesakes_collapse_into_one_player(self):
+        # Documented limitation, not an accident: without e-mail the sheet gives
+        # us nothing that separates two people called the same thing. This is why
+        # "Collect email addresses" is worth switching on for new forms.
+        first = resolve_player(self.legacy_row(), self.LEGACY)
+        second = resolve_player(self.legacy_row(), self.LEGACY)
+        self.assertEqual(first.pk, second.pk)
+        self.assertEqual(User.objects.count(), 1)
+
+    def test_row_with_neither_email_nor_name_is_skipped(self):
+        self.assertIsNone(resolve_player(self.legacy_row(name="   "), self.LEGACY))
+        self.assertEqual(User.objects.count(), 0)
+
+    def test_email_only_row_falls_back_to_the_email_as_a_name(self):
+        user = resolve_player(self.email_row(name=""), self.WITH_EMAIL)
+        self.assertEqual(user.name, "jan@example.com")
+
+
+class ResolvePlayerAfterMergeTests(TestCase):
+    """A sheet re-synced after a merge must not undo the merge.
+
+    Sheets stay readable for the archive, so an old form can be synced again at
+    any time. If it recreated the row an admin just merged away, the queue would
+    refill with the same duplicates and the points would land off the
+    leaderboard, on a row nobody can see.
+    """
+
+    LEGACY = header_map(HEADER)
+    WITH_EMAIL = header_map(HEADER_WITH_EMAIL)
+
+    def setUp(self):
+        self.archive = User.objects.create(name="Jan Novák", email="jan@example.com")
+        self.target = User.objects.create(name="Honza N")
+        merging.merge_players(self.archive, self.target)
+
+    def test_an_email_row_resolves_to_the_merge_target(self):
+        row = ["2026-01-01", "jan@example.com", "Jan Novák", "Ano", "", ""]
+        # merge_players moved the address across with the history.
+        self.target.refresh_from_db()
+        self.assertEqual(self.target.email, "jan@example.com")
+        self.assertEqual(resolve_player(row, self.WITH_EMAIL), self.target)
+
+    def test_a_name_row_resolves_to_the_merge_target(self):
+        row = ["2026-01-01", "777123456", "Jan Novák", "Ano", "", ""]
+        self.assertEqual(resolve_player(row, self.LEGACY), self.target)
+
+    def test_the_merged_row_is_not_recreated(self):
+        row = ["2026-01-01", "777123456", "Jan Novák", "Ano", "", ""]
+        resolve_player(row, self.LEGACY)
+        self.assertEqual(User.objects.filter(name="Jan Novák").count(), 0)
+        self.assertEqual(User.all_objects.count(), 2)
+
+    def test_points_land_on_the_target(self):
+        event = Event.objects.create(
+            name="Stará akce", points=15, date=timezone.now() - timedelta(days=10))
+        insert_rec(event, ["2026-01-01", "777123456", "Jan Novák", "Ano", "", ""],
+                   self.LEGACY)
+        self.assertTrue(UserToEvent.objects.filter(user=self.target, event=event).exists())

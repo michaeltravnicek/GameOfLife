@@ -45,7 +45,13 @@ const COLUMNS = {
   pts: {
     className: 'ev-pt',
     width: '90px',
-    render: (row) => <>+{row.pts ?? row.points}<span className="u">pts</span></>,
+    // The value is absent (not zero) on a profile whose owner hid their points —
+    // the API strips it so the total can't be re-added from the event rows. Show
+    // a dash rather than "+undefined pts".
+    render: (row) => {
+      const value = row.pts ?? row.points;
+      return value == null ? <span className="u">·</span> : <>+{value}<span className="u">pts</span></>;
+    },
   },
 };
 

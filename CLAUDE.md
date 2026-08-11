@@ -4,25 +4,31 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**GameOfLive** is a Django-based leaderboard system for gameofyolo.com, tracking points and events. Key features include:
-- Event management with point awards
-- User leaderboard rankings (total, monthly, yearly)
+**GameOfLive** is a leaderboard system for gameofyolo.com, tracking points and events. Key features include:
+- Event management with point awards, RSVP, feedback, and geo check-in
+- User leaderboard rankings (total, monthly, yearly) and badges
 - Google Sheets integration for data synchronization
-- User profiles with photo/social media links
-- Event RSVP and feedback system
-- Automatic daily sync from Google Forms/Sheets data
+- User profiles with photo/social links and enforced privacy flags
+- Photo gallery with likes
 
-The application is deployed on [Render](https://render.com) with a PostgreSQL database. Google Sheets sync runs via cron job at 4 AM UTC daily.
+**Architecture in one line:** a **Django + DRF API** with a **React SPA** front end, deployed as a
+**single Render service** — Django serves the built SPA via WhiteNoise. See
+[ARCHITECTURE.md](djangotutorial/ARCHITECTURE.md) for the decision record.
+
+Database is PostgreSQL on Render; Google Sheets sync runs daily (Render cron) and on boot
+(`start.sh`).
 
 ## Tech Stack
 
-- **Framework:** Django 5.0.7
+- **Backend:** Django 5.2 + Django REST Framework — **API-only**, no page views, no page templates
+- **Frontend:** React 19 + Vite SPA in `frontend/`, served as a static bundle by the same Django service
 - **Database:** PostgreSQL (configured via `dj-database-url`)
-- **Frontend:** Django templates, custom CSS, Pillow for image processing
+- **Auth:** Django sessions + django-allauth (Google login). Session cookies are the **only** credential — token auth was removed with the mobile app
 - **Google Integration:** google-api-python-client for Sheets/Forms sync
-- **Caching:** Django cache framework with Redis support
-- **Serving:** WhiteNoise (static files), Gunicorn/Uvicorn (WSGI/ASGI)
-- **Utilities:** django-background-tasks, dj-redis, dotenv
+- **Caching:** Django cache framework with Redis support (django-redis)
+- **Serving:** WhiteNoise (static files + SPA), Gunicorn
+- **Security:** django-axes (lockout), django-csp, Sentry, S3-compatible media via django-storages
+- **Images:** Pillow, with WebP variants generated on upload
 
 ## Project Structure
 
@@ -34,32 +40,41 @@ The application is deployed on [Render](https://render.com) with a PostgreSQL da
 │   │   ├── urls.py              # Root URL routing
 │   │   ├── middleware.py        # Custom middleware (Debug500Middleware)
 │   │   └── wsgi.py/asgi.py      # Server entry points
-│   ├── leaderboard/             # Core leaderboard app
-│   │   ├── models.py            # Event, User, UserToEvent, EventRSVP, EventFeedback, etc.
-│   │   ├── views.py             # Views (367 lines): home, leaderboard, events, user details
+│   ├── leaderboard/             # Core leaderboard app (API-only — no views.py, no templates)
+│   │   ├── models.py            # Event, User, UserToEvent, EventRSVP, EventFeedback, Badge, etc.
+│   │   ├── api/                 # DRF serializers + views + urls (mounted at /api/v1/)
+│   │   ├── services/            # Business logic: events, leaderboard, home, gallery, badges…
+│   │   ├── privacy.py           # Profile privacy-flag enforcement (used by API + OG tags)
+│   │   ├── checkin.py           # Geo check-in logic
 │   │   ├── admin.py             # Django admin configuration
-│   │   ├── tasks.py             # Background tasks for Google Sheets sync
-│   │   ├── image_utils.py       # Image resizing/optimization
-│   │   ├── management/commands/
-│   │   │   ├── sync_sheets.py   # Manual Google Sheets sync command
-│   │   │   └── award_event_points.py  # Award points for events
-│   │   ├── static/              # CSS, JS, images
-│   │   │   └── custom.css       # Design system CSS
-│   │   ├── templates/           # HTML templates (home, leaderboard, events, etc.)
-│   │   └── templatetags/        # Custom template filters
+│   │   ├── tasks.py             # Google Sheets sync
+│   │   ├── image_utils.py       # Resizing, upload validation, WebP variants
+│   │   ├── management/commands/ # sync_sheets, award_event_points, ensure_season,
+│   │   │                        #   generate_image_variants, migrate_media_to_s3…
+│   │   └── tests/               # ~30 test modules
 │   ├── accounts/                # User account/profile management
-│   │   ├── models.py            # Profile model (linked to User and LeaderboardUser)
-│   │   ├── views.py             # Auth views (login, register, profile)
-│   │   ├── urls.py              # Auth routes (/prihlasit/, /registrace/, /profil/)
-│   │   └── templates/           # Auth templates
+│   │   ├── models.py            # Profile model (linked to auth.User and LeaderboardUser)
+│   │   ├── api/                 # DRF auth + profile endpoints
+│   │   ├── adapters.py          # allauth adapter (Google login)
+│   │   ├── matching.py          # Ranks which account an archive player belongs to (admin merges)
+│   │   └── templates/           # ONLY password-reset mail + 2 Django-admin overrides
 │   ├── media/                   # User uploads (event images, profile photos)
 │   │   ├── event_images/
 │   │   ├── profile_photos/
 │   │   └── images/
-│   └── staticfiles/             # Collected static files (generated by collectstatic)
+│   └── staticfiles/             # Generated by collectstatic; staticfiles/react/ = the SPA build
 │
-├── ClaudeDesign/                # Static HTML/CSS/JS design mockup
-│   ├── CLAUDE.md               # ClaudeDesign-specific documentation
+├── frontend/                    # React 19 + Vite SPA — THE frontend
+│   ├── src/pages/              # One dir per route (Home, Events, EventDetail, Leaderboard…)
+│   ├── src/components/         # Shared UI (Nav, Footer, EventCard, Toast, CheckinBanner…)
+│   ├── src/services/           # api.js (axios + CSRF), queryCache, errors
+│   ├── src/context/            # AuthContext
+│   ├── src/styles/             # Design tokens + global CSS
+│   ├── image-src/              # Source images — originals, NOT served directly
+│   ├── public/img/             # Generated WebP variants (gitignored, `npm run images`)
+│   └── dist/                   # Build output (gitignored), copied to staticfiles/react/
+│
+├── claudedesign/                # Static HTML/CSS/JS design mockup — VISUAL SPEC, untracked
 │   ├── colors_and_type.css     # Design token source (colors, fonts, spacing, shadows)
 │   ├── nav.js                  # Shared navigation component
 │   ├── footer.js               # Shared footer component
@@ -81,10 +96,14 @@ The application is deployed on [Render](https://render.com) with a PostgreSQL da
 │   ├── export/src/             # Build artifact (trimmed deliverable bundle)
 │   └── scraps/                 # Sketches/notes (not part of the site)
 │
-├── build.sh                    # Production build/deployment script
+├── build.sh                    # Render build: npm build → stage SPA → collectstatic → migrate → sync
+├── security/RUNBOOK.md         # Manual Cloudflare/Render/Google Cloud steps (live checklist)
+├── loadtest/                   # Locust load-testing tooling (isolated venv)
+├── script/                     # One-off 2025 Google Forms import scripts — CONTAINS PII + a
+│                               #   service-account key. Gitignored. Do not commit or move.
 ├── README.md                   # Project overview (Czech language)
 ├── requirements.txt            # Python dependencies
-└── docker-compose.yaml         # Docker configuration
+└── docker-compose.yaml         # Local Postgres + Redis + adminer
 ```
 
 ## Key Architecture Patterns
@@ -113,57 +132,81 @@ Located in `leaderboard/tasks.py` and `leaderboard/management/commands/sync_shee
 - Images stored in `/media/` with subdirectories by type
 
 ### 4. User Authentication
-- Uses Django's built-in `auth.User` model
-- Custom `accounts.Profile` model links Django users to leaderboard users
-- Czech routes: `/prihlasit/` (login), `/registrace/` (register), `/profil/<username>/` (profile)
-- Login redirects to home (`/`)
+- Uses Django's built-in `auth.User` model; `accounts.Profile` links it to a `LeaderboardUser`
+- **Registration creates that `LeaderboardUser`** (`accounts.services.ensure_leaderboard_user`) —
+  an account without one cannot check in. An archive player with the same e-mail is adopted;
+  anything less exact is an admin **merge** (`leaderboard/merging.py`), which is soft and
+  reversible via `User.merged_into`. `User.objects` hides merged rows, `User.all_objects` doesn't
+- **Session cookies only.** DRF token auth is disabled (`DEFAULT_AUTHENTICATION_CLASSES`) — do not
+  reintroduce it. Plan features as web-session-only.
+- Google login via django-allauth (`accounts/adapters.py`); allauth URLs live under `/accounts/`
+- Login/registration UI is React; the backend exposes them under `/api/v1/auth/`
+- django-axes locks out repeated failed logins by (IP, username); a custom handler
+  (`accounts/axes_handler.py`, wired via `AXES_HANDLER`) adds a second counter per
+  username across all IPs, for attacks spread over many hosts
+
+### 5. Serving the SPA
+- `build.sh` builds `frontend/` and copies `dist/*` into `staticfiles/react/`
+- WhiteNoise serves it (`WHITENOISE_ROOT`); `mysite/views.py:react_index` returns `index.html`
+  for any non-reserved path, so client-side routes deep-link correctly
+- Crawlers get server-rendered Open Graph tags from `mysite/og.py` (privacy-flag aware)
 
 ## Common Development Commands
 
+> Use `python3`, not `python`. For manage.py specifically use `/usr/bin/python3` — a bare
+> `python3` on this machine lacks `dotenv`.
+
 ### Setup & Installation
 ```bash
+pip install -r requirements.txt          # Backend deps (from repo root)
+cd frontend && npm install               # Frontend deps
+docker compose up -d                     # Local Postgres + Redis
 cd djangotutorial
-pip install -r requirements.txt      # Install dependencies (or in parent: pip install -r requirements.txt)
-python manage.py migrate             # Apply database migrations
-python manage.py superuser.py        # Create superuser (defined in djangotutorial/superuser.py)
+/usr/bin/python3 manage.py migrate
+/usr/bin/python3 superuser.py            # Create superuser
 ```
 
 ### Running Locally
+Two processes — Django API on :8000, Vite dev server on :5173 (it proxies `/api`, `/media`,
+`/admin` to :8000, see `frontend/vite.config.js`):
 ```bash
-python manage.py runserver           # Start dev server on http://localhost:8000
-python manage.py runserver 0.0.0.0:8000  # Listen on all interfaces
+cd djangotutorial && /usr/bin/python3 manage.py runserver
+cd frontend && npm run dev
 ```
 
 ### Database & Migrations
 ```bash
-python manage.py makemigrations      # Create migration files for model changes
-python manage.py migrate             # Apply migrations
-python manage.py showmigrations      # Show migration status
-```
-
-### Static Files & Caching
-```bash
-python manage.py collectstatic --no-input  # Collect static files (used in production)
-python manage.py clear_cache               # Clear all caches (if needed for testing)
+/usr/bin/python3 manage.py makemigrations
+/usr/bin/python3 manage.py migrate
+/usr/bin/python3 manage.py showmigrations
 ```
 
 ### Google Sheets Sync
 ```bash
-python manage.py sync_sheets         # Manually trigger Google Sheets sync
+/usr/bin/python3 manage.py sync_sheets           # Skips if already synced today
+/usr/bin/python3 manage.py sync_sheets --force-all
 ```
 
 ### Admin Interface
-Access at `http://localhost:8000/admin/` with superuser credentials.
+At `settings.ADMIN_URL` (env `ADMIN_URL`, **not** the default `/admin/` in production).
 
 ## Environment Variables
 
 Required environment variables (in `djangotutorial/.env` or system):
-- `DJANGO_SECRET_KEY`: Secret key for Django (generated in settings)
-- `DATABASE_URL`: PostgreSQL connection string (required for production, e.g., `postgres://user:pass@host/db`)
-- `MODE`: Set to `PRODUCTION` for production deployment
+- `DJANGO_SECRET_KEY`: Secret key. **Production refuses to boot without it** (no default).
+- `DATABASE_URL`: PostgreSQL connection string (e.g., `postgres://user:pass@host/db`)
+- `MODE`: Set to `PRODUCTION` for production. `DEBUG = MODE != "PRODUCTION"`.
+- `ADMIN_URL`: Obscured Django admin path — do not leave at the default in production
 - `CSRF_TRUSTED_ORIGIN`: Allowed origin for CSRF (e.g., `https://www.gameofyolo.com`)
-- `MEDIA_URL`: URL path for media files (default: `/media/`)
-- `MEDIA_ROOT`: Filesystem path to media directory
+- `MEDIA_URL` / `MEDIA_ROOT`: Media serving path and filesystem root
+- `REDIS_URL`: Cache backend (falls back to local-memory cache when unset)
+- `SENTRY_DSN`: Backend error reporting (the frontend DSN is committed in `frontend/.env.production`)
+
+Frontend build-time vars live in `frontend/.env.production` and are **intentionally committed** —
+they end up in the public bundle anyway (write-only Sentry DSN, donation QR string).
+
+See `security/RUNBOOK.md` for the Cloudflare / Render / Google Cloud console steps that can't be
+done from the repo.
 
 ## Deployment
 
@@ -174,98 +217,100 @@ Production deployment via Render (configured in `build.sh`):
 
 This script:
 1. Installs Python dependencies
-2. Collects static files
-3. Runs migrations
-4. Creates superuser if needed
-5. Registers daily cron job for Google Sheets sync at 4 AM UTC
+2. Builds the React SPA (`npm ci && npm run build`) and stages it into `staticfiles/react/`
+3. Collects static files
+4. Runs migrations, ensures the current season exists
+5. Syncs Google Sheets and backfills WebP image variants
+6. Creates superuser if needed
 
-Database is PostgreSQL on Render. Static files are served via WhiteNoise.
+`start.sh` is the Render **start** command (gunicorn + a backgrounded boot-time sheet sync).
+Database is PostgreSQL on Render. Static files and the SPA are served via WhiteNoise.
 
 ## URL Routing
 
-**Main Views (Czech routes):**
-- `/` — Home page (hero, upcoming events, featured users)
-- `/events/` — Events list
-- `/events/<slug>/` — Event detail, RSVP, feedback
-- `/leaderboard/` — Leaderboard (all, monthly, yearly rankings)
-- `/o-bodech/` — About points/scoring system
-- `/profil/<username>/` — User profile
-- `/admin/` — Django admin
+Routes are **client-side** (React Router, `frontend/src/App.jsx`). Django only owns the
+reserved prefixes; everything else falls through to `index.html`.
 
-**Authentication:**
-- `/prihlasit/` — Login
-- `/registrace/` — Register
-- `/odhlasit/` — Logout (POST)
+**SPA routes (Czech):**
+- `/` home · `/events` · `/events/:slug` · `/events/vytvorit` · `/events/:slug/upravit`
+- `/galerie` · `/leaderboard` · `/historie` · `/o-bodech`
+- `/profil`, `/profil/:username` · `/upravit-profil` · `/hrac/:userId`
+- `/prihlasit` · `/registrace` · `/zapomenute-heslo` · `/obnova-hesla/:uid/:token`
+- `/ochrana-osobnich-udaju` · `/sprava/zpetna-vazba` (admin)
 
-**API:**
-- `/api/user/<user_id>/` — User detail (JSON)
-- `/api/events/<event_id>/images/` — Event images (JSON)
+**Django-owned prefixes** (see `mysite/urls.py`):
+- `/api/v1/` — the DRF API (leaderboard, `auth/`, `profiles/`)
+- `/accounts/` — allauth (Google OAuth callbacks)
+- `settings.ADMIN_URL` — Django admin
+- `/media/`, `/static/`, `/sitemap.xml`, `/robots.txt`, `/whoami/`
+- `/api/schema/` + `swagger/` + `redoc/` — DEBUG only
 
 ## Frontend Design System
 
-Located in `djangotutorial/leaderboard/static/leaderboard/custom.css`:
-- **Fonts:** Bebas Neue (display), Barlow (body), Courier Prime (mono)
+Lives in `frontend/src/styles/` (tokens as CSS custom properties). `claudedesign/colors_and_type.css`
+is the upstream source of truth for the token values.
 - **Color Palette:**
-  - `--gol-pink: #e15463` (primary accent)
+  - `--color-pink: #e15463` (primary accent / CTA / hover)
   - `--gol-purple: #2a2468` (primary section bg)
   - `--gol-dark: #1a0f0a` (dark bg)
   - `--gol-cream: #fff1d4` (light text/bg)
   - `--gol-gold: #f5c842` (secondary accent)
 - **Visual:** Dark brown base, purple sections, grain textures, responsive layout
+- **Design language rules:** the homepage is the reference. Hard cuts, opaque cards; ticket skin
+  on texture, poster card on photos, frost for chrome only, cream ticket for events only.
 
-## ClaudeDesign — Static Design Mockup
+## claudedesign — Static Design Mockup
 
-The `ClaudeDesign/` directory contains a **standalone HTML/CSS/JS design mockup** (no build system, no backend). This is the visual reference and component library for the Django frontend.
+The `claudedesign/` directory contains a **standalone HTML/CSS/JS design mockup** (no build system,
+no backend), and is **untracked** — it is the visual spec the React SPA is built against, not
+shipped code.
 
 ### Architecture
 
-Three core files hold the design together:
+Two core files hold the design together:
 
-1. **[colors_and_type.css](ClaudeDesign/colors_and_type.css)** — Single source of truth for design tokens:
+1. **[colors_and_type.css](claudedesign/colors_and_type.css)** — Single source of truth for design tokens:
    - CSS custom properties on `:root` for colors, fonts, spacing scale, border radii, shadows
    - **Always use these vars** in new pages/components; avoid one-off color/size literals
 
-2. **[nav.js](ClaudeDesign/nav.js)** — Shared navigation component:
+2. **[nav.js](claudedesign/nav.js)** — Shared navigation component:
    - Pages opt in by setting `window.GOL_PAGE` (e.g., `'home'`, `'events'`, `'leaderboard'`, `'profile'`)
    - Injects nav HTML and CSS into `<div id="nav-root"></div>`
    - Implements hide-on-scroll-down / show-on-scroll-up behavior
-   - Known pages: `home`, `events`, `gallery`, `leaderboard`, `profile`
-
-3. **[footer.js](ClaudeDesign/footer.js)** — Shared footer component (similar pattern to nav)
 
 ### Pages
 
-All pages are standalone HTML files; preview by opening in a browser or running `python3 -m http.server`:
+All pages are standalone HTML files; preview by opening in a browser or running `python3 -m http.server`.
+Several exist in two variants (`*_v2.html`, `*2.html`) — competing directions, not supersets; check
+which one the React page actually followed before treating either as canonical.
 
 | Page | Purpose |
 |------|---------|
-| [index.html](ClaudeDesign/index.html) | Landing page: hero, upcoming events teaser, leaderboard teaser, about |
-| [events.html](ClaudeDesign/events.html) | Event listing with filtering |
-| [event_detail.html](ClaudeDesign/event_detail.html) | Individual event page with RSVP/feedback |
-| [leaderboard.html](ClaudeDesign/leaderboard.html) | Full leaderboard rankings |
-| [gallery_page.html](ClaudeDesign/gallery_page.html) | Photo gallery (uses `gallery/gal0.jpg`–`gal3.jpg`) |
-| [profile.html](ClaudeDesign/profile.html) | User profile page (reads `localStorage['gol_user']`) |
-| [login.html](ClaudeDesign/login.html) | Login form (no nav; guest state) |
-| [register.html](ClaudeDesign/register.html) | Registration form (no nav; guest state) |
-| [o-bodech.html](ClaudeDesign/o-bodech.html) | About points/scoring explanation |
-| [index-print.html](ClaudeDesign/index-print.html) | **Standalone A4-landscape print export** — inlines design tokens, does NOT link `colors_and_type.css` or `nav.js` |
+| [index.html](claudedesign/index.html) | Landing page — **the design reference for everything else** |
+| [events.html](claudedesign/events.html) | Event listing with filtering |
+| [event_detail.html](claudedesign/event_detail.html) · `event_detail_v2.html` | Event page with RSVP/feedback |
+| [leaderboard.html](claudedesign/leaderboard.html) | Full leaderboard rankings |
+| [gallery_page.html](claudedesign/gallery_page.html) · `gallery_page2.html` | Photo gallery |
+| [profile.html](claudedesign/profile.html) · `profile_v2.html` | User profile page |
+| [upravit_profil2.html](claudedesign/upravit_profil2.html) | Profile editing |
+| [historie.html](claudedesign/historie.html) | History / support page |
+| [login.html](claudedesign/login.html) · [register.html](claudedesign/register.html) | Auth forms (no nav; guest state) |
+| [o-bodech2.html](claudedesign/o-bodech2.html) | About points/scoring explanation |
+| [eshop.html](claudedesign/eshop.html) | Eshop concept — **not implemented in the SPA** |
+| [index-print.html](claudedesign/index-print.html) | **Standalone A4-landscape print export** — inlines design tokens, does NOT link `colors_and_type.css` or `nav.js` |
 
 ### Assets
 
-- **[logos/](ClaudeDesign/logos/)** — Brand marks; `GOL_main_logo_pink.png` is the nav logo
-- **[assets/](ClaudeDesign/assets/)** — Grain texture overlays (applied as `background-image` on dark sections)
-- **[gallery/](ClaudeDesign/gallery/)** — Photo assets (`gal0.jpg`–`gal3.jpg`)
-- **[fonts/](ClaudeDesign/fonts/)** — Locally hosted Courier Prime Italic (Google Fonts is primary; this is fallback)
-- **[design_ref/](ClaudeDesign/design_ref/)** — Figma/PNG reference mockups (visual spec for implementation)
-- **[export/src/](ClaudeDesign/export/src/)** — Build artifact: trimmed deliverable bundle (`index.html`, `nav.js`, `colors_and_type.css`)
+- **[logos/](claudedesign/logos/)** — Brand marks; `GOL_main_logo_pink.png` is the nav logo
+- **[assets/](claudedesign/assets/)** — Grain texture overlays (applied as `background-image` on dark sections)
+- **[gallery/](claudedesign/gallery/)** — Photo assets
+- **[fonts/](claudedesign/fonts/)** — Locally hosted Courier Prime Italic (Google Fonts is primary; this is fallback)
+- **[design_ref/](claudedesign/design_ref/)** — Figma/PNG reference mockups (visual spec for implementation)
+- **[export/src/](claudedesign/export/src/)** — Build artifact: trimmed deliverable bundle
+- **[scraps/](claudedesign/scraps/)** — Sketches/notes, not part of the site
 
-### Auth Mock
-
-Pages use **`localStorage['gol_user']`** as the only "auth" mechanism:
-- **Absence** → Guest state (nav shows *Start Playing* CTA → `register.html`)
-- **Presence** → Logged-in state (nav shows *Eshop* + avatar with user initials → `profile.html`)
-- [login.html](ClaudeDesign/login.html) / [register.html](ClaudeDesign/register.html) write to this key
-- [profile.html](ClaudeDesign/profile.html) likely reads/clears it
+Note the mockups use `localStorage['gol_user']` as a fake auth toggle. That is **mockup-only** —
+the real SPA uses `AuthContext` against session cookies.
 
 ### Conventions
 
@@ -274,27 +319,42 @@ Pages use **`localStorage['gol_user']`** as the only "auth" mechanism:
 - **UI copy is in Czech** — keep Czech when editing labels, nav items, headings unless explicitly asked otherwise
 - **No separate stylesheets** — extend per-page styles inline rather than creating new files
 
-### Updating ClaudeDesign
+### Porting claudedesign → React
 
-When syncing changes from ClaudeDesign to Django templates:
-1. Reference the [design_ref/](ClaudeDesign/design_ref/) mockups for visual spec
-2. Use the same CSS custom properties (from `colors_and_type.css`) in Django's `custom.css`
-3. Match nav/footer structure from `nav.js`/`footer.js` in Django template includes
-4. **Note:** [index-print.html](ClaudeDesign/index-print.html) duplicates color tokens — if palette changes, update both `colors_and_type.css` AND `index-print.html` by hand
+1. Reference the [design_ref/](claudedesign/design_ref/) mockups for the visual spec
+2. Reuse the CSS custom properties from `colors_and_type.css` in `frontend/src/styles/`
+3. Match nav/footer structure from `nav.js` in `frontend/src/components/Nav` / `Footer`
+4. **Note:** [index-print.html](claudedesign/index-print.html) duplicates color tokens — if the palette changes, update both `colors_and_type.css` AND `index-print.html` by hand
 
 ## Testing
 
-Basic test structure exists in `leaderboard/tests.py`. Run tests with:
+Both suites run in CI (`.github/workflows/tests.yml`).
+
 ```bash
-python manage.py test leaderboard
-python manage.py test accounts
+# Backend — 530 tests. test_settings forces in-memory SQLite, so no Postgres needed.
+cd djangotutorial
+DJANGO_SETTINGS_MODULE=mysite.test_settings DJANGO_SECRET_KEY=x \
+  /usr/bin/python3 manage.py test leaderboard accounts
+
+# Frontend — 37 tests
+cd frontend && npm run test:run
+npm run lint     # NOT clean — ~33 known pre-existing issues
 ```
 
 ## Notes for Future Development
 
-1. **Image Uploads:** Always use `image_utils.resize_image()` when saving image fields to optimize storage.
+1. **Image Uploads:** Always use `image_utils.resize_image()` when saving image fields, and
+   `validate_upload()` for anything user-supplied. Static images go through
+   `frontend/scripts/optimize-images.js` (`npm run images`), which writes WebP variants into
+   `frontend/public/img/` from originals in `frontend/image-src/`.
 2. **Cache Invalidation:** When modifying Event, User, or UserToEvent models, ensure cache keys are invalidated in the model's `save()` method.
-3. **Google Sheets:** The cron job is registered in `build.sh`—test `sync_sheets` locally before deploying if you modify the sync logic.
-4. **Production:** `DEBUG = True` is currently set in settings (line 40). Change to check `MODE` environment variable for production deployments.
-5. **Static Files:** Use `python manage.py collectstatic` before any production deployment; WhiteNoise serves them from `staticfiles/`.
-6. **Database Transactions:** Heavy operations (e.g., mass sync from Google Sheets) may benefit from transaction wrapping or batch inserts.
+3. **Write endpoints must be transactional:** every POST/PATCH wraps its writes in
+   `transaction.atomic` — no half-saved rows when response building fails.
+4. **Event creation lives in React** (`CreateEventPage`/`EditEventPage`). Django admin is for
+   manual fix-ups only — form work on the Event model belongs in the SPA.
+5. **Privacy flags are enforced server-side** (`leaderboard/privacy.py`). Any new endpoint that
+   exposes profile data must honour them; so must `mysite/og.py`.
+6. **Google Sheets:** test `sync_sheets` locally before deploying if you modify the sync logic.
+   The daily cron is configured in the Render dashboard (the `build.sh` crontab block is commented out).
+7. **Database Transactions:** Heavy operations (e.g., mass sync from Google Sheets) may benefit from transaction wrapping or batch inserts.
+8. **No mobile app.** Capacitor was removed 2026-07-27 — plan features as web-session-only.

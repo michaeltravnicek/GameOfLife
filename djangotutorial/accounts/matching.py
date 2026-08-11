@@ -1,10 +1,17 @@
-"""Suggest which leaderboard player an account belongs to.
+"""Suggest which archive player an account belongs to.
 
 Historically the link was exact: registration asked for a phone number and
-`LeaderboardUser.number` matched it. Once the number goes away there is no exact
-key left, so linking becomes a judgement call -- and judgement calls belong to a
-human. Nothing here ever writes: it ranks candidates and explains why, the admin
-decides.
+`LeaderboardUser.number` matched it. The number is gone (migration 0026), so
+there is no exact key left and linking became a judgement call -- and judgement
+calls belong to a human. Nothing here ever writes: it ranks candidates and
+explains why, the admin decides.
+
+What the admin confirms is now a *merge*, not a link. Registration gives every
+account its own player (accounts.services.ensure_leaderboard_user), so both
+sides of the match are real players and one gets folded into the other --
+`leaderboard.merging.merge_players`. Exact e-mail matches never reach this
+module; they are settled at signup. What is left here is the pre-e-mail archive,
+matched on names.
 
 Two things make this harder than a plain name comparison:
 
@@ -87,12 +94,26 @@ def score_player(user, player_name):
     return best_score, best_signal
 
 
+def _top_with_ambiguity(scored, limit):
+    """Best `limit` candidates, each flagged if the top two are too close.
+
+    `ambiguous` is set on the whole result when the leader's margin is under
+    AMBIGUOUS_MARGIN -- that is exactly the case a tired admin gets wrong, and
+    since the merge moves points it is worth interrupting them for.
+    """
+    scored.sort(key=lambda candidate: -candidate["score"])
+    top = scored[:limit]
+    ambiguous = len(top) > 1 and (top[0]["score"] - top[1]["score"]) < AMBIGUOUS_MARGIN
+    for candidate in top:
+        candidate["ambiguous"] = ambiguous
+    return top
+
+
 def suggest_players(user, players, limit=5):
-    """Rank `players` as link candidates for `user`. Writes nothing.
+    """Rank `players` as merge candidates for `user`. Writes nothing.
 
     Returns dicts of ``{player, score, signal, signal_label, ambiguous}``, best
-    first. `ambiguous` is set on the whole result when the top two are within
-    AMBIGUOUS_MARGIN -- that is exactly the case a tired admin gets wrong.
+    first.
     """
     scored = []
     for player in players:
@@ -106,23 +127,63 @@ def suggest_players(user, players, limit=5):
                 "signal": signal,
                 "signal_label": SIGNAL_LABELS.get(signal, signal),
             })
-    scored.sort(key=lambda candidate: -candidate["score"])
-    top = scored[:limit]
-    ambiguous = len(top) > 1 and (top[0]["score"] - top[1]["score"]) < AMBIGUOUS_MARGIN
-    for candidate in top:
-        candidate["ambiguous"] = ambiguous
-    return top
+    return _top_with_ambiguity(scored, limit)
 
 
-def unlinked_players():
-    """Leaderboard players that no account has claimed yet."""
+def suggest_accounts(player, accounts, limit=5):
+    """The mirror image: rank `accounts` as owners of one archive `player`.
+
+    The admin queue runs this way round now. Every account has its own player
+    from registration, so the open work is no longer "accounts waiting for a
+    player" (there are none) but "archive rows waiting for their human" -- a
+    finite backlog that only shrinks. Same scoring, same shape, `account`
+    instead of `player`.
+    """
+    scored = []
+    for account in accounts:
+        value, signal = score_player(account, player.name)
+        if value >= MIN_SCORE:
+            scored.append({
+                "account": account,
+                "score": value,
+                "percent": round(value * 100),
+                "signal": signal,
+                "signal_label": SIGNAL_LABELS.get(signal, signal),
+            })
+    return _top_with_ambiguity(scored, limit)
+
+
+def archive_players():
+    """Players with no account: the merge backlog.
+
+    Everything the Google-Forms era left behind. `User.objects` already drops
+    rows merged into someone else, so a player leaves this queue for good the
+    moment an admin merges it.
+    """
     from leaderboard.models import User as LeaderboardUser
 
     return LeaderboardUser.objects.filter(profile__isnull=True)
 
 
-def unlinked_accounts():
-    """Accounts with no leaderboard player attached (no Profile counts too)."""
+def mergeable_accounts():
+    """Accounts that can receive an archive player's history.
+
+    That means every account with a player of its own -- the merge target. An
+    account without one predates `ensure_leaderboard_user`; the
+    `backfill_player_accounts` command gives it one.
+    """
+    from django.contrib.auth import get_user_model
+
+    return (
+        get_user_model().objects
+        .filter(profile__leaderboard_user__isnull=False)
+        .select_related("profile__leaderboard_user")
+        .order_by("-date_joined")
+    )
+
+
+def accounts_without_player():
+    """Pre-`ensure_leaderboard_user` accounts. Should be empty; surfaced if not."""
     from django.contrib.auth import get_user_model
     from django.db.models import Q
 

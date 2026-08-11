@@ -97,9 +97,13 @@ class SocialAccountAdapter(DefaultSocialAccountAdapter):
                 "gdpr_consent_version": settings.PRIVACY_POLICY_VERSION,
             },
         )
-        # Deliberately NOT linked to a LeaderboardUser. Matching a new account to
-        # an existing player is an admin action (see accounts.matching): letting
-        # a social signup claim a namesake's points automatically would be the
-        # same account-takeover this module exists to prevent, just via the
-        # leaderboard instead of the login.
+        # Same as local registration: the account gets its own player straight
+        # away, and adopts an archive row only on an exact e-mail match. Google
+        # has verified this address, so here that match is as good a key as the
+        # old phone number was. Name similarity still never links anything by
+        # itself — that stays an admin merge (accounts.matching), because
+        # claiming a namesake's points is the takeover this module exists to
+        # prevent, just via the leaderboard instead of the login.
+        from accounts.services import ensure_leaderboard_user
+        ensure_leaderboard_user(user)
         return user

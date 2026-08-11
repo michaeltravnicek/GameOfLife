@@ -71,6 +71,8 @@ USER_TO_EVENT_DEPENDENT_CACHE_KEYS = (
 
 
 import logging
+import threading
+from contextlib import contextmanager
 
 logger = logging.getLogger(__name__)
 
@@ -113,11 +115,63 @@ def invalidate_hero_cache():
     _evict((CACHE_KEY_HERO_IMAGES,))
 
 
+def _season_leaderboard_keys():
+    """Every per-season leaderboard key, listed by name.
+
+    `delete_pattern` alone is not enough: it only exists on django-redis, and
+    REDIS_URL is optional (settings falls back to LocMemCache). On that fallback
+    the pattern branch silently does nothing — and since *every* leaderboard
+    response is cached under this family, nothing would evict the board at all.
+    Seasons are one per year, so naming the keys is cheap and works on any
+    backend. The pattern is still passed as a backstop for stale key shapes.
+    """
+    from .models import Season
+
+    ids = ["all"]
+    try:
+        ids += list(Season.objects.values_list("pk", flat=True))
+    except Exception:  # noqa: BLE001 — no DB yet (migrations, early boot)
+        logger.debug("Season lookup failed while evicting; using the pattern only.")
+    return [season_leaderboard_key(season_id) for season_id in ids]
+
+
 def invalidate_points_dependent_caches():
     """Evict everything that depends on points totals after attendance changes.
 
-    Covers the static keys plus the dynamic per-season leaderboard family
-    (`leaderboard_season:*`), which can't be listed individually.
+    Does nothing inside `suspend_points_cache_invalidation()` — see there.
     """
-    _evict(USER_TO_EVENT_DEPENDENT_CACHE_KEYS,
+    if _suspended.depth:
+        return
+    _evict(tuple(USER_TO_EVENT_DEPENDENT_CACHE_KEYS) + tuple(_season_leaderboard_keys()),
            pattern=f"{CACHE_KEY_LEADERBOARD_SEASON_PREFIX}:*")
+
+
+class _Suspended(threading.local):
+    """Per-thread suspension depth — gunicorn workers handle requests in threads,
+    so a module-level int would let one request's bulk import silence another's
+    invalidation."""
+    depth = 0
+
+
+_suspended = _Suspended()
+
+
+@contextmanager
+def suspend_points_cache_invalidation():
+    """Batch a bulk write's invalidations into one at the end.
+
+    `UserToEvent.save()` evicts the cache, which is what makes an attendance row
+    added by hand in the admin show up on the leaderboard. During the Sheets sync
+    that same call fires per row: the season family is evicted with
+    `delete_pattern`, and django-redis implements that as a SCAN over the whole
+    keyspace. A thousand-row sync would mean a thousand keyspace scans.
+
+    So the sync wraps itself in this and evicts once when it's done. Anything
+    that suspends invalidation is responsible for calling
+    `invalidate_points_dependent_caches()` afterwards.
+    """
+    _suspended.depth += 1
+    try:
+        yield
+    finally:
+        _suspended.depth -= 1

@@ -25,9 +25,9 @@ def make_image_upload(name="test.png", size=(8, 8), image_format="PNG",
     return SimpleUploadedFile(name, buf.getvalue(), content_type=content_type)
 
 
-def make_profile_for(auth_user, *, number):
+def make_profile_for(auth_user, *, name=None):
     """Link `auth_user` to a fresh LeaderboardUser via a Profile."""
-    lb_user = LeaderboardUser.objects.create(number=number, name=f"Tester {number}")
+    lb_user = LeaderboardUser.objects.create(name=name or f"Tester {auth_user.username}")
     profile, _ = Profile.objects.get_or_create(user=auth_user)
     profile.leaderboard_user = lb_user
     profile.save()

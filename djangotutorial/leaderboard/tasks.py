@@ -1,4 +1,5 @@
 import gc
+import re
 from datetime import datetime
 
 from django.db import reset_queries
@@ -12,7 +13,7 @@ from leaderboard.sheet_columns import (
     is_negative_attendance,
     parse_rating,
 )
-from leaderboard.utils import parse_event_date_from_name, parse_phone_number
+from leaderboard.utils import parse_event_date_from_name
 
 SCOPES = [
     'https://www.googleapis.com/auth/drive.metadata.readonly',
@@ -42,28 +43,81 @@ def insert_event(sheet_id: str, sheet: dict):
     return event
 
 
-def handle_new_user(rec: tuple) -> User | None:
-    """
-    rec[1] = number, rec[2] = name
-    """
-    number = parse_phone_number(rec[1])
-    if number is None:
-        print("Invalid Number!")
-        return
+# Old sheets are "Timestamp | Telefon | Jméno a příjmení | …" with no header we
+# recognise for the name column. The phone is not read any more (the column may
+# still be there in historical sheets; we simply ignore it), but the name is
+# still needed, so fall back to its fixed position.
+LEGACY_NAME_INDEX = 2
 
-    user, created = User.objects.get_or_create(
-        number=number,
-        defaults={"name": rec[2]}
-    )
-    if not created:
-        print("USER FOUND", user)
-    else:
-        print(f"Inserted user ID: {user.id}")
-    return user
+
+def normalize_name(raw: str) -> str:
+    """Trim and collapse inner whitespace — "Jan  Novák " and "Jan Novák" are one person."""
+    return re.sub(r"\s+", " ", str(raw or "")).strip()
+
+
+def resolve_player(rec: tuple, cols: dict[str, int]) -> User | None:
+    """Find (or create) the leaderboard player a form response belongs to.
+
+    E-mail first: it is the only value in the sheet that is genuinely one person,
+    and it is the same key the site account uses. Forms with "Collect email
+    addresses" switched on provide it.
+
+    Name second, for the sheets that predate that — and they are most of the
+    archive. Name matching is case-insensitive and whitespace-tolerant, but it
+    cannot tell two namesakes apart; that is the price of not keeping a phone
+    number around purely as a join key, and it is the reason e-mail is preferred
+    whenever the column exists.
+
+    Returns None for a row with neither, which is a row we cannot attribute to
+    anyone — skipping it is better than inventing a player.
+    """
+    from .merging import resolve_player_id
+
+    email = cell(rec, cols.get("email")).lower() or None
+    name = normalize_name(cell(rec, cols.get("name", LEGACY_NAME_INDEX)))
+
+    if email:
+        # all_objects, then resolve: the row that owns this address may since
+        # have been merged into an account's player. Writing to the merged-away
+        # row would park the points off the leaderboard, where nobody sees them.
+        user = User.all_objects.filter(email=email).first()
+        if user:
+            return resolve_player_id(user.pk)
+        # This person may already exist from a name-only sheet. Adopt that row
+        # instead of starting a second one — otherwise the same human ends up
+        # with their points split across two players.
+        if name:
+            # Active rows only: a merged player must not be given an e-mail, it
+            # would resurrect it as a match target for every later sync.
+            user = User.objects.filter(
+                email__isnull=True, name__iexact=name,
+            ).order_by("id").first()
+            if user:
+                user.email = email
+                user.save(update_fields=["email"])
+                print(f"Linked existing player {user} to {email}")
+                return user
+        return User.objects.create(email=email, name=name or email)
+
+    if not name:
+        print("Row has neither e-mail nor name — skipping")
+        return None
+
+    user = User.objects.filter(name__iexact=name).order_by("id").first()
+    if user:
+        return user
+    # No live player by that name — but a merged one may still carry it, and an
+    # admin has already ruled that that name is this account. Honour the ruling
+    # instead of recreating the row they just cleared off the queue.
+    merged = User.all_objects.filter(
+        name__iexact=name, merged_into__isnull=False).order_by("id").first()
+    if merged:
+        return resolve_player_id(merged.pk)
+    return User.objects.create(name=name)
 
 
 def insert_rec(event: Event, rec: tuple, cols: dict[str, int]):
-    user = handle_new_user(rec)
+    user = resolve_player(rec, cols)
     if user is None:
         return
 
@@ -175,35 +229,42 @@ def main(run_all: bool):
     ).execute()
 
     service_sheets = build("sheets", "v4", credentials=creds)
-    for sheet_info in sheets.get("files", []):
-        sheet_id = sheet_info["id"]
-    
-        spreadsheet = service_sheets.spreadsheets().get(
-            spreadsheetId=sheet_id
-        ).execute()
+    # Each attendance row now evicts the caches on save (UserToEvent.save), which
+    # is right for a single admin edit and wrong for a few thousand rows — the
+    # season family is evicted with a Redis SCAN. Suspend it and evict once below.
+    from leaderboard.cache_config import (
+        invalidate_points_dependent_caches, suspend_points_cache_invalidation,
+    )
+    with suspend_points_cache_invalidation():
+        for sheet_info in sheets.get("files", []):
+            sheet_id = sheet_info["id"]
 
-        for sheet_meta in spreadsheet.get("sheets", []):
-            title = sheet_meta["properties"]["title"]
-            print(f"Processing sheet: {title}")
-            insert_event(sheet_id, sheet_meta)
-            
-            result = service_sheets.spreadsheets().values().get(
-                spreadsheetId=sheet_id,
-                range=title
+            spreadsheet = service_sheets.spreadsheets().get(
+                spreadsheetId=sheet_id
             ).execute()
 
-            sheet_list_id = str(sheet_meta["properties"]["sheetId"]) 
-            handle_attendance(sheet_id, sheet_list_id, result.get("values", []), run_all)
-            
-            del result
-            reset_queries()
-            gc.collect()
+            for sheet_meta in spreadsheet.get("sheets", []):
+                title = sheet_meta["properties"]["title"]
+                print(f"Processing sheet: {title}")
+                insert_event(sheet_id, sheet_meta)
+
+                result = service_sheets.spreadsheets().values().get(
+                    spreadsheetId=sheet_id,
+                    range=title
+                ).execute()
+
+                sheet_list_id = str(sheet_meta["properties"]["sheetId"])
+                handle_attendance(sheet_id, sheet_list_id, result.get("values", []), run_all)
+
+                del result
+                reset_queries()
+                gc.collect()
 
     del service_sheets, sheets, service
     gc.collect()
 
-    # Points changed → drop the leaderboard / stats caches.
-    from leaderboard.cache_config import invalidate_points_dependent_caches
+    # Points changed → drop the leaderboard / stats caches. This is the one
+    # eviction for the whole run (see suspend_points_cache_invalidation).
     invalidate_points_dependent_caches()
 
 

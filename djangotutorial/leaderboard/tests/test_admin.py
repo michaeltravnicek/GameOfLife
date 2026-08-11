@@ -71,7 +71,7 @@ class AdminFeedbacksApiTests(TestCase):
         self.attendee = UserModel.objects.create_user(
             username="att", password="x", first_name="Jana", last_name="Nováková",
         )
-        lb = LeaderboardUser.objects.create(number=700000011, name="Jana Nováková")
+        lb = LeaderboardUser.objects.create(name="Jana Nováková")
         Profile.objects.create(user=self.attendee, leaderboard_user=lb)
 
         self.event = Event.objects.create(
