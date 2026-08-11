@@ -190,3 +190,66 @@ class AnonymizeAccountCommandTests(TestCase):
         with self.assertRaises(CommandError):
             call_command("anonymize_account", "kdo-to-je", "--yes")
         self.assertTrue(AuthUser.objects.filter(username="posta").exists())
+
+
+class PasswordChangeTests(TestCase):
+    """Changing your own password while signed in.
+
+    Until this existed the only route was logging out and mailing yourself a
+    reset link — a strange thing to ask of someone already authenticated.
+    """
+
+    def setUp(self):
+        self.client = APIClient()
+        self.user = AuthUser.objects.create_user(username="menic", password="stare-heslo-123")
+        self.url = reverse("api-password-change")
+
+    def _post(self, **body):
+        self.client.force_authenticate(user=self.user)
+        return self.client.post(self.url, body, format="json")
+
+    def test_changes_the_password(self):
+        resp = self._post(old_password="stare-heslo-123", new_password="nove-heslo-456")
+        self.assertEqual(resp.status_code, 200)
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.check_password("nove-heslo-456"))
+
+    def test_wrong_old_password_is_refused(self):
+        # The session already proves who they are; the old password is what
+        # stops a borrowed unlocked laptop becoming a permanent takeover.
+        resp = self._post(old_password="uplne-jine", new_password="nove-heslo-456")
+        self.assertEqual(resp.status_code, 400)
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.check_password("stare-heslo-123"))
+
+    def test_a_weak_new_password_is_refused(self):
+        resp = self._post(old_password="stare-heslo-123", new_password="123")
+        self.assertEqual(resp.status_code, 400)
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.check_password("stare-heslo-123"))
+
+    def test_reusing_the_same_password_is_refused(self):
+        resp = self._post(old_password="stare-heslo-123", new_password="stare-heslo-123")
+        self.assertEqual(resp.status_code, 400)
+
+    def test_missing_fields_are_refused(self):
+        self.assertEqual(self._post(old_password="stare-heslo-123").status_code, 400)
+        self.assertEqual(self._post(new_password="nove-heslo-456").status_code, 400)
+
+    def test_requires_auth(self):
+        resp = self.client.post(
+            self.url, {"old_password": "a", "new_password": "b"}, format="json",
+        )
+        self.assertIn(resp.status_code, (401, 403))
+
+    def test_you_stay_logged_in_afterwards(self):
+        # Changing a password rotates the session auth hash. Without
+        # update_session_auth_hash the user is logged out by their own
+        # successful password change.
+        self.client.force_authenticate(user=self.user)
+        self.client.post(
+            self.url,
+            {"old_password": "stare-heslo-123", "new_password": "nove-heslo-456"},
+            format="json",
+        )
+        self.assertEqual(self.client.get(reverse("api-me")).status_code, 200)

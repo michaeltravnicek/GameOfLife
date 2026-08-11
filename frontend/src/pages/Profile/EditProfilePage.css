@@ -34,6 +34,10 @@
 .editprofile-page .gol-input-prefix .gol-input{padding-left:42px}
 .editprofile-page .gol-input-prefix .ep-pre{position:absolute;left:14px;top:50%;transform:translateY(-50%);font-family:var(--font-mono);font-style:italic;font-size:13px;color:var(--alpha-cream-55);letter-spacing:.04em;pointer-events:none}
 .editprofile-page .ep-counter{font-family:var(--font-mono);font-style:italic;font-size:11px;color:var(--fg-muted-dark);letter-spacing:.04em;text-align:right;margin-top:-2px}
+/* Password section: its own save, so it needs its own error line and action
+   row rather than borrowing the page-wide save bar. */
+.editprofile-page .ep-pw-error{font-family:var(--font-body);font-size:13.5px;color:var(--color-pink);margin-top:4px}
+.editprofile-page .ep-pw-actions{display:flex;justify-content:flex-end;margin-top:18px}
 
 .editprofile-page .ep-social-rows{display:flex;flex-direction:column;gap:12px}
 .editprofile-page .ep-social-row{display:grid;grid-template-columns:44px 1fr;gap:14px;align-items:center}

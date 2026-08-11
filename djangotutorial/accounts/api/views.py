@@ -1,6 +1,6 @@
 import logging
 
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
 from django.contrib.auth.forms import PasswordResetForm
 from django.contrib.auth.models import User as AuthUser
 from django.db import transaction
@@ -32,7 +32,9 @@ from .serializers import (
     RegisterRequestSerializer,
     SeasonDetailSerializer,
 )
-from .throttles import LoginThrottle, PasswordResetThrottle, RegisterThrottle
+from .throttles import (
+    LoginThrottle, PasswordChangeThrottle, PasswordResetThrottle, RegisterThrottle,
+)
 
 from leaderboard.models import Season
 
@@ -41,6 +43,7 @@ from leaderboard.privacy import visibility_for
 
 from accounts.services import (
     anonymize_account,
+    change_password,
     profile_payload,
     visible_profile_user_or_404,
     reset_password,
@@ -130,6 +133,33 @@ def login_api(request):
     # Session cookie only — see DEFAULT_AUTHENTICATION_CLASSES in settings.py for why
     # the `client: "mobile"` token branch that used to live here was removed.
     return Response({"user": serialize_user(user, request)}, status=status.HTTP_200_OK)
+
+
+@extend_schema(tags=["Auth"], request=OpenApiTypes.OBJECT, responses=OkResponseSerializer)
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+@throttle_classes([PasswordChangeThrottle])
+@transaction.atomic
+def password_change_api(request):
+    """Change your own password. Body: {old_password, new_password}.
+
+    Until now the only route was logging out and mailing yourself a reset link,
+    which is a strange thing to ask of someone who is already signed in.
+
+    Throttled per user, not per IP: the caller is signed in, so an AnonRate
+    throttle would skip them entirely (see api/throttles.py).
+    """
+    ok, error = change_password(
+        request.user,
+        request.data.get("old_password") or "",
+        request.data.get("new_password") or "",
+    )
+    if not ok:
+        return Response({"error": error}, status=status.HTTP_400_BAD_REQUEST)
+    # Changing the password rotates the session auth hash; without this the
+    # user is logged out by their own successful password change.
+    update_session_auth_hash(request, request.user)
+    return Response({"ok": True}, status=status.HTTP_200_OK)
 
 
 @extend_schema(tags=["Auth"], request=None, responses=OkResponseSerializer)

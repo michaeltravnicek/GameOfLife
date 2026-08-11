@@ -8,7 +8,7 @@ These bound one attacker, not one account: a run spread over many IPs passes eve
 per-IP limit. The account-wide failure counter in accounts/axes_handler.py covers
 that case — this module is not the whole brute-force story.
 """
-from rest_framework.throttling import AnonRateThrottle
+from rest_framework.throttling import AnonRateThrottle, UserRateThrottle
 
 
 class LoginThrottle(AnonRateThrottle):
@@ -21,3 +21,14 @@ class RegisterThrottle(AnonRateThrottle):
 
 class PasswordResetThrottle(AnonRateThrottle):
     scope = "password_reset"
+
+
+class PasswordChangeThrottle(UserRateThrottle):
+    """Password change is authenticated, so it needs a *user* throttle.
+
+    AnonRateThrottle returns early for signed-in users — reusing one of the
+    classes above here would have applied no limit at all. The endpoint checks
+    the old password, so it is a guessing surface for anyone who gets hold of a
+    logged-in browser.
+    """
+    scope = "password_change"

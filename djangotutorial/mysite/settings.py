@@ -569,6 +569,9 @@ REST_FRAMEWORK = {
         # below the generic 'user' rate — a hot loop here is an outbound flood
         # from our IP, not just load on us.
         'form_submit': '20/hour',
+        # Checking the old password makes this a guessing surface for whoever
+        # got hold of a signed-in browser. Per user, not per IP.
+        'password_change': '10/hour',
         # Generous: one SPA page load fans out into several requests, and
         # visitors on shared/mobile NAT share an IP. Tune down once you've
         # seen real traffic. Both are env-overridable — see _throttle_rate above.

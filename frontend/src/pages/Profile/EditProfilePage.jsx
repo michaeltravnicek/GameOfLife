@@ -8,7 +8,7 @@ import Button from '../../components/Button/Button';
 import { useToast } from '../../components/Toast/ToastProvider';
 import {
   fetchMe, fetchProfile, updateProfile, fetchCategories, fetchProfileQuestions,
-  apiDeleteAccount,
+  apiDeleteAccount, apiPasswordChange,
 } from '../../services/api';
 import { useBeforeUnload } from '../../hooks/useBeforeUnload';
 import { reportError, extractApiError } from '../../services/errors';
@@ -33,6 +33,11 @@ export default function EditProfilePage() {
   const { refresh: refreshAuth } = useAuth();
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  // Password change is its own little form: separate state, separate save.
+  const [pw, setPw] = useState({ old: '', next: '' });
+  const [pwBusy, setPwBusy] = useState(false);
+  const [pwError, setPwError] = useState(null);
+  const [pwDone, setPwDone] = useState(false);
   const [loading, setLoading] = useState(true);
   const [allCategories, setAllCategories] = useState([]);
   const [form, setForm] = useState({
@@ -189,6 +194,21 @@ export default function EditProfilePage() {
   const togglePrivacy = (key) => (next) => { setPrivacy((p) => ({ ...p, [key]: next })); markDirty(); };
 
   const handleCategories = (next) => { setCategories(next); markDirty(); };
+
+  const handlePasswordChange = async () => {
+    setPwBusy(true);
+    setPwError(null);
+    try {
+      await apiPasswordChange(pw.old, pw.next);
+      setPw({ old: '', next: '' });
+      setPwDone(true);
+      toast.success('Heslo je změněné. Zůstáváš přihlášený/á.', { title: 'Heslo' });
+    } catch (err) {
+      setPwError(extractApiError(err, 'Heslo se nepodařilo změnit.'));
+    } finally {
+      setPwBusy(false);
+    }
+  };
 
   const confirmDelete = async () => {
     setDeleting(true);
@@ -422,12 +442,46 @@ export default function EditProfilePage() {
           </div>
         </section>
 
-        {/* 08 · Danger */}
+        {/* 08 · Heslo — its own save button on purpose: it is not part of the
+            profile form's dirty state, and mixing it in would mean the big
+            "Uložit profil" button silently changed your password too. */}
+        <section className="gol-section">
+          <div className="gol-rule" />
+          <div className="gol-card">
+            <div className="gol-card-head">
+              <div className="gol-sec-eyebrow">— 08 · Heslo —</div>
+              <h2 className="gol-sec-heading">Změnit <span className="pink">heslo.</span></h2>
+              <p className="ep-sec-sub">Staré heslo potřebujeme, i když jsi přihlášený/á — kdyby ti někdo sedl k odemčenému počítači.</p>
+            </div>
+            <div className="gol-field gol-full">
+              <label htmlFor="f-old-pw">Staré heslo</label>
+              <input
+                className="gol-input" id="f-old-pw" type="password" autoComplete="current-password"
+                value={pw.old} onChange={(e) => setPw((p) => ({ ...p, old: e.target.value }))}
+              />
+            </div>
+            <div className="gol-field gol-full">
+              <label htmlFor="f-new-pw">Nové heslo</label>
+              <input
+                className="gol-input" id="f-new-pw" type="password" autoComplete="new-password"
+                value={pw.next} onChange={(e) => setPw((p) => ({ ...p, next: e.target.value }))}
+              />
+            </div>
+            {pwError && <div className="ep-pw-error" role="alert">{pwError}</div>}
+            <div className="ep-pw-actions">
+              <Button variant="action" onClick={handlePasswordChange} busy={pwBusy} disabled={!pw.old || !pw.next}>
+                {pwDone ? '✓ Heslo změněno' : 'Změnit heslo'}
+              </Button>
+            </div>
+          </div>
+        </section>
+
+        {/* 09 · Danger */}
         <section className="gol-section">
           <div className="gol-rule" />
           <div className="gol-card gol-danger-card">
             <div className="gol-card-head">
-              <div className="gol-sec-eyebrow danger">— 08 · Konec hry —</div>
+              <div className="gol-sec-eyebrow danger">— 09 · Konec hry —</div>
               <h2 className="gol-sec-heading">Něco <span className="pink">extrémního.</span></h2>
               <p className="ep-sec-sub">Tyhle akce jsou nevratné. Mysli si dvakrát.</p>
             </div>

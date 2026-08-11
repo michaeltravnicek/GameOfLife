@@ -93,15 +93,40 @@ class EventRsvpApiTests(TestCase):
         resp = self.client.put(reverse("api-event-rsvp", kwargs={"slug": "neexistuje"}))
         self.assertEqual(resp.status_code, 404)
 
-    def test_past_event_currently_accepts_rsvp(self):
-        # Documents current behavior: the API has no date gate, only the
-        # frontend hides the button. RSVPing a past event inflates the public
-        # participant count — see TESTING_REPORT.md before relying on this.
-        past = Event.objects.create(
+    def _past_event(self):
+        return Event.objects.create(
             sheet_id="past", sheet_list_id="x",
             name="Past Event", place="Brno", points=10,
             date=timezone.now() - timedelta(days=7),
         )
+
+    def test_past_event_refuses_new_rsvp(self):
+        # The frontend has always hidden the button on is_past; the endpoint
+        # used to accept it anyway, and the public "X účastníků" on a finished
+        # event is built from this count.
+        past = self._past_event()
         self.client.force_authenticate(user=self.user)
         resp = self.client.put(reverse("api-event-rsvp", kwargs={"slug": past.slug}))
+        self.assertEqual(resp.status_code, 400)
+        self.assertFalse(EventRSVP.objects.filter(event=past).exists())
+
+    def test_past_event_still_allows_leaving(self):
+        # Joined while it was upcoming, wants out afterwards. Removing an RSVP
+        # can only make the public count more accurate.
+        past = self._past_event()
+        EventRSVP.objects.create(auth_user=self.user, event=past)
+        self.client.force_authenticate(user=self.user)
+        resp = self.client.delete(reverse("api-event-rsvp", kwargs={"slug": past.slug}))
+        self.assertEqual(resp.status_code, 200)
+        self.assertFalse(EventRSVP.objects.filter(event=past).exists())
+
+    def test_event_without_a_date_can_still_be_joined(self):
+        # `date` is nullable (an event announced before its time is fixed).
+        # No date means nothing to compare against, so it is not "past".
+        undated = Event.objects.create(
+            sheet_id="tbd", sheet_list_id="x",
+            name="Kdysi", place="Brno", points=10, date=None,
+        )
+        self.client.force_authenticate(user=self.user)
+        resp = self.client.put(reverse("api-event-rsvp", kwargs={"slug": undated.slug}))
         self.assertEqual(resp.status_code, 201)

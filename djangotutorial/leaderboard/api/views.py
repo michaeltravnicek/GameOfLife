@@ -2,6 +2,7 @@ from django.conf import settings
 from django.db import transaction
 from django.http import Http404
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from django.views.decorators.cache import cache_control, never_cache
 
 from drf_spectacular.types import OpenApiTypes
@@ -233,9 +234,22 @@ def event_rsvp(request, slug):
     event = get_object_or_404(Event.objects.select_for_update(), slug=slug)
 
     if request.method == "DELETE":
+        # Leaving is always allowed, including after the event. Someone who
+        # joined by mistake must be able to take it back, and removing an RSVP
+        # can only make the public count more accurate, never less.
         EventRSVP.objects.filter(auth_user=request.user, event=event).delete()
         return Response({"rsvp": False, "rsvp_count": event.rsvps.count()},
                         status=status.HTTP_200_OK)
+
+    # Joining a finished event is not a thing. The frontend has always hidden
+    # the button on `is_past`, but the endpoint accepted it anyway — and the
+    # public "X účastníků" on a past event page is built from this count, so an
+    # RSVP arriving afterwards silently inflates a number people can't explain.
+    # Mirrors EventSerializer.get_is_past exactly, so the UI and the API agree
+    # on where "past" starts.
+    if event.date and event.date < timezone.now():
+        return Response({"error": "Akce už proběhla."},
+                        status=status.HTTP_400_BAD_REQUEST)
 
     if EventRSVP.objects.filter(auth_user=request.user, event=event).exists():
         return Response({"rsvp": True, "rsvp_count": event.rsvps.count()},

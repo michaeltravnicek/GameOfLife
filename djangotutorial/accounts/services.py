@@ -126,6 +126,32 @@ def ensure_leaderboard_user(user):
     return lb_user
 
 
+def change_password(user, old_password, new_password):
+    """Change a signed-in user's password. Returns ``(ok, error)``.
+
+    The old password is required even though the session already proves who
+    they are: it is what stops a borrowed unlocked laptop from becoming a
+    permanent takeover.
+
+    Caller must run `update_session_auth_hash` afterwards — changing the
+    password rotates the session hash, and without that the user is logged out
+    by their own successful password change.
+    """
+    if not old_password or not new_password:
+        return False, "Vyplň staré i nové heslo."
+    if not user.check_password(old_password):
+        return False, "Staré heslo nesouhlasí."
+    if old_password == new_password:
+        return False, "Nové heslo musí být jiné než staré."
+    try:
+        validate_password(new_password, user)
+    except ValidationError as exc:
+        return False, " ".join(exc.messages)
+    user.set_password(new_password)
+    user.save(update_fields=["password"])
+    return True, None
+
+
 def anonymize_account(user):
     """Delete `user`'s personal data, keep their points as an anonymous player.
 

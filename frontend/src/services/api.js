@@ -73,6 +73,12 @@ export const apiLogout = () => api.post('/auth/logout/').then((r) => r.data);
 export const apiDeleteAccount = () => api.delete('/auth/me/delete/').then((r) => r.data);
 export const apiRegister = (payload) =>
   api.post('/auth/register/', payload).then((r) => r.data);
+// Change your own password while signed in (the reset-by-email flow below is
+// for people who can't log in at all).
+export const apiPasswordChange = (oldPassword, newPassword) =>
+  api.post('/auth/password-change/', { old_password: oldPassword, new_password: newPassword })
+    .then((r) => r.data);
+
 export const apiPasswordReset = (email) =>
   api.post('/auth/password-reset/', { email }).then((r) => r.data);
 export const apiPasswordResetConfirm = (uid, token, newPassword) =>

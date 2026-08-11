@@ -30,6 +30,10 @@ urlpatterns = [
     path("sitemap.xml", sitemap, {"sitemaps": SITEMAPS}, name="sitemap"),
     path("robots.txt", react_views.robots_txt, name="robots"),
 
+    # Health check. Point Render's health-check path here — the default (`/`)
+    # returns the SPA shell from memory and answers 200 with the DB down.
+    path("healthz/", react_views.healthz, name="healthz"),
+
     # Deliberate 500 for verifying the Sentry pipeline. Superuser-only —
     # see the view's docstring for why it isn't the open route Sentry suggests.
     path("sentry-debug/", react_views.sentry_debug, name="sentry-debug"),
@@ -100,7 +104,12 @@ if settings.DEBUG:
 # ADMIN_URL a literal "admin" here would let the SPA swallow the real admin path
 # and serve a blank page instead of the login form.
 _admin_segment = re.escape(settings.ADMIN_URL.strip("/").split("/")[0])
-_reserved = "|".join(["api", _admin_segment, "media", "static", "accounts"])
+_reserved = "|".join(["api", _admin_segment, "media", "static", "accounts", "healthz"])
 urlpatterns += [
     re_path(rf"^(?!(?:{_reserved})(?:/|$)).*$", react_views.react_index, name="react-index"),
 ]
+
+# Unknown /api/ paths answer in JSON instead of an HTML error page — the SPA
+# parses every API response as JSON, so HTML there surfaces as a parse failure
+# rather than "not found". Everything else still falls through to the SPA.
+handler404 = "mysite.views.api_not_found"

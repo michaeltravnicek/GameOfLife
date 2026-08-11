@@ -20,6 +20,5 @@ requests==2.33.1
 whitenoise[brotli]==6.12.0
 django-storages[s3]==1.14.6
 gunicorn==23.0.0
-uvicorn==0.35.0
 pillow==12.3.0
 python-dotenv==1.0.0

@@ -2,8 +2,11 @@ import logging
 import os
 
 from django.conf import settings
-from django.http import Http404, HttpResponse
+from django.core.cache import cache
+from django.db import connection
+from django.http import Http404, HttpResponse, JsonResponse
 from django.middleware.csrf import get_token
+from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import ensure_csrf_cookie
 
 from . import og
@@ -59,6 +62,69 @@ def react_index(request):
     except Exception:  # noqa: BLE001 -- metadata is decoration; never 500 the SPA
         logger.warning("OG tag injection failed (serving plain shell).", exc_info=True)
     return HttpResponse(html, content_type="text/html")
+
+
+@never_cache
+def healthz(request):
+    """Liveness probe for Render's health check, and for anything watching uptime.
+
+    Why not just `/`: that serves the SPA shell from a memoised file read, so it
+    answers 200 with the database face-down. A check that cannot fail is not a
+    check — it means an outage looks healthy until a person notices.
+
+    Touches both dependencies that make the site work at all: one trivial query
+    (is Postgres reachable and accepting connections) and one cache round-trip
+    (is Redis there). Nothing else — a probe that walks the whole app becomes a
+    reason for restarts of its own.
+
+    Never authenticated: the prober has no session, and the response says
+    nothing an attacker doesn't already know from the site being up.
+    """
+    checks = {}
+    ok = True
+
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT 1")
+            cursor.fetchone()
+        checks["database"] = "ok"
+    except Exception as exc:  # noqa: BLE001 — the point is to report, not raise
+        logger.warning("healthz: database check failed: %s", exc)
+        checks["database"] = "fail"
+        ok = False
+
+    try:
+        cache.set("healthz", "1", 10)
+        # Read it back: a cache that accepts writes and returns nothing is the
+        # failure mode that silently doubles every page's query count.
+        checks["cache"] = "ok" if cache.get("healthz") == "1" else "fail"
+        ok = ok and checks["cache"] == "ok"
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("healthz: cache check failed: %s", exc)
+        checks["cache"] = "fail"
+        ok = False
+
+    return JsonResponse({"ok": ok, **checks}, status=200 if ok else 503)
+
+
+def api_not_found(request, exception=None):
+    """JSON 404 for /api/ paths, plain 404 for everything else.
+
+    Wired as the project-wide handler404. Without it a mistyped endpoint hands
+    the SPA an HTML error page, axios tries to parse it as JSON, and the user
+    sees a generic parse failure instead of "not found" — a wrong turn that
+    looks like a broken app.
+
+    Unknown *React* routes never arrive here: the SPA catch-all in urls.py
+    matches them first and serves index.html, so the client-side NotFound page
+    still renders. What reaches this handler is a real Django 404 — the admin,
+    a missing media file, a view raising Http404 — and those must keep saying
+    404. (An earlier version re-rendered the SPA shell here, which turned every
+    one of them into a cheerful 200.)
+    """
+    if request.path.startswith("/api/"):
+        return JsonResponse({"error": "Nenalezeno."}, status=404)
+    return HttpResponse("Nenalezeno.", status=404, content_type="text/plain; charset=utf-8")
 
 
 def robots_txt(request):
