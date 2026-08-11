@@ -111,6 +111,9 @@ export default function LeaderboardPage() {
                     className={`pod ${cls} clickable${dim ? ' dim' : ''}`}
                   >
                     <div className="trophy">{TROPHIES[idx]}</div>
+                    {/* The podium is the top three, so it always gets the photo
+                        (initials when there isn't one) — see PlayerRow for the
+                        same cut applied to the list below. */}
                     <Avatar name={p.name} photo={p.photo} size={idx === 0 ? 'xl' : 'lg'} rank={idx === 0 ? 'gold' : idx === 1 ? 'silver' : 'bronze'} className="ava" />
                     <div className="nm">{p.name}</div>
                     <div className="pts">{p.total_points}<span className="pts-u">pts</span></div>

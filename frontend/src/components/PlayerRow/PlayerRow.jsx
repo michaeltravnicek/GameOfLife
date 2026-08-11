@@ -17,7 +17,11 @@ export default function PlayerRow({ player }) {
     <Link to={playerLink(player)} className="player-row">
       <div className={`pr-rk${medal ? ' pr-rk-medal' : ''}`}>{medal || `${player.rank}.`}</div>
       <div className="pr-nm">
-        <Avatar name={player.name} photo={player.photo} size="xs" />
+        {/* Photo for the medal ranks only, initials for everyone else — the same
+            `rank <= 3` cut the trophy uses. Photos scattered through the whole
+            list made arbitrary rows jump out; kept to the top three they read as
+            part of the podium treatment rather than noise. */}
+        <Avatar name={player.name} photo={medal ? player.photo : null} size="xs" />
         <span className="pr-txt">{player.name}</span>
       </div>
       <div className="pr-pt">{player.total_points}</div>

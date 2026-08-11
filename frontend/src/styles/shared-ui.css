@@ -79,6 +79,27 @@
 .gol-credit-value{font-family:var(--font-display);font-size:clamp(38px,5vw,64px);letter-spacing:.04em;line-height:.95;color:var(--color-white);text-shadow:0 4px 28px var(--alpha-black-60)}
 .gol-credit-sub{font-family:var(--font-body);font-style:italic;font-size:13px;color:var(--alpha-cream-80);margin-top:8px;text-shadow:0 2px 10px var(--alpha-black-60);line-height:1.4}
 
+/* Narrow screens. The strip had no responsive rules at all, so a 3-up strip on
+   a 360px phone gave each column ~110px while the value stayed at its 38px
+   floor — event detail's date/time/place ran together into one unreadable
+   "31.07.26UPŘESNÍMEBRNO". The gutters and the label tracking are what has to
+   give first (the figure is the point of the strip), so shrink those hardest
+   and the value only as far as it takes to fit. A 4-up strip cannot fit at all
+   at this width and wraps instead — see the historie page. */
+@media (max-width:600px){
+  /* flex-end bottom-aligns the columns, which is fine while the sub lines all
+     wrap to the same height and ragged once they don't — on a phone the profile
+     strip's "0 měst · sezóna ukončena" ran to two lines while "zatím bez bodů"
+     took one, dropping the Pozice label 16px below its neighbours. Align the
+     tops instead: the labels are uniform one-liners, so they line up and the
+     figures follow. */
+  .gol-credits{padding:26px 10px 44px;align-items:flex-start}
+  .gol-credit{padding:0 7px;max-width:none}
+  .gol-credit-label{font-size:9.5px;letter-spacing:.14em;margin-bottom:7px}
+  .gol-credit-value{font-size:clamp(24px,7.4vw,38px)}
+  .gol-credit-sub{font-size:11.5px;margin-top:6px}
+}
+
 /* ── Admin action button (Events list + Event detail) ── */
 .events-page .admin-btn,.event-detail-page .admin-btn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:var(--radius-pill);border:1px solid var(--alpha-gold-40);color:var(--color-gold);background:var(--alpha-gold-15);text-decoration:none;font-family:var(--font-mono);font-size:var(--text-sm);letter-spacing:.03em;transition:background .15s}
 .events-page .admin-btn:hover,.event-detail-page .admin-btn:hover{background:var(--alpha-gold-40)}

@@ -31,8 +31,13 @@
 @media(max-width:560px){
   .page-hero{padding:96px 12px 10px}
 }
+/* 15vw put "Leaderboard" — the longest single-word title, and one that cannot
+   wrap — 16px past the content box between 321px and 375px, so the final D sat
+   under the screen edge. 13.6vw is the widest scale that still clears it there
+   (measured: 333px of text in 351px at 375, 319 in 336 at 360), and it stays
+   below the 52px floor the ≤640 rule hands back at 376. */
 @media(max-width:375px){
-  .page-hero-title{font-size:clamp(40px,15vw,80px)}
+  .page-hero-title{font-size:clamp(40px,13.6vw,80px)}
 }
 @media(max-width:320px){
   .page-hero-title{font-size:36px}

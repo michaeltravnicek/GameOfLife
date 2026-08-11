@@ -14,7 +14,12 @@
 .profile-page.player-anon .claim-note{font-family:var(--font-body);font-style:italic;font-size:13px;color:rgba(255,241,212,.6);align-self:center}
 
 @media(max-width:720px){
-  .profile-page.player-anon .back-actions{justify-content:center}
+  /* ProfilePage.css sets .back-actions to flex-wrap:nowrap at this width so the
+     account profile's three buttons sit as equal columns. This page puts a
+     full-width note in that same row, and nowrap left the note holding the
+     whole line while the two buttons collapsed on top of each other. Wrapping
+     gives the note its own line and lets the buttons share the next one. */
+  .profile-page.player-anon .back-actions{justify-content:center;flex-wrap:wrap}
   .profile-page.player-anon .claim-note{width:100%;text-align:center}
 }
 

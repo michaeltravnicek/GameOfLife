@@ -29,9 +29,31 @@
 .event-detail-page .badges{display:inline-flex;gap:8px;justify-content:center;margin-bottom:24px;flex-wrap:wrap}
 .event-detail-page .ev-pill{font-family:var(--font-mono);font-style:italic;font-size:11px;letter-spacing:.18em;text-transform:uppercase;padding:6px 14px;border-radius:9999px;background:var(--alpha-dark-55);border:1.5px dashed rgba(255,241,212,.4);color:rgba(255,241,212,.9);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
 .event-detail-page .ev-pill.live{background:var(--color-pink);color:var(--color-white);border-color:transparent;box-shadow:0 4px 14px rgba(225,84,99,.5)}
-.event-detail-page .poster-logo{width:min(360px,72vw);height:auto;filter:drop-shadow(0 14px 44px rgba(0,0,0,.7));margin-bottom:8px}.event-detail-page .gol-credits{padding:28px 24px 56px}.event-detail-page .gol-credit-value{font-size:clamp(28px,4.4vw,54px)}
+.event-detail-page .poster-logo{width:min(360px,72vw);height:auto;filter:drop-shadow(0 14px 44px rgba(0,0,0,.7));margin-bottom:8px}
+.event-detail-page .gol-credits{padding:28px 24px 56px}
+.event-detail-page .gol-credit-value{font-size:clamp(28px,4.4vw,54px)}
 .event-detail-page .gol-credit-value.long{font-size:clamp(24px,2.9vw,38px)}
 .event-detail-page .gol-credit-value.xlong{font-size:clamp(19px,2.2vw,29px)}
+
+/* Date · time · place three-up gave each figure ~90px of a 360px screen, and
+   the values collided into an unreadable "31.07.26UPŘESNÍMEBRNO" (the vw terms
+   above bottom out at their floors long before the column gets that narrow).
+   Two up with the place spanning the row underneath is the only arrangement
+   that keeps all three at a poster size. The separator between the pair is the
+   inherited left border; the spanning row gets a rule above it instead. */
+@media(max-width:600px){
+  .event-detail-page .gol-credits{display:grid;grid-template-columns:1fr 1fr;row-gap:18px;padding:26px 12px 40px}
+  .event-detail-page .gol-credit:nth-child(3){
+    grid-column:1/-1;border-left:0;padding-top:18px;
+    border-top:1px solid var(--alpha-cream-20);
+  }
+  .event-detail-page .gol-credit-value{font-size:clamp(26px,7.6vw,34px)}
+  .event-detail-page .gol-credit-value.long{font-size:clamp(19px,5.6vw,26px)}
+  .event-detail-page .gol-credit-value.xlong{font-size:clamp(16px,4.6vw,22px)}
+  /* The place column has a &nbsp; sub purely to bottom-align the three-up row;
+     spanning its own row it just adds a dead line. */
+  .event-detail-page .gol-credit:nth-child(3) .gol-credit-sub{display:none}
+}
 
 /* ── RSVP BAR ── */
 .event-detail-page .rsvp-bar{background:var(--alpha-dark-80);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px dashed var(--alpha-cream-20);border-bottom:1px dashed var(--alpha-cream-20);position:relative;z-index:2}
@@ -100,7 +122,7 @@
 }
 
 @media(max-width:720px){
-  .event-detail-page .poster-top{padding:110px 18px 24px}.event-detail-page .gol-credits{padding:28px 24px 56px}.event-detail-page .gol-credit-value{font-size:clamp(28px,4.4vw,54px)}
+  .event-detail-page .poster-top{padding:110px 18px 24px}
   .event-detail-page .rsvp-inner{flex-direction:column;align-items:stretch}
   .event-detail-page .back-strip-inner{justify-content:center}
   .event-detail-page .collage{padding:0;grid-template-rows:auto}
@@ -121,7 +143,7 @@
   .event-detail-page .poster{min-height:560px;height:auto}
   .event-detail-page .poster-top{padding:96px 14px 22px}
   .event-detail-page .poster-logo{width:min(280px,80vw)}
-  .event-detail-page .ev-pill{font-size:10px;padding:5px 10px;letter-spacing:.14em}.event-detail-page .gol-credits{padding:28px 24px 56px}.event-detail-page .gol-credit-value{font-size:clamp(28px,4.4vw,54px)}
+  .event-detail-page .ev-pill{font-size:10px;padding:5px 10px;letter-spacing:.14em}
   .event-detail-page .rsvp-inner{padding:14px 16px;gap:12px}
   .event-detail-page .pts-tag{font-size:11px;padding:5px 11px}
   .event-detail-page .cap-tag{font-size:11px}
@@ -135,7 +157,7 @@
 
 @media(max-width:375px){
   .event-detail-page .poster-top{padding:88px 12px 18px}
-  .event-detail-page .poster-logo{width:min(240px,84vw)}.event-detail-page .gol-credits{padding:28px 24px 56px}.event-detail-page .gol-credit-value{font-size:clamp(28px,4.4vw,54px)}
+  .event-detail-page .poster-logo{width:min(240px,84vw)}
   .event-detail-page .rsvp-inner{padding:12px 12px}
   .event-detail-page main.detail-main{padding:32px 12px 28px}
   .event-detail-page .sec-heading{font-size:clamp(24px,8.5vw,34px)}
@@ -146,7 +168,7 @@
 
 @media(max-width:320px){
   .event-detail-page .poster-top{padding:80px 10px 14px}
-  .event-detail-page .poster-logo{width:min(200px,86vw)}.event-detail-page .gol-credit-value{font-size:clamp(28px,4.4vw,54px)}
+  .event-detail-page .poster-logo{width:min(200px,86vw)}
   .event-detail-page .sec-heading{font-size:24px}
   .event-detail-page .rules li{grid-template-columns:28px 1fr;gap:10px;font-size:14px}
   .event-detail-page .rules li::before{font-size:22px}

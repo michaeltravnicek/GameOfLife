@@ -54,19 +54,37 @@
    breakpoint so it doesn't jump at 480. Tune the title size here. */
 @media(max-width:640px){
   .evcard-light .evcard-title{font-size:clamp(24px,5.6vw,32px);padding-right:clamp(74px,23vw,96px);line-height:1.06;height:auto}
+  /* Single-column range: the card runs the full width of a 10–16px gutter, so
+     the tilted sticker's negative `right` (−14px to −25px) plus its ~9% tilt
+     bleed hung 11–19px off the side of the screen at every width from 320 to
+     640, and body{overflow-x:hidden} shaved it. Flush right, capped so the
+     bleed alone fits the gutter. */
+  .evcard-light .evcard-badge{
+    width:clamp(84px,24vw,106px);height:clamp(84px,24vw,106px);
+    top:clamp(-32px,-7.5vw,-24px);right:0;
+  }
 }
+/* The sticker is tilted 12°, which widens its painted box by ~9% of its size
+   beyond the layout box (a 118px badge paints 140px wide). Added to a negative
+   `right`, that pushed it past the 12px section gutter and off the screen on
+   every phone width — the homepage document measured 425px wide at a 414px
+   viewport, and the sticker's outer edge was shaved off. Sit it flush with the
+   card and size it so the tilt's bleed alone stays inside the gutter; the tilt
+   still gives it the corner-sticker overhang it is drawn for. */
 @media(max-width:480px){
   .evcard-dark{max-width:100%;min-height:130px}
   .evcard-dark-inner{min-height:122px}
-  .evcard-dark .evcard-badge{width:118px;height:118px;top:-18px;right:-12px}
+  .evcard-dark .evcard-badge{width:104px;height:104px;top:-16px;right:0}
   .evcard-light{height:auto;min-height:160px}
   .evcard-light .evcard-content{padding:14px 18px 16px}
-  .evcard-light .evcard-badge{width:clamp(96px,26vw,118px);height:clamp(96px,26vw,118px);top:clamp(-40px,-9vw,-30px);right:clamp(-18px,-4.5vw,-14px)}
+  /* Badge sizing for this range lives in the ≤640 block above — it has to cover
+     the whole single-column range, and repeating it here would only re-break it. */
   .evcard-light .evcard-status{font-size:12px;letter-spacing:1px;padding:5px 12px}
   .evcard-light .evcard-title{margin-bottom:20px}
 }
 @media(max-width:360px){
   .evcard-dark .evcard-title-wrap{padding-right:78px}
-  .evcard-dark .evcard-badge{width:96px;height:96px;top:-14px;right:-8px}
+  /* Same as above, against the 10px gutter this band drops to at 320. */
+  .evcard-dark .evcard-badge{width:92px;height:92px;top:-13px;right:0}
   .evcard-light .evcard-title{margin-bottom:10px}
 }

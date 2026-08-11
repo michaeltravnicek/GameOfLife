@@ -160,6 +160,18 @@
   .historie-page .cta-foot{padding:0 16px 60px}
 }
 
+/* Four figures side by side need ~83px per column on a 360px phone, which is
+   narrower than the word "Hráčů" at the label's tracking — the values ran into
+   each other ("202570+300+30K+") and the last one fell off the screen. Two rows
+   of two is the only arrangement that fits. The separator is a left border on
+   every credit after the first, so the item that starts the second row has to
+   drop it. */
+@media(max-width:600px){
+  .historie-page .gol-credits{display:grid;grid-template-columns:1fr 1fr;row-gap:22px;padding:28px 12px 0}
+  .historie-page .gol-credit{max-width:none}
+  .historie-page .gol-credit:nth-child(odd){border-left:0}
+}
+
 /* ── XS / very narrow ── */
 @media(max-width:375px){
   .historie-page .row{grid-template-columns:24px 1fr;align-items:start}
