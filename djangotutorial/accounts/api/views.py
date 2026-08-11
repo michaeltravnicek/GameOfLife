@@ -10,6 +10,7 @@ from django.views.decorators.cache import never_cache
 
 logger = logging.getLogger(__name__)
 
+from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiExample, extend_schema
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes, throttle_classes
@@ -39,6 +40,7 @@ from accounts.forms import CustomUserCreationForm
 from leaderboard.privacy import visibility_for
 
 from accounts.services import (
+    anonymize_account,
     profile_payload,
     visible_profile_user_or_404,
     reset_password,
@@ -58,6 +60,26 @@ def me_view(request):
     """Current authenticated user (or `{user: null}` for guests)."""
     user = request.user if request.user.is_authenticated else None
     return Response({"user": serialize_user(user, request)}, status=status.HTTP_200_OK)
+
+
+@extend_schema(tags=["Auth"], request=None, responses=OpenApiTypes.OBJECT)
+@api_view(["DELETE"])
+@permission_classes([IsAuthenticated])
+@transaction.atomic
+def delete_me(request):
+    """Delete the caller's account, keeping their points anonymised.
+
+    This is what makes PrivacyPage §6 true. See
+    `accounts.services.anonymize_account` for exactly what goes and what stays.
+
+    Logs out before deleting: the session key is tied to the auth user, and
+    leaving a live cookie pointing at a deleted row is how you get 500s on the
+    next request instead of a clean guest state.
+    """
+    user = request.user
+    logout(request)
+    anonymize_account(user)
+    return Response({"ok": True}, status=status.HTTP_200_OK)
 
 
 @extend_schema(

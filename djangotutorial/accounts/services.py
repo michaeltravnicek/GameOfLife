@@ -126,6 +126,82 @@ def ensure_leaderboard_user(user):
     return lb_user
 
 
+def anonymize_account(user):
+    """Delete `user`'s personal data, keep their points as an anonymous player.
+
+    This is the code behind the promise in the privacy policy (PrivacyPage §6):
+    name, nickname, e-mail, photo, bio and social links go; points and
+    attendance stay, detached from the person.
+
+    Why not just delete everything: a season's results are a shared record of
+    events that happened, and the other players' standings only mean anything
+    against the full field. Once the row carries no name and no e-mail it is no
+    longer personal data, so keeping it is honest.
+
+    What goes:
+      * auth.User — and by cascade the Profile (bio, city, socials, privacy
+        flags, GDPR consent), gallery photos, photo likes, RSVPs and profile
+        answers.
+      * every uploaded file, deleted from storage explicitly. Django only drops
+        the database row; the bytes would otherwise stay on disk (or in R2)
+        forever, which is exactly what was asked to be erased.
+
+    What stays:
+      * leaderboard.User, with `name` blanked and `email` set to NULL. It keeps
+        its UserToEvent rows, so nobody's rank shifts. `short_name("")` already
+        renders an empty name as "Hráč", so the board needs no special case.
+      * EventFeedback — the rating survives (it is aggregate, about the event),
+        the free-text comment is blanked, since that is the person talking.
+
+    Deliberately NOT a merge: `merged_into` hides a player and moves their
+    points onto someone else. Anonymising leaves them exactly where they are.
+
+    Clearing the e-mail is also what stops the row being re-adopted later —
+    `ensure_leaderboard_user()` matches archive players on e-mail, so a stale
+    address here would hand this history to whoever registers with it next.
+    """
+    from leaderboard.models import EventFeedback, UserPhoto
+
+    profile = getattr(user, "profile", None)
+    lb_user = profile.leaderboard_user if profile else None
+
+    if profile is not None and profile.photo:
+        _delete_file_and_variants(profile.photo)
+    for photo in UserPhoto.objects.filter(auth_user=user):
+        _delete_file_and_variants(photo.image)
+
+    if lb_user is not None:
+        EventFeedback.objects.filter(user=lb_user).exclude(comment="").update(comment="")
+        lb_user.name = ""
+        lb_user.email = None
+        # save() (not update()) so the leaderboard's cached rendered names are
+        # evicted — otherwise the board keeps showing the old name for an hour.
+        lb_user.save(update_fields=["name", "email"])
+
+    user.delete()
+    return lb_user
+
+
+def _delete_file_and_variants(field_file):
+    """Remove an uploaded file and the WebP sibling generated next to it.
+
+    `make_webp_variant` writes 'foo.jpg.mobile.webp' alongside 'foo.jpg'; a
+    plain .delete() would leave that copy of the image behind.
+    """
+    from leaderboard.image_utils import variant_name
+
+    if not field_file:
+        return
+    name = field_file.name
+    storage = field_file.storage
+    for candidate in (variant_name(name), name):
+        try:
+            if candidate and storage.exists(candidate):
+                storage.delete(candidate)
+        except Exception:  # noqa: BLE001 — a storage hiccup must not strand the account
+            logger.warning("Could not delete %s during anonymisation.", candidate, exc_info=True)
+
+
 def reset_password(uid, token, new_password):
     """Verify a password-reset uid+token and set the new password.
 

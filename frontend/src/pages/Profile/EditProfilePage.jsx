@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import Switch from '../../components/Switch/Switch';
 import ChipSelect from '../../components/ChipSelect/ChipSelect';
 import Modal from '../../components/Modal/Modal';
@@ -7,6 +8,7 @@ import Button from '../../components/Button/Button';
 import { useToast } from '../../components/Toast/ToastProvider';
 import {
   fetchMe, fetchProfile, updateProfile, fetchCategories, fetchProfileQuestions,
+  apiDeleteAccount,
 } from '../../services/api';
 import { useBeforeUnload } from '../../hooks/useBeforeUnload';
 import { reportError, extractApiError } from '../../services/errors';
@@ -27,7 +29,10 @@ const SOCIALS = [
 
 export default function EditProfilePage() {
   const toast = useToast();
+  const navigate = useNavigate();
+  const { refresh: refreshAuth } = useAuth();
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [loading, setLoading] = useState(true);
   const [allCategories, setAllCategories] = useState([]);
   const [form, setForm] = useState({
@@ -185,10 +190,22 @@ export default function EditProfilePage() {
 
   const handleCategories = (next) => { setCategories(next); markDirty(); };
 
-  const confirmDelete = () => {
-    setDeleteOpen(false);
-    // Deletion isn't wired to the API yet — surface that honestly, in-system.
-    toast.info('Mazání účtu zatím není napojené — kdyby bylo, teď by ses smazal.', { title: 'Smazání účtu' });
+  const confirmDelete = async () => {
+    setDeleting(true);
+    try {
+      await apiDeleteAccount();
+      // The session is already gone server-side; clear it here too so the nav
+      // doesn't keep showing a logged-in user who no longer exists.
+      setDirty(false);
+      await refreshAuth();
+      navigate('/', { replace: true });
+      toast.success('Účet je smazaný. Body zůstaly na žebříčku anonymně.', { title: 'Sbohem' });
+    } catch (err) {
+      setDeleteOpen(false);
+      reportError('Účet se nepodařilo smazat.', err);
+    } finally {
+      setDeleting(false);
+    }
   };
 
   useBeforeUnload(dirty);
@@ -412,10 +429,10 @@ export default function EditProfilePage() {
             <div className="gol-card-head">
               <div className="gol-sec-eyebrow danger">— 08 · Konec hry —</div>
               <h2 className="gol-sec-heading">Něco <span className="pink">extrémního.</span></h2>
-              <p className="ep-sec-sub">Tyhle akce jsou nevratné. Body, akce, fotky — všechno zmizí. Mysli si dvakrát.</p>
+              <p className="ep-sec-sub">Tyhle akce jsou nevratné. Mysli si dvakrát.</p>
             </div>
             <div className="gol-toggle-row">
-              <div className="gol-txt"><h4>Smazat účet</h4><p>Trvalé. Všechny tvoje akce, body i fotky budou ztraceny v čase, jako slzy v dešti.</p></div>
+              <div className="gol-txt"><h4>Smazat účet</h4><p>Trvalé. Osobní údaje a nahrané fotky zmizí; body a účast zůstanou v žebříčku anonymně.</p></div>
               <button type="button" className="gol-btn danger" onClick={() => setDeleteOpen(true)}>Smazat účet</button>
             </div>
           </div>
@@ -443,13 +460,25 @@ export default function EditProfilePage() {
         </div>
       </div>
 
-      <Modal open={deleteOpen} onClose={() => setDeleteOpen(false)} labelledBy="ep-delete-title" width={480}>
+      {/* The copy has to match what the code actually does, and what the
+          privacy policy promises (§6): personal data goes, points stay on the
+          board without a name. Saying "body budou ztraceny" would be a nicer
+          sentence and a false one. */}
+      <Modal open={deleteOpen} onClose={deleting ? undefined : () => setDeleteOpen(false)} labelledBy="ep-delete-title" width={480}>
         <div className="gol-modal-eyebrow">— Konec hry —</div>
         <h3 id="ep-delete-title" className="gol-modal-title">Smazat účet <span className="pink">natrvalo?</span></h3>
-        <p className="gol-modal-text">Tato akce je nevratná. Všechny tvoje akce, body i fotky budou ztraceny v čase, jako slzy v dešti.</p>
+        <p className="gol-modal-text">
+          Nevratné. Smažeme tvoje jméno, přezdívku, e-mail, fotku, bio i odkazy
+          na sítě — a taky fotky, které jsi nahrál/a do galerie.
+        </p>
+        <p className="gol-modal-text">
+          <strong>Body a účast na akcích zůstanou v žebříčku anonymně</strong>,
+          bez vazby na tebe. Výsledky sezóny jsou společný záznam a pořadí
+          ostatních dává smysl jen s kompletním polem.
+        </p>
         <div className="gol-modal-buttons">
-          <Button variant="frost" onClick={() => setDeleteOpen(false)}>Zpět</Button>
-          <Button variant="action" onClick={confirmDelete}>Smazat natrvalo</Button>
+          <Button variant="frost" onClick={() => setDeleteOpen(false)} disabled={deleting}>Zpět</Button>
+          <Button variant="action" onClick={confirmDelete} busy={deleting}>Smazat natrvalo</Button>
         </div>
       </Modal>
     </div>

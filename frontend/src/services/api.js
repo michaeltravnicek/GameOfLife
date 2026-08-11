@@ -67,6 +67,10 @@ export const apiLogin = (identifier, password, remember = false) =>
     .post('/auth/login/', { identifier, password, remember })
     .then((r) => r.data);
 export const apiLogout = () => api.post('/auth/logout/').then((r) => r.data);
+// Deletes the account and anonymises the player row — points and attendance
+// stay on the board without a name. Server-side detail: accounts/services.py
+// anonymize_account().
+export const apiDeleteAccount = () => api.delete('/auth/me/delete/').then((r) => r.data);
 export const apiRegister = (payload) =>
   api.post('/auth/register/', payload).then((r) => r.data);
 export const apiPasswordReset = (email) =>
