@@ -6,6 +6,7 @@ import FormInput from '../../components/FormInput/FormInput';
 import Button from '../../components/Button/Button';
 import { extractApiError } from '../../services/errors';
 import GoogleSignInButton from '../../components/GoogleSignInButton/GoogleSignInButton';
+import { safeRedirect } from '../../utils/safeRedirect';
 import '../Login/AuthPage.css';
 
 export default function RegisterPage() {
@@ -68,9 +69,11 @@ export default function RegisterPage() {
         );
       }
       // `from` may arrive as router state (in-app) or a ?from= query param
-      // (api.js 401 interceptor redirect) — honour either.
+      // (api.js 401 interceptor redirect) — honour either, but only after
+      // safeRedirect: the query param comes from the URL, so it is exactly as
+      // trustworthy as whoever sent the member the link.
       const from = location.state?.from || searchParams.get('from');
-      navigate(from || `/profil/${u.username}`, { replace: true });
+      navigate(safeRedirect(from, `/profil/${u.username}`), { replace: true });
     } catch (err) {
       const fields = apiFieldErrors(err);
       setFieldErrors(fields);

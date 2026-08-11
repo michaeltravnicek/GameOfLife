@@ -5,6 +5,7 @@ import FormInput from '../../components/FormInput/FormInput';
 import Button from '../../components/Button/Button';
 import { extractApiError } from '../../services/errors';
 import GoogleSignInButton from '../../components/GoogleSignInButton/GoogleSignInButton';
+import { safeRedirect } from '../../utils/safeRedirect';
 import './AuthPage.css';
 
 export default function LoginPage() {
@@ -26,9 +27,11 @@ export default function LoginPage() {
       const u = await login(identifier, pw, remember);
       // `from` arrives either as router state (in-app redirects) or as a
       // ?from= query param (the api.js 401 interceptor redirects via
-      // window.location, which can't carry router state).
+      // window.location, which can't carry router state). The query param is
+      // attacker-controlled, so it goes through safeRedirect — an off-site
+      // target here would bounce a member who *just* typed their password.
       const from = location.state?.from || searchParams.get('from');
-      navigate(from || `/profil/${u.username}`, { replace: true });
+      navigate(safeRedirect(from, `/profil/${u.username}`), { replace: true });
     } catch (err) {
       setError(extractApiError(err, 'Přihlášení selhalo.'));
     } finally {
