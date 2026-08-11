@@ -5,13 +5,18 @@ import ChipSelect from '../../components/ChipSelect/ChipSelect';
 import Modal from '../../components/Modal/Modal';
 import Button from '../../components/Button/Button';
 import { useToast } from '../../components/Toast/ToastProvider';
-import { fetchMe, fetchProfile, updateProfile, fetchCategories } from '../../services/api';
+import {
+  fetchMe, fetchProfile, updateProfile, fetchCategories, fetchProfileQuestions,
+} from '../../services/api';
 import { useBeforeUnload } from '../../hooks/useBeforeUnload';
 import { reportError, extractApiError } from '../../services/errors';
 import { initials } from '../../utils/name';
 import './EditProfilePage.css';
 
 const BIO_MAX = 220;
+// Mirrors ANSWER_MAX_LENGTH in accounts/services.py. The server truncates
+// anyway; this is so the counter tells the truth before you hit save.
+const ANSWER_MAX = 500;
 
 const SOCIALS = [
   { key: 'instagram', ico: 'IG', pre: 'instagram.com/', placeholder: 'uživatel' },
@@ -37,6 +42,10 @@ export default function EditProfilePage() {
   const [removePhoto, setRemovePhoto] = useState(false);
   const [avatarFile, setAvatarFile] = useState(null);
   const [categories, setCategories] = useState([]);
+  // Questions come from admin; answers are keyed by question id. Both default
+  // to empty, so a site with no questions authored yet renders no section.
+  const [questions, setQuestions] = useState([]);
+  const [answers, setAnswers] = useState({});
   const [socials, setSocials] = useState({ instagram: '', strava: '', spotify: '', tiktok: '' });
   const [privacy, setPrivacy] = useState({
     hide_pts: false, hide_events: false, members_only: false,
@@ -56,8 +65,9 @@ export default function EditProfilePage() {
         return username ? fetchProfile(username) : null;
       }),
       fetchCategories(),
+      fetchProfileQuestions(),
     ])
-      .then(([profile, cats]) => {
+      .then(([profile, cats, qs]) => {
         if (profile) {
           setForm({
             first_name: profile.first_name || '',
@@ -82,9 +92,17 @@ export default function EditProfilePage() {
           if (profile.photo) {
             setAvatar(profile.photo);
           }
+          // The payload only carries answered questions, so anything missing
+          // here is genuinely unanswered and starts blank.
+          setAnswers(Object.fromEntries(
+            (profile.answers || []).map((a) => [a.question_id, a.answer]),
+          ));
         }
         if (cats?.categories) {
           setAllCategories(cats.categories);
+        }
+        if (qs?.questions) {
+          setQuestions(qs.questions);
         }
         setLoading(false);
       })
@@ -129,6 +147,10 @@ export default function EditProfilePage() {
       formData.append('strava', socials.strava);
       formData.append('spotify', socials.spotify);
       formData.append('tiktok', socials.tiktok);
+      // Send every question, including the ones left blank: an emptied answer
+      // has to reach the server to delete its row, and a missing key would read
+      // as "unchanged" instead.
+      questions.forEach((q) => formData.append(`answer_${q.id}`, answers[q.id] || ''));
 
       await updateProfile(formData);
       setDirty(false);
@@ -289,13 +311,45 @@ export default function EditProfilePage() {
           </div>
         </section>
 
-        {/* 04 · Kategorie — hidden entirely when no categories exist to pick */}
+        {/* 04 · Otázky — same rule as categories: no questions authored in
+            admin, no section. An empty heading would read as a broken feature. */}
+        {questions.length > 0 && (
+          <section className="gol-section">
+            <div className="gol-rule" />
+            <div className="gol-card">
+              <div className="gol-card-head">
+                <div className="gol-sec-eyebrow">— 04 · Otázky —</div>
+                <h2 className="gol-sec-heading">Pár otázek <span className="pink">na tebe.</span></h2>
+                <p className="ep-sec-sub">Nepovinné. Co vyplníš, se objeví na tvém profilu v sekci „O mně“ — co necháš prázdné, se nikde neukáže.</p>
+              </div>
+              {questions.map((q) => (
+                <div key={q.id} className="gol-field gol-full">
+                  <label htmlFor={`f-answer-${q.id}`}>{q.text}</label>
+                  <textarea
+                    className="gol-textarea ep-answer"
+                    id={`f-answer-${q.id}`}
+                    maxLength={ANSWER_MAX}
+                    value={answers[q.id] || ''}
+                    onChange={(e) => {
+                      const { value } = e.target;
+                      setAnswers((a) => ({ ...a, [q.id]: value }));
+                      markDirty();
+                    }}
+                  />
+                  <div className="ep-counter">{(answers[q.id] || '').length} / {ANSWER_MAX} znaků</div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* 05 · Kategorie — hidden entirely when no categories exist to pick */}
         {allCategories.length > 0 && (
           <section className="gol-section">
             <div className="gol-rule" />
             <div className="gol-card">
               <div className="gol-card-head">
-                <div className="gol-sec-eyebrow">— 04 · Oblíbené kategorie —</div>
+                <div className="gol-sec-eyebrow">— 05 · Oblíbené kategorie —</div>
                 <h2 className="gol-sec-heading">V čem <span className="pink">jedeš.</span></h2>
                 <p className="ep-sec-sub">Vyber až 3 kategorie, ve kterých se nejvíc realizuješ. Pomůže nám doporučit ti akce na míru.</p>
               </div>
@@ -304,12 +358,12 @@ export default function EditProfilePage() {
           </section>
         )}
 
-        {/* 05 · Sociální sítě */}
+        {/* 06 · Sociální sítě */}
         <section className="gol-section">
           <div className="gol-rule" />
           <div className="gol-card">
             <div className="gol-card-head">
-              <div className="gol-sec-eyebrow">— 05 · Sociální sítě —</div>
+              <div className="gol-sec-eyebrow">— 06 · Sociální sítě —</div>
               <h2 className="gol-sec-heading">Kde tě <span className="pink">najdou.</span></h2>
               <p className="ep-sec-sub">Tyhle odkazy se objeví v sekci „O mně“ na tvém profilu. Nech prázdné, co nechceš sdílet.</p>
             </div>
@@ -327,12 +381,12 @@ export default function EditProfilePage() {
           </div>
         </section>
 
-        {/* 06 · Soukromí */}
+        {/* 07 · Soukromí */}
         <section className="gol-section">
           <div className="gol-rule" />
           <div className="gol-card">
             <div className="gol-card-head">
-              <div className="gol-sec-eyebrow">— 06 · Soukromí —</div>
+              <div className="gol-sec-eyebrow">— 07 · Soukromí —</div>
               <h2 className="gol-sec-heading">Kdo tě <span className="pink">uvidí.</span></h2>
               <p className="ep-sec-sub">Profil je veřejný, ale tyhle detaily můžeš zamknout.</p>
             </div>
@@ -351,12 +405,12 @@ export default function EditProfilePage() {
           </div>
         </section>
 
-        {/* 07 · Danger */}
+        {/* 08 · Danger */}
         <section className="gol-section">
           <div className="gol-rule" />
           <div className="gol-card gol-danger-card">
             <div className="gol-card-head">
-              <div className="gol-sec-eyebrow danger">— 07 · Konec hry —</div>
+              <div className="gol-sec-eyebrow danger">— 08 · Konec hry —</div>
               <h2 className="gol-sec-heading">Něco <span className="pink">extrémního.</span></h2>
               <p className="ep-sec-sub">Tyhle akce jsou nevratné. Body, akce, fotky — všechno zmizí. Mysli si dvakrát.</p>
             </div>

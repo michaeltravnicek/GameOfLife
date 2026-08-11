@@ -155,6 +155,11 @@ export const fetchCheckinEvents = () => api.get('/checkin-events/').then((r) => 
 // --- Gallery / Categories ---
 export const fetchGallery = (params = {}) =>
   api.get('/gallery/', { params }).then((r) => r.data);
+// The questions members answer on their profile. Authored in Django admin, so
+// the list is the same for everyone — the answers ride on the profile payload.
+export const fetchProfileQuestions = () =>
+  api.get('/profile-questions/').then((r) => r.data);
+
 export const fetchCategories = () =>
   api.get('/categories/').then((r) => r.data);
 // Admin-only. Returns the created `{id, name}` so the event form can select it

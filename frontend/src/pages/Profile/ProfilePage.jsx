@@ -160,6 +160,23 @@ export default function ProfilePage() {
                     </div>
                   )}
 
+                  {/* Answered profile questions. The payload omits unanswered
+                      ones, so there is nothing to filter here — and nothing to
+                      render at all for someone who skipped them. */}
+                  {profile.answers?.length > 0 && (
+                    <div className="qa">
+                      <div className="qa-label">— Pár otázek —</div>
+                      <dl className="qa-list">
+                        {profile.answers.map((a) => (
+                          <div className="qa-item" key={a.question_id}>
+                            <dt className="qa-q">{a.question}</dt>
+                            <dd className="qa-a">{a.answer}</dd>
+                          </div>
+                        ))}
+                      </dl>
+                    </div>
+                  )}
+
                   {(profile.instagram || profile.strava || profile.spotify || profile.tiktok) && (
                     <div className="socials">
                       <div className="socials-label">— Najdeš na —</div>

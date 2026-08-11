@@ -508,6 +508,20 @@ class ProfileQuestion(models.Model):
     class Meta:
         ordering = ["order"]
 
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        # Questions are authored in Django admin and the list is cached for an
+        # hour. Without this, an edit sits invisible until the TTL expires and
+        # reads as "the admin didn't save it".
+        from .cache_config import invalidate_profile_questions_cache
+        invalidate_profile_questions_cache()
+
+    def delete(self, *args, **kwargs):
+        result = super().delete(*args, **kwargs)
+        from .cache_config import invalidate_profile_questions_cache
+        invalidate_profile_questions_cache()
+        return result
+
     def __str__(self):
         return self.text
 

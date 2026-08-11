@@ -46,6 +46,11 @@ CACHE_TTL_CATEGORIES = 60 * 60  # 1 hour
 CACHE_KEY_SEASONS = "api_seasons"
 CACHE_TTL_SEASONS = 60 * 60  # 1 hour
 
+# Profile questions for /api/profile-questions/. Authored in Django admin and
+# changed maybe twice a season, but read on every profile-edit page load.
+CACHE_KEY_PROFILE_QUESTIONS = "api_profile_questions"
+CACHE_TTL_PROFILE_QUESTIONS = 60 * 60  # 1 hour
+
 # ── Short alias (legacy name still used across the codebase) ───────────
 CACHE_KEY = CACHE_KEY_LEADERBOARD_TOTAL
 CACHE_TTL = CACHE_TTL_LEADERBOARD
@@ -113,6 +118,15 @@ def invalidate_category_cache():
 def invalidate_hero_cache():
     """Drop the hero-carousel cache (called from ImageToEvent.save())."""
     _evict((CACHE_KEY_HERO_IMAGES,))
+
+
+def invalidate_profile_questions_cache():
+    """Drop the profile-questions cache (ProfileQuestion.save()/delete()).
+
+    Questions are authored in Django admin, so without this an edit would sit
+    invisible for up to an hour and read as "the admin didn't save".
+    """
+    _evict((CACHE_KEY_PROFILE_QUESTIONS,))
 
 
 def _season_leaderboard_keys():

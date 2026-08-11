@@ -46,6 +46,7 @@ from leaderboard.services import (
     list_events,
     pick_hero_events,
     player_payload,
+    profile_questions_cached,
     remove_attendance,
     resolve_season,
     resolve_season_filter,
@@ -459,6 +460,22 @@ def event_checkin(request, slug):
         payload["points"] = result.points
         payload["already_had"] = not result.created
     return Response(payload, status=result.status)
+
+
+@extend_schema(tags=["Profiles"], responses=OpenApiTypes.OBJECT)
+# Public and identical for everyone — the questions are the same for all
+# members; only the answers are personal, and those ride on the profile payload.
+@cache_control(public=True, max_age=300)
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def profile_questions_list(request):
+    """The profile questions members answer. Response: `{questions: [{id, text}]}`.
+
+    Authored in Django admin. An empty list is the normal state until someone
+    writes the first question — the edit form then renders no section at all
+    rather than an empty heading.
+    """
+    return Response({"questions": profile_questions_cached()}, status=status.HTTP_200_OK)
 
 
 @extend_schema(tags=["Events"], responses=CategoriesResponseSerializer)

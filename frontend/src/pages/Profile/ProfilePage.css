@@ -70,6 +70,15 @@
 .profile-page .fact .v{font-family:var(--font-display);font-size:34px;letter-spacing:.03em;color:var(--color-white);line-height:.95;margin-bottom:4px}
 .profile-page .fact .s{font-family:var(--font-body);font-style:italic;font-size:12.5px;color:var(--alpha-cream-70);line-height:1.4}
 
+/* Profile questions — same dashed-rule label as .socials so the "O mně" tab
+   reads as one stack of sections rather than three unrelated blocks. */
+.profile-page .qa{margin-top:30px}
+.profile-page .qa-label{font-family:var(--font-mono);font-style:italic;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--alpha-cream-55);margin-bottom:14px;display:flex;align-items:center;gap:14px}
+.profile-page .qa-label::after{content:'';flex:1;height:1px;background:repeating-linear-gradient(90deg,var(--alpha-cream-30) 0 6px,transparent 6px 12px)}
+.profile-page .qa-list{display:flex;flex-direction:column;gap:18px;max-width:62ch}
+.profile-page .qa-q{font-family:var(--font-mono);font-style:italic;font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--color-pink);margin-bottom:6px}
+.profile-page .qa-a{font-family:var(--font-body);font-size:16px;line-height:1.55;color:var(--alpha-cream-95);margin:0;white-space:pre-line}
+
 .profile-page .socials{margin-top:30px}
 .profile-page .socials-label{font-family:var(--font-mono);font-style:italic;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--alpha-cream-55);margin-bottom:14px;display:flex;align-items:center;gap:14px}
 .profile-page .socials-label::after{content:'';flex:1;height:1px;background:repeating-linear-gradient(90deg,var(--alpha-cream-30) 0 6px,transparent 6px 12px)}

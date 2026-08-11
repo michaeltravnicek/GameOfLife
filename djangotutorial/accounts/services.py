@@ -13,7 +13,14 @@ from django.utils import timezone
 from django.utils.http import urlsafe_base64_decode
 
 from leaderboard.image_utils import validate_upload
-from leaderboard.models import Category, Season, User as LeaderboardUser, UserToEvent
+from leaderboard.models import (
+    Category,
+    ProfileAnswer,
+    ProfileQuestion,
+    Season,
+    User as LeaderboardUser,
+    UserToEvent,
+)
 from leaderboard.privacy import public_handle, visibility_for
 from leaderboard.services import season_rank
 from leaderboard.services.badges import badges_for
@@ -283,6 +290,23 @@ def profile_payload(profile_user, request):
     if profile:
         fav_cats = [{"id": c.id, "name": c.name} for c in profile.favourite_categories.all()]
 
+    # Answered questions only — an unanswered one is not a blank to render, it's
+    # a question this person didn't take. Ordered by the admin's `order`, so a
+    # profile reads in the same sequence as the edit form.
+    # No separate privacy gate: these are free text the member wrote about
+    # themselves, exactly like `bio`, and a members_only profile never reaches
+    # this function for an anonymous viewer (profile_view 404s first).
+    answers = [
+        {"question_id": a.question_id, "question": a.question.text, "answer": a.answer}
+        for a in (
+            ProfileAnswer.objects
+            .filter(auth_user=profile_user)
+            .exclude(answer="")
+            .select_related("question")
+            .order_by("question__order")
+        )
+    ]
+
     is_own_profile = request.user.is_authenticated and request.user == profile_user
 
     payload = {
@@ -307,6 +331,7 @@ def profile_payload(profile_user, request):
         "spotify":    profile.spotify if profile else "",
         "tiktok":     profile.tiktok if profile else "",
         "favourite_categories": fav_cats,
+        "answers": answers,
         # Badges stay visible under both flags: they are awarded markers the user
         # chose to display, and they carry no point totals or event dates.
         "badges":         badges_for(lb_user, request),
@@ -422,6 +447,55 @@ def update_profile(user, data, files):
             raw = [raw]
         ids = [int(x) for x in raw if str(x).isdigit()]
         profile.favourite_categories.set(list(Category.objects.filter(id__in=ids)[:3]))
+
+    _save_profile_answers(user, data)
+
+
+# One answer is a sentence or two about yourself, not an essay. Enforced here
+# because the model field is a TextField (no max_length to lean on) and the
+# client's counter is a courtesy, not a control.
+ANSWER_MAX_LENGTH = 500
+
+
+def _save_profile_answers(user, data):
+    """Persist `answer_<question_id>` fields from the profile form.
+
+    The form is multipart, so answers arrive flat rather than nested — same
+    shape as the privacy flags above.
+
+    Two deliberate choices:
+      * an emptied answer deletes its row, so "cleared it" and "never answered"
+        stay the same state; otherwise a profile would keep rendering an empty
+        heading for a question the member backed out of.
+      * unknown question ids are skipped rather than raising. A member with the
+        edit page open when a question is deleted in admin would otherwise be
+        unable to save anything at all, including the fields that are still fine.
+    """
+    prefix = "answer_"
+    submitted = {
+        key[len(prefix):]: data[key]
+        for key in data.keys()
+        if key.startswith(prefix) and str(key[len(prefix):]).isdigit()
+    }
+    if not submitted:
+        return
+
+    known = set(
+        ProfileQuestion.objects
+        .filter(id__in=[int(qid) for qid in submitted])
+        .values_list("id", flat=True)
+    )
+    for qid, raw in submitted.items():
+        qid = int(qid)
+        if qid not in known:
+            continue
+        text = (raw or "").strip()[:ANSWER_MAX_LENGTH]
+        if text:
+            ProfileAnswer.objects.update_or_create(
+                auth_user=user, question_id=qid, defaults={"answer": text},
+            )
+        else:
+            ProfileAnswer.objects.filter(auth_user=user, question_id=qid).delete()
 
 
 def _season_base(season):
