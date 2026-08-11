@@ -11,6 +11,26 @@ button{font-family:inherit}
 .app-shell{min-height:100vh;width:100%;display:flex;flex-direction:column}
 .app-main{flex:1;width:100%}
 
+/* ── Keyboard focus ────────────────────────────────────────────────────────
+   Several inputs set `outline:none` and replace it with a border-colour shift
+   (see FormInput, SearchInput, the gallery upload fields). That reads fine with
+   a mouse and badly with a keyboard: a colour change on a 1.5px border is a
+   weak "where am I", and one of them — .ep-combo .gol-input — removed the
+   outline with no replacement at all.
+
+   So: one visible ring for everything reached by keyboard. :focus-visible, not
+   :focus, so it never fires on a mouse click. Placed here rather than patched
+   into each file so a new component inherits it by default; anything that
+   genuinely wants its own treatment can still override locally. */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-pink);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+/* The dashed-frame inputs already draw a pink outline on focus and set their
+   own offset; a second ring on top of it just looks like a mistake. */
+:where(.gol-input, .gol-textarea):focus-visible { outline-offset: var(--frame-gap, 4px); border-radius: 9px }
+
 /* Skip link — the nav has ~8 items before the content starts, so keyboard and
    screen-reader users get a way past it. Off-screen until focused. */
 .gol-skip-link{position:absolute;left:50%;transform:translateX(-50%) translateY(-200%);z-index:1000;padding:12px 22px;background:var(--color-pink);color:var(--color-white);font-family:var(--font-mono);font-size:13px;letter-spacing:.1em;text-transform:uppercase;border-radius:0 0 10px 10px;transition:transform .18s}

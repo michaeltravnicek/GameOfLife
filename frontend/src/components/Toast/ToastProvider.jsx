@@ -112,6 +112,9 @@ export function ToastProvider({ children }) {
   );
 }
 
+// The hook is this module's public API; it belongs beside the provider.
+// Splitting it out would only sharpen hot-reload granularity in dev.
+// eslint-disable-next-line react-refresh/only-export-components
 export function useToast() {
   const ctx = useContext(ToastContext);
   if (!ctx) throw new Error('useToast must be used within ToastProvider');
@@ -125,6 +128,8 @@ export function useToast() {
 let pending = [];
 let active = null;
 
+// The imperative proxy has to sit next to the provider it forwards into.
+// eslint-disable-next-line react-refresh/only-export-components
 export const toast = {
   show: (...args) => (active ? active.show(...args) : pending.push(['show', args])),
   success: (...args) => (active ? active.success(...args) : pending.push(['success', args])),

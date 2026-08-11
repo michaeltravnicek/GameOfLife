@@ -4,6 +4,15 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/webp" href="/img/GOL_main_logo_pink.webp" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <!-- Home-screen basics. This is a mobile-first community site people are
+         told to "add to home screen" at events; without these they get a blank
+         icon and a white browser chrome that fights the dark design. The
+         manifest is the only thing here that isn't purely cosmetic — it is what
+         makes the saved shortcut open standalone rather than in a tab. -->
+    <link rel="manifest" href="/site.webmanifest" />
+    <link rel="apple-touch-icon" href="/img/GOL_main_logo_pink.webp" />
+    <!-- Matches --color-dark-brown in styles/colors_and_type.css. -->
+    <meta name="theme-color" content="#1a0f0a" />
     <title>Game of Life — Život je hra, tak ho hrej</title>
     <link rel="preload" as="font" type="font/ttf" href="/fonts/IBMPlexMono-Italic.ttf" crossorigin />
   </head>

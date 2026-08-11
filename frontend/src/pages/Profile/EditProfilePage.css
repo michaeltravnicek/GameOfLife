@@ -48,7 +48,10 @@
 .editprofile-page .ep-combo:focus-within{outline-color:var(--color-pink);background:var(--alpha-black-40)}
 .editprofile-page .ep-combo .ep-pre{display:flex;align-items:center;padding:0 4px 0 14px;font-family:var(--font-mono);font-style:italic;font-size:13px;color:var(--alpha-cream-55);letter-spacing:.04em;white-space:nowrap;flex-shrink:0;user-select:none}
 .editprofile-page .ep-combo .gol-input{flex:1;min-width:0;background:transparent;border:0;border-radius:0;padding:13px 14px 13px 4px;outline:none}
-.editprofile-page .ep-combo .gol-input:hover,.editprofile-page .ep-combo .gol-input:focus{background:transparent;border:0;outline:none}
+/* The combo's wrapper draws the frame, so the inner input stays flat — but
+   :focus-visible must still show a ring, or keyboard users lose their place
+   entirely on these fields (global.css supplies it). */
+.editprofile-page .ep-combo .gol-input:hover,.editprofile-page .ep-combo .gol-input:focus:not(:focus-visible){background:transparent;border:0;outline:none}
 
 @media(max-width:860px){
   .editprofile-page .ep-avatar-card{grid-template-columns:1fr;text-align:center}

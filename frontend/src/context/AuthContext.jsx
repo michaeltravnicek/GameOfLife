@@ -20,9 +20,13 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
+  // The session lives in an httpOnly cookie, so the only way to learn who
+  // is signed in is to ask the server once on mount.
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     refresh();
   }, [refresh]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const login = useCallback(async (identifier, password, remember = false) => {
     const data = await apiLogin(identifier, password, remember);
@@ -57,7 +61,6 @@ export function AuthProvider({ children }) {
       // The server session may still be alive, but we always clear client state
       // so the UI reflects a logged-out user. Surface the failure in dev.
       if (import.meta.env.DEV) {
-        // eslint-disable-next-line no-console
         console.error('Logout request failed:', err);
       }
     }
@@ -83,6 +86,9 @@ export function AuthProvider({ children }) {
   );
 }
 
+// The hook is this module's public API; it belongs beside the provider.
+// Splitting it out would only sharpen hot-reload granularity in dev.
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error('useAuth must be used within AuthProvider');

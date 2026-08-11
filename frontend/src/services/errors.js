@@ -52,7 +52,6 @@ export function reportError(fallback, errMaybe, { title = 'Chyba' } = {}) {
     const msg = extractApiError(err, fallback);
     toast.error(msg, { title });
     if (import.meta.env.DEV) {
-      // eslint-disable-next-line no-console
       console.error(err);
     }
   };

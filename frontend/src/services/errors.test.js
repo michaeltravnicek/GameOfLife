@@ -60,9 +60,6 @@ describe('reportError', () => {
   });
 
   it('respects a custom title', () => {
-    const handler = reportError('msg', undefined, { title: 'Vlastní titulek' });
-    // (passing undefined makes it return a handler, but in this signature the
-    // 3rd-arg form is options for the immediate-call shape — verify by direct call)
     reportError('msg', new Error('boom'), { title: 'Vlastní titulek' });
     expect(toast.error).toHaveBeenLastCalledWith('msg', { title: 'Vlastní titulek' });
   });

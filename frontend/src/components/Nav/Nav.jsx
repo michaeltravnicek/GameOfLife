@@ -29,10 +29,14 @@ export default function Nav() {
 
   // The nav is always present (no hide-on-scroll); on navigation just close any
   // open menus. The page itself scrolls back to the top.
+  // Synchronising with the router, which is exactly what effects are for:
+  // the menus are open/closed UI state that a navigation must reset.
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     setMenuOpen(false);
     setUserMenuOpen(false);
   }, [location.pathname]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   // Close on Escape
   useEffect(() => {

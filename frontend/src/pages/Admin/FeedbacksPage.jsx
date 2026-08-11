@@ -61,7 +61,9 @@ export default function FeedbacksPage() {
     ttl: 60 * 1000,
   });
   const { data: seasonsData } = useCachedQuery('seasons', fetchSeasons, { ttl: 5 * 60 * 1000 });
-  const seasons = seasonsData?.seasons || [];
+  // Memoised, not `?? []`: a fresh [] each render gives every dependent
+  // useMemo a new identity, so they all recompute on every render.
+  const seasons = useMemo(() => seasonsData?.seasons || [], [seasonsData]);
 
   const seasonTabs = useMemo(
     () => [{ key: 'all', label: 'Vše' }, ...seasons.map((s) => ({ key: String(s.id), label: s.name }))],

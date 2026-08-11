@@ -18,4 +18,11 @@ export default defineConfig([
       parserOptions: { ecmaFeatures: { jsx: true } },
     },
   },
+  {
+    // Build tooling runs in Node, not the browser: `process` and `Buffer` are
+    // real there. Without this they read as undefined globals and drown out
+    // findings in src/.
+    files: ['scripts/**/*.js', '*.config.js'],
+    languageOptions: { globals: globals.node },
+  },
 ])

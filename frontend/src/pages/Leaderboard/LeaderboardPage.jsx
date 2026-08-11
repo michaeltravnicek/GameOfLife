@@ -24,7 +24,9 @@ export default function LeaderboardPage() {
   const restVisible = restCounts[seasonId] ?? REST_PAGE_SIZE;
 
   const { data: seasonsData } = useCachedQuery('seasons', fetchSeasons, { ttl: CACHE_TTL.LEADERBOARD });
-  const seasons = seasonsData?.seasons || [];
+  // Memoised, not `?? []`: a fresh [] each render gives every dependent
+  // useMemo a new identity, so they all recompute on every render.
+  const seasons = useMemo(() => seasonsData?.seasons || [], [seasonsData]);
 
   // Tabs: All-time + one per season. The active season's id-tab is highlighted
   // while the API param is still the resolver token 'active'.
@@ -42,7 +44,7 @@ export default function LeaderboardPage() {
     () => fetchLeaderboard(seasonId),
     { ttl: CACHE_TTL.LEADERBOARD },
   );
-  const entries = data?.entries || [];
+  const entries = useMemo(() => data?.entries || [], [data]);
   const loading = queryLoading && entries.length === 0;
 
   const q = query.trim().toLowerCase();

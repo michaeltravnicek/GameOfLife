@@ -155,6 +155,10 @@ export function useCachedQuery(key, fetcher, options = {}) {
   // Snapshot current entry up-front so the first render already has data
   // when we navigate back to a cached page.
   const initialEntry = enabled ? getEntry(key) : undefined;
+  // Reading the module-level cache (and the clock) during render is the whole
+  // point of this hook: a cached page must paint with its data on the first
+  // render, not flash empty and fill in from an effect one frame later.
+  // eslint-disable-next-line react-hooks/purity
   const initialFresh = !!initialEntry && Date.now() - initialEntry.fetchedAt < ttl;
 
   const [data, setData] = useState(initialEntry?.value);
@@ -162,9 +166,17 @@ export function useCachedQuery(key, fetcher, options = {}) {
   const [loading, setLoading] = useState(enabled && !initialFresh);
 
   // Keep the latest fetcher in a ref so changing it doesn't retrigger the effect.
+  // Callers pass an inline arrow, so the fetcher is a new function every
+  // render. Storing it in a ref is what stops that from re-running the fetch
+  // on every render; putting it in the dependency array would be an infinite
+  // loop, and the value is only ever read inside the effect.
   const fetcherRef = useRef(fetcher);
+  // eslint-disable-next-line react-hooks/refs
   fetcherRef.current = fetcher;
 
+  // This effect *is* the data-fetching state machine — loading/data/error only
+  // exist to mirror an async external system into React.
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (!enabled) {
       setLoading(false);
@@ -232,6 +244,7 @@ export function useCachedQuery(key, fetcher, options = {}) {
       unsubscribe();
     };
   }, [key, enabled, ttl, maxAge]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const refetch = () => {
     // Forget cached value so the next consumer fetches fresh.

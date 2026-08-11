@@ -49,6 +49,9 @@ function AttendancePointsInput({ attendee, onSave, busy }) {
 
   // The roster reloads after every save; adopt the server's number so a
   // rejected edit doesn't leave a stale draft in the input.
+  // Adopting the server's value into a draft the user also edits: it is a
+  // controlled input, so this cannot be computed during render.
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => { setValue(String(attendee.points)); }, [attendee.points]);
 
   const commit = () => {
@@ -94,7 +97,9 @@ export default function EventDetailPage() {
   const [fbHover, setFbHover] = useState(0);
   const [comment, setComment] = useState('');
   const [fbBusy, setFbBusy] = useState(false);
-  const [fbDone, setFbDone] = useState(false);
+  // Only whether *this session* submitted; the server's own
+  // `feedback_given` is the other half, combined below.
+  const [fbSubmitted, setFbSubmitted] = useState(false);
   const [fbOpen, setFbOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [surveyOpen, setSurveyOpen] = useState(false);
@@ -119,10 +124,10 @@ export default function EventDetailPage() {
     { enabled: !!slug, ttl: CACHE_TTL.EVENT_DETAIL },
   );
 
-  // Pre-set "done" state if the server already recorded feedback from this user.
-  useEffect(() => {
-    if (event?.feedback_given) setFbDone(true);
-  }, [event?.feedback_given]);
+  // Derived, not synced: "already rated" is the server's answer OR the rating
+  // just submitted here. The effect this replaces copied one into the other and
+  // cost a render cycle every time the event loaded.
+  const fbDone = fbSubmitted || !!event?.feedback_given;
 
   // No auto-prompt: the rating modal opens only from the "★ Ohodnotit akci"
   // button in the feedback section — never on its own on landing.
@@ -143,13 +148,21 @@ export default function EventDetailPage() {
 
   // Lazy: only admins ever open this tab, so nobody else pays for the fetch.
   // Loads once when the tab is first opened for this event.
+  // Fetching on demand, which is a side effect by definition. `loadAttendance`
+  // is redefined every render, so listing it as a dependency would re-fetch in
+  // a loop; the `attLoaded` guard is what actually makes this run once.
   useEffect(() => {
     if (isAdmin && adminView === 'ucast' && !attLoaded) loadAttendance();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAdmin, adminView, attLoaded]);
 
   // A route-param change (navigating between events) doesn't remount this
   // component, so stale attendance from the last event has to be dropped
   // explicitly.
+  // Resetting per-event state on a route change. React Router reuses this
+  // component across events, so without this the previous event's roster and
+  // rating leak onto the next one.
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     setAttLoaded(false);
     setAttendees([]);
@@ -158,11 +171,12 @@ export default function EventDetailPage() {
     // Feedback state is per-event; clear it so navigating between events never
     // carries one event's rating (or "done" state) onto the next.
     setFbOpen(false);
-    setFbDone(false);
+    setFbSubmitted(false);
     setRating(0);
     setFbHover(0);
     setComment('');
   }, [slug]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const attendingIds = useMemo(() => new Set(attendees.map((a) => a.user_id)), [attendees]);
   // 'find' mode narrows the table in place; 'add' mode leaves it untouched so
@@ -279,7 +293,7 @@ export default function EventDetailPage() {
     setFbBusy(true);
     try {
       await submitFeedback(slug, rating, comment.trim());
-      setFbDone(true);
+      setFbSubmitted(true);
       setFbOpen(false);
       toast.success('Díky za hodnocení!');
     } catch (err) {
@@ -310,8 +324,6 @@ export default function EventDetailPage() {
       e.target.value = '';
     }
   };
-
-  const totalAttendancePoints = attendees.reduce((sum, a) => sum + a.points, 0);
 
   // Every attendance write moves the leaderboard and this event's own
   // attendee_count. refetchEvent() updates the rsvp bar in place; deliberately

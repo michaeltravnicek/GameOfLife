@@ -26,7 +26,6 @@ export default function EventsPage() {
   const [debouncedQuery, setDebouncedQuery] = useState('');
   // Cities are returned only on the first page; we keep them locally so
   // they survive filter changes.
-  const [cities, setCities] = useState([]);
 
   // Season is now the primary filter (replaces the old upcoming/past/all tabs).
   // Tab keys are strings; 'all' = every season.
@@ -84,14 +83,12 @@ export default function EventsPage() {
     extractCount,
   });
 
-  // Update city list whenever a new first page arrives. We skip the update
-  // only if firstPage hasn't resolved yet (undefined = still loading) to avoid
-  // a flash of empty filters. Once the response is in, we always overwrite —
-  // stale cities from a previous season must not persist.
-  useEffect(() => {
-    if (firstPage === undefined) return;
-    setCities(firstPage.cities || []);
-  }, [firstPage]);
+  // Computed during render rather than synced through an effect: this is the
+  // first page's own data, so there is no second source to keep in step with.
+  // The effect it replaces cost a render cycle per load, and the guard for
+  // "firstPage hasn't resolved" falls out for free — undefined ?? [] is [], so
+  // there is no flash of empty filters and no stale season's cities either.
+  const cities = useMemo(() => firstPage?.cities ?? [], [firstPage]);
 
   // All cities surface in the filter panel (even those with a single event) so
   // users see the full set of choices. Each chip shows its event count.
