@@ -51,7 +51,7 @@ Database is PostgreSQL on Render; Google Sheets sync runs daily (Render cron) an
 │   │   ├── image_utils.py       # Resizing, upload validation, WebP variants
 │   │   ├── management/commands/ # sync_sheets, award_event_points, ensure_season,
 │   │   │                        #   generate_image_variants, migrate_media_to_s3…
-│   │   └── tests/               # ~30 test modules
+│   │   └── tests/               # 40 test modules
 │   ├── accounts/                # User account/profile management
 │   │   ├── models.py            # Profile model (linked to auth.User and LeaderboardUser)
 │   │   ├── api/                 # DRF auth + profile endpoints
@@ -243,7 +243,12 @@ reserved prefixes; everything else falls through to `index.html`.
 - `/accounts/` — allauth (Google OAuth callbacks)
 - `settings.ADMIN_URL` — Django admin
 - `/media/`, `/static/`, `/sitemap.xml`, `/robots.txt`, `/whoami/`
+- `/healthz/` — DB + cache probe, 503 when either is down. **Point Render's
+  health check here**; `/` answers 200 off a memoised file read with the DB down.
 - `/api/schema/` + `swagger/` + `redoc/` — DEBUG only
+
+Unknown `/api/…` paths answer JSON (`handler404` in `mysite/urls.py`); unknown
+page paths still fall through to the SPA, which renders its own 404.
 
 ## Frontend Design System
 
@@ -331,14 +336,14 @@ the real SPA uses `AuthContext` against session cookies.
 Both suites run in CI (`.github/workflows/tests.yml`).
 
 ```bash
-# Backend — 530 tests. test_settings forces in-memory SQLite, so no Postgres needed.
+# Backend — 607 tests. test_settings forces in-memory SQLite, so no Postgres needed.
 cd djangotutorial
 DJANGO_SETTINGS_MODULE=mysite.test_settings DJANGO_SECRET_KEY=x \
   /usr/bin/python3 manage.py test leaderboard accounts
 
-# Frontend — 37 tests
+# Frontend — 71 tests
 cd frontend && npm run test:run
-npm run lint     # NOT clean — ~33 known pre-existing issues
+npm run lint     # clean (zero problems) — keep it that way; CI runs it
 ```
 
 ## Notes for Future Development
@@ -358,3 +363,16 @@ npm run lint     # NOT clean — ~33 known pre-existing issues
    The daily cron is configured in the Render dashboard (the `build.sh` crontab block is commented out).
 7. **Database Transactions:** Heavy operations (e.g., mass sync from Google Sheets) may benefit from transaction wrapping or batch inserts.
 8. **No mobile app.** Capacitor was removed 2026-07-27 — plan features as web-session-only.
+9. **Google Forms are link-only.** Event sign-up hands out a link (the survey modal on the event
+   page). The native renderer (`leaderboard/google_form.py`) is kept but switched off by
+   `settings.GOOGLE_FORM_NATIVE`; turning it on revives the backend only — the sign-up page was
+   deleted and must be restored from commit `7d1ba78`. Consequence worth knowing: we cannot tell
+   who filled a form in. `EventRSVP` is the record of intent; the answers live in the spreadsheet.
+10. **Account deletion anonymises, it does not erase.** `accounts.services.anonymize_account`
+    deletes the account and every uploaded file but keeps the `leaderboard.User` row with a blank
+    name and NULL e-mail, so points and attendance stay and nobody's rank moves. The privacy
+    policy (`PrivacyPage.jsx` §6) promises exactly this split — if you change one, change both.
+11. **Keep `npm run lint` clean.** It is zero now and CI runs it. Where a rule is wrong for the
+    code, use a scoped disable *with a reason*; note that the directive must be the last comment
+    line before the code, and the react-hooks effect rules report on the `setState` inside the
+    effect, so those need block disables.

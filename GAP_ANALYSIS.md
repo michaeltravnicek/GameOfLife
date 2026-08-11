@@ -1,6 +1,7 @@
 # GameOfLive — gap analysis, and the work that follows from it
 
-> *Audit run 2026-08-11 against branch `feature/google-form-native-signup`. This is the working
+> *Audit run 2026-08-11 against branch `feature/google-form-native-signup`; **all nine items were
+> implemented on 2026-08-12** — see the table at the bottom. This is the working
 > plan — tick items off in the "Suggested order" table at the bottom as they land. The two dated
 > snapshots it refers to (`CODE_REVIEW.md`, `TESTING_REPORT.md`) are from 2026-07-03 and are
 > superseded by this document wherever they disagree.*
@@ -397,15 +398,15 @@ Two items I've deliberately left out of the task list, because they aren't mine 
 | # | Task | Size | Done |
 |---|---|---|---|
 | 0 | Save this plan as `GAP_ANALYSIS.md` in the repo root | 1 min | ✅ |
-| 1 | `git add` untracked runtime files + CI workflow + the four root docs; `.gitignore` the 86 MB PDF; commit, push, merge to `main` | 30 min |  |
-| 2 | `safeRedirect()` helper + both call sites + test; `npm audit fix`; re-run suites | 1 h |  |
-| 3 | Photo likes end-to-end (payload + N+1-safe like state + UI + tests) | ½ day |  |
-| 4 | Profile questions (endpoint + `update_profile` + edit UI + profile display + privacy gate) | ½ day |  |
-| 5 | Google Forms → link-only: flag off, delete the page, restore the RSVP modal, move `embedUrl.js` | ~2 h |  |
-| 6 | Account deletion + anonymisation (endpoint, command, confirm-modal UI) — Part 5 | ½ day |  |
-| 7 | RSVP past-event gate · password change · JSON API 404 · `/healthz/` · drop `uvicorn` | ½ day |  |
-| 8 | Lint to zero · PWA manifest · `:focus-visible` pass | ~2 h |  |
-| 9 | Docs: fix the three live ones, header-stamp the two snapshots, write the backup procedure | ~2 h |  |
+| 1 | `git add` untracked runtime files + CI workflow + the four root docs; `.gitignore` the 86 MB PDF; commit, push, merge to `main` | 30 min | ✅ (branch pushed; `main` merge deferred) |
+| 2 | `safeRedirect()` helper + both call sites + test; `npm audit fix`; re-run suites | 1 h | ✅ |
+| 3 | Photo likes end-to-end (payload + N+1-safe like state + UI + tests) | ½ day | ✅ |
+| 4 | Profile questions (endpoint + `update_profile` + edit UI + profile display + privacy gate) | ½ day | ✅ |
+| 5 | Google Forms → link-only: flag off, delete the page, restore the RSVP modal, move `embedUrl.js` | ~2 h | ✅ |
+| 6 | Account deletion + anonymisation (endpoint, command, confirm-modal UI) — Part 5 | ½ day | ✅ |
+| 7 | RSVP past-event gate · password change · JSON API 404 · `/healthz/` · drop `uvicorn` | ½ day | ✅ |
+| 8 | Lint to zero · PWA manifest · `:focus-visible` pass | ~2 h | ✅ |
+| 9 | Docs: fix the three live ones, header-stamp the two snapshots, write the backup procedure | ~2 h | ✅ |
 
 ## Verification
 

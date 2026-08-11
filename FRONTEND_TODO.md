@@ -15,28 +15,31 @@ _(zatím prázdné)_
 
 ## ⚪ Odloženo — čeká na produktové rozhodnutí na BE
 
-### Privacy flagy (`hide_pts`, `hide_events`, `members_only`)
-Momentálně se **ukládají, ale nikde nevynucují** (viz komentář v `accounts/models.py`). Až se na BE rozhodne, co mají dělat, dodělat FE:
-- [ ] Přidat přepínač **`hide_pts`** do [EditProfilePage.jsx](frontend/src/pages/Profile/EditProfilePage.jsx) — jako jediný ze tří ho v UI vůbec nemá.
-- [ ] Až BE začne v `profile_payload` data vynechávat podle flagů, ošetřit na FE chybějící pole (např. `members_only` → stav „soukromý profil", `hide_events`/`hide_pts` → nezobrazovat sekci) — čti, co reálně přijde v odpovědi, ne co čekáš.
-- Rozhodnutí „zapojit vs. vyhodit" zatím otevřené.
+_(zatím prázdné)_
 
 ---
 
-## 🟢 Drobnosti / až bude potřeba
-
-- [ ] `setPhotoLike(photoId, liked)` v `api.js` existuje (PUT/DELETE, idempotentní), ale nemá zatím žádného volajícího — napojit, až přibude tlačítko lajku v galerii.
-
----
+## ✅ Hotovo (jen pro přehled, neřešit)
+- [x] **Privacy flagy se vynucují na BE** (`leaderboard/privacy.py`, `visibility_for`) —
+  `profile_payload` sekce podle flagů **vynechává**, ne nuluje, a posílá `hidden: [...]`,
+  ať FE pozná „skryto" od „nemá nic". Přepínač `hide_pts` je v UI
+  ([EditProfilePage.jsx](frontend/src/pages/Profile/EditProfilePage.jsx), sekce Soukromí).
+- [x] **Lajky fotek napojené.** `setPhotoLike` má volajícího: srdíčko v mřížce galerie
+  i v lightboxu, optimistické s rollbackem. Payload galerie posílá `id`, `like_count`
+  a `liked_by_me`; oficiální fotky akcí mají `id: null` (lajkovat jdou jen fotky od lidí).
+- [x] **Otázky na profilu.** `ProfileQuestion`/`ProfileAnswer` mají endpoint
+  (`/api/v1/profile-questions/`), sekci v editaci profilu a výpis v „O mně".
+  Otázky se píšou v Django adminu — dokud tam žádná není, sekce se nezobrazuje.
+- [x] **Mazání účtu funguje.** `DELETE /api/v1/auth/me/delete/`; osobní údaje a nahrané
+  soubory zmizí, body a účast zůstanou anonymně (viz zásady ochrany údajů, bod 6).
+- [x] **Změna hesla** pro přihlášené: sekce „08 · Heslo" v editaci profilu.
 
 ## ✅ Hotovo v BE-first fázi (jen pro přehled, neřešit)
 - [x] **Admin: správa účasti a bodů u akce.** `api.js` má `fetchEventAttendees`,
   `setEventAttendeePoints` (PUT), `removeEventAttendee` (DELETE), `fetchEventRsvps`.
-  UI je **samostatná admin stránka** `/sprava/akce/<slug>/ucast`
-  ([EventAttendancePage.jsx](frontend/src/pages/Admin/EventAttendancePage.jsx)) —
-  ne panel na detailu akce, aby detail zůstal veřejná stránka. Vypadá jako profil
-  (poster hero + credits + `ticket-list`/`StatList`). Odkaz vede z back-stripu
-  na detailu akce. Obsahuje: editaci bodů inline, přidání hráče (hledá v žebříčku,
+  UI nakonec **žije přímo na detailu akce** ([EventDetailPage.jsx](frontend/src/pages/EventDetail/EventDetailPage.jsx))
+  jako admin-only přepínač „Popis / Účast a body" — samostatná stránka
+  `/sprava/akce/<slug>/ucast` nikdy nevznikla. Obsahuje: editaci bodů inline, přidání hráče (hledá v žebříčku,
   jen existující leaderboard-user), odebrání, filtr při >10 účastnících a
   seznam přihlášených s příznakem „nezapočítán".
 - [x] **`attendee_count` na detailu akce.** Rekap u proběhlé akce ukazuje reálnou

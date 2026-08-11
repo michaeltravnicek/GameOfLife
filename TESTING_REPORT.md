@@ -1,5 +1,11 @@
 # Testing Report — GameOfLive
 
+> **⚠️ Dated snapshot — 2026-07-03.** Kept as a record of what was true then, not as current
+> guidance. Where it disagrees with [GAP_ANALYSIS.md](GAP_ANALYSIS.md) (2026-08-12) or the
+> code, the newer one wins. Notably: the mobile/token-auth findings are moot (Capacitor removed 2026-07-27), the past-event RSVP hole is closed, and login no longer reveals which usernames exist.
+
+
+
 *Date: 2026-07-03 · Branch: `react` · Tested by: automated + live exercise of the running app*
 
 ## How it was tested

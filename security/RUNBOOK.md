@@ -380,3 +380,81 @@ SECURE_HSTS_SECONDS=31536000
 - [ ] `gthread` worker, počet vláken sedí s limitem Postgresu
 - [ ] CSP reporty čisté → `CSP_ENFORCE=1`
 - [ ] `SECURE_HSTS_SECONDS` zvýšené na rok
+
+---
+
+## 10. Zálohy — co vlastně máme ⏱ 30 min 🔴
+
+Tohle je jediný bod, který se **netýká útočníka**. Týká se překlepu v `DELETE`,
+špatně spuštěné migrace a smazaného bucketu. Zatím není nikde napsané, co
+zálohu tvoří ani jak se z ní vrací zpátky — a záloha, kterou jsi nikdy
+neobnovil, není záloha, je to naděje.
+
+### 10.1 Zjisti a zapiš, co Render drží
+
+V dashboardu u databáze (sekce *Backups*) si ověř a doplň sem:
+
+```
+Plán:                 ...........................
+Retence:              ......... dní
+Frekvence:            ......... (denní / continuous PITR)
+Poslední úspěšná:     ...........................
+```
+
+Na free/starter plánech je retence krátká nebo žádná. Pokud vyjde „žádná“,
+je to zjištění, ne detail — buď se plán zvedne, nebo se dělá vlastní dump
+(bod 10.3).
+
+### 10.2 Zkus obnovu **do zahazovací databáze**
+
+Nikdy ne přes produkci. Cílem je zjistit, že soubor jde načíst a data v něm
+dávají smysl:
+
+```bash
+# 1. Stáhni si dump z Renderu (dashboard → Backups → Download).
+# 2. Lokálně, do prázdné DB:
+createdb gol_restore_test
+pg_restore --no-owner --dbname=gol_restore_test dump.sql
+
+# 3. Kontrola, že tam je to podstatné:
+psql gol_restore_test -c "SELECT count(*) FROM leaderboard_user;"
+psql gol_restore_test -c "SELECT count(*) FROM leaderboard_usertoevent;"
+psql gol_restore_test -c "SELECT max(date) FROM leaderboard_event;"
+
+# 4. Ukliď.
+dropdb gol_restore_test
+```
+
+Zapiš si sem datum, kdy to naposled prošlo: `.......................`
+
+### 10.3 Vlastní dump, když retence nestačí
+
+`pg_dump` z Render shellu nebo z cronu, výstup do R2 (jiný bucket než média —
+záloha vedle originálu není záloha):
+
+```bash
+pg_dump "$DATABASE_URL" --no-owner --format=custom \
+  | aws s3 cp - "s3://gameofyolo-backups/db-$(date +%F).dump" \
+      --endpoint-url "$AWS_S3_ENDPOINT_URL"
+```
+
+### 10.4 Média
+
+R2 bucket s fotkami **žádnou zálohu nemá**, pokud mu nezapneš versioning.
+Smazaný nebo přepsaný objekt je pryč. Zvaž zapnutí versioningu s krátkou
+lifecycle policy — obrázky se nepřepisují (Django dává nové jméno při kolizi),
+takže to nestojí skoro nic.
+
+- [ ] versioning zapnutý na `gameofyolo-media`
+
+### 10.5 Co záloha *nepokrývá*
+
+Ať to není překvapení: `MEDIA_ROOT` na disku Renderu, obsah cache (Redis) a
+`credentials.json` pro Google. První dvě jsou obnovitelné, třetí se stahuje
+znovu z Google Cloud Console.
+
+### Do závěrečného checklistu
+
+- [ ] retence a plán Renderu zapsané výš
+- [ ] obnova do zahazovací DB **jednou proběhla** a je u ní datum
+- [ ] R2 versioning na médiích

@@ -3,7 +3,7 @@
 > Cíl tohohle dokumentu: **abys tenhle backend uměl sám udržovat, rozšiřovat a posoudit** —
 > bez toho, aby ti někdo musel vysvětlovat, co která vrstva dělá.
 > Není to tutoriál Djanga (to umíš). Je to mapa TVOJÍ codebase + upřímné hodnocení, čemu věřit.
-> Verze: 2026-08-01. Stav: 13 400 řádků Pythonu (bez migrací), 465 testů, všechny procházejí.
+> Verze: 2026-08-12. Stav: 16 700 řádků Pythonu (bez migrací), 607 testů, všechny procházejí.
 
 ---
 
@@ -262,22 +262,23 @@ Když to zvládneš sám, backend umíš.
   zorientovat bez autora.
 - **DB constraints, ne jen Python validace.** `CheckConstraint` a partial unique indexy hlídají
   invarianty i pro bulk cesty (sheets sync), které obcházejí `clean()`.
-- **454 testů, všechny procházejí**, a pokrývají to podstatné: privacy flagy, bezpečnost,
-  oprávnění, check-in, párování účtů, sync.
+- **607 testů, všechny procházejí**, a pokrývají to podstatné: privacy flagy, bezpečnost,
+  oprávnění, check-in, párování účtů, sync, mazání účtu, health check.
 - **Bezpečnost je promyšlená** — role deklarativně, CSRF, axes, CSP, obskurní admin URL,
   throttling na auth.
 - **Cache má jedno místo.**
 
 ### Dluh (drobnosti, nic strukturálního)
-1. **[api/views.py](djangotutorial/leaderboard/api/views.py) má 827 řádků.** Pořád čitelné, ale
+1. **[api/views.py](djangotutorial/leaderboard/api/views.py) má 874 řádků.** Pořád čitelné, ale
    blíží se hranici. Přirozený řez je `views/events.py`, `views/admin.py`, `views/gallery.py`.
    Zatím bych nechal — dělej to, až přeteče přes ~1000.
 2. **`WHITENOISE_AUTOREFRESH = True` bez ohledu na `DEBUG`**
    ([settings.py:728](djangotutorial/mysite/settings.py#L728)) — v produkci `os.stat()` navíc
    u každého statického requestu. Patří do `if DEBUG:`.
-3. ~~**[CLAUDE.md](CLAUDE.md) tvrdí 377 testů**, reálně je jich 454.~~ Opraveno — teď 459.
+3. ~~**[CLAUDE.md](CLAUDE.md) tvrdí 377 testů**, reálně je jich 454.~~ Opraveno — teď 607,
+   a tenhle dokument sám uváděl na třech místech tři různá čísla (465 / 454 / 459).
    Zůstává poučení: dokumentaci, které se nedá věřit v číslech, se hůř věří i jinde.
-4. **[settings.py](djangotutorial/mysite/settings.py) má 836 řádků.** Pro jednu appku je to hodně,
+4. **[settings.py](djangotutorial/mysite/settings.py) má 895 řádků.** Pro jednu appku je to hodně,
    ale komentáře jsou tam právem — nedělil bych.
 5. **`Profile.leaderboard_user` může být `None`** a není to typově vynucené. Kód s tím počítá,
    ale je to trvalý zdroj pozornosti u nového kódu.

@@ -1,5 +1,11 @@
 # Code Review — architecture, duplication, React best practices
 
+> **⚠️ Dated snapshot — 2026-07-03.** Kept as a record of what was true then, not as current
+> guidance. Where it disagrees with [GAP_ANALYSIS.md](GAP_ANALYSIS.md) (2026-08-12) or the
+> code, the newer one wins. Notably: both 🔴 "rewrite candidates" below (EventForm extraction, EventWriteSerializer) are **done**, and lint is now clean.
+
+
+
 *Date: 2026-07-03 · Branch: `react` · Method: jscpd duplication scan (frontend + backend), full read of the hotspot files, checked against the Vercel react-best-practices rules.*
 
 ## Changes made during this review
