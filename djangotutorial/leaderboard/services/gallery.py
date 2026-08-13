@@ -1,0 +1,143 @@
+"""Combined gallery (official + user photos) with bounded merge-pagination."""
+from datetime import datetime, timezone as _tz
+
+from django.db.models import Count, F
+
+from leaderboard.image_utils import validate_upload, variant_url
+from leaderboard.models import Event, ImageToEvent, PhotoLike, UserPhoto
+from leaderboard.privacy import public_handle
+
+# Sort key for photos with no event date — they sink to the bottom.
+_SORT_FALLBACK = datetime.min.replace(tzinfo=_tz.utc)
+
+
+def create_user_photo(user, image, *, event_slug="", caption=""):
+    """Create a community gallery photo for `user`.
+
+    `validate_upload` guards size/type; `UserPhoto.save()` downscales the stored
+    file (1600×1600, q80). Raises ValueError for a bad image and LookupError for
+    an unknown event slug.
+    """
+    validate_upload(image)
+    event = None
+    if event_slug:
+        event = Event.objects.filter(slug=event_slug).first()
+        if event is None:
+            raise LookupError("Akce nenalezena.")
+    return UserPhoto.objects.create(
+        auth_user=user,
+        event=event,
+        image=image,
+        caption=(caption or "").strip()[:255],
+    )
+
+
+def gallery_page(offset, limit, request, season=None):
+    """Merged, date-desc photo page. Returns ``(photos, total_count)``.
+
+    Both sources are date-ordered in the DB, so we pull only ``offset+limit``
+    rows from each, merge, and slice — bounded memory instead of loading every
+    photo. ``request`` is used to build absolute media URLs. When ``season`` is
+    given, only photos whose event falls inside the season window are included.
+    """
+    upper = offset + limit
+
+    official = (
+        ImageToEvent.objects
+        .select_related("event")
+        .exclude(image="")
+        .filter(image__isnull=False)
+        .only("image", "event__name", "event__slug", "event__date")
+        .order_by("-event__date")
+    )
+    user_photos = (
+        UserPhoto.objects
+        .select_related("auth_user", "event")
+        .exclude(image="")
+        .filter(image__isnull=False)
+        .only("image", "event__name", "event__slug", "event__date",
+              "auth_user__first_name", "auth_user__last_name", "auth_user__username")
+        # Counted in the same query rather than per photo: a 60-photo page would
+        # otherwise issue 60 extra COUNT(*)s just to draw the hearts.
+        .annotate(like_count=Count("likes"))
+        .order_by(F("event__date").desc(nulls_last=True))
+    )
+
+    if season is not None:
+        official = official.filter(
+            event__date__date__gte=season.start_date,
+            event__date__date__lte=season.end_date,
+        )
+        user_photos = user_photos.filter(
+            event__date__date__gte=season.start_date,
+            event__date__date__lte=season.end_date,
+        )
+
+    total = official.count() + user_photos.count()
+
+    photos = []
+    for img in official[:upper]:
+        photos.append({
+            # Official event photos carry no id and no like state: PhotoLike
+            # hangs off UserPhoto, so there is nothing for a heart to point at.
+            # `None` (not 0) is what tells the client "not likeable" apart from
+            # "likeable, nobody has yet".
+            "id": None,
+            "url": request.build_absolute_uri(img.image.url),
+            "url_mobile": variant_url(img.image, request),
+            "event_name": img.event.name if img.event else "",
+            "event_slug": img.event.slug if img.event else "",
+            "event_date": img.event.date if img.event else None,
+            "is_user_photo": False,
+            "uploaded_by": "",
+            "like_count": None,
+            "liked_by_me": False,
+        })
+    for up in user_photos[:upper]:
+        photos.append({
+            "id": up.pk,
+            "url": request.build_absolute_uri(up.image.url),
+            "url_mobile": variant_url(up.image, request),
+            "event_name": up.event.name if up.event else "",
+            "event_slug": up.event.slug if up.event else "",
+            "event_date": up.event.date if up.event else None,
+            "is_user_photo": True,
+            # Never fall back to the raw username — it's the e-mail for social
+            # logins. Prefer a real name, then a safe handle, then a neutral label.
+            "uploaded_by": (
+                up.auth_user.get_full_name()
+                or public_handle(up.auth_user.username)
+                or "Hráč"
+            ),
+            "like_count": up.like_count,
+            "liked_by_me": False,  # filled in below for the sliced page only
+        })
+
+    photos.sort(key=lambda p: p["event_date"] or _SORT_FALLBACK, reverse=True)
+    page = photos[offset:upper]
+    _mark_liked_by(page, getattr(request, "user", None))
+    return page, total
+
+
+def _mark_liked_by(page, user):
+    """Set ``liked_by_me`` on the page's user photos, in one query.
+
+    Deliberately runs *after* the slice: the merge above builds up to
+    ``offset+limit`` rows from each source, but only the sliced page is ever
+    rendered, so asking about the rest would be work thrown away. Anonymous
+    visitors skip the query entirely — they still see the counts, which is what
+    makes the login prompt on tap worth following.
+    """
+    if user is None or not user.is_authenticated:
+        return
+    ids = [p["id"] for p in page if p["id"] is not None]
+    if not ids:
+        return
+    liked = set(
+        PhotoLike.objects
+        .filter(auth_user=user, photo_id__in=ids)
+        .values_list("photo_id", flat=True)
+    )
+    for p in page:
+        if p["id"] in liked:
+            p["liked_by_me"] = True

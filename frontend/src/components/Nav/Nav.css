@@ -1,0 +1,87 @@
+/* Frosted navy pill: a darker translucent navy base, a heavy blur, a thin
+   hairline border and a soft top highlight. A faint blue grain sits on top
+   (via ::before) just to break up the flat frost — never a full-opacity fill. */
+nav.top{position:fixed;top:calc(24px + env(safe-area-inset-top,0px));left:60px;right:60px;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:2px 13px 2px 36px;border-radius:9999px;background:rgba(10,18,50,.7);backdrop-filter:blur(24px) saturate(125%);-webkit-backdrop-filter:blur(24px) saturate(125%);border:1px solid rgba(255,255,255,.15);box-shadow:0 8px 32px rgba(0,0,0,.3),inset 0 1px 1px rgba(255,255,255,.15)}
+/* Grain overlay: below the links (negative z-index), above the tint, at low
+   opacity so it only textures the frost. Shared by the pill and both menus. */
+nav.top::before,.nav-user-menu::before,.nav-drop::before{content:'';position:absolute;inset:0;border-radius:inherit;background:var(--tex-blue) 0 0/var(--tex-size) var(--tex-size) repeat;opacity:.3;pointer-events:none;z-index:-1}
+.nav-left,.nav-right{display:flex;align-items:center;gap:36px;flex:1}
+.nav-right{justify-content:flex-end}
+.nav-item{font-family:var(--font-nav);font-size:16px;font-weight:700;letter-spacing:.48px;color:rgba(255,255,255,.9);background:none;border:0;cursor:pointer;transition:color .2s;padding:18px 0;text-decoration:none;display:inline-block}
+.nav-item:hover,.nav-item.active{color:var(--color-pink);text-shadow:0 4px 4px rgba(0,0,0,.25)}
+.nav-logo{position:absolute;left:50%;transform:translateX(-50%);height:48px;display:flex;align-items:center;background:transparent;border:0;cursor:pointer;padding:4.5px 1px;text-decoration:none;pointer-events:auto}
+.nav-logo img{width:90px;height:45px;display:block;object-fit:contain}
+.nav-avatar{width:50px;height:50px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;border:1.5px solid rgba(255,255,255,.5);background:var(--alpha-white-10);box-shadow:inset 0 1px 1px rgba(255,255,255,.15);padding:0;font-family:var(--font-nav);font-size:13px;font-weight:600;color:var(--color-white);cursor:pointer;transition:border-color .2s;margin:9px 0;text-decoration:none}
+.nav-avatar:hover,.nav-avatar.active{border-color:var(--color-pink)}
+.nav-avatar img{width:100%;height:100%;border-radius:50%;object-fit:cover}
+
+/* Avatar dropdown (profile + logout) */
+.nav-user{position:relative;display:flex;align-items:center}
+.nav-user-menu{position:absolute;top:calc(100% + 8px);right:0;min-width:184px;background:rgba(10,18,50,.8);backdrop-filter:blur(24px) saturate(125%);-webkit-backdrop-filter:blur(24px) saturate(125%);border:1px solid rgba(255,255,255,.15);border-radius:14px;box-shadow:0 14px 36px var(--alpha-black-40),inset 0 1px 1px rgba(255,255,255,.15);padding:8px;display:none;flex-direction:column;gap:2px;z-index:120}
+.nav-user-menu.open{display:flex;animation:navUserPop .18s ease both}
+@keyframes navUserPop{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+.nav-user-name{font-size:11px;letter-spacing:.12em;color:rgba(255,255,255,.55);padding:6px 12px 8px;border-bottom:1px dashed var(--alpha-white-10);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nav-user-item{font-family:var(--font-nav);font-size:14px;font-weight:600;color:rgba(255,255,255,.9);background:none;border:0;cursor:pointer;text-align:left;text-decoration:none;padding:10px 12px;border-radius:8px;transition:background .15s,color .15s;width:100%}
+.nav-user-item:hover{background:var(--alpha-white-10);color:var(--color-white)}
+.nav-user-logout{color:var(--color-pink-light)}
+.nav-user-logout:hover{background:var(--alpha-pink-20);color:var(--color-white)}
+
+@media(prefers-reduced-motion:reduce){.nav-user-menu.open{animation:none}}
+
+/* Hamburger — hidden on desktop */
+.nav-hamburger{display:none;align-items:center;justify-content:center;background:none;border:0;cursor:pointer;color:rgba(255,255,255,.9);padding:10px 4px;line-height:0;transition:color .18s;flex-shrink:0}
+.nav-hamburger svg{display:block}
+.nav-hamburger:hover{color:var(--color-pink)}
+
+/* Mobile dropdown — full-width popup, same visual language as the avatar menu */
+.nav-drop{position:absolute;top:calc(100% + 10px);left:0;right:0;background:rgba(10,18,50,.8);backdrop-filter:blur(24px) saturate(125%);-webkit-backdrop-filter:blur(24px) saturate(125%);border:1px solid rgba(255,255,255,.15);border-radius:20px;box-shadow:0 16px 40px var(--alpha-black-45),inset 0 1px 1px rgba(255,255,255,.15);padding:10px;display:none;flex-direction:column;gap:2px;z-index:130}
+.nav-drop.open{display:flex;animation:navUserPop .2s ease both}
+.nav-drop-name{font-size:12px;letter-spacing:.12em;color:rgba(255,255,255,.55);padding:8px 14px 10px;border-bottom:1px dashed var(--alpha-white-10);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nav-drop-item{font-family:var(--font-nav);font-size:17px;font-weight:600;letter-spacing:.02em;color:rgba(255,255,255,.9);background:none;border:0;cursor:pointer;text-align:left;text-decoration:none;padding:14px 14px;border-radius:10px;transition:background .15s,color .15s;width:100%}
+.nav-drop-item:hover,.nav-drop-item:active,.nav-drop-item.active{background:var(--alpha-white-10);color:var(--color-white)}
+.nav-drop-item.active{color:var(--color-pink)}
+.nav-drop-logout{color:var(--color-pink-light);margin-top:2px}
+.nav-drop-logout:hover,.nav-drop-logout:active{background:var(--alpha-pink-20);color:var(--color-white)}
+.nav-drop-start{color:var(--color-pink);margin-top:6px;border:1.5px dashed rgba(225,84,99,.55);text-align:center}
+
+/* The dropdown is a mobile affordance; never show it on desktop. */
+@media(min-width:901px){.nav-drop{display:none !important}}
+@media(prefers-reduced-motion:reduce){.nav-drop.open{animation:none}}
+
+/* 1100px — tighten gaps before switching to mobile, prevents nav items from colliding with the centered logo */
+@media(max-width:1100px){
+  nav.top{left:24px;right:24px;padding:2px 10px 2px 24px}
+  .nav-left,.nav-right{gap:24px}
+  .nav-item{font-size:15px}
+}
+
+/* 900px — switch to hamburger; below this, the 5 nav items + centered logo + avatar can no longer coexist without overlap */
+@media(max-width:900px){
+  /* In hamburger mode the side links are hidden, so the pill no longer needs the
+     tight 14px gutter that desktop used to fit them — keep the 24px inset from the
+     1100px breakpoint so the nav matches the page content gutter and doesn't hug
+     the screen edge. */
+  /* Less right gutter than left: the avatar is a big filled circle and looked
+     over-padded against the pill edge; the hamburger (left) stays at 14px. */
+  nav.top{left:24px;right:24px;top:calc(16px + env(safe-area-inset-top,0px));padding:0 8px 0 14px}
+  /* Hide text links on both sides; the hamburger (left) opens the full menu. */
+  .nav-left .nav-item,.nav-right .nav-item{display:none}
+  .nav-right .start-playing-btn{display:none}
+  .nav-left,.nav-right{gap:0;flex:0 0 auto}
+  .nav-right{margin-left:auto}
+  /* Cancel the button's own left padding so the dots sit flush with the nav's
+     inner edge — same inset as the avatar on the right (symmetric content). */
+  .nav-hamburger{display:flex;margin-left:-4px}
+  .nav-logo{height:48px}
+  .nav-logo img{width:76px;height:36px}
+}
+
+@media(max-width:480px){
+  nav.top{left:16px;right:16px;top:calc(12px + env(safe-area-inset-top,0px));padding:0 8px 0 16px}
+  .nav-right{margin-right:0}
+  .nav-avatar{width:42px;height:42px;font-size:11px}
+  /* Smaller mark on phones: at 78x38 the logo filled most of the 62px pill and
+     crowded the hamburger and the avatar. Same 2.05 aspect ratio, ~20% down. */
+  .nav-logo{height:42px}
+  .nav-logo img{width:64px;height:31px}
+}

@@ -1,0 +1,250 @@
+/* ============================================================
+   GAME OF LIFE — Design Tokens
+   ============================================================ */
+
+/* ── Helvetica ── */
+@font-face {
+  font-family: 'Helvetica';
+  src: url('/fonts/Helvetica.ttf') format('truetype');
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'Helvetica';
+  src: url('/fonts/Helvetica-Oblique.ttf') format('truetype');
+  font-weight: 400; font-style: italic; font-display: swap;
+}
+@font-face {
+  font-family: 'Helvetica';
+  src: url('/fonts/Helvetica-Bold.ttf') format('truetype');
+  font-weight: 700; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'Helvetica';
+  src: url('/fonts/Helvetica-BoldOblique.ttf') format('truetype');
+  font-weight: 700; font-style: italic; font-display: swap;
+}
+@font-face {
+  font-family: 'Helvetica';
+  src: url('/fonts/helvetica-light-587ebe5a59211.ttf') format('truetype');
+  font-weight: 300; font-style: normal; font-display: swap;
+}
+
+/* ── IBM Plex Serif ── */
+
+/* ── IBM Plex Mono ── navigation + every "mono" role (labels, eyebrows, pills) */
+@font-face {
+  font-family: 'IBM Plex Mono';
+  src: url('/fonts/IBMPlexMono-Regular.ttf') format('truetype');
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'IBM Plex Mono';
+  src: url('/fonts/IBMPlexMono-Italic.ttf') format('truetype');
+  font-weight: 400; font-style: italic; font-display: swap;
+}
+@font-face {
+  font-family: 'IBM Plex Mono';
+  src: url('/fonts/IBMPlexMono-SemiBold.ttf') format('truetype');
+  font-weight: 600; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'IBM Plex Mono';
+  src: url('/fonts/IBMPlexMono-Bold.ttf') format('truetype');
+  font-weight: 700; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'IBM Plex Mono';
+  src: url('/fonts/IBMPlexMono-BoldItalic.ttf') format('truetype');
+  font-weight: 700; font-style: italic; font-display: swap;
+}
+
+/* ── Ringold Gym ── */
+@font-face {
+  font-family: 'Ringold Gym';
+  src: url('/fonts/Ringold-Gym.ttf') format('truetype');
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+
+/* ── Open Sans ── */
+
+/* ── Ringold Sans ── */
+@font-face {
+  font-family: 'Ringold Sans';
+  src: url('/fonts/Ringold-Sans.ttf') format('truetype');
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+
+/* TODO: add when font file is provided:
+   @font-face { font-family: 'Ringold Clarendon'; src: url('/fonts/Ringold-Clarendon.ttf') format('truetype'); font-display: swap; }
+*/
+
+/* TODO: buttons are meant to run on Helvetica World, not Helvetica Regular.
+   Drop HelveticaWorld-Regular.ttf + HelveticaWorld-Bold.ttf into public/fonts,
+   uncomment, and point --font-hv-world at it (it already falls back to
+   --font-hv, so .btn picks it up with no further edits):
+   @font-face { font-family: 'Helvetica World'; src: url('/fonts/HelveticaWorld-Regular.ttf') format('truetype'); font-weight: 400; font-style: normal; font-display: swap; }
+   @font-face { font-family: 'Helvetica World'; src: url('/fonts/HelveticaWorld-Bold.ttf') format('truetype'); font-weight: 700; font-style: normal; font-display: swap; }
+*/
+
+:root {
+  --color-white:          #ffffff;
+  --color-black:          #1a1a1a;
+  --color-cream-light:    #fff1d4;
+  --color-cream-lighter:  #fff4e1;
+  --color-pink:           #e15463;   /* GOL_Web_Manual_2026 */
+  --color-purple:         #2d2a8e;
+  --color-logo-purple:    rgba(71, 81, 133, 1);
+  --color-dark-brown:     #1a0f0a;
+  --color-brown:          #3a2418;
+  --color-tan:            #c4a882;
+  --color-gold:           #f5c842;
+  --color-success:        #7fd674;
+  --color-pink-dark:      #c1394a;
+  --color-pink-light:     #ffb0b8;
+  --color-blue:           #9cc9ff;
+  --color-green:          #9eff5b;
+
+  /* Alpha tokens (ported from claudedesign mockups) */
+  --alpha-success-60:     rgba(127, 214, 116, 0.6);
+  --alpha-gold-60:        rgba(245, 200, 66, 0.6);
+  --alpha-gold-40:        rgba(245, 200, 66, 0.4);
+  --alpha-gold-15:        rgba(245, 200, 66, 0.15);
+  --alpha-cream-95:       rgba(255, 241, 212, 0.95);
+  --alpha-cream-80:       rgba(255, 241, 212, 0.8);
+  --alpha-cream-70:       rgba(255, 241, 212, 0.7);
+  --alpha-cream-65:       rgba(255, 241, 212, 0.65);
+  --alpha-cream-55:       rgba(255, 241, 212, 0.55);
+  --alpha-cream-45:       rgba(255, 241, 212, 0.45);
+  --alpha-cream-30:       rgba(255, 241, 212, 0.3);
+  --alpha-cream-20:       rgba(255, 241, 212, 0.2);
+  --alpha-cream-10:       rgba(255, 241, 212, 0.1);
+  --alpha-cream-05:       rgba(255, 241, 212, 0.05);
+  --alpha-dark-95:        rgba(26, 15, 10, 0.95);
+  --alpha-dark-80:        rgba(26, 15, 10, 0.8);
+  --alpha-dark-60:        rgba(26, 15, 10, 0.6);
+  --alpha-dark-55:        rgba(26, 15, 10, 0.55);
+  --alpha-black-75:       rgba(0, 0, 0, 0.75);
+  --alpha-black-60:       rgba(0, 0, 0, 0.6);
+  --alpha-black-50:       rgba(0, 0, 0, 0.5);
+  --alpha-black-45:       rgba(0, 0, 0, 0.45);
+  --alpha-black-40:       rgba(0, 0, 0, 0.4);
+  --alpha-black-35:       rgba(0, 0, 0, 0.35);
+  --alpha-pink-45:        rgba(225, 84, 99, 0.45);
+  --alpha-pink-40:        rgba(225, 84, 99, 0.4);
+  --alpha-pink-35:        rgba(225, 84, 99, 0.35);
+  --alpha-pink-20:        rgba(225, 84, 99, 0.2);
+  --alpha-pink-15:        rgba(225, 84, 99, 0.15);
+  --alpha-pink-10:        rgba(225, 84, 99, 0.1);
+  --alpha-purple-20:      rgba(45, 42, 142, 0.2);
+  --alpha-purple-35:      rgba(45, 42, 142, 0.35);
+  --alpha-white-45:       rgba(255, 255, 255, 0.45);
+  --alpha-white-10:       rgba(255, 255, 255, 0.1);
+  --alpha-blue-40:        rgba(120, 180, 255, 0.4);
+  --alpha-blue-15:        rgba(120, 180, 255, 0.15);
+  --alpha-green-40:       rgba(158, 255, 91, 0.4);
+  --alpha-green-15:       rgba(158, 255, 91, 0.15);
+  --alpha-ink-35:         rgba(26, 26, 26, 0.35);
+  --alpha-dark-text-80:   rgba(26, 15, 10, 0.8);
+
+  --bg-primary:           var(--color-cream-light);
+  --bg-dark:              var(--color-black);
+  --bg-purple:            var(--color-purple);
+  --bg-hero-overlay:      rgba(26, 26, 26, 0.6);
+
+  --fg-primary:           var(--color-black);
+  --fg-on-dark:           var(--color-cream-light);
+  --fg-on-purple:         var(--color-cream-light);
+  --fg-accent:            var(--color-pink);
+  --fg-muted:             rgba(26, 26, 26, 0.55);
+  --fg-muted-dark:        rgba(255, 241, 212, 0.6);
+
+  --btn-primary-bg:       var(--color-pink);
+  --btn-primary-text:     var(--color-white);
+  --btn-primary-hover:    #c8404f;
+  --btn-outline-border:   var(--color-cream-light);
+  --btn-outline-text:     var(--color-cream-light);
+
+  --border-card:          3px solid #ffffff;
+  --border-card-dark:     3px solid rgba(26,26,26,.9);
+
+  /* role-based font tokens */
+  /* Headings sit one step whiter than body cream — the manual's #fff4e1. */
+  --color-heading:        var(--color-cream-lighter);
+
+  /* ── Type ── GOL_Web_Manual_2026 defines exactly three families:
+       Helvetica World (+ Italic) · IBM Plex Mono (+ Italic) · Ringold
+     Anything outside that set was removed (Barlow, IBM Plex Serif, Bebas Neue,
+     Open Sans, Helvetica Compressed, Helvetica Rounded).
+
+     Ringold ships in five cuts per the manual — Sans, Clarendon, Gym, Slab,
+     Soft. Only Gym and Sans have font files here, so the others fall back to
+     Gym until their .ttf lands. 'Helvetica World' likewise falls back to the
+     plain Helvetica files that are present. */
+  --font-display:         'Ringold Gym', sans-serif;          /* velké nadpisy */
+  --font-event-name:      'Ringold Gym', sans-serif;          /* Název akce */
+  --font-leaderboard:     'Ringold Gym', sans-serif;          /* Top 10 leaderboard */
+  --font-sans:            'Ringold Sans', 'Ringold Gym', sans-serif;
+  --font-nav:             'IBM Plex Mono', ui-monospace, monospace; /* navigation bar */
+  --font-mono:            'IBM Plex Mono', ui-monospace, monospace;
+  --font-body:            'Helvetica World', 'Helvetica', Arial, sans-serif;
+  --font-hv:              var(--font-body);                   /* alias, kept for existing call sites */
+  --font-hv-world:        var(--font-body);                   /* alias */
+
+  --text-xs:    0.75rem;
+  --text-sm:    0.875rem;
+  --text-base:  1rem;
+  --text-lg:    1.125rem;
+  --text-xl:    1.25rem;
+  --text-2xl:   1.5rem;
+  --text-3xl:   2rem;
+  --text-4xl:   3rem;
+  --text-5xl:   4.5rem;
+  --text-hero:  7rem;
+
+  --leading-tight:  1.1;
+  --leading-snug:   1.3;
+  --leading-normal: 1.6;
+  --leading-loose:  1.8;
+
+  --tracking-wide:    0.08em;
+  --tracking-wider:   0.14em;
+  --tracking-widest:  0.22em;
+
+  --weight-regular: 400;
+  --weight-medium:  500;
+  --weight-bold:    700;
+  --weight-black:   900;
+
+  --space-1:   0.25rem;
+  --space-2:   0.5rem;
+  --space-3:   0.75rem;
+  --space-4:   1rem;
+  --space-5:   1.25rem;
+  --space-6:   1.5rem;
+  --space-8:   2rem;
+  --space-10:  2.5rem;
+  --space-12:  3rem;
+  --space-16:  4rem;
+  --space-20:  5rem;
+  --space-24:  6rem;
+
+  --radius-sm:   6px;
+  --radius-md:   12px;
+  --radius-lg:   20px;
+  --radius-pill: 9999px;
+
+  --shadow-card:  0 4px 24px rgba(0, 0, 0, 0.2);
+  --shadow-btn:   0 2px 12px rgba(225, 84, 99, 0.35);
+
+  --tex-purple:   url('/img/Grain_texture_purple.webp');
+  --tex-brown:    url('/img/Grain_texture_brown.webp');
+  --tex-brown-2:  url('/img/Grain_texture_brown2.webp');
+  --tex-blue:     url('/img/Grain_texture_blue.webp');
+  --tex-light:    url('/img/Grain_texture_light.webp');
+  --tex-light-2:  url('/img/Grain_texture_light2.webp');
+
+  --tex-size:   240px;  /* = seamless mirror-tile; displays 1:1 (crisp) */
+  --grain-opacity: 0.15;
+}
+
+h1,h2,h3,h4{font-weight:400}

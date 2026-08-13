@@ -1,0 +1,6 @@
+/* All selectors prefixed with `.gol-hero-dots` to prevent cross-page leak. */
+.gol-hero-dots{position:absolute;bottom:12px;left:0;right:0;display:flex;justify-content:center;gap:1px;z-index:3}
+.gol-hero-dots__dot{padding:7px;border-radius:50%;background:transparent;border:0;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;outline-offset:2px}
+.gol-hero-dots__dot::before{content:'';display:block;width:9px;height:9px;border-radius:50%;border:1.5px solid rgba(255,255,255,.65);transition:background .3s,border-color .3s,width .3s,height .3s}
+.gol-hero-dots__dot.is-active::before{width:12px;height:12px;background:var(--color-white);border-color:var(--color-white)}
+.gol-hero-dots__dot:focus-visible{outline:2px solid var(--color-white);outline-offset:2px}

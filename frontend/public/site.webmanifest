@@ -1,0 +1,25 @@
+{
+  "name": "Game of Life",
+  "short_name": "Game of Life",
+  "description": "Žebříček, akce a body komunity Game of Life.",
+  "lang": "cs",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#1a0f0a",
+  "theme_color": "#1a0f0a",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/img/GOL_main_logo_pink.webp",
+      "sizes": "512x512",
+      "type": "image/webp",
+      "purpose": "any"
+    }
+  ]
+}

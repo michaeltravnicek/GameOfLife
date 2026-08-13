@@ -1,0 +1,55 @@
+/* Event editor (Create + Edit) — page-specific parts only.
+   The shared poster-form chrome (head, cards, fields, save bar, modal, buttons)
+   lives in styles/edit-form.css under `.gol-*`. */
+@import '../../styles/edit-form.css';
+
+/* ── Photo stage — this page's own backdrop (the profile editor uses a
+   different photo and a heavier tint). ── */
+.event-page .ev-stage{position:fixed;inset:0;z-index:-2;background:url('/img/gal2.webp') center 30%/cover no-repeat;filter:saturate(.7) contrast(1.02);transform:scale(1.06)}
+.event-page .ev-stage::after{content:'';position:absolute;inset:0;background:
+  radial-gradient(ellipse at 50% 0%, var(--alpha-purple-20) 0%, transparent 38%),
+  linear-gradient(180deg, var(--alpha-dark-55) 0%, var(--alpha-dark-80) 32%, var(--alpha-dark-95) 60%)}
+
+/* Slightly dimmer than the profile editor's sub-heading. */
+.event-page .ev-sec-sub{font-family:var(--font-body);font-style:italic;font-size:14px;color:var(--alpha-cream-65);margin-bottom:0;line-height:1.5;max-width:62ch}
+
+/* ── Image pair — event poster + badge previews ── */
+.event-page .ev-image-pair{display:grid;grid-template-columns:1fr 1fr;gap:28px}
+.event-page .ev-img-section{display:flex;flex-direction:column;gap:14px}
+.event-page .ev-img-label{font-family:var(--font-mono);font-style:italic;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--color-pink);margin-bottom:0}
+.event-page .ev-img-preview{width:100%;aspect-ratio:1;border-radius:12px;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 30% 30%,var(--alpha-pink-20),transparent 65%),var(--alpha-dark-60);border:3px dashed var(--alpha-cream-45);font-family:var(--font-mono);font-style:italic;font-size:46px;font-weight:700;color:var(--color-cream-light);box-shadow:0 14px 44px var(--alpha-black-50);background-size:cover;background-position:center;overflow:hidden}
+.event-page .ev-img-preview.has-img{font-size:0}
+.event-page .ev-img-preview.sm{aspect-ratio:1/1;width:140px;height:140px}
+/* Badge preview: the real artwork scaled exactly like the render, clipped to
+   the box. The scale comes from the badge, not the event — one correction for
+   every edition that shares the logo. */
+.event-page .ev-logo-preview-img{max-width:100%;max-height:100%;object-fit:contain;transition:transform .12s ease}
+.event-page .ev-hint-block{margin-top:8px;font-family:var(--font-body);font-style:italic;font-size:12.5px;line-height:1.5;color:var(--alpha-cream-65);max-width:34ch}
+.event-page .ev-img-actions{display:flex;gap:10px;flex-wrap:wrap}
+
+/* Fields stacked directly in a card (no grid) need the same 18px gap, or the
+   previous input's dashed outline (drawn outside the box) crosses the label. */
+.event-page .gol-card > .gol-field + .gol-field{margin-top:18px}
+
+/* ── Inline "add a missing option" panels (new badge / new category) ──
+   Deliberately quiet: picking an existing option is the common path, so the
+   trigger reads as a link next to the picker rather than a second CTA. */
+.event-page .ev-inline-add{margin-top:12px;align-self:flex-start;background:none;border:1.5px dashed var(--alpha-cream-45);border-radius:8px;padding:7px 14px;font-family:var(--font-mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--color-pink);cursor:pointer}
+.event-page .ev-inline-add:hover{border-style:solid;color:var(--color-cream-light)}
+.event-page .ev-inline-form{margin-top:16px;padding:18px;border:1.5px dashed var(--alpha-pink-45);border-radius:12px;background:var(--alpha-dark-60)}
+.event-page .ev-inline-form .gol-field + .gol-field{margin-top:18px}
+.event-page .ev-inline-head{font-family:var(--font-mono);font-style:italic;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--color-pink);margin-bottom:14px}
+.event-page .ev-inline-preview{margin-top:16px;height:120px;display:flex;align-items:center;justify-content:center;overflow:hidden;border-radius:10px;background:var(--alpha-dark-60)}
+.event-page .ev-inline-preview img{max-width:100%;max-height:100%;object-fit:contain}
+.event-page .ev-inline-error{margin-top:14px;font-family:var(--font-mono);font-size:12px;line-height:1.5;color:var(--color-pink)}
+.event-page .ev-inline-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+
+/* ── Map picker meta ── */
+.event-page .ev-map-meta{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:12px;font-family:var(--font-mono);font-size:12px;color:var(--alpha-cream-65);letter-spacing:.04em}
+.event-page .ev-map-clear{background:none;border:none;color:var(--color-pink);font:inherit;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;padding:4px 6px}
+.event-page .ev-map-clear:hover{color:var(--color-cream-light);text-decoration:underline}
+
+@media(max-width:860px){
+  .event-page .ev-image-pair{grid-template-columns:1fr}
+  .event-page .ev-img-preview.sm{width:100%;height:auto;aspect-ratio:1}
+}

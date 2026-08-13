@@ -1,0 +1,12 @@
+/* On/off toggle. Every dimension derives from the four variables below, so the
+   knob keeps an equal gap on all four sides at any size — the old fixed 18px
+   knob sat 2px from the left/top but 3px from the right/bottom and visually
+   collided with the border. Knob and travel are computed, never hand-tuned:
+     inner  = track - 2 * border
+     knob   = inner height - 2 * gap
+     travel = inner width - knob - 2 * gap  */
+.switch{--sw-w:46px;--sw-h:26px;--sw-border:1.5px;--sw-gap:3px;--sw-knob:calc(var(--sw-h) - 2*var(--sw-border) - 2*var(--sw-gap));position:relative;box-sizing:border-box;width:var(--sw-w);height:var(--sw-h);padding:0;background:var(--alpha-black-50);border:var(--sw-border) dashed var(--alpha-cream-20);border-radius:var(--radius-pill);cursor:pointer;flex-shrink:0;transition:.18s}
+.switch::after{content:'';position:absolute;top:var(--sw-gap);left:var(--sw-gap);width:var(--sw-knob);height:var(--sw-knob);border-radius:50%;background:var(--alpha-cream-80);transition:.2s cubic-bezier(.2,.7,.2,1)}
+.switch.on{background:var(--color-pink);border-color:transparent;border-style:solid}
+.switch.on::after{transform:translateX(calc(var(--sw-w) - 2*var(--sw-border) - 2*var(--sw-gap) - var(--sw-knob)));background:var(--color-white)}
+.switch:focus-visible{outline:2px solid var(--color-pink);outline-offset:3px}

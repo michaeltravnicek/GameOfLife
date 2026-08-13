@@ -1,0 +1,185 @@
+{
+  "label": "before-r2",
+  "host": "https://www.gameofyolo.com",
+  "started": "2026-08-03 23:49:28",
+  "duration_per_step_s": 20,
+  "steps": [
+    {
+      "users": 3,
+      "endpoints": {
+        "MEDIA image": {
+          "requests": 30,
+          "failures": 0,
+          "rps": 1.59,
+          "p50_ms": 80,
+          "p95_ms": 160,
+          "max_ms": 202,
+          "avg_size_b": 757279
+        },
+        "PROBE API /events": {
+          "requests": 10,
+          "failures": 0,
+          "rps": 0.53,
+          "p50_ms": 92,
+          "p95_ms": 180,
+          "max_ms": 176,
+          "avg_size_b": 14137
+        },
+        "PROBE API /stats": {
+          "requests": 7,
+          "failures": 0,
+          "rps": 0.37,
+          "p50_ms": 64,
+          "p95_ms": 92,
+          "max_ms": 92,
+          "avg_size_b": 42
+        },
+        "PROBE SPA /": {
+          "requests": 1,
+          "failures": 0,
+          "rps": 0.05,
+          "p50_ms": 68,
+          "p95_ms": 68,
+          "max_ms": 68,
+          "avg_size_b": 3559
+        }
+      },
+      "total_requests": 48,
+      "total_failures": 0,
+      "mb_transferred": 22.9
+    },
+    {
+      "users": 6,
+      "endpoints": {
+        "MEDIA image": {
+          "requests": 49,
+          "failures": 0,
+          "rps": 2.58,
+          "p50_ms": 87,
+          "p95_ms": 190,
+          "max_ms": 274,
+          "avg_size_b": 981458
+        },
+        "PROBE API /events": {
+          "requests": 6,
+          "failures": 0,
+          "rps": 0.32,
+          "p50_ms": 120,
+          "p95_ms": 170,
+          "max_ms": 165,
+          "avg_size_b": 14137
+        },
+        "PROBE API /stats": {
+          "requests": 8,
+          "failures": 0,
+          "rps": 0.42,
+          "p50_ms": 61,
+          "p95_ms": 67,
+          "max_ms": 67,
+          "avg_size_b": 42
+        },
+        "PROBE SPA /": {
+          "requests": 3,
+          "failures": 0,
+          "rps": 0.16,
+          "p50_ms": 58,
+          "p95_ms": 62,
+          "max_ms": 62,
+          "avg_size_b": 3558
+        }
+      },
+      "total_requests": 66,
+      "total_failures": 0,
+      "mb_transferred": 48.2
+    },
+    {
+      "users": 12,
+      "endpoints": {
+        "MEDIA image": {
+          "requests": 101,
+          "failures": 0,
+          "rps": 5.38,
+          "p50_ms": 85,
+          "p95_ms": 210,
+          "max_ms": 307,
+          "avg_size_b": 893422
+        },
+        "PROBE API /events": {
+          "requests": 6,
+          "failures": 0,
+          "rps": 0.32,
+          "p50_ms": 110,
+          "p95_ms": 230,
+          "max_ms": 228,
+          "avg_size_b": 14137
+        },
+        "PROBE API /stats": {
+          "requests": 8,
+          "failures": 0,
+          "rps": 0.43,
+          "p50_ms": 62,
+          "p95_ms": 110,
+          "max_ms": 107,
+          "avg_size_b": 42
+        },
+        "PROBE SPA /": {
+          "requests": 4,
+          "failures": 0,
+          "rps": 0.21,
+          "p50_ms": 56,
+          "p95_ms": 59,
+          "max_ms": 59,
+          "avg_size_b": 3558
+        }
+      },
+      "total_requests": 119,
+      "total_failures": 0,
+      "mb_transferred": 90.3
+    },
+    {
+      "users": 24,
+      "endpoints": {
+        "MEDIA image": {
+          "requests": 189,
+          "failures": 0,
+          "rps": 9.98,
+          "p50_ms": 110,
+          "p95_ms": 320,
+          "max_ms": 6707,
+          "avg_size_b": 1082155
+        },
+        "PROBE API /events": {
+          "requests": 6,
+          "failures": 0,
+          "rps": 0.32,
+          "p50_ms": 190,
+          "p95_ms": 990,
+          "max_ms": 986,
+          "avg_size_b": 14137
+        },
+        "PROBE API /stats": {
+          "requests": 8,
+          "failures": 0,
+          "rps": 0.42,
+          "p50_ms": 100,
+          "p95_ms": 280,
+          "max_ms": 276,
+          "avg_size_b": 42
+        },
+        "PROBE SPA /": {
+          "requests": 2,
+          "failures": 0,
+          "rps": 0.11,
+          "p50_ms": 160,
+          "p95_ms": 160,
+          "max_ms": 156,
+          "avg_size_b": 3559
+        }
+      },
+      "total_requests": 205,
+      "total_failures": 0,
+      "mb_transferred": 204.6
+    }
+  ],
+  "total_mb": 366.0
+}

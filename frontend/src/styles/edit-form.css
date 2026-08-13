@@ -1,0 +1,149 @@
+/* ══ Poster form page ═══════════════════════════════════════════════════════
+   The shared chrome behind the two editing screens — the event editor
+   (Create/EditEventPage) and the profile editor (EditProfilePage).
+
+   These two pages were built as copies of each other: 55 of EventPage.css's 73
+   rules were byte-identical to EditProfilePage.css, under `.ev-*` / `.ep-*`
+   prefixes. They are now one system on `.gol-*`.
+
+   What stays in the page files: whatever genuinely differs — the photo stage
+   (different images), `.ev-sec-sub` / `.ep-sec-sub` (different cream level),
+   and each page's own widgets (image pair + map for events, avatar + socials
+   for the profile).
+
+   --frame-gap = distance between an input's dashed frame (outline) and its
+   dark panel. Set on the page root so inputs inherit it.                     */
+
+.gol-form-page{position:relative;padding-bottom:96px;--frame-gap:2px}
+
+/* ── Entrance ── on-mount staggered fade-up. Header, then each form card
+   cascades in, then the commit zone. */
+@keyframes golFade{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+.gol-head{animation:golFade .6s cubic-bezier(.22,.68,0,1.2) both .05s}
+.gol-main > .gol-section{animation:golFade .55s cubic-bezier(.22,.68,0,1.2) both}
+.gol-main > .gol-section:nth-child(1){animation-delay:.14s}
+.gol-main > .gol-section:nth-child(2){animation-delay:.2s}
+.gol-main > .gol-section:nth-child(3){animation-delay:.26s}
+.gol-main > .gol-section:nth-child(4){animation-delay:.32s}
+.gol-main > .gol-section:nth-child(n+5){animation-delay:.38s}
+.gol-commit-zone{animation:golFade .6s ease both .44s}
+@media(prefers-reduced-motion:reduce){
+  .gol-head,.gol-main > .gol-section,.gol-commit-zone{animation:none}
+}
+
+.gol-grain{position:fixed;inset:0;z-index:-1;pointer-events:none;background:url('/img/Grain_texture_brown.webp') 0 0/var(--tex-size) var(--tex-size) repeat;opacity:var(--grain-opacity);mix-blend-mode:overlay}
+
+/* ── Header ── */
+.gol-head{position:relative;z-index:2;padding:120px 24px 28px;text-align:center;max-width:1040px;margin:0 auto}
+.gol-crumb{font-family:var(--font-mono);font-style:italic;font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:var(--alpha-cream-55);margin-bottom:14px}
+.gol-crumb a{color:var(--alpha-cream-70);border-bottom:1px dashed var(--alpha-cream-45)}
+.gol-crumb a:hover{color:var(--color-pink);border-color:var(--color-pink)}
+.gol-head h1{font-family:var(--font-display);font-size:clamp(60px,8.4vw,116px);line-height:.92;color:var(--color-white);text-transform:uppercase;letter-spacing:.04em;text-shadow:0 6px 38px var(--alpha-black-60);margin-bottom:10px}
+
+/* ── Sections ── */
+.gol-main{position:relative;z-index:2;max-width:980px;margin:0 auto;padding:48px 24px 28px}
+.gol-section{margin-bottom:48px}
+.gol-section:last-child{margin-bottom:0}
+/* Section header lives INSIDE the card (readable on the opaque surface, not on
+   the photo behind) — .gol-card-head wraps eyebrow + heading + sub. */
+.gol-sec-heading{font-family:var(--font-display);font-size:clamp(26px,3vw,36px);letter-spacing:.04em;color:var(--color-white);text-transform:uppercase;line-height:.95;margin-bottom:6px}
+.gol-sec-heading .pink{color:var(--color-pink)}
+.gol-card-head{padding-bottom:18px;border-bottom:1px dashed var(--alpha-cream-20);margin-bottom:22px}
+
+/* Poster card — homepage lb-card material (photo page → opaque poster). */
+.gol-card{position:relative;background:var(--color-dark-brown) var(--tex-blue) 0 0/var(--tex-size) var(--tex-size) repeat;border:2px solid var(--color-black);border-bottom:8px solid var(--color-black);border-radius:14px;padding:26px;overflow:hidden;box-shadow:0 16px 40px var(--alpha-black-50)}
+.gol-danger-card{border-color:var(--alpha-pink-45)}
+
+/* ── Fields ── */
+.gol-grid-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.gol-field{display:flex;flex-direction:column;gap:8px}
+.gol-field.gol-full{grid-column:1 / -1}
+/* Fields normally sit in a .gol-grid-2, which spaces them with its own gap.
+   The password card (08) stacks two straight into the block-level card instead,
+   where that gap does not exist — "Staré heslo" and "Nové heslo" were flush,
+   the second label touching the first input. A little more than the 18px grid
+   gap, because these two are not a pair of related fields: mistaking one for
+   the other is exactly the mistake worth designing against. */
+.gol-card > .gol-field + .gol-field{margin-top:var(--space-6)}
+.gol-field label{font-family:var(--font-mono);font-style:italic;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--alpha-cream-65);display:flex;align-items:center;justify-content:space-between;gap:10px}
+.gol-hint{font-family:var(--font-body);font-style:italic;font-size:11px;letter-spacing:.04em;text-transform:none;color:var(--fg-muted-dark)}
+
+.gol-toggle-row{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;padding:16px 0;border-bottom:1px dashed var(--alpha-cream-10)}
+.gol-toggle-row:last-child{border-bottom:0}
+.gol-toggle-row .gol-txt h4{font-family:var(--font-body);font-weight:700;font-size:15px;color:var(--color-white);margin-bottom:4px;letter-spacing:.01em}
+.gol-toggle-row .gol-txt p{font-family:var(--font-body);font-style:italic;font-size:13px;color:var(--alpha-cream-65);line-height:1.5;max-width:48ch}
+.gol-toggle-row .switch{margin-top:2px}
+
+/* ── Commit zone ── */
+.gol-commit-zone{position:relative;z-index:2;max-width:980px;margin:0 auto;padding:8px 24px 64px;text-align:center}
+.gol-commit-label{font-family:var(--font-mono);font-style:italic;font-size:13px;letter-spacing:.22em;text-transform:uppercase;color:var(--alpha-cream-65);margin-bottom:14px}
+.gol-commit-zone h2{font-family:var(--font-display);font-size:clamp(34px,4.6vw,52px);line-height:1;color:var(--color-heading);text-transform:uppercase;letter-spacing:.03em;margin-bottom:22px}
+.gol-commit-row{display:inline-flex;gap:12px;flex-wrap:wrap;justify-content:center;align-items:center}
+.gol-commit-note{font-family:var(--font-mono);font-style:italic;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--alpha-cream-55);margin-top:18px}
+
+/* ── Save bar — slides up when there are unsaved changes. Frost is fine here:
+   it's chrome over scrolling content. ── */
+.gol-savebar{position:fixed;left:0;right:0;bottom:0;z-index:50;background:var(--alpha-dark-95);backdrop-filter:blur(16px) saturate(1.15);-webkit-backdrop-filter:blur(16px) saturate(1.15);border-top:1px dashed var(--alpha-cream-20);transform:translateY(110%);transition:transform .28s cubic-bezier(.2,.7,.2,1);box-shadow:0 -14px 36px var(--alpha-black-50)}
+.gol-savebar.visible{transform:translateY(0)}
+.gol-savebar-inner{max-width:1040px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 24px;flex-wrap:wrap}
+.gol-savebar-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.gol-status{font-family:var(--font-mono);font-style:italic;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--alpha-cream-65);display:inline-flex;align-items:center;gap:10px}
+.gol-status .gol-pulse{width:8px;height:8px;border-radius:50%;background:var(--color-gold);display:inline-block;box-shadow:0 0 10px var(--alpha-gold-60)}
+.gol-status.saved .gol-pulse{background:var(--color-success);box-shadow:0 0 10px var(--alpha-success-60)}
+
+/* ── Buttons ────────────────────────────────────────────────────────────────
+   The pill button used by these forms (save, cancel, delete, upload).
+
+   Deliberately NOT the same thing as <Button> (components/Button): that one is
+   the site's public CTA (3D nav shape, action pill, frost) and has a different
+   shadow, padding and size scale. These are the flatter, denser form controls.
+   Keep them separate unless the design says otherwise. */
+.gol-btn{display:inline-flex;align-items:center;gap:8px;border:0;cursor:pointer;font-family:var(--font-body);font-size:12.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;padding:11px 22px;border-radius:var(--radius-pill);transition:.18s;text-decoration:none}
+.gol-btn.primary{background:var(--color-pink);color:var(--color-white);box-shadow:0 6px 18px var(--alpha-pink-40)}
+.gol-btn.primary:hover{background:var(--btn-primary-hover);transform:translateY(-1px)}
+.gol-btn.ghost{background:transparent;color:var(--color-cream-light);border:1.5px dashed var(--alpha-cream-45);padding:9px 20px}
+.gol-btn.ghost:hover{border-color:var(--color-pink);color:var(--color-pink);border-style:solid}
+.gol-btn.danger{background:transparent;color:var(--color-pink);border:1.5px dashed var(--alpha-pink-45);padding:9px 20px}
+.gol-btn.danger:hover{background:var(--alpha-pink-10);border-style:solid}
+.gol-btn.lg{padding:15px 32px;font-size:14px;letter-spacing:.16em}
+
+/* ── Fields ─────────────────────────────────────────────────────────────────
+   Mini-ticket input: dark panel + white dashed frame floating --frame-gap
+   outside it, drawn as an outline so no wrapper element is needed. Focus turns
+   the frame pink.
+
+   Separate from <FormInput> (components/FormInput) on purpose: that component
+   renders its own <label>, error slot and password toggle, while these fields
+   sit in the forms' own label markup. */
+.gol-input,.gol-textarea{width:100%;background:rgba(0,0,0,.3);border:none;border-radius:9px;padding:13px 16px;font-family:var(--font-body);font-size:15px;color:var(--color-white);outline:2px dashed rgba(255,255,255,.85);outline-offset:var(--frame-gap);transition:outline-color .18s,background .18s;letter-spacing:.01em}
+.gol-input:hover,.gol-textarea:hover{outline-color:var(--color-white)}
+.gol-input:focus,.gol-textarea:focus{outline-color:var(--color-pink);background:var(--alpha-black-40)}
+.gol-input::placeholder,.gol-textarea::placeholder{color:var(--fg-muted-dark);font-style:italic}
+.gol-textarea{min-height:130px;resize:vertical;line-height:1.55}
+
+/* ── Responsive ── */
+@media(max-width:860px){
+  .gol-grid-2{grid-template-columns:1fr}
+}
+@media(max-width:720px){
+  /* Minimise the gutters so form fields get as much width as possible. */
+  .gol-form-page{padding-bottom:128px}
+  .gol-head{padding:96px 12px 16px}
+  .gol-main{padding:28px 12px 20px}
+  .gol-card{padding:20px 14px}
+  .gol-commit-zone{padding:8px 12px 56px}
+  .gol-commit-zone h2{font-size:30px}
+  .gol-savebar-inner{flex-direction:column;gap:10px;padding:12px 12px}
+}
+@media(max-width:420px){
+  /* Very narrow phones: trim to the minimum readable gutter. */
+  .gol-head{padding:92px 8px 14px}
+  .gol-main{padding:22px 8px 18px}
+  .gol-card{padding:18px 11px}
+  .gol-commit-zone{padding:8px 8px 52px}
+}
+/* Mobile: lighten the save bar's blur — the cards are opaque posters now, so
+   only this chrome still blurs. */
+@media (max-width:768px){
+  .gol-savebar{backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+}

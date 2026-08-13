@@ -1,0 +1,169 @@
+/* All selectors scoped under .leaderboard-page to prevent cross-page leaks.
+   Poster page (homepage lb-section, expanded): the photo stays full-bleed and
+   ALIVE — only the light homepage tint sits on it. Readability comes from the
+   cards being opaque print artifacts (lb-card style), never from blur or from
+   darkening the photo into a fade. */
+.leaderboard-page{min-height:100vh;color:var(--color-cream-light);overflow-x:hidden}
+.leaderboard-page .stage{position:fixed;inset:0;bottom:auto;height:100vh;height:100lvh;z-index:-2;background:url('/img/gal1.webp') center 15%/cover no-repeat;filter:saturate(.8)}
+.leaderboard-page .stage::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(45,42,142,.1) 0%,var(--alpha-dark-80) 100%)}
+.leaderboard-page .grain{position:fixed;inset:0;bottom:auto;height:100vh;height:100lvh;z-index:-1;pointer-events:none;background:url('/img/Grain_texture_blue.webp') 0 0/var(--tex-size) var(--tex-size) repeat;opacity:var(--grain-opacity);mix-blend-mode:overlay}
+
+/* Hero eyebrow sits on the photo stage here — add a shadow so it stays legible. */
+.leaderboard-page .page-hero-eyebrow{color:var(--color-pink);text-shadow:0 2px 10px rgba(0,0,0,.8),0 0 2px var(--alpha-black-50)}
+
+.leaderboard-page .controls{position:relative;z-index:2;max-width:880px;margin:32px auto 0;padding:0 24px;display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap}
+.leaderboard-page .controls .search-wrap{flex:1;max-width:290px}
+.leaderboard-page .tab{font-family:var(--font-hv);font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;padding:9px 20px;border-radius:9999px;cursor:pointer;background:transparent;border:0;color:rgba(255,241,212,.9);transition:all .18s}
+.leaderboard-page .tab:hover{color:var(--color-white)}
+.leaderboard-page .tab.on{background:var(--color-pink);color:var(--color-white);box-shadow:0 4px 14px var(--alpha-pink-45)}
+.leaderboard-page .search{flex:1;max-width:290px;min-width:180px;position:relative}
+.leaderboard-page .search input{width:100%;padding:11px 18px 11px 40px;font-family:var(--font-hv);font-size:16px;color:var(--color-cream-light);background:linear-gradient(var(--alpha-dark-60),var(--alpha-dark-60)),var(--tex-brown) 0 0/var(--tex-size) var(--tex-size) repeat;border:1.5px dashed var(--alpha-cream-45);border-radius:9999px;outline:none;transition:border-color .18s;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.leaderboard-page .search input:focus{border-color:var(--color-pink)}
+.leaderboard-page .search input::placeholder{color:rgba(255,241,212,.75);font-style:italic}
+.leaderboard-page .search::before{content:'⌕';position:absolute;left:16px;top:50%;transform:translateY(-50%);color:var(--alpha-cream-80);font-size:14px;pointer-events:none}
+.leaderboard-page .lb-search{flex:1;max-width:290px}
+.leaderboard-page .lb-search .search-input{background:linear-gradient(var(--alpha-dark-60),var(--alpha-dark-60)),var(--tex-brown) 0 0/var(--tex-size) var(--tex-size) repeat;border-color:var(--alpha-cream-45);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.leaderboard-page .lb-search .search-input::placeholder{color:rgba(255,241,212,.75)}
+.leaderboard-page .lb-search::before{color:var(--alpha-cream-80)}
+/* Help affordance — a frosted pill matching the toolbar chrome, but pink-accented
+   with a circled "?" badge so it stands out against the photo stage. */
+.leaderboard-page .lb-help-link{display:inline-flex;align-items:center;gap:9px;font-family:var(--font-hv);font-weight:600;font-style:italic;font-size:14px;color:var(--color-cream-light);background:var(--alpha-dark-60);border:1.5px dashed var(--color-pink);border-radius:9999px;padding:9px 18px;text-decoration:none;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 4px 14px rgba(0,0,0,.3);transition:background .18s,color .18s,border-color .18s,box-shadow .18s}
+.leaderboard-page .lb-help-link::before{content:'?';display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:var(--color-pink);color:var(--color-white);font-style:normal;font-weight:700;font-size:12px;flex:none}
+.leaderboard-page .lb-help-link:hover{background:var(--color-pink);color:var(--color-white);border-color:var(--color-pink);box-shadow:0 6px 18px rgba(225,84,99,.5)}
+.leaderboard-page .lb-help-link:hover::before{background:var(--color-white);color:var(--color-pink)}
+
+.leaderboard-page .lb-main{position:relative;z-index:2;max-width:880px;margin:0 auto;padding:40px 24px 80px}
+
+.leaderboard-page .stage-wrap{position:relative;margin:44px 0 54px;padding:0 10px;overflow:visible}
+.leaderboard-page .stage-wrap::before{content:'';position:absolute;left:-20vw;right:-20vw;top:-40px;bottom:40px;background:radial-gradient(ellipse 55% 65% at 50% 40%,rgba(245,200,66,.1) 0%,transparent 70%),radial-gradient(ellipse 35% 50% at 18% 55%,rgba(192,192,210,.1) 0%,transparent 75%),radial-gradient(ellipse 35% 50% at 82% 55%,rgba(205,127,50,.1) 0%,transparent 75%);pointer-events:none;z-index:0}
+.leaderboard-page .podium{position:relative;z-index:1;display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;align-items:end}
+.leaderboard-page .pod{position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;transition:transform .13s,filter .25s,opacity .25s;text-decoration:none;color:inherit}
+/* Search miss: darken the podium player a bit (kept visible, not faded out). */
+.leaderboard-page .pod.dim{filter:brightness(.4);opacity:.85}
+.leaderboard-page .pod.clickable{cursor:pointer}
+/* Press on hover — same physics as .btn-nav: the whole column sinks by the
+   ledge height while the base's ledge collapses, so the bottom edge stays put
+   and the podium reads as a physically pressed button. */
+.leaderboard-page .pod.clickable:hover{transform:translateY(6px)}
+.leaderboard-page .pod.clickable:hover .trophy{transform:scale(1.06) rotate(-3deg)}
+.leaderboard-page .pod .trophy{font-size:52px;line-height:1;margin-bottom:10px;filter:drop-shadow(0 6px 14px rgba(0,0,0,.55));transition:transform .3s}
+.leaderboard-page .pod.p1 .trophy{font-size:68px;filter:drop-shadow(0 0 22px rgba(245,200,66,.55)) drop-shadow(0 6px 14px rgba(0,0,0,.55))}
+.leaderboard-page .pod .ava{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 30% 30%,rgba(225,84,99,.3),transparent 65%),rgba(26,15,10,.65);border:2px dashed var(--alpha-cream-55);font-family:var(--font-mono);font-style:italic;font-size:16px;font-weight:700;color:var(--color-cream-light);margin-bottom:10px;box-shadow:0 6px 16px var(--alpha-black-40)}
+.leaderboard-page .pod.p1 .ava{width:76px;height:76px;font-size:18px;border-color:var(--color-gold);box-shadow:0 0 0 3px var(--alpha-gold-15),0 6px 20px var(--alpha-black-50)}
+.leaderboard-page .pod.p2 .ava{border-color:rgba(210,210,215,.7)}
+.leaderboard-page .pod.p3 .ava{border-color:rgba(205,127,50,.75)}
+/* Name + points follow the o-bodech "credits" typography: mono italic label,
+   big display value with a soft shadow — same data, poster voice. */
+.leaderboard-page .pod .nm{font-family:var(--font-mono);font-style:italic;font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,241,212,.9);margin-bottom:5px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 2px 10px var(--alpha-black-60)}
+.leaderboard-page .pod .pts{font-family:var(--font-display);font-size:26px;letter-spacing:.03em;color:var(--color-heading);line-height:1;margin-bottom:14px;text-shadow:0 4px 22px var(--alpha-black-60)}
+.leaderboard-page .pod.p1 .pts{font-size:36px;color:var(--color-pink)}
+.leaderboard-page .pod .pts-u{font-family:var(--font-mono);font-style:italic;font-size:10px;color:var(--alpha-cream-70);letter-spacing:.16em;margin-left:4px}
+/* Poster pedestal: grain slab with the standard poster border + 3D ledge
+   (box-shadow, not a border, so pressing never changes the box height). */
+.leaderboard-page .pod .base{width:100%;position:relative;background:var(--color-dark-brown) var(--tex-blue) 0 0/var(--tex-size) var(--tex-size) repeat;border:2px solid var(--color-black);border-radius:8px;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 0 0 var(--color-black),0 14px 28px var(--alpha-black-50);transition:box-shadow .13s}
+.leaderboard-page .pod.clickable:hover .base{box-shadow:0 0 0 0 var(--color-black),0 6px 14px var(--alpha-black-40)}
+.leaderboard-page .pod .base .rk{font-family:var(--font-display);letter-spacing:.04em;line-height:1}
+.leaderboard-page .pod.p1 .base{height:120px}
+.leaderboard-page .pod.p2 .base{height:86px}
+.leaderboard-page .pod.p3 .base{height:64px}
+.leaderboard-page .pod.p1 .base .rk{font-size:72px;color:var(--color-gold)}
+.leaderboard-page .pod.p2 .base .rk{font-size:54px;color:rgba(210,210,215,.85)}
+.leaderboard-page .pod.p3 .base .rk{font-size:42px;color:rgba(205,127,50,.95)}
+
+.leaderboard-page .list-label{font-family:var(--font-mono);font-style:italic;font-size:13px;letter-spacing:.26em;text-transform:uppercase;color:rgba(255,241,212,.9);margin:0 6px 18px;display:flex;align-items:center;gap:14px}
+/* Poster card — the homepage .lb-card, expanded: opaque blue grain, solid
+   black border with a fat bottom edge, pinned onto the living photo. */
+.leaderboard-page .list{position:relative;background:var(--color-dark-brown) var(--tex-blue) 0 0/var(--tex-size) var(--tex-size) repeat;border:2px solid var(--color-black);border-bottom:8px solid var(--color-black);border-radius:14px;overflow:hidden;box-shadow:0 16px 40px var(--alpha-black-50)}
+.leaderboard-page .list-inner{position:relative;z-index:1;padding:10px 8px 14px}
+.leaderboard-page .empty{text-align:center;padding:44px 20px;font-family:var(--font-body);font-style:italic;color:var(--alpha-cream-55);font-size:14px}
+
+/* ── Animations ── (heroFade keyframe is defined in PageHero.css) */
+.leaderboard-page .controls{animation:heroFade .5s ease both .56s}
+
+@keyframes podRise{from{opacity:0;transform:translateY(36px)}to{opacity:1;transform:none}}
+/* `backwards` (not `both`): a filled animation would pin transform:none forever
+   and swallow the hover press — fill only the pre-start delay, then let go. */
+.leaderboard-page .pod{animation:podRise .6s cubic-bezier(.22,.68,0,1.2) backwards}
+.leaderboard-page .pod.p3{animation-delay:.1s}
+.leaderboard-page .pod.p2{animation-delay:.22s}
+.leaderboard-page .pod.p1{animation-delay:.38s}
+
+@keyframes trophyPop{
+  0%{transform:scale(0) rotate(-18deg)}
+  60%{transform:scale(1.22) rotate(5deg)}
+  80%{transform:scale(.9) rotate(-2deg)}
+  100%{transform:none}
+}
+.leaderboard-page .pod .trophy{transform-origin:center;animation:trophyPop .5s cubic-bezier(.22,.68,0,1.2) backwards}
+.leaderboard-page .pod.p3 .trophy{animation-delay:.58s}
+.leaderboard-page .pod.p2 .trophy{animation-delay:.70s}
+.leaderboard-page .pod.p1 .trophy{animation-delay:.88s}
+
+@keyframes rowSlide{from{opacity:0;transform:translateX(-16px)}to{opacity:1;transform:none}}
+.leaderboard-page .list .player-row{animation:rowSlide .40s cubic-bezier(.22,.68,0,1.2) both .40s}
+.leaderboard-page .list .player-row:nth-child(2){animation-delay:.46s}
+.leaderboard-page .list .player-row:nth-child(3){animation-delay:.52s}
+.leaderboard-page .list .player-row:nth-child(4){animation-delay:.58s}
+.leaderboard-page .list .player-row:nth-child(5){animation-delay:.64s}
+.leaderboard-page .list .player-row:nth-child(6){animation-delay:.70s}
+.leaderboard-page .list .player-row:nth-child(7){animation-delay:.76s}
+.leaderboard-page .list .player-row:nth-child(8){animation-delay:.82s}
+
+@media(prefers-reduced-motion:reduce){
+  .leaderboard-page .pod,.leaderboard-page .pod .trophy,.leaderboard-page .list .player-row{animation:none;opacity:1;transform:none}
+}
+
+/* ── Responsive ── */
+@media(max-width:768px){
+  .leaderboard-page .controls{flex-direction:column;align-items:stretch;gap:12px;padding:0 16px}
+  .leaderboard-page .search{max-width:100%}
+  .leaderboard-page .controls .search-wrap.lb-search{max-width:100%;width:100%}
+  .leaderboard-page .lb-search .search-input{width:100%}
+  .leaderboard-page .lb-help-link{align-self:center;justify-content:center}
+  .leaderboard-page .lb-main{padding:30px 16px 64px}
+  .leaderboard-page .stage-wrap{margin:32px 0 40px;padding:0}
+}
+
+@media(max-width:560px){
+  .leaderboard-page .controls{padding:0 12px}
+  .leaderboard-page .lb-main{padding:24px 12px 56px}
+  .leaderboard-page .podium{gap:6px}
+  .leaderboard-page .pod .trophy{font-size:30px}
+  .leaderboard-page .pod.p1 .trophy{font-size:42px}
+  .leaderboard-page .pod .ava{width:46px;height:46px;font-size:12px}
+  .leaderboard-page .pod.p1 .ava{width:58px;height:58px;font-size:15px}
+  .leaderboard-page .pod .nm{font-size:10px}
+  .leaderboard-page .pod .pts{font-size:18px}
+  .leaderboard-page .pod.p1 .pts{font-size:26px}
+  .leaderboard-page .pod.p1 .base{height:74px}
+  .leaderboard-page .pod.p2 .base{height:54px}
+  .leaderboard-page .pod.p3 .base{height:40px}
+  .leaderboard-page .pod.p1 .base .rk{font-size:44px}
+  .leaderboard-page .pod.p2 .base .rk{font-size:32px}
+  .leaderboard-page .pod.p3 .base .rk{font-size:26px}
+  .leaderboard-page .list-label{font-size:11px;letter-spacing:.18em}
+}
+
+@media(max-width:375px){
+  .leaderboard-page .podium{gap:3px}
+  .leaderboard-page .pod .trophy{font-size:24px}
+  .leaderboard-page .pod.p1 .trophy{font-size:34px}
+  .leaderboard-page .pod .ava{width:38px;height:38px;font-size:10px}
+  .leaderboard-page .pod.p1 .ava{width:48px;height:48px;font-size:12px}
+  .leaderboard-page .pod .nm{font-size:9px;max-width:70px}
+  .leaderboard-page .pod .pts{font-size:15px}
+  .leaderboard-page .pod.p1 .pts{font-size:20px}
+  .leaderboard-page .pod.p1 .base{height:56px}
+  .leaderboard-page .pod.p2 .base{height:40px}
+  .leaderboard-page .pod.p3 .base{height:30px}
+  .leaderboard-page .pod.p1 .base .rk{font-size:34px}
+  .leaderboard-page .pod.p2 .base .rk{font-size:24px}
+  .leaderboard-page .pod.p3 .base .rk{font-size:20px}
+}
+
+@media(max-width:320px){
+  .leaderboard-page .pod .nm{font-size:8px;max-width:56px}
+}
+
+/* "Načíst další" — same dashed-pill load-more as the events page. */
+.leaderboard-page .load-more-row{display:flex;justify-content:center;margin-top:26px}

@@ -1,0 +1,144 @@
+/* All selectors scoped under .auth-page to prevent cross-page leaks.
+   Poster look ("plakát"): brown grain page — same family as the homepage
+   sections — with the site-wide ticket card. No photo stage. */
+.auth-page{min-height:100vh;color:var(--color-cream-light);overflow-x:hidden;background:var(--color-brown);background-image:var(--tex-brown);background-size:var(--tex-size) var(--tex-size);background-repeat:repeat}
+
+/* ── ENTRANCE ── on-mount fade-up (matches PageHero's heroFade). Applies to
+   every auth page — Login, Register, Forgot, Reset all share this shell. */
+@keyframes authFade{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+.auth-page .auth-card{animation:authFade .7s cubic-bezier(.22,.68,0,1.2) both .22s}
+
+/* ── AUTH CARD — unified across all auth pages. The homepage evcard-dark
+   ticket: white dashed SVG frame (TicketFrame) + translucent dark panel
+   floating 7px inside (brown page shows through), rotated corner badge. ── */
+.auth-page .auth-container{position:relative;z-index:2;display:flex;align-items:center;justify-content:center;padding:0 24px 64px}
+.auth-page .auth-card{width:100%;max-width:560px;border-radius:16px;position:relative;padding:7px}
+.auth-page .auth-card.wide{max-width:560px}  /* legacy modifier kept as no-op */
+.auth-page .auth-card-inner{position:relative;z-index:2;padding:36px 40px 38px;background:rgba(0,0,0,.2);border-radius:11px}
+.auth-page .auth-badge{position:absolute;top:-46px;right:-25px;width:126px;height:126px;transform:rotate(12deg);object-fit:contain;pointer-events:none;filter:drop-shadow(0 5px 12px var(--alpha-black-40));z-index:4}
+@media(max-width:480px){.auth-page .auth-badge{width:clamp(96px,26vw,118px);height:clamp(96px,26vw,118px);top:clamp(-40px,-9vw,-30px);right:clamp(-18px,-4.5vw,-14px)}}
+
+/* ── AUTH-POSTER — the shared look of ALL auth pages (root gets .auth-poster):
+   photo background (alive, light homepage tint), one opaque poster card
+   holding the page name, and inputs as mini homepage-event-card tickets:
+   white dashed frame around a small dark panel. ── */
+/* Transparent root — the base .auth-page texture would paint OVER the
+   negative-z fixed stage and hide the photo.
+   --frame-gap = distance between an input's dashed frame and the dark panel
+   inside it; tune it here for the whole page. */
+.auth-page.auth-poster{background:none;--frame-gap:2px}
+.auth-page.auth-poster .stage{position:fixed;inset:0;bottom:auto;height:100vh;height:100lvh;z-index:-2;background:url('/img/gal12-mobile.webp') center 30%/cover no-repeat;filter:saturate(.8)}
+@media(min-width:769px){.auth-page.auth-poster .stage{background-image:url('/img/gal12-desktop.webp')}}
+.auth-page.auth-poster .stage::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(45,42,142,.1) 0%,rgba(26,15,10,.5) 100%)}
+.auth-page.auth-poster .auth-container{padding:140px 24px 72px}
+/* Poster card — homepage lb-card material: opaque blue grain, solid black
+   border, fat bottom edge. Replaces the ticket frame on this page. */
+.auth-page.auth-poster .auth-card{padding:0;border-radius:14px;background:var(--color-dark-brown) var(--tex-blue) 0 0/var(--tex-size) var(--tex-size) repeat;border:2px solid var(--color-black);border-bottom:8px solid var(--color-black);box-shadow:0 16px 40px var(--alpha-black-50)}
+.auth-page.auth-poster .auth-card-inner{background:none;border-radius:0;padding:38px 40px 40px}
+.auth-page.auth-poster .auth-card-title{font-size:clamp(44px,7vw,68px);margin-bottom:8px}
+/* Inputs as mini tickets: the wrap is the white dashed frame, the input the
+   dark panel floating inside it (evcard-dark, shrunk to form scale). */
+.auth-page.auth-poster .form-field-input-wrap{border:2px dashed rgba(255,255,255,.85);border-radius:14px;padding:var(--frame-gap);transition:border-color .2s}
+.auth-page.auth-poster .form-field-input-wrap:focus-within{border-color:var(--color-pink)}
+/* Typed text: pale blue instead of plain white — sits with the blue grain. */
+.auth-page.auth-poster .form-field-input{background:rgba(0,0,0,.3);border-color:transparent;border-radius:9px;padding:13px 16px;color:#d7deff}
+.auth-page.auth-poster .form-field-input:focus{background:var(--alpha-black-40);border-color:transparent;box-shadow:none}
+.auth-page.auth-poster .form-field-input.has-error{border-color:rgba(225,84,99,.95)}
+.auth-page.auth-poster .form-field-pw-toggle{right:10px}
+@media(max-width:480px){
+  .auth-page.auth-poster .auth-container{padding:118px 12px 52px}
+  .auth-page.auth-poster .auth-card-inner{padding:28px 20px 30px}
+}
+.auth-page .auth-card-tag{font-family:var(--font-mono);font-size:11.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--color-pink);margin-bottom:8px;font-style:italic}
+.auth-page .auth-card-title{font-family:var(--font-display);font-size:clamp(30px,5.4vw,44px);letter-spacing:.04em;text-transform:uppercase;color:var(--color-heading);line-height:1;margin-bottom:6px;font-weight:400}
+.auth-page .auth-card-sub{font-family:var(--font-mono);font-size:13px;color:var(--alpha-cream-55);margin-bottom:22px;line-height:1.5}
+.auth-page .auth-divider{height:1px;background:repeating-linear-gradient(90deg,var(--alpha-cream-30) 0 6px,transparent 6px 12px);margin-bottom:22px}
+.auth-page .auth-success{font-family:var(--font-body);font-size:14px;color:rgba(255,241,212,.9);background:rgba(95,178,103,.1);border:1.5px dashed rgba(95,178,103,.55);border-radius:8px;padding:14px 16px;line-height:1.55;margin-bottom:18px}
+.auth-page .auth-success strong{color:var(--color-white)}
+.auth-page .auth-error{font-family:var(--font-mono);font-size:12px;color:#ffb1ba;background:var(--alpha-pink-20);border:1px dashed rgba(225,84,99,.6);border-radius:6px;padding:10px 12px;margin:0 0 14px}
+.auth-page .forgot{position:absolute;top:0;right:0;font-family:var(--font-mono);font-style:italic;font-size:12px;color:var(--alpha-cream-55);transition:color .2s;border-bottom:1px solid transparent;text-decoration:none}
+.auth-page .forgot:hover{color:var(--color-pink);border-color:var(--color-pink)}
+.auth-page .remember-row{display:flex;align-items:center;gap:10px;margin:-2px 0 18px;font-family:var(--font-mono);font-size:13px;letter-spacing:.05em;color:rgba(255,241,212,.75);cursor:pointer}
+.auth-page .remember-row input{appearance:none;-webkit-appearance:none;width:15px;height:15px;border-radius:3px;border:1.5px solid rgba(255,241,212,.4);background:rgba(255,255,255,.05);cursor:pointer;position:relative;flex-shrink:0;transition:background .2s,border-color .2s}
+.auth-page .remember-row input:checked{background:var(--color-pink);border-color:var(--color-pink)}
+.auth-page .remember-row input:checked::after{content:'';position:absolute;left:4px;top:1px;width:5px;height:8px;border:solid var(--color-white);border-width:0 2px 2px 0;transform:rotate(45deg)}
+.auth-page .auth-foot{margin-top:26px;text-align:center;font-family:var(--font-mono);font-size:13px;color:var(--alpha-cream-65);letter-spacing:.04em}
+.auth-page .auth-foot a{color:var(--color-cream-light);font-weight:600;font-style:italic;border-bottom:1px solid var(--alpha-cream-30);transition:color .2s,border-color .2s;text-decoration:none}
+.auth-page .auth-foot a:hover{color:var(--color-pink);border-color:var(--color-pink)}
+
+/* Button component override — full width submit button */
+/* Keeps the button face (Helvetica) — the submit is a button first, not a
+   mono label, so it matches every other CTA on the site. */
+.auth-page .pts-btn-wrap{width:100%;justify-content:center;letter-spacing:.06em;padding:17px 28px;margin-top:8px}
+
+@media(max-width:640px){
+  .auth-page .auth-container{padding:0 16px 56px}
+  .auth-page .auth-card-inner{padding:28px 24px 30px}
+}
+
+@media(max-width:480px){
+  .auth-page .auth-container{padding:0 12px 48px}
+  .auth-page .auth-card-inner{padding:24px 18px 28px}
+  .auth-page .auth-card-sub{font-size:12.5px;margin-bottom:18px}
+  .auth-page .auth-divider{margin-bottom:18px}
+  .auth-page .pts-btn-wrap,.auth-page .pts-btn{padding:14px 22px;font-size:13px;letter-spacing:.05em}
+  .auth-page .forgot{font-size:11px}
+  .auth-page .auth-foot{font-size:12px}
+}
+
+@media(max-width:375px){
+  .auth-page .auth-container{padding:0 10px 40px}
+  .auth-page .auth-card-inner{padding:20px 14px 24px}
+  .auth-page .auth-card-title{font-size:28px}
+  .auth-page .pts-btn-wrap,.auth-page .pts-btn{padding:13px 18px;font-size:12px;letter-spacing:.04em}
+}
+
+@media(max-width:320px){
+  .auth-page .auth-card-title{font-size:24px}
+  .auth-page .auth-card-inner{padding:18px 12px 22px}
+}
+
+/* ── CONSENT ROW (registration) — checkbox + link to the privacy policy.
+   Sits directly above the submit button; the pink accent keeps its usual
+   role as the interactive/CTA colour. ── */
+.auth-page .auth-consent{margin:6px 0 16px}
+.auth-page .auth-consent-row{display:flex;align-items:flex-start;gap:10px;cursor:pointer;font-size:13.5px;line-height:1.5;color:rgba(255,255,255,.85)}
+.auth-page .auth-consent-row input[type="checkbox"]{flex:0 0 auto;width:18px;height:18px;margin-top:1px;accent-color:var(--color-pink);cursor:pointer}
+.auth-page .auth-consent-row a{color:var(--color-pink);text-decoration:underline;text-underline-offset:3px}
+.auth-page .auth-consent-row a:hover{color:var(--color-gold)}
+.auth-page .auth-consent-err{margin-top:7px;padding-left:28px;font-size:12.5px;color:var(--color-pink)}
+
+/* ── GOOGLE SIGN-IN — separator, button, consent note.
+   The button is chrome, not content, so it takes the frost treatment rather
+   than the pink CTA: the primary action on this card is still the password
+   form's submit, and two competing pink buttons would read as a choice between
+   equals. Google's mark keeps its own colours (brand requirement), which is
+   also why it is the only saturated thing here. ── */
+.auth-page .auth-or{display:flex;align-items:center;gap:14px;margin:22px 0 18px;
+  font-family:var(--font-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--fg-muted-dark)}
+.auth-page .auth-or::before,
+.auth-page .auth-or::after{content:"";flex:1;height:1px;
+  background:repeating-linear-gradient(90deg,var(--alpha-cream-30) 0 6px,transparent 6px 12px)}
+
+.auth-page .auth-google{display:flex;align-items:center;justify-content:center;gap:11px;
+  width:100%;padding:13px 18px;border-radius:var(--radius-md,10px);
+  background:rgba(255,255,255,.05);border:1px solid var(--alpha-cream-20);
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  font-family:var(--font-body);font-size:15px;font-weight:600;
+  color:var(--color-cream-light);text-decoration:none;
+  transition:background .2s,border-color .2s,transform .12s}
+.auth-page .auth-google:hover{background:var(--alpha-white-10);border-color:var(--color-pink)}
+.auth-page .auth-google:active{transform:translateY(1px)}
+.auth-page .auth-google:focus-visible{outline:2px solid var(--color-pink);outline-offset:3px}
+.auth-page .auth-google-mark{width:19px;height:19px;flex:0 0 auto}
+
+.auth-page .auth-google-note{margin:12px 0 0;text-align:center;
+  font-family:var(--font-mono);font-size:11.5px;line-height:1.6;
+  color:var(--alpha-cream-55)}
+.auth-page .auth-google-note a{color:var(--color-pink);text-decoration:underline;text-underline-offset:3px}
+.auth-page .auth-google-note a:hover{color:var(--color-gold)}
+
+@media(max-width:520px){
+  .auth-page .auth-google{padding:12px 14px;font-size:14px}
+}

@@ -1,4 +1,28 @@
+# ── Tajemství ──────────────────────────────────────────────────────────────
+# Google service-account klíče. Vzory níž chytají jen konkrétní názvy, takže
+# celý script/ radši bereme jako "sem patří klíč" — soubor se jmenuje podle
+# projektu a ID (gameoflive-34359340b227.json), na *-service-account*.json
+# nesedí a bez tohohle pravidla by ho `git add -A` commitnul.
 credentials.json
+credentials1.json
+*-service-account*.json
+script/*.json
+# OAuth client, jak ho stáhne Google Cloud Console (client_secret_<id>.apps.
+# googleusercontent.com.json). Aplikace ho nečte — bere client_id/secret z env —
+# ale stažený soubor snadno skončí v repu.
+client_secret*.json
+*.pem
+*.key
+
+# ── Osobní údaje ───────────────────────────────────────────────────────────
+# Exporty z Google Forms: sloupce Telefon + Jméno reálných členů. Do repa
+# nepatří ani jednou — z historie se nemažou.
+script/data*.csv
+script/actions*/
+# Výstup `manage.py export_player_numbers` — záloha telefonních čísel pořízená
+# před migrací 0026, která je z databáze odstranila.
+player_numbers_*.csv
+
 __pycache__/
 *.__pycache__/
 *.pyc
@@ -9,6 +33,12 @@ __pycache__/
 venv/
 env/
 .env
+# frontend/.env.production a .env.mobile jsou verzované ZÁMĚRNĚ — obsahují jen
+# hodnoty, které stejně končí ve veřejném bundlu (write-only Sentry DSN, QR).
+# Proto tu není žádné .env.* — nové env soubory se musí posoudit jednotlivě.
+
+# frontend/.gitignore řeší jen frontend/node_modules — tenhle je v rootu
+node_modules/
 
 build/
 *.log
@@ -21,3 +51,10 @@ build/
 /custom
 djangotutorial/media
 djangotutorial/staticfiles
+# load-test tooling (isolated venv, not part of the app)
+loadtest/.venv/
+
+# Exportovaný manuál (86 MB). Do gitu nepatří — repo už tak nese 139 MB
+# originálů v frontend/image-src/. Kdyby ho `git add -A` jednou zabral, z
+# historie se nesmaže bez přepsání historie.
+GOL_Web_Manual_2026.pdf

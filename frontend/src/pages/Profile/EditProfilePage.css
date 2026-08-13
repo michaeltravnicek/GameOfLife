@@ -1,0 +1,61 @@
+/* Profile editor — page-specific parts only.
+   The shared poster-form chrome (head, cards, fields, save bar, modal, buttons)
+   lives in styles/edit-form.css under `.gol-*`. */
+@import '../../styles/edit-form.css';
+
+/* ── Photo stage — this page's own backdrop (the event editor uses a different
+   photo). Light tint: the cards are opaque posters, so the photo can stay
+   alive. ── */
+.editprofile-page .ep-stage{position:fixed;inset:0;z-index:-2;background:url('/img/gal3-mobile.webp') center 30%/cover no-repeat;filter:saturate(.7) contrast(1.02);transform:scale(1.06)}
+@media(min-width:769px){.editprofile-page .ep-stage{background-image:url('/img/gal3-desktop.webp')}}
+.editprofile-page .ep-stage::after{content:'';position:absolute;inset:0;background:
+  radial-gradient(ellipse at 50% 0%, var(--alpha-purple-20) 0%, transparent 38%),
+  linear-gradient(180deg, rgba(26,15,10,.35) 0%, rgba(26,15,10,.5) 32%, rgba(26,15,10,.7) 100%)}
+
+/* Slightly brighter than the event editor's sub-heading. */
+.editprofile-page .ep-sec-sub{font-family:var(--font-body);font-style:italic;font-size:14px;color:var(--alpha-cream-80);margin-bottom:0;line-height:1.5;max-width:62ch}
+
+.editprofile-page .gol-card > *{position:relative;z-index:1}
+.editprofile-page .gol-danger-card .gol-sec-heading{color:var(--color-pink)}
+
+/* ── Avatar card ── */
+.editprofile-page .ep-avatar-card{display:grid;grid-template-columns:auto 1fr;gap:28px;align-items:center}
+/* The card head is a grid child here — span it so avatar + meta keep their row. */
+.editprofile-page .ep-avatar-card .gol-card-head{grid-column:1 / -1}
+.editprofile-page .ep-avatar-big{width:140px;height:140px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 30% 30%,var(--alpha-pink-20),transparent 65%),var(--alpha-dark-60);border:3px dashed var(--alpha-cream-45);font-family:var(--font-mono);font-style:italic;font-size:46px;font-weight:700;color:var(--color-cream-light);box-shadow:0 14px 44px var(--alpha-black-50);background-size:cover;background-position:center}
+.editprofile-page .ep-avatar-big.has-img{font-size:0}
+.editprofile-page .ep-avatar-meta .ep-l{font-family:var(--font-mono);font-style:italic;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--color-pink);margin-bottom:8px}
+.editprofile-page .ep-avatar-meta .ep-h{font-family:var(--font-display);font-size:30px;letter-spacing:.04em;color:var(--color-white);text-transform:uppercase;margin-bottom:6px;line-height:1}
+.editprofile-page .ep-avatar-meta .ep-s{font-family:var(--font-body);font-style:italic;font-size:13px;color:var(--alpha-cream-65);margin-bottom:14px;line-height:1.5;max-width:48ch}
+.editprofile-page .ep-avatar-actions{display:flex;gap:10px;flex-wrap:wrap}
+
+/* ── Prefixed / combo inputs (@handle, social URLs) ── */
+.editprofile-page .gol-input-prefix{position:relative}
+.editprofile-page .gol-input-prefix .gol-input{padding-left:42px}
+.editprofile-page .gol-input-prefix .ep-pre{position:absolute;left:14px;top:50%;transform:translateY(-50%);font-family:var(--font-mono);font-style:italic;font-size:13px;color:var(--alpha-cream-55);letter-spacing:.04em;pointer-events:none}
+.editprofile-page .ep-counter{font-family:var(--font-mono);font-style:italic;font-size:11px;color:var(--fg-muted-dark);letter-spacing:.04em;text-align:right;margin-top:-2px}
+/* Password section: its own save, so it needs its own error line and action
+   row rather than borrowing the page-wide save bar. */
+.editprofile-page .ep-pw-error{font-family:var(--font-body);font-size:13.5px;color:var(--color-pink);margin-top:4px}
+.editprofile-page .ep-pw-actions{display:flex;justify-content:flex-end;margin-top:18px}
+
+.editprofile-page .ep-social-rows{display:flex;flex-direction:column;gap:12px}
+.editprofile-page .ep-social-row{display:grid;grid-template-columns:44px 1fr;gap:14px;align-items:center}
+.editprofile-page .ep-social-row .ep-ico{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--alpha-pink-15);border:1.5px dashed var(--alpha-pink-45);color:var(--color-pink);font-family:var(--font-mono);font-style:italic;font-weight:700;font-size:13px;letter-spacing:.02em;flex-shrink:0}
+.editprofile-page .ep-social-row.filled .ep-ico{background:var(--color-pink);color:var(--color-white);border-color:transparent;border-style:solid}
+.editprofile-page .ep-combo{display:flex;align-items:stretch;background:rgba(0,0,0,.3);border:none;border-radius:9px;overflow:hidden;outline:2px dashed rgba(255,255,255,.85);outline-offset:var(--frame-gap);transition:outline-color .18s,background .18s;min-width:0}
+.editprofile-page .ep-combo:hover{outline-color:var(--color-white)}
+.editprofile-page .ep-combo:focus-within{outline-color:var(--color-pink);background:var(--alpha-black-40)}
+.editprofile-page .ep-combo .ep-pre{display:flex;align-items:center;padding:0 4px 0 14px;font-family:var(--font-mono);font-style:italic;font-size:13px;color:var(--alpha-cream-55);letter-spacing:.04em;white-space:nowrap;flex-shrink:0;user-select:none}
+.editprofile-page .ep-combo .gol-input{flex:1;min-width:0;background:transparent;border:0;border-radius:0;padding:13px 14px 13px 4px;outline:none}
+/* The combo's wrapper draws the frame, so the inner input stays flat — but
+   :focus-visible must still show a ring, or keyboard users lose their place
+   entirely on these fields (global.css supplies it). */
+.editprofile-page .ep-combo .gol-input:hover,.editprofile-page .ep-combo .gol-input:focus:not(:focus-visible){background:transparent;border:0;outline:none}
+
+@media(max-width:860px){
+  .editprofile-page .ep-avatar-card{grid-template-columns:1fr;text-align:center}
+  .editprofile-page .ep-avatar-actions{justify-content:center}
+  .editprofile-page .ep-avatar-big{margin:0 auto}
+  .editprofile-page .gol-savebar-inner{justify-content:center;text-align:center}
+}

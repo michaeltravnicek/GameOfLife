@@ -1,0 +1,6 @@
+Count,Message,Traceback,Nodes
+40,No tasks defined on Visitor. Use the @task decorator or set the 'tasks' attribute of the User (or mark it as abstract = True if you only intend to subclass it),"  File ""/home/michael/.local/lib/python3.10/site-packages/locust/user/task.py"", line 358, in run
+    self.schedule_task(self.get_next_task())
+  File ""/home/michael/.local/lib/python3.10/site-packages/locust/user/task.py"", line 502, in get_next_task
+    raise Exception(
+",local

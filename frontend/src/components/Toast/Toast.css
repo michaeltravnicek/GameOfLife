@@ -1,0 +1,60 @@
+/* Toast stack — fixed top-right (bottom on mobile). Pointer-events: none on
+   the wrapper so the page underneath stays usable, but individual toasts
+   re-enable themselves so close/action buttons work. */
+.toast-stack{position:fixed;top:92px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:12px;pointer-events:none;max-width:min(480px,calc(100vw - 40px))}
+
+/* --toast-pad / --toast-icon drive every inset in here: the icon, the close
+   button and the single-line body height all derive from them, so the mobile
+   override below only has to restate those two values. Padding is symmetric —
+   the old 18/20/18/18 plus the close button's own 4px made the right gutter
+   read 6px wider than the left. */
+.toast{--toast-pad:18px;--toast-icon:32px;pointer-events:auto;display:flex;align-items:flex-start;gap:14px;padding:var(--toast-pad);border-radius:14px;border:1.5px dashed var(--alpha-cream-30);background:var(--alpha-dark-95);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:0 14px 38px rgba(0,0,0,.55);color:var(--color-cream-light);font-family:var(--font-body);font-size:15px;line-height:1.5;animation:toast-in .28s cubic-bezier(.22,.68,0,1.2) both}
+
+.toast-icon{flex-shrink:0;width:var(--toast-icon);height:var(--toast-icon);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-weight:700;font-size:16px;line-height:1}
+/* min-height = icon height, so a message-only toast centres its single line
+   against the icon instead of hanging above its middle. A title + message is
+   taller than the icon, so it keeps sitting flush with the top. */
+.toast-body{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:3px;min-height:var(--toast-icon)}
+.toast-title{font-family:var(--font-display);font-size:16px;letter-spacing:.04em;text-transform:uppercase;line-height:1.1;color:var(--color-heading)}
+.toast-message{font-size:14.5px;color:rgba(255,241,212,.85);word-wrap:break-word}
+.toast-action{flex-shrink:0;align-self:center;background:transparent;border:1.5px dashed var(--alpha-cream-45);color:var(--color-cream-light);font-family:var(--font-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;padding:6px 12px;border-radius:9999px;cursor:pointer;transition:border-color .18s,color .18s}
+.toast-action:hover{border-color:var(--color-pink);color:var(--color-pink)}
+/* Square hit target the same height as the icon (so the two line up exactly),
+   with the slack hanging into the toast's padding via the negative margin —
+   that keeps the × optically the same distance from the edge as the icon is on
+   the other side, without an 18x24px tap target. */
+.toast-close{flex-shrink:0;display:flex;align-items:center;justify-content:center;width:var(--toast-icon);height:var(--toast-icon);margin-right:calc(7px - var(--toast-icon)/2);padding:0;background:transparent;border:0;border-radius:50%;color:var(--alpha-cream-55);font-size:22px;line-height:1;cursor:pointer;transition:color .15s,background .15s}
+.toast-close:hover{color:var(--color-white);background:var(--alpha-cream-10)}
+
+/* Variant tints. Each variant overrides the dashed border + icon color. */
+.toast-success{border-color:rgba(95,178,103,.55)}
+.toast-success .toast-icon{background:rgba(95,178,103,.2);color:#a8e0a8;border:1px dashed rgba(95,178,103,.6)}
+.toast-error{border-color:rgba(225,84,99,.65)}
+.toast-error .toast-icon{background:var(--alpha-pink-20);color:#ffb6bf;border:1px dashed rgba(225,84,99,.7)}
+.toast-warning{border-color:rgba(245,200,66,.55)}
+.toast-warning .toast-icon{background:rgba(245,200,66,.2);color:#ffd96b;border:1px dashed var(--alpha-gold-60)}
+.toast-info{border-color:rgba(255,241,212,.4)}
+.toast-info .toast-icon{background:var(--alpha-cream-10);color:rgba(255,241,212,.85);border:1px dashed rgba(255,241,212,.4)}
+
+@keyframes toast-in{
+  from{opacity:0;transform:translateX(14px) translateY(-6px)}
+  to{opacity:1;transform:none}
+}
+
+@media(max-width:640px){
+  /* Full-bleed: the stack spans the whole screen width, anchored to the bottom. */
+  .toast-stack{top:auto;bottom:0;right:0;left:0;max-width:none;gap:0;padding-bottom:env(safe-area-inset-bottom,0)}
+  .toast{--toast-pad:20px;--toast-icon:34px;border-radius:18px 18px 0 0;border-width:1.5px 0 0;font-size:15.5px;box-shadow:0 -8px 32px var(--alpha-black-50)}
+  .toast + .toast{border-top-width:1px}
+  .toast-icon{font-size:17px}
+  .toast-title{font-size:16.5px}
+  .toast-message{font-size:15px}
+  @keyframes toast-in{
+    from{opacity:0;transform:translateY(16px)}
+    to{opacity:1;transform:none}
+  }
+}
+
+@media(prefers-reduced-motion: reduce){
+  .toast{animation:none}
+}

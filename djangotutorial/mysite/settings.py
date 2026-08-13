@@ -10,9 +10,12 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 import os
+import sys
+from datetime import timedelta
+
 import dj_database_url
+from django.core.exceptions import ImproperlyConfigured
 from pathlib import Path
-from .middleware import Debug500Middleware
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -22,29 +25,243 @@ MODE = os.getenv("MODE")
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-# I generated a new one:))
-SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", 'django-insecure-apk-d!f9%95l%z3&*^omgieg!z8bd$0+eu3kxiyp_ayjge3k@9')
+# The key signs session cookies and password-reset tokens, so a known value
+# means anyone can forge both. The dev fallback is deliberately only reachable
+# when MODE != PRODUCTION; production must supply DJANGO_SECRET_KEY or refuse
+# to boot (failing loudly beats silently running on a public default).
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "")
 LAST_UPDATE = None
 
-STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
-STATICFILES_DIRS = [
-    BASE_DIR / "leaderboard" / "static",
-]
 MEDIA_URL = os.getenv("MEDIA_URL", "/media/")
 MEDIA_ROOT = os.getenv("MEDIA_ROOT", BASE_DIR / "media")
 
+# Upload limits.
+#
+# These cover the *non-file* parts of a request only — Django deliberately
+# exempts uploaded files from DATA_UPLOAD_MAX_MEMORY_SIZE. Per-file size,
+# format and pixel-count limits live in leaderboard/image_utils.validate_upload,
+# and the per-request file count is capped in the upload views.
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024   # 10 MB of form fields
+# Above this, an uploaded file is spooled to a temp file instead of being held
+# in RAM. It is a memory/disk trade-off, not a cap.
+FILE_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024
+# Blunts hash-collision / parser-exhaustion POSTs with tens of thousands of keys.
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 1000
+# Ceiling on files per request, enforced by the multi-image upload view.
+MAX_UPLOAD_FILES_PER_REQUEST = 30
+
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True # if MODE == "PRODUCTION" else False
-ALLOWED_HOSTS = ["*"]
+DEBUG = MODE != "PRODUCTION"
+
+if not DEBUG and not SECRET_KEY:
+    raise ImproperlyConfigured(
+        "DJANGO_SECRET_KEY must be set when MODE=PRODUCTION."
+    )
+if not SECRET_KEY:
+    SECRET_KEY = "django-insecure-local-dev-only-not-used-in-production"
+
+# In production, restrict to the real domain(s) via ALLOWED_HOSTS env var
+# (comma-separated). A wildcard here would let an attacker set the Host header
+# freely, which poisons the absolute URLs Django builds — most damagingly the
+# password-reset links sent by email.
+_allowed_hosts_env = os.getenv("ALLOWED_HOSTS", "")
+if _allowed_hosts_env:
+    ALLOWED_HOSTS = [h.strip() for h in _allowed_hosts_env.split(",") if h.strip()]
+elif DEBUG:
+    ALLOWED_HOSTS = ["*"]
+elif os.getenv("RENDER_EXTERNAL_HOSTNAME"):
+    # Render injects this automatically. It's a safe last resort so a deploy
+    # doesn't hard-fail before ALLOWED_HOSTS is configured, but set the env var
+    # explicitly — this misses any custom domain pointed at the service.
+    ALLOWED_HOSTS = [os.getenv("RENDER_EXTERNAL_HOSTNAME")]
+else:
+    raise ImproperlyConfigured(
+        "ALLOWED_HOSTS must be set when MODE=PRODUCTION "
+        "(comma-separated, e.g. 'gameofyolo.com,www.gameofyolo.com')."
+    )
+
+# Number of proxies between the client and gunicorn. Production is
+# Cloudflare -> Render's load balancer -> gunicorn, i.e. TWO hops, so
+# X-Forwarded-For arrives as "<client>, <cloudflare-edge>".
+#
+# Getting this wrong is not a subtle bug: too low and the rate limiter keys on
+# Cloudflare's IP, so every visitor shares one bucket and one lockout. Too high
+# and it keys on a client-supplied value an attacker can forge to dodge both.
+#
+# Env-overridable rather than hard-coded so it can be corrected without a
+# redeploy — verify the real chain at /whoami/ (superuser only) and set
+# PROXY_COUNT until computed_client_ip equals your own public IP.
+PROXY_COUNT = int(os.getenv("PROXY_COUNT", "1" if DEBUG else "2"))
 
 # Only trust the SSL proxy header in production (behind a real proxy).
 # In local dev with DEBUG=True, trusting this header causes Django to
 # mis-detect HTTPS and mark CSRF cookies as Secure, which breaks forms over HTTP.
 if not DEBUG:
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+# Whether this instance is actually reached over HTTPS. Normally true whenever
+# DEBUG is off — but this repo's local .env also sets MODE=PRODUCTION, and on
+# plain http://localhost the HTTPS hardening below is self-defeating: the
+# redirect sends you to an https:// URL nothing serves, and Secure cookies are
+# dropped by the browser, so you can never log in. Set HTTPS=0 in the local
+# .env for that case; leave it unset (or 1) on Render.
+HTTPS_ENABLED = not DEBUG and os.getenv("HTTPS", "1") != "0"
+
+if HTTPS_ENABLED:
+    # Render terminates TLS upstream, so this redirect decision relies on
+    # SECURE_PROXY_SSL_HEADER above.
+    SECURE_SSL_REDIRECT = True
+    # HSTS: tell browsers to refuse plain HTTP for this domain.
+    #
+    # This is the ONE irreversible setting here. Once a browser has seen a long
+    # max-age it honours it for that long even if the header disappears
+    # tomorrow — so if HTTPS breaks, visitors cannot reach the site at all and
+    # there is no way to reach out and fix their browsers.
+    #
+    # Default is therefore 5 minutes: real protection, but a mistake ages out
+    # almost immediately. Once the deploy is confirmed healthy over HTTPS
+    # (including the Cloudflare leg), raise it via the environment:
+    #
+    #   SECURE_HSTS_SECONDS=31536000   (1 year — the value worth ending on)
+    #
+    # includeSubDomains + preload are held back until the max-age is raised;
+    # submitting to the preload list is effectively permanent.
+    SECURE_HSTS_SECONDS = int(os.getenv("SECURE_HSTS_SECONDS", "300"))
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = SECURE_HSTS_SECONDS >= 86400
+    SECURE_HSTS_PRELOAD = SECURE_HSTS_SECONDS >= 31536000
+
+    # Session/CSRF cookies must never travel over plain HTTP.
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+
+# The CSRF cookie is read by React (to echo it back in the X-CSRFToken header),
+# so it cannot be HttpOnly. The session cookie can be, and is by default.
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = "Lax"
+CSRF_COOKIE_SAMESITE = "Lax"
+
+# Don't let browsers second-guess Content-Type (an uploaded file sniffed as
+# HTML would run as HTML), and don't leak full URLs to third-party sites.
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_REFERRER_POLICY = "same-origin"
+X_FRAME_OPTIONS = "DENY"
+
+# Where the Django admin is mounted. Override in production, e.g.
+# ADMIN_URL=sprava-x7k2/
+#
+# This is obscurity, not security, and it is worth being precise about why it is
+# still here: it does not make the admin harder to break into, it makes the
+# background noise go away. Every bot on the internet probes /admin/ constantly,
+# so those log lines mean nothing. Move the path and the constant scanning stops
+# -- and then a single hit on the real admin URL is a signal worth reading.
+#
+# The actual protection is the edge auth layer in front of it (Cloudflare
+# Access); see security/RUNBOOK.md. Two things must track this value: the SPA
+# catch-all in urls.py, and robots.txt, which deliberately stops listing the path
+# once it is non-default -- publishing a secret URL in robots.txt would undo the
+# entire point.
+ADMIN_URL = os.getenv("ADMIN_URL", "admin/").strip().lstrip("/")
+if not ADMIN_URL.endswith("/"):
+    ADMIN_URL += "/"
+
+# Leaving the admin at the default /admin/ in production defeats the point above:
+# it's the one path every bot on the internet already hammers, so a real
+# break-in attempt is indistinguishable from the constant background scanning.
+# Refuse to boot on the default in production — same fail-loud stance as
+# DJANGO_SECRET_KEY / ALLOWED_HOSTS. Set ADMIN_URL (e.g. ADMIN_URL=sprava-x7k2/).
+if not DEBUG and ADMIN_URL == "admin/":
+    raise ImproperlyConfigured(
+        "ADMIN_URL must be overridden when MODE=PRODUCTION "
+        "(e.g. 'sprava-x7k2/'); the default '/admin/' must not be used."
+    )
+
+# ---------------------------------------------------------------------------
+# Content-Security-Policy
+#
+# The last line of defence, not the first: if an injection ever does land on the
+# page, the browser refuses to execute it because it isn't from an allowed
+# source. Everything else in this file tries to stop the injection happening;
+# this limits the damage when something slips through.
+#
+# ENFORCED by default (report-only ships the header but blocks nothing, so it
+# stops no XSS). The policy is derived from what the app loads today; the
+# allowlist below is asserted in tests against the real asset inventory so it
+# can't silently drift and start blocking legitimate resources. For a cautious
+# first-week rollout on a new domain, set CSP_REPORT_ONLY=1 to watch the
+# violation reports first, then drop the flag. In DEBUG it's report-only so local
+# tooling isn't blocked. The enforce/report-only switch lives at the bottom of
+# this block.
+#
+# The allowlist is small and every entry is here for a reason:
+#   fonts.googleapis.com  — the stylesheet linked from index.html
+#   fonts.gstatic.com     — the font files that stylesheet points at
+#   *.tile.openstreetmap.org — Leaflet map tiles on the event detail page
+#   docs.google.com/forms.gle — the embedded event sign-up form (frame-src only)
+#   Sentry ingest         — error reports (host varies per DSN, hence the env var)
+#   the media host        — R2/S3 images once MEDIA_S3_CUSTOM_DOMAIN is set
+#
+# 'unsafe-inline' in style-src is the one real compromise. React inline styles
+# and Leaflet's runtime positioning both write style attributes, so removing it
+# means nonce-ing every inline style — a large change for a modest gain, given
+# script-src stays strict. Note that 'unsafe-inline' is NOT in script-src, which
+# is where it would actually matter.
+#
+# The admin ships inline <script> blocks, so a strict script-src can break its
+# widgets (date pickers, inline formsets) — and unlike the SPA, nothing about
+# that failure is visible server-side. Rather than weaken script-src site-wide,
+# AdminCSPExemptMiddleware adds 'unsafe-inline' to script-src for the admin path
+# only (see mysite/middleware.py), so enforcement is safe for the admin too.
+_csp_media_host = os.getenv("MEDIA_S3_CUSTOM_DOMAIN", "")
+_csp_extra_connect = [
+    o.strip() for o in os.getenv("CSP_EXTRA_CONNECT_SRC", "").split(",") if o.strip()
+]
+
+_CSP_DIRECTIVES = {
+    "default-src": ["'self'"],
+    "script-src": ["'self'"],
+    "style-src": ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+    "font-src": ["'self'", "https://fonts.gstatic.com", "data:"],
+    "img-src": [
+        "'self'", "data:", "blob:",
+        "https://*.tile.openstreetmap.org",
+        *([f"https://{_csp_media_host}"] if _csp_media_host else []),
+    ],
+    "connect-src": ["'self'", *_csp_extra_connect],
+    # Nothing frames a Google Form today — sign-up links out to it. Kept so the
+    # iframe fallback works the moment GOOGLE_FORM_NATIVE is turned back on,
+    # and because listing a frame source we never frame costs nothing.
+    # forms.gle is the short-link host: it 302s to docs.google.com, and CSP
+    # checks *every* hop, so both must be listed or a shortened survey_url
+    # renders an empty frame.
+    "frame-src": ["'self'", "https://docs.google.com", "https://forms.gle"],
+    # Supersedes X_FRAME_OPTIONS above and blocks clickjacking: nobody may load
+    # the site in an iframe to trick a logged-in user into clicking through it.
+    "frame-ancestors": ["'none'"],
+    "base-uri": ["'self'"],
+    "form-action": ["'self'"],
+    "object-src": ["'none'"],
+}
+
+# Enforced by default: report-only ships the header but blocks nothing, so an
+# XSS that lands runs freely — the policy has to actually enforce to be worth
+# having. The admin's inline scripts (the reason enforcement was held back) are
+# handled by AdminCSPExemptMiddleware, which adds 'unsafe-inline' to script-src
+# for the admin path only, so a strict site-wide policy can't break its widgets.
+#
+# Set CSP_REPORT_ONLY=1 for a cautious first-week rollout on a new domain —
+# watch the violation reports, then drop the flag to enforce. In DEBUG the
+# policy is report-only so local tooling isn't blocked. (Legacy CSP_ENFORCE=1
+# still forces enforcement.)
+_csp_report_only = os.getenv("CSP_REPORT_ONLY") == "1" or (
+    DEBUG and os.getenv("CSP_ENFORCE") != "1"
+)
+if _csp_report_only:
+    CONTENT_SECURITY_POLICY_REPORT_ONLY = {"DIRECTIVES": _CSP_DIRECTIVES}
+else:
+    CONTENT_SECURITY_POLICY = {"DIRECTIVES": _CSP_DIRECTIVES}
 
 # CSRF trusted origins for local dev + any hosted domains.
 # Django 4+ requires this for POST from origins not matching the Host header.
@@ -58,6 +275,10 @@ _prod_origin = os.getenv("CSRF_TRUSTED_ORIGIN")
 if _prod_origin:
     CSRF_TRUSTED_ORIGINS.append(_prod_origin)
 
+# Sessions: default to expiring on browser close. The "remember me" checkbox
+# on the login form overrides this per-session via session.set_expiry(...).
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -67,29 +288,202 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'background_task',
+    'django.contrib.sitemaps',  # /sitemap.xml (no sites framework needed; uses the request host)
+    'rest_framework',
+    'rest_framework.authtoken',
+    'drf_spectacular',
+    'corsheaders',
+    'axes',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
     'leaderboard',
     'accounts',
-    #"background_task.apps.BackgroundTaskConfig",  # correct
-
 ]
 
-LOGIN_URL = '/prihlasit/'
+# Auth lives in the React SPA; these only matter for Django's own redirects.
+LOGIN_URL = '/prihlasit'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
-AUTHENTICATION_BACKENDS = ['django.contrib.auth.backends.ModelBackend']
+# AxesStandaloneBackend must come first: it short-circuits authenticate() for a
+# locked-out credential/IP before ModelBackend gets to verify the password.
+AUTHENTICATION_BACKENDS = [
+    'axes.backends.AxesStandaloneBackend',
+    'django.contrib.auth.backends.ModelBackend',
+    # Social login. Order matters: axes stays first so brute-force lockout still
+    # applies to password attempts.
+    'allauth.account.auth_backends.AuthenticationBackend',
+]
 
 MIDDLEWARE = [
-    'mysite.middleware.Debug500Middleware',
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware', 
+    'whitenoise.middleware.WhiteNoiseMiddleware',
+    # Stamps the CSP header on every response (enforced unless CSP_REPORT_ONLY=1).
+    'csp.middleware.CSPMiddleware',
+    # Must sit AFTER CSPMiddleware: on the response leg (bottom-up) it relaxes
+    # script-src for the admin path before CSP builds the header.
+    'mysite.middleware.AdminCSPExemptMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
+    # Must be last: it turns the PermissionDenied raised by the axes backend
+    # into a proper lockout response.
+    'axes.middleware.AxesMiddleware',
 ]
+
+# ---------------------------------------------------------------------------
+# Social login (django-allauth) — Google only.
+#
+# The flow is deliberately the boring one: a full-page redirect to Google, a
+# callback that sets the ordinary Django session cookie, and a redirect home.
+# React reboots already logged in. No tokens, no localStorage, no change to the
+# auth model — the SPA cannot tell the difference between this and a password
+# login, which is exactly the point.
+#
+# ⚠ The two settings that matter most are the takeover guards below. Everything
+# else here is plumbing.
+# ---------------------------------------------------------------------------
+SOCIALACCOUNT_PROVIDERS = {
+    "google": {
+        "APP": {
+            "client_id": os.getenv("GOOGLE_CLIENT_ID", ""),
+            "secret": os.getenv("GOOGLE_CLIENT_SECRET", ""),
+            "key": "",
+        },
+        "SCOPE": ["profile", "email"],
+        # "online": we never call Google's APIs on the user's behalf, so a
+        # refresh token would be a stored credential with no purpose.
+        "AUTH_PARAMS": {"access_type": "online"},
+    }
+}
+
+# Credentials come from the environment, never from the SocialApp admin row:
+# a client secret stored in the database is readable by anyone who reaches the
+# admin, which widens a compromise there into a compromise of the OAuth app.
+SOCIALACCOUNT_ONLY = False
+SOCIALACCOUNT_ADAPTER = "accounts.adapters.SocialAccountAdapter"
+ACCOUNT_ADAPTER = "accounts.adapters.AccountAdapter"
+
+# 🔴 Account takeover via e-mail matching — the most important lines in this block.
+#
+# The attack: an existing user has a password account on michael@example.com.
+# An attacker creates a Google account with that same address and signs in. If
+# allauth links the social identity to the existing user because the e-mails
+# match, the attacker has taken over the account without ever knowing the
+# password. Google verifying the address does not help: the question is whether
+# *this* claimant controls the local account, and a matching e-mail does not
+# answer it.
+#
+# So: never authenticate by e-mail alone, and never auto-connect. Linking a
+# Google identity to an existing account may only happen while that account is
+# already logged in and explicitly asks for it.
+SOCIALACCOUNT_EMAIL_AUTHENTICATION = False
+SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = False
+SOCIALACCOUNT_AUTO_SIGNUP = True
+
+# Google has already verified the address it hands us, so re-verifying by e-mail
+# would be asking the user to prove something we were just told by the authority
+# on it. Password signups are unaffected (they don't go through allauth).
+SOCIALACCOUNT_EMAIL_VERIFICATION = "none"
+ACCOUNT_EMAIL_VERIFICATION = "none"
+ACCOUNT_LOGIN_METHODS = {"username", "email"}
+
+LOGIN_REDIRECT_URL = "/"
+ACCOUNT_LOGOUT_REDIRECT_URL = "/"
+ACCOUNT_SIGNUP_REDIRECT_URL = "/"
+SOCIALACCOUNT_LOGIN_ON_GET = True  # no interstitial "continue?" page
+
+# ---------------------------------------------------------------------------
+# django-axes: brute-force lockout on login.
+#
+# Why this exists alongside the DRF throttles: the throttles only cover the DRF
+# auth endpoints, so /admin/login/ — a plain Django view, and the highest-value
+# target on the site — had no rate limit at all. Axes hooks authenticate()
+# itself, so it covers the admin and the API login in one place.
+# ---------------------------------------------------------------------------
+AXES_FAILURE_LIMIT = 8
+# Lock out on the (IP, username) pair rather than IP alone: locking a bare IP
+# would let one attacker knock every user behind a shared NAT (school/office
+# wifi, mobile carriers) off the site — a denial-of-service handed to them for
+# free. Per-pair still stops password spraying against a single account.
+AXES_LOCKOUT_PARAMETERS = [["ip_address", "username"]]
+# Auto-expire the lockout so a locked-out real user isn't stuck waiting for an
+# admin. An attacker gets 8 tries an hour, which is useless for brute force.
+AXES_COOLOFF_TIME = timedelta(hours=1)
+# A successful login clears the failure count for that pair.
+AXES_RESET_ON_SUCCESS = True
+# Usernames are matched case-insensitively at login, so count them that way too.
+AXES_USERNAME_CALLABLE = lambda request, credentials: (  # noqa: E731
+    (credentials or {}).get("username") or request.POST.get("username") or ""
+).strip().lower()
+# Must agree with REST_FRAMEWORK["NUM_PROXIES"] — both derive from PROXY_COUNT
+# so they cannot drift apart. None in DEBUG (no proxy in front locally).
+AXES_IPWARE_PROXY_COUNT = None if DEBUG else PROXY_COUNT
+
+# Second layer: a failure counter for the *account*, over all IPs.
+#
+# The (IP, username) pair above — and the per-IP DRF throttles — only bound how
+# fast one attacker can guess. A stuffing run spread over 200 hosts, five guesses
+# each, trips neither. This counter does. See accounts/axes_handler.py.
+AXES_HANDLER = "accounts.axes_handler.AccountAwareAxesHandler"
+# Deliberately far above AXES_FAILURE_LIMIT: only cooperating hosts get here, and
+# a lockout that a real user can reach by fumbling would be a DoS on themselves.
+# 40 guesses/hour against one account is hopeless for an attacker.
+ACCOUNT_FAILURE_LIMIT = 40
+# An account lockout is a DoS lever by nature. Blunt it: an IP that logged in as
+# this user in the last 30 days keeps getting through while the flood runs, so the
+# victim's own device/network is unaffected.
+ACCOUNT_TRUSTED_IP_DAYS = 30
+AXES_IPWARE_META_PRECEDENCE_ORDER = ["HTTP_X_FORWARDED_FOR", "REMOTE_ADDR"]
+
+# CORS is a DEVELOPMENT-ONLY concern here.
+#
+# In production React is served same-origin by react_index, so the browser makes
+# no cross-origin requests at all and nothing needs to be allowed. In dev the
+# Vite server on :5173 calls Django on :8000, which does cross origins — hence
+# these two entries, and only these two.
+#
+# Previously this list also carried `capacitor://localhost` and `https://localhost`
+# for the (now cancelled) native app, unconditionally, in production, alongside
+# CORS_ALLOW_CREDENTIALS. `https://localhost` in particular is an origin any
+# process on a visitor's machine can serve from, so it had no business being a
+# production default. If a native client is ever revived, add its origin through
+# an env var scoped to production rather than reinstating a default.
+if DEBUG:
+    CORS_ALLOWED_ORIGINS = [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ]
+    CORS_ALLOW_CREDENTIALS = True
+    CSRF_TRUSTED_ORIGINS += ["http://localhost:5173", "http://127.0.0.1:5173"]
+else:
+    CORS_ALLOWED_ORIGINS = []
+    CORS_ALLOW_CREDENTIALS = False
+
+# Apply CORS handling to the API only.
+#
+# By default django-cors-headers processes every response, including /media/,
+# and stamps `Vary: origin` on each one. Cloudflare only varies its cache on
+# Accept-Encoding and treats other Vary values as uncacheable — so that header
+# alone can keep every image at `cf-cache-status: DYNAMIC`, sending 100% of
+# image traffic to the origin no matter what Cache-Control says.
+#
+# Safe: only XHR/fetch calls need CORS, and those all live under /api/. Images
+# rendered in <img> tags are not subject to CORS at all. This would only matter
+# if JS read an image via fetch()/canvas.
+CORS_URLS_REGEX = r"^/api/.*$"
+
+# Version of the privacy policy currently in force, stored alongside each
+# user's consent. Bump it (and the date in the React PrivacyPage) whenever the
+# document changes materially — that makes it visible which users agreed to the
+# old text and would need to re-confirm.
+PRIVACY_POLICY_VERSION = os.getenv("PRIVACY_POLICY_VERSION", "2026-07-22")
 
 ROOT_URLCONF = 'mysite.urls'
 
@@ -109,6 +503,127 @@ TEMPLATES = [
     },
 ]
 
+# The two generic throttle rates are env-overridable, the auth ones are not.
+#
+# Why: a load test from one machine hits `anon` (120/min = 2 req/s) long before
+# it hits the server, so measuring API capacity means lifting that ceiling for a
+# few minutes. Doing it by env means no code change and no new deploy — Render
+# restarts the service when the variable changes, and changing it back is the
+# same click. See loadtest/R2_BASELINE.md.
+#
+#   ANON_THROTTLE_RATE=600/min   raise it
+#   ANON_THROTTLE_RATE=off       disable that class of throttling entirely
+#
+# ⚠ While it is raised, the site's brute-force/scraping ceiling is raised for
+# EVERYONE, not just for the test. Put it back the moment the run finishes. The
+# auth endpoints (login/register/password reset) deliberately have no env knob —
+# those limits are a security control, not a tuning parameter, and there is no
+# load-testing reason to touch them.
+def _throttle_rate(env_name, default):
+    raw = (os.getenv(env_name) or default).strip()
+    return None if raw.lower() in {"off", "none", "0", ""} else raw
+
+
+ANON_THROTTLE_RATE = _throttle_rate("ANON_THROTTLE_RATE", "120/min")
+USER_THROTTLE_RATE = _throttle_rate("USER_THROTTLE_RATE", "300/min")
+
+REST_FRAMEWORK = {
+    # Session auth only. The frontend is served same-origin by react_index, so the
+    # session cookie reaches the API on its own and is HttpOnly — script running in
+    # the page cannot read it.
+    #
+    # TokenAuthentication used to sit here for the Capacitor app (a WebView can't
+    # rely on cookies). That app is cancelled, and a DRF token is a worse credential
+    # in every way that matters here: it is returned in a response body, never
+    # expires, and does NOT rotate on password change — so anyone who briefly holds
+    # a session could mint one that outlives both the session and the password reset.
+    #
+    # If a native client is ever revived it needs a token path again, but a
+    # short-lived refreshable one, not this permanent default.
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.SessionAuthentication',
+    ],
+    # Fail closed: an endpoint that forgets to declare permission_classes is
+    # locked to authenticated users, not silently public. Every genuinely public
+    # endpoint already declares AllowAny explicitly (a request without a session
+    # still reaches them), so this only affects a future view that forgets its
+    # guard — which should 403, not leak.
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    'EXCEPTION_HANDLER': 'mysite.drf.api_exception_handler',
+    # Baseline per-IP / per-user ceiling on every endpoint. Views that need a
+    # tighter limit (the auth endpoints) set their own throttle_classes, which
+    # replaces this rather than adding to it.
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle',
+    ],
+    # Per-IP limits for the anonymous auth endpoints (see accounts/api/throttles.py).
+    'DEFAULT_THROTTLE_RATES': {
+        'login': '10/min',
+        'register': '10/hour',
+        'password_reset': '5/hour',
+        # Each call makes us POST to Google, so this one is rate-limited well
+        # below the generic 'user' rate — a hot loop here is an outbound flood
+        # from our IP, not just load on us.
+        'form_submit': '20/hour',
+        # Checking the old password makes this a guessing surface for whoever
+        # got hold of a signed-in browser. Per user, not per IP.
+        'password_change': '10/hour',
+        # Generous: one SPA page load fans out into several requests, and
+        # visitors on shared/mobile NAT share an IP. Tune down once you've
+        # seen real traffic. Both are env-overridable — see _throttle_rate above.
+        'anon': ANON_THROTTLE_RATE,
+        'user': USER_THROTTLE_RATE,
+    },
+    # See PROXY_COUNT above — must match the real number of proxy hops, or the
+    # throttle keys on the wrong address.
+    'NUM_PROXIES': PROXY_COUNT,
+}
+
+# ── Google Forms: native rendering ────────────────────────────────────
+# OFF. Event sign-up hands out a plain link to Google (the survey modal on the
+# event page), which is where it started and where it is again.
+#
+# When on, leaderboard/google_form.py reads the form's questions off the public
+# respondent page and we draw them with our own inputs, posting answers back to
+# Google. That is nicer to look at and rests on two undocumented endpoints
+# Google can change without warning.
+#
+# Turning this back to "1" revives the BACKEND only. The sign-up page that
+# consumed it (frontend/src/pages/EventSignup/) was deleted, so a full revival
+# is: set this flag AND restore that directory plus its route in App.jsx from
+# commit 7d1ba78. Without the frontend half, nothing calls these endpoints.
+GOOGLE_FORM_NATIVE = os.getenv("GOOGLE_FORM_NATIVE", "") == "1"
+
+# The browsable API renders every endpoint as an HTML page listing its fields
+# and serializer forms. Handy locally, free API documentation for strangers in
+# production — so ship JSON only there.
+if not DEBUG:
+    REST_FRAMEWORK['DEFAULT_RENDERER_CLASSES'] = [
+        'rest_framework.renderers.JSONRenderer',
+    ]
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Game of Life API',
+    'DESCRIPTION': 'REST API for the Game of Life leaderboard platform.',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    # Group order + descriptions for the Swagger/ReDoc sidebar. The `tags=[...]`
+    # on each view (accounts/leaderboard api views) must match these names.
+    'TAGS': [
+        {'name': 'Auth', 'description': 'Login, registration, logout and password reset.'},
+        {'name': 'Profile', 'description': 'Public profiles and editing your own account.'},
+        {'name': 'Events', 'description': 'Events: listing, detail, management, RSVP, check-in and feedback.'},
+        {'name': 'Leaderboard', 'description': 'Rankings, seasons and player details.'},
+        {'name': 'Gallery', 'description': 'Photo gallery: uploading and liking photos.'},
+        {'name': 'Home', 'description': 'Landing-page data (stats, hero carousel).'},
+        {'name': 'Admin', 'description': 'Administrator-only reports.'},
+    ],
+}
+
 WSGI_APPLICATION = 'mysite.wsgi.application'
 
 
@@ -116,7 +631,9 @@ WSGI_APPLICATION = 'mysite.wsgi.application'
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 DATABASES = {
     'default': dj_database_url.config(
-        default=os.getenv("DATABASE_URL")
+        default=os.getenv("DATABASE_URL"),
+        # Reuse connections for up to 10 min instead of opening one per request.
+        conn_max_age=int(os.getenv("CONN_MAX_AGE", "600")),
     )
 }
 
@@ -125,18 +642,26 @@ DATABASES = {
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
 
+# A 4-character minimum with no other checks made "1234" a valid password,
+# which is what credential-stuffing bots try first. These four are Django's
+# defaults; the messages are already translated into Czech.
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-        'OPTIONS': {'min_length': 4},
+        'OPTIONS': {'min_length': 8},
     },
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
 ]
 
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.0/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+# 'cs' — the UI is Czech; DRF/Django validation messages surface directly in
+# the frontend forms, so they must come back localized, not in English.
+LANGUAGE_CODE = 'cs'
 
 TIME_ZONE = 'UTC'
 
@@ -154,16 +679,110 @@ CACHES = {
     }
 }
 
+# Tests share Redis with the running dev server, so cached responses written
+# by test fixtures (stats, hero, events list) would be served live for up to
+# their TTL. Use an in-process cache when running under `manage.py test`.
+if "test" in sys.argv:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        }
+    }
+    # Disable API throttling in the suite: throttle state lives in the cache and
+    # accumulates across tests (shared client IP), so rates would cause spurious
+    # 429s unrelated to the code under test. Scopes stay defined (setting them to
+    # None, not removing them, avoids ImproperlyConfigured); the throttle feature
+    # is covered explicitly by AuthThrottleTests via @override_settings.
+    REST_FRAMEWORK = {
+        **REST_FRAMEWORK,
+        "DEFAULT_THROTTLE_RATES": {
+            scope: None for scope in REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]
+        },
+    }
+    # Same reasoning for axes: failed-login attempts accumulate across tests
+    # (every test client shares 127.0.0.1), so the many deliberate bad-password
+    # cases in the suite would start locking each other out. The lockout
+    # behaviour itself is covered by AxesLockoutTests via @override_settings.
+    AXES_ENABLED = False
+
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
 STATIC_URL = '/static/'
+
+# Storage backends (Django 5 STORAGES API). This replaces the legacy
+# STATICFILES_STORAGE / DEFAULT_FILE_STORAGE settings — Django refuses to boot if
+# both the dict and either legacy setting are present, so neither is set below.
+#
+# Media default: local filesystem, UNLESS the MEDIA_S3_* vars are set AND
+# MEDIA_S3_ENABLED is on, in which case uploads and serving move to S3-compatible
+# object storage (Cloudflare R2 by default — zero egress, shares the Cloudflare
+# edge already in front of the site). Serving media off the web worker is the
+# point: Django's own serve view ties up a worker for the whole file transfer
+# (see mysite/urls.py). Leave the MEDIA_S3_* vars unset and behaviour is
+# byte-for-byte the previous local setup.
+#
+# ⚠ MEDIA_S3_ENABLED exists to make the cutover safe, and the two flags are
+# deliberately separate.
+#
+# The database stores each file's key relative to MEDIA_ROOT, and FileField.url
+# resolves it against whichever backend is active *right now*. So the moment the
+# S3 backend goes live, every existing image URL points at the bucket — whether
+# or not the bytes have been copied there yet. Flipping storage and migrating in
+# one step therefore means every photo on the site is broken for as long as the
+# upload takes.
+#
+# Splitting them removes that window entirely:
+#   1. set MEDIA_S3_* + MEDIA_S3_ENABLED=0  → credentials available, app still
+#      serving from disk, nothing user-visible changes
+#   2. run `manage.py migrate_media_to_s3` then `--verify`
+#   3. set MEDIA_S3_ENABLED=1               → files are already there
+_media_s3_options = None
+if os.getenv("MEDIA_S3_BUCKET"):
+    _media_s3_options = {
+        "bucket_name": os.environ["MEDIA_S3_BUCKET"],
+        "endpoint_url": os.environ["MEDIA_S3_ENDPOINT"],       # R2: https://<acct>.r2.cloudflarestorage.com
+        "access_key": os.environ["MEDIA_S3_ACCESS_KEY"],
+        "secret_key": os.environ["MEDIA_S3_SECRET_KEY"],
+        "region_name": os.getenv("MEDIA_S3_REGION", "auto"),   # R2 = "auto"
+        "custom_domain": os.getenv("MEDIA_S3_CUSTOM_DOMAIN") or None,  # e.g. img.gameofyolo.com
+        "querystring_auth": False,   # public bucket, clean immutable URLs
+        "default_acl": None,         # R2 ignores per-object ACLs
+        "file_overwrite": False,     # keep Django's collision suffixes for new uploads
+    }
+
+# Exported for migrate_media_to_s3, which needs to reach the bucket during step 2
+# above — while the active media backend is still the local filesystem.
+MEDIA_S3_OPTIONS = _media_s3_options
+# Default on when credentials exist, so an already-migrated deployment keeps
+# working without adding a second variable. Set it to 0 only during the cutover.
+MEDIA_S3_ENABLED = bool(_media_s3_options) and os.getenv("MEDIA_S3_ENABLED", "1") != "0"
+
+_media_storage = {"BACKEND": "django.core.files.storage.FileSystemStorage"}
+if MEDIA_S3_ENABLED:
+    _media_storage = {
+        "BACKEND": "storages.backends.s3.S3Storage",
+        "OPTIONS": _media_s3_options,
+    }
+
 if not DEBUG:
     STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
     # CompressedStaticFilesStorage (no manifest/hashing): simpler + forgiving.
     # Avoids "Missing staticfiles manifest entry" errors if anything is out of sync.
-    STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
+    _staticfiles_storage = {"BACKEND": "whitenoise.storage.CompressedStaticFilesStorage"}
+    # Serve the Vite build at the site root so its root-absolute references
+    # (/assets/*, /gallery/*, /logos/*, /fonts/*) resolve. WHITENOISE_INDEX_FILE
+    # stays off, so "/" and SPA routes fall through to the react_index view
+    # (which sets the CSRF cookie).
+    WHITENOISE_ROOT = os.path.join(STATIC_ROOT, 'react')
+else:
+    _staticfiles_storage = {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"}
+
+STORAGES = {
+    "default": _media_storage,
+    "staticfiles": _staticfiles_storage,
+}
 
 WHITENOISE_AUTOREFRESH = True
 
@@ -185,3 +804,92 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "Game of Yolo <noreply@gameofyolo.cz>")
+
+
+# ---------------------------------------------------------------------------
+# Logging
+#
+# Independent of Sentry on purpose: Render captures stdout, so tracebacks stay
+# readable in the dashboard even if Sentry is down, unconfigured, or over quota.
+# ---------------------------------------------------------------------------
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "{asctime} {levelname} {name} {message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": os.getenv("LOG_LEVEL", "INFO"),
+    },
+    "loggers": {
+        # Unhandled exceptions in views. Without this, a 500's traceback is
+        # invisible once DEBUG is off.
+        "django.request": {
+            "handlers": ["console"],
+            "level": "ERROR",
+            "propagate": False,
+        },
+        # Lockouts and repeated login failures — the audit trail for the
+        # brute-force protection above.
+        "axes": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+    },
+}
+
+
+# ---------------------------------------------------------------------------
+# Sentry error reporting.
+#
+# Deliberately env-var only, with no committed fallback: unlike the frontend
+# DSN (which necessarily ships inside the JS bundle and is public anyway), this
+# one is never exposed to clients, so committing it would turn a private
+# credential into a repo-readable one for no functional gain.
+#
+# Set SENTRY_DSN in Render's environment (and in djangotutorial/.env locally).
+# ---------------------------------------------------------------------------
+SENTRY_DSN = os.getenv("SENTRY_DSN", "")
+
+# Never report from the test suite: several tests raise on purpose (error
+# handling, the 500 path, the axes lockout), and with a DSN present in the
+# local .env every run would file those synthetic failures as real issues.
+if "test" in sys.argv:
+    SENTRY_DSN = ""
+
+if SENTRY_DSN:
+    import sentry_sdk
+
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        environment=os.getenv("SENTRY_ENVIRONMENT", "development" if DEBUG else "production"),
+        # NOT True (which is what Sentry's onboarding snippet suggests):
+        # send_default_pii=True attaches the request headers, cookies, client IP
+        # and the logged-in user to every event. For a Czech user base that
+        # means shipping personal data to a processor on every 500 — needing a
+        # legal basis and a much longer privacy-policy entry. Off, the events
+        # still carry the traceback, URL and view name, which is what actually
+        # helps debugging.
+        send_default_pii=False,
+        # Errors only. Performance tracing would burn the free-tier quota fast.
+        traces_sample_rate=0,
+        # Don't let a body sneak in through the request-data machinery.
+        max_request_body_size="never",
+    )
+elif not DEBUG and "test" not in sys.argv:
+    # Loud, but not fatal: missing monitoring shouldn't block a deploy.
+    print(
+        "WARNING: SENTRY_DSN is not set — server errors will not be reported.",
+        file=sys.stderr,
+    )

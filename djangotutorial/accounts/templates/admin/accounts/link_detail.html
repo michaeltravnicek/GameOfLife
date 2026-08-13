@@ -1,0 +1,68 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+<div id="content-main">
+
+  <h2>Hráč z archivu: {{ player.name }}</h2>
+  <ul>
+    <li>E-mail: <strong>{{ player.email|default:"—" }}</strong></li>
+    <li>Body: <strong>{{ player.total_points|default:0 }}</strong>
+        ({{ player.events_count|default:0 }} akcí)</li>
+    <li>Naposledy: {{ player.last_event_at|date:"j. n. Y"|default:"—" }}</li>
+  </ul>
+
+  <p style="margin:1.5em 0">
+    Přiřazením se tenhle hráč <strong>sloučí do hráče vybraného účtu</strong> —
+    body, odznaky i hodnocení přejdou na něj a tenhle řádek zmizí ze žebříčku.
+    Špatné přiřazení dá cizímu člověku cizí historii; u těsných shod radši ověř
+    jinak (Instagram, zeptej se). Sloučení jde vrátit.
+  </p>
+
+  {% if candidates %}
+    {% if candidates.0.ambiguous %}
+      <p style="padding:.7em 1em;background:#fdf2f2;border-left:4px solid #b32d2e">
+        ⚠ Dva nejlepší kandidáti jsou skoro stejně dobří. Nepotvrzuj podle skóre.
+      </p>
+    {% endif %}
+
+    <table style="width:100%">
+      <thead>
+        <tr>
+          <th>Účet</th>
+          <th>Jméno</th>
+          <th>E-mail</th>
+          <th>Shoda</th>
+          <th>Registrace</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for candidate in candidates %}
+        <tr>
+          <td><strong>{{ candidate.account.username }}</strong></td>
+          <td>{{ candidate.account.get_full_name|default:"—" }}</td>
+          <td>{{ candidate.account.email|default:"—" }}</td>
+          <td>{{ candidate.percent }} % <small>podle {{ candidate.signal_label }}</small></td>
+          <td>{{ candidate.account.date_joined|date:"j. n. Y" }}</td>
+          <td>
+            <form method="post" style="margin:0">
+              {% csrf_token %}
+              <input type="hidden" name="account_id" value="{{ candidate.account.pk }}">
+              <button type="submit" class="button">Sloučit</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p>Žádný dost podobný účet. Buď se ten člověk ještě nezaregistroval, nebo se
+       jméno účtu liší od jména ve formuláři — pak ho najdi ručně
+       v <a href="{% url 'admin:accounts_profile_changelist' %}">Profilech</a>.</p>
+  {% endif %}
+
+  <p style="margin-top:2em">
+    <a href="{% url 'admin:accounts_profile_link_list' %}">← Zpět na seznam</a>
+  </p>
+</div>
+{% endblock %}

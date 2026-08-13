@@ -1,0 +1,61 @@
+@import './page-bg.css';
+@import './reveal.css';
+@import './shared-ui.css';
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body,#root{min-height:100%;width:100%}
+html{background:var(--color-dark-brown)}
+body{font-family:var(--font-body);color:var(--color-cream-light);background:transparent;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;overflow-x:hidden}
+a{color:inherit}
+img{max-width:100%;display:block}
+button{font-family:inherit}
+.app-shell{min-height:100vh;width:100%;display:flex;flex-direction:column}
+.app-main{flex:1;width:100%}
+
+/* ── Keyboard focus ────────────────────────────────────────────────────────
+   Several inputs set `outline:none` and replace it with a border-colour shift
+   (see FormInput, SearchInput, the gallery upload fields). That reads fine with
+   a mouse and badly with a keyboard: a colour change on a 1.5px border is a
+   weak "where am I", and one of them — .ep-combo .gol-input — removed the
+   outline with no replacement at all.
+
+   So: one visible ring for everything reached by keyboard. :focus-visible, not
+   :focus, so it never fires on a mouse click. Placed here rather than patched
+   into each file so a new component inherits it by default; anything that
+   genuinely wants its own treatment can still override locally. */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-pink);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+/* The dashed-frame inputs already draw a pink outline on focus and set their
+   own offset; a second ring on top of it just looks like a mistake. */
+:where(.gol-input, .gol-textarea):focus-visible { outline-offset: var(--frame-gap, 4px); border-radius: 9px }
+
+/* Skip link — the nav has ~8 items before the content starts, so keyboard and
+   screen-reader users get a way past it. Off-screen until focused. */
+.gol-skip-link{position:absolute;left:50%;transform:translateX(-50%) translateY(-200%);z-index:1000;padding:12px 22px;background:var(--color-pink);color:var(--color-white);font-family:var(--font-mono);font-size:13px;letter-spacing:.1em;text-transform:uppercase;border-radius:0 0 10px 10px;transition:transform .18s}
+.gol-skip-link:focus{transform:translateX(-50%) translateY(0)}
+
+/* ── Label type utilities ──────────────────────────────────────────────────
+   The mono + italic pair appears in 122 rules across the page/component CSS,
+   and uppercase in ~90 of them. Those three declarations are the whole shared
+   part of the "label / eyebrow / meta" look — font-size and letter-spacing
+   genuinely vary per context (18+ combinations), so they stay on the local
+   class. Put `u-label` (or `u-mono` when it shouldn't be uppercased) on the
+   element and let the local class carry only the size/spacing/colour delta. */
+.u-mono{font-family:var(--font-mono);font-style:italic}
+.u-label{font-family:var(--font-mono);font-style:italic;text-transform:uppercase}
+
+/* ── Mobile: stop the decorative full-bleed backgrounds from pinning to the
+   viewport. On phones a position:fixed layer is re-laid-out every time the URL
+   bar shows/hides while scrolling, which reads as a jarring "jump/click". Anchor
+   them to their (full-height) page root with position:absolute so they scroll
+   naturally with the page, and drop the scale()+filter compositing that makes
+   each scroll frame expensive to repaint. Desktop is untouched. ── */
+@media (max-width:768px){
+  .auth-page,.feedbacks-page,.event-page,.leaderboard-page,.gallery-page,
+  .player-page,.events-page,.historie-page,.obodech-page,.editprofile-page{position:relative}
+
+  .stage,.grain,.ev-stage,.ev-grain,.ep-stage,.ep-grain,.bg-texture,
+  .page-stage,.page-grain{position:absolute;transform:none;filter:none}
+}

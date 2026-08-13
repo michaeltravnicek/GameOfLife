@@ -1,0 +1,33 @@
+/* Symmetric rank/points columns (same width, both centred) + equal left/right
+   padding (--lb-pad-x) so the row's outer gaps read identical on both sides.
+   The divider reuses --lb-pad-x so it always lines up with the content. */
+.player-row{--lb-pad-x:24px;position:relative;display:grid;grid-template-columns:52px 1fr 52px;align-items:center;gap:14px;padding:10px var(--lb-pad-x);transition:background .18s,transform .18s;text-decoration:none;color:inherit;cursor:pointer}
+/* Rounded ("oblouky") dashes: 14px dash + 12px gap, round caps, via repeated SVG */
+.player-row::after{content:'';position:absolute;left:var(--lb-pad-x);right:var(--lb-pad-x);bottom:0;height:3px;background:left bottom/16px 3px repeat-x url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='3'%3E%3Cline x1='1.5' y1='1.5' x2='7.5' y2='1.5' stroke='%23fff1d4' stroke-opacity='0.3' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E")}
+.player-row:last-child::after{display:none}
+.player-row:hover{background:var(--alpha-cream-05);transform:translateX(2px)}
+.player-row .pr-rk{text-align:center;font-family:var(--font-display);font-size:24px;letter-spacing:.03em;color:rgba(255,241,212,.6);line-height:1}
+.player-row .pr-rk-medal{font-size:20px;line-height:1}
+.player-row .pr-nm{display:flex;align-items:center;gap:12px;padding-left:12px;font-family:var(--font-hv);font-size:15px;color:var(--color-white);font-weight:400;min-width:0}
+.player-row .pr-nm .avatar{border-style:solid;border-color:rgba(255,255,255,.9)}
+.player-row .pr-txt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.player-row .pr-pt{text-align:center;font-family:var(--font-display);font-size:24px;letter-spacing:.03em;color:var(--color-heading)}
+
+@media(max-width:640px){
+  .player-row{--lb-pad-x:16px;grid-template-columns:44px 1fr 44px;gap:10px}
+}
+@media(max-width:560px){
+  .player-row{--lb-pad-x:14px;grid-template-columns:40px 1fr 40px;gap:8px}
+  .player-row .pr-pt{font-size:18px}
+}
+@media(max-width:375px){
+  .player-row{--lb-pad-x:12px;grid-template-columns:34px 1fr 34px;gap:6px}
+  .player-row .pr-rk{font-size:18px}
+  .player-row .pr-pt{font-size:15px}
+  .player-row .pr-nm{font-size:13px;gap:8px}
+}
+@media(max-width:320px){
+  .player-row{--lb-pad-x:10px;grid-template-columns:30px 1fr 30px;gap:4px}
+  .player-row .pr-rk{font-size:15px}
+  .player-row .pr-pt{font-size:13px}
+}

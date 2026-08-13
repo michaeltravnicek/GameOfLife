@@ -1,0 +1,588 @@
+import re
+
+from drf_spectacular.utils import extend_schema_field
+from rest_framework import serializers
+
+from leaderboard.image_utils import ALLOWED_IMAGE_CONTENT_TYPES, MAX_UPLOAD_BYTES, variant_url
+from leaderboard.models import Badge, Category, Event, EventFeedback, EventRSVP, ImageToEvent, UserPhoto
+from leaderboard.privacy import public_handle
+
+# Badge artwork may be SVG (vector) as well as raster — unlike the poster
+# `image`, which is downscaled by Pillow on save and so must stay a raster
+# format.
+_ALLOWED_LOGO_CONTENT_TYPES = ALLOWED_IMAGE_CONTENT_TYPES | {"image/svg+xml"}
+
+
+# SVG is XML, and a browser rendering it as a top-level document will execute
+# any <script>, on*= handler, javascript: URL or <foreignObject> HTML it carries
+# — i.e. stored XSS on our origin if the file is ever opened directly. Badges are
+# admin-only, and media is ideally served off a separate origin, but this is
+# cheap defence in depth. Denylist, not a full sanitiser: it blocks the known
+# active-content vectors rather than proving the file inert.
+_SVG_ACTIVE_CONTENT_RE = re.compile(
+    r"<\s*script\b|<\s*foreignobject\b|javascript\s*:|\bon\w+\s*=|<!ENTITY\b",
+    re.IGNORECASE,
+)
+
+
+def _svg_looks_active(uploaded):
+    """True if an uploaded SVG carries script / event-handler / entity content."""
+    try:
+        uploaded.seek(0)
+        data = uploaded.read()
+        uploaded.seek(0)
+    except Exception:  # noqa: BLE001 — unreadable stream: let the caller reject it elsewhere
+        return False
+    if isinstance(data, bytes):
+        data = data.decode("utf-8", "ignore")
+    return bool(_SVG_ACTIVE_CONTENT_RE.search(data))
+
+
+def validate_logo_file(uploaded):
+    """Content-type + size guard for badge artwork — no Pillow decode, so SVG passes.
+
+    ModelSerializer would otherwise map Badge.image to an ImageField that
+    Pillow-verifies the file and rejects SVG.
+    """
+    content_type = (getattr(uploaded, "content_type", "") or "").lower()
+    if content_type and content_type not in _ALLOWED_LOGO_CONTENT_TYPES:
+        raise serializers.ValidationError(
+            "Logo musí být PNG, JPG, WEBP, GIF nebo SVG.")
+    if (getattr(uploaded, "size", 0) or 0) > MAX_UPLOAD_BYTES:
+        raise serializers.ValidationError("Logo je příliš velké (max 15 MB).")
+    name = (getattr(uploaded, "name", "") or "").lower()
+    if (content_type == "image/svg+xml" or name.endswith(".svg")) and _svg_looks_active(uploaded):
+        raise serializers.ValidationError(
+            "SVG nesmí obsahovat skripty ani aktivní obsah.")
+
+
+def _badge_image_url(obj, request):
+    """Absolute URL of the event's badge artwork — the event's logo."""
+    badge = obj.badge
+    if not badge or not badge.image:
+        return None
+    url = badge.image.url
+    return request.build_absolute_uri(url) if request else url
+
+
+class BadgeSerializer(serializers.ModelSerializer):
+    """A badge as the event form's logo picker and the profile collection see it."""
+    image = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Badge
+        fields = ["id", "name", "slug", "image", "image_scale", "description"]
+
+    def get_image(self, obj) -> str | None:
+        if not obj.image:
+            return None
+        request = self.context.get("request")
+        url = obj.image.url
+        return request.build_absolute_uri(url) if request else url
+
+
+class BadgeWriteSerializer(serializers.ModelSerializer):
+    """Input side of badge creation — the one place event artwork is uploaded now.
+
+    `image` is a FileField rather than the auto ImageField for the same reason
+    the old event logo was: Pillow-verification rejects SVG, and a good half of
+    the logos are vector.
+    """
+    name = serializers.CharField(max_length=255)
+    image = serializers.FileField(required=False, allow_null=True,
+                                  validators=[validate_logo_file])
+    image_scale = serializers.FloatField(min_value=0.1, max_value=5.0, required=False)
+
+    class Meta:
+        model = Badge
+        fields = ["name", "image", "image_scale", "description"]
+
+
+class UserPhotoOutSerializer(serializers.Serializer):
+    """Shape of one community photo embedded in an event's `user_photos`."""
+    url = serializers.URLField()
+    uploaded_by = serializers.CharField()
+    caption = serializers.CharField()
+
+
+class CategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Category
+        fields = ["id", "name"]
+
+
+class CategoryWriteSerializer(serializers.ModelSerializer):
+    """Input side of category creation — the event form's "new category" field.
+
+    `name` is unique on the model, but the model's uniqueness is case-sensitive
+    while people aren't: "Sport" and "sport" would become two chips that mean the
+    same thing. So the check here is case-insensitive, and a duplicate is a 400
+    telling the author to pick the chip that already exists.
+    """
+    name = serializers.CharField(max_length=50, trim_whitespace=True)
+
+    class Meta:
+        model = Category
+        fields = ["name"]
+
+    def validate_name(self, value):
+        name = value.strip()
+        if not name:
+            raise serializers.ValidationError("Zadej název kategorie.")
+        if Category.objects.filter(name__iexact=name).exists():
+            raise serializers.ValidationError("Kategorie s tímto názvem už existuje.")
+        return name
+
+
+class EventListSerializer(serializers.ModelSerializer):
+    image = serializers.SerializerMethodField()
+    # `logo` / `logo_scale` are now derived from the linked badge. The keys stay
+    # in the response on purpose: the artwork moved, what a card renders did not.
+    logo = serializers.SerializerMethodField()
+    logo_scale = serializers.SerializerMethodField()
+    is_past = serializers.SerializerMethodField()
+    category = CategorySerializer(read_only=True)
+
+    class Meta:
+        model = Event
+        fields = [
+            "id", "slug", "name", "description", "place",
+            "date", "time_tbd", "points", "image", "logo", "logo_scale",
+            "badge_id", "capacity", "is_past", "category",
+            "visible_to_users", "visible_to_close",
+        ]
+
+    def get_image(self, obj) -> str | None:
+        if not obj.image:
+            return None
+        request = self.context.get("request")
+        url = obj.image.url
+        return request.build_absolute_uri(url) if request else url
+
+    def get_logo(self, obj) -> str | None:
+        return _badge_image_url(obj, self.context.get("request"))
+
+    def get_logo_scale(self, obj) -> float:
+        return obj.badge.image_scale if obj.badge else 1.0
+
+    def get_is_past(self, obj) -> bool:
+        from django.utils import timezone
+        return bool(obj.date and obj.date < timezone.now())
+
+
+class EventDetailSerializer(serializers.ModelSerializer):
+    image = serializers.SerializerMethodField()
+    image_mobile = serializers.SerializerMethodField()
+    logo = serializers.SerializerMethodField()
+    logo_scale = serializers.SerializerMethodField()
+    badge = BadgeSerializer(read_only=True)
+    is_past = serializers.SerializerMethodField()
+    rsvp_count = serializers.SerializerMethodField()
+    attendee_count = serializers.SerializerMethodField()
+    is_full = serializers.SerializerMethodField()
+    has_rsvp = serializers.SerializerMethodField()
+    has_attended = serializers.SerializerMethodField()
+    feedback_given = serializers.SerializerMethodField()
+    official_images = serializers.SerializerMethodField()
+    user_photos = serializers.SerializerMethodField()
+    category = CategorySerializer(read_only=True)
+
+    class Meta:
+        model = Event
+        fields = [
+            "id", "slug", "name", "description", "place", "date", "time_tbd", "end_date",
+            "points", "image", "image_mobile", "logo", "logo_scale", "badge",
+            "rules", "capacity",
+            "latitude", "longitude", "category",
+            "survey_url", "whatsapp_url", "visible_to_users", "visible_to_close",
+            "is_past", "rsvp_count", "attendee_count", "is_full", "has_rsvp",
+            "has_attended", "feedback_given",
+            "official_images", "user_photos",
+        ]
+
+    def _abs(self, image_field):
+        if not image_field:
+            return None
+        request = self.context.get("request")
+        url = image_field.url
+        return request.build_absolute_uri(url) if request else url
+
+    def get_image(self, obj) -> str | None:
+        return self._abs(obj.image)
+
+    def get_image_mobile(self, obj) -> str | None:
+        return variant_url(obj.image, self.context.get("request"))
+
+    def get_logo(self, obj) -> str | None:
+        return _badge_image_url(obj, self.context.get("request"))
+
+    def get_logo_scale(self, obj) -> float:
+        return obj.badge.image_scale if obj.badge else 1.0
+
+    def get_is_past(self, obj) -> bool:
+        from django.utils import timezone
+        return bool(obj.date and obj.date < timezone.now())
+
+    def _rsvp_count(self, obj):
+        # Memoize per instance — rsvp_count + is_full both need it.
+        if not hasattr(obj, "_cached_rsvp_count"):
+            obj._cached_rsvp_count = obj.rsvps.count()
+        return obj._cached_rsvp_count
+
+    def get_rsvp_count(self, obj) -> int:
+        return self._rsvp_count(obj)
+
+    def get_attendee_count(self, obj) -> int:
+        # Real attendance (UserToEvent), distinct from rsvp_count (intentions).
+        from leaderboard.models import UserToEvent
+        return UserToEvent.objects.filter(event=obj).count()
+
+    def get_is_full(self, obj) -> bool:
+        if obj.capacity is None:
+            return False
+        return self._rsvp_count(obj) >= obj.capacity
+
+    def get_has_rsvp(self, obj) -> bool:
+        request = self.context.get("request")
+        if not request or not request.user.is_authenticated:
+            return False
+        return EventRSVP.objects.filter(auth_user=request.user, event=obj).exists()
+
+    def get_has_attended(self, obj) -> bool:
+        request = self.context.get("request")
+        if not request or not request.user.is_authenticated:
+            return False
+        from accounts.models import Profile
+        from leaderboard.models import UserToEvent
+        try:
+            lb_user = request.user.profile.leaderboard_user
+        except (AttributeError, Profile.DoesNotExist):
+            return False
+        if lb_user is None:
+            return False
+        return UserToEvent.objects.filter(user=lb_user, event=obj).exists()
+
+    def get_feedback_given(self, obj) -> bool:
+        request = self.context.get("request")
+        if not request or not request.user.is_authenticated:
+            return False
+        from accounts.models import Profile  # local import — avoid app-load cycle
+
+        try:
+            lb_user = request.user.profile.leaderboard_user
+        except (AttributeError, Profile.DoesNotExist):
+            return False
+        if lb_user is None:
+            return False
+        return EventFeedback.objects.filter(user=lb_user, event=obj).exists()
+
+    @extend_schema_field(serializers.ListField(child=serializers.URLField()))
+    def get_official_images(self, obj):
+        request = self.context.get("request")
+        return [
+            request.build_absolute_uri(img.image.url) if request else img.image.url
+            for img in ImageToEvent.objects.filter(event=obj)
+            if img.image
+        ]
+
+    @extend_schema_field(UserPhotoOutSerializer(many=True))
+    def get_user_photos(self, obj):
+        request = self.context.get("request")
+        return [
+            {
+                "url": request.build_absolute_uri(p.image.url) if request else p.image.url,
+                # Never fall back to the raw username — it's the e-mail for social
+                # logins. Real name, then a safe handle, then a neutral label.
+                "uploaded_by": (
+                    p.auth_user.get_full_name()
+                    or public_handle(p.auth_user.username)
+                    or "Hráč"
+                ),
+                "caption": p.caption,
+            }
+            for p in UserPhoto.objects.filter(event=obj).select_related("auth_user")
+            if p.image
+        ]
+
+
+class FeedbackSerializer(serializers.Serializer):
+    rating = serializers.IntegerField(min_value=1, max_value=10)
+    # default="" so an omitted comment still lands in validated_data — the view
+    # feeds validated_data into update_or_create(defaults=...), and a missing
+    # key there would silently keep the old comment instead of clearing it.
+    comment = serializers.CharField(max_length=1000, allow_blank=True, default="")
+
+
+class CheckinSerializer(serializers.Serializer):
+    latitude = serializers.FloatField(min_value=-90, max_value=90)
+    longitude = serializers.FloatField(min_value=-180, max_value=180)
+
+
+class PhotoUploadSerializer(serializers.Serializer):
+    # FileField, not ImageField: image_utils.validate_upload() is the single
+    # authority on upload validity (content-type + size), called inside
+    # create_user_photo. ImageField would additionally Pillow-decode here,
+    # a stricter contract than the rest of the codebase applies.
+    image = serializers.FileField()
+    event = serializers.CharField(required=False, allow_blank=True, default="")
+    caption = serializers.CharField(max_length=255, allow_blank=True, default="")
+
+
+class _BlankToNone:
+    """Field mixin: treat "" as null.
+
+    Multipart forms can't send a real null — clearing an optional field arrives
+    as an empty string, which DateTimeField/IntegerField/FloatField would reject.
+    """
+    def validate_empty_values(self, data):
+        if data == "":
+            data = None
+        return super().validate_empty_values(data)
+
+
+class BlankableDateTimeField(_BlankToNone, serializers.DateTimeField):
+    pass
+
+
+class BlankableIntegerField(_BlankToNone, serializers.IntegerField):
+    pass
+
+
+class BlankableFloatField(_BlankToNone, serializers.FloatField):
+    pass
+
+
+class EventWriteSerializer(serializers.ModelSerializer):
+    """Input side of event create (POST, full) and update (PATCH, partial).
+
+    Fields are declared explicitly where the API contract differs from the
+    model: `name` is required here (the model has a default), `date` is
+    optional here (the model requires it but the UI treats it as optional),
+    and nullable fields accept "" as "clear". Everything else (rules,
+    survey_url, visibility flags, image) is derived from the model.
+
+    There is no `logo` upload any more: the logo is the linked badge's artwork,
+    so the form picks a `badge` id. Creating new artwork means creating a badge
+    (POST /badges/), which is what keeps one file from being stored once per
+    event.
+    """
+    name = serializers.CharField(max_length=255)
+    date = BlankableDateTimeField(required=False, allow_null=True)
+    end_date = BlankableDateTimeField(required=False, allow_null=True)
+    points = serializers.IntegerField(min_value=0, default=0)
+    capacity = BlankableIntegerField(min_value=0, required=False, allow_null=True)
+    latitude = BlankableFloatField(min_value=-90, max_value=90,
+                                   required=False, allow_null=True)
+    longitude = BlankableFloatField(min_value=-180, max_value=180,
+                                    required=False, allow_null=True)
+    checkin_radius = serializers.IntegerField(min_value=10, max_value=50000,
+                                              required=False)
+    # allow_null so the form can clear the logo; the multipart form sends "" for
+    # an empty select, which BlankableIntegerField-style coercion doesn't cover
+    # for relations — hence the explicit empty-string handling in to_internal_value.
+    badge = serializers.PrimaryKeyRelatedField(
+        queryset=Badge.objects.all(), required=False, allow_null=True)
+
+    class Meta:
+        model = Event
+        fields = [
+            "name", "description", "place", "date", "time_tbd", "end_date", "points",
+            "capacity", "rules", "survey_url", "whatsapp_url", "visible_to_users",
+            "visible_to_close", "latitude", "longitude", "checkin_radius",
+            "category", "image", "badge",
+        ]
+
+    def to_internal_value(self, data):
+        # A <select> with nothing chosen posts "" in multipart form data, which
+        # PrimaryKeyRelatedField rejects as an invalid pk. Treat it as "clear".
+        if hasattr(data, "copy") and data.get("badge", None) == "":
+            data = data.copy()
+            data["badge"] = None
+        return super().to_internal_value(data)
+
+    def validate(self, attrs):
+        # Same pairing rule as Event.clean() — DRF never calls model.clean(),
+        # so it lives here too. On PATCH, fall back to the instance's values
+        # so sending just one coordinate can't break the pair.
+        lat = attrs.get("latitude", getattr(self.instance, "latitude", None))
+        lon = attrs.get("longitude", getattr(self.instance, "longitude", None))
+        if (lat is None) != (lon is None):
+            raise serializers.ValidationError(
+                "Zadej zeměpisnou šířku i délku, nebo ani jednu.")
+        return attrs
+
+
+# --- Read-response serializers (document what GET endpoints return) ---
+# These mirror the dicts built in leaderboard.services; they exist for the API
+# schema, not for runtime serialization (the views return the service dicts).
+
+class SeasonSerializer(serializers.Serializer):
+    """A season (leaderboard.services.catalog.season_dict)."""
+    id = serializers.IntegerField()
+    name = serializers.CharField()
+    start = serializers.DateField()
+    end = serializers.DateField()
+    is_active = serializers.BooleanField()
+
+
+class SeasonsResponseSerializer(serializers.Serializer):
+    seasons = SeasonSerializer(many=True)
+
+
+class LeaderboardEntrySerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    name = serializers.CharField()
+    rank = serializers.IntegerField()
+    total_points = serializers.IntegerField()
+    events_count = serializers.IntegerField()
+    profile_username = serializers.CharField(allow_null=True, help_text="Linked account, if any.")
+    photo = serializers.URLField(allow_null=True)
+
+
+class LeaderboardResponseSerializer(serializers.Serializer):
+    season = SeasonSerializer(allow_null=True, help_text="null for the all-time board.")
+    entries = LeaderboardEntrySerializer(many=True)
+
+
+class StatsResponseSerializer(serializers.Serializer):
+    players = serializers.IntegerField()
+    events = serializers.IntegerField()
+    points = serializers.IntegerField()
+
+
+class HeroEventSerializer(serializers.Serializer):
+    url = serializers.URLField()
+    name = serializers.CharField()
+    date = serializers.DateTimeField(allow_null=True)
+    slug = serializers.CharField()
+
+
+class HeroResponseSerializer(serializers.Serializer):
+    hero_events = HeroEventSerializer(many=True)
+
+
+class CheckinEventSerializer(serializers.Serializer):
+    slug = serializers.CharField()
+    name = serializers.CharField()
+    date = serializers.DateTimeField(allow_null=True)
+    points = serializers.IntegerField()
+    latitude = serializers.FloatField()
+    longitude = serializers.FloatField()
+    checkin_radius = serializers.IntegerField()
+    checkin_window_end = serializers.DateTimeField(allow_null=True)
+
+
+class CheckinEventsResponseSerializer(serializers.Serializer):
+    events = CheckinEventSerializer(many=True)
+
+
+class CategoriesResponseSerializer(serializers.Serializer):
+    categories = CategorySerializer(many=True)
+
+
+class _PlayerEventSerializer(serializers.Serializer):
+    slug = serializers.CharField()
+    name = serializers.CharField()
+    place = serializers.CharField()
+    date = serializers.DateTimeField(allow_null=True)
+    points = serializers.IntegerField()
+    category = CategorySerializer(allow_null=True)
+
+
+class _PlayerSeasonSummarySerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    label = serializers.CharField()
+    start = serializers.DateField()
+    end = serializers.DateField()
+    is_active = serializers.BooleanField()
+    season_pts = serializers.IntegerField()
+    rank = serializers.IntegerField(allow_null=True)
+
+
+class PlayerDetailSerializer(serializers.Serializer):
+    """Public leaderboard-player profile (leaderboard.services.player_payload).
+
+    Honours the linked account's privacy flags exactly as `/profiles/<username>/`
+    does -- same person, different lookup key. Gated sections are omitted rather
+    than zeroed; read `hidden` to tell "withheld" from "genuinely none".
+    """
+    id = serializers.IntegerField()
+    name = serializers.CharField()
+    profile_username = serializers.CharField(allow_null=True, help_text="Linked account, if any.")
+    hidden = serializers.ListField(
+        child=serializers.ChoiceField(choices=["points", "events"]),
+        help_text='Sections withheld by the player\'s privacy flags.')
+    total_points = serializers.IntegerField(required=False)
+    events_count = serializers.IntegerField(required=False)
+    rank = serializers.IntegerField(allow_null=True, required=False)
+    events = _PlayerEventSerializer(many=True, required=False)
+    seasons = _PlayerSeasonSummarySerializer(many=True, required=False)
+
+
+class GalleryPhotoSerializer(serializers.Serializer):
+    url = serializers.URLField()
+    url_mobile = serializers.URLField(allow_null=True)
+    event_name = serializers.CharField(allow_blank=True)
+    event_slug = serializers.CharField(allow_blank=True)
+    event_date = serializers.DateTimeField(allow_null=True)
+    is_user_photo = serializers.BooleanField()
+    uploaded_by = serializers.CharField(allow_blank=True)
+
+
+class GalleryResponseSerializer(serializers.Serializer):
+    photos = GalleryPhotoSerializer(many=True)
+    count = serializers.IntegerField()
+    has_more = serializers.BooleanField()
+
+
+class _AdminFeedbackUserSerializer(serializers.Serializer):
+    name = serializers.CharField()
+    attended_events = serializers.IntegerField()
+
+
+class _AdminFeedbackEventSerializer(serializers.Serializer):
+    slug = serializers.CharField()
+    name = serializers.CharField()
+    date = serializers.DateTimeField(allow_null=True)
+
+
+class AdminFeedbackSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    rating = serializers.IntegerField()
+    comment = serializers.CharField(allow_blank=True)
+    created_at = serializers.DateTimeField()
+    updated_at = serializers.DateTimeField()
+    user = _AdminFeedbackUserSerializer()
+    event = _AdminFeedbackEventSerializer()
+
+
+class AdminFeedbacksResponseSerializer(serializers.Serializer):
+    feedbacks = AdminFeedbackSerializer(many=True)
+
+
+# --- Admin: attendance + RSVP management for one event ---
+
+class AttendeeSerializer(serializers.Serializer):
+    user_id = serializers.IntegerField(help_text="Leaderboard user id (see /players/<id>/).")
+    name = serializers.CharField()
+    points = serializers.IntegerField()
+    profile_username = serializers.CharField(allow_null=True, help_text="Linked account, if any.")
+
+
+class AttendeesResponseSerializer(serializers.Serializer):
+    attendees = AttendeeSerializer(many=True)
+
+
+class AttendeeWriteSerializer(serializers.Serializer):
+    points = serializers.IntegerField(min_value=0)
+
+
+class RsvpEntrySerializer(serializers.Serializer):
+    auth_user_id = serializers.IntegerField()
+    name = serializers.CharField()
+    username = serializers.CharField()
+    created_at = serializers.DateTimeField()
+
+
+class RsvpsResponseSerializer(serializers.Serializer):
+    rsvps = RsvpEntrySerializer(many=True)
