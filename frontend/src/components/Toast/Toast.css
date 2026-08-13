@@ -8,7 +8,7 @@
    override below only has to restate those two values. Padding is symmetric —
    the old 18/20/18/18 plus the close button's own 4px made the right gutter
    read 6px wider than the left. */
-.toast{--toast-pad:18px;--toast-icon:32px;pointer-events:auto;display:flex;align-items:flex-start;gap:14px;padding:var(--toast-pad);border-radius:14px;border:1.5px dashed var(--alpha-cream-30);background:var(--alpha-dark-95);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:0 14px 38px rgba(0,0,0,.55);color:var(--color-cream-light);font-family:var(--font-body);font-size:15px;line-height:1.5;animation:toast-in .28s cubic-bezier(.22,.68,0,1.2) both}
+.toast{--toast-pad:18px;--toast-icon:32px;pointer-events:auto;display:flex;align-items:flex-start;gap:14px;padding:var(--toast-pad);border-radius:14px;border:1.5px dashed var(--alpha-cream-30);background:var(--alpha-dark-95);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:0 14px 38px rgba(0,0,0,.55);color:var(--color-cream-light);font-family:var(--font-body);font-size:15px;line-height:1.5;animation:toast-in .28s cubic-bezier(.22,.68,0,1.2) both}
 
 .toast-icon{flex-shrink:0;width:var(--toast-icon);height:var(--toast-icon);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-weight:700;font-size:16px;line-height:1}
 /* min-height = icon height, so a message-only toast centres its single line

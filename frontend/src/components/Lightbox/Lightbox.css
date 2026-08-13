@@ -38,7 +38,7 @@
 .lb-nav-next{right:28px}
 .lb-info{position:absolute;bottom:18px;left:0;right:0;display:flex;flex-direction:column;align-items:center;gap:10px;padding:0 80px;pointer-events:none}
 .lb-info-title{font-size:13px;letter-spacing:.16em;color:var(--alpha-cream-80);text-align:center;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.lb-info-credit{display:inline-flex;align-items:center;gap:8px;padding:7px 16px 7px 14px;background:var(--alpha-dark-80);border:1.5px dashed var(--alpha-cream-55);border-radius:9999px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);box-shadow:0 6px 20px var(--alpha-black-45);pointer-events:auto}
+.lb-info-credit{display:inline-flex;align-items:center;gap:8px;padding:7px 16px 7px 14px;background:var(--alpha-dark-80);border:1.5px dashed var(--alpha-cream-55);border-radius:9999px;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);box-shadow:0 6px 20px var(--alpha-black-45);pointer-events:auto}
 .lb-info-cam{font-size:14px;line-height:1}
 .lb-info-credit-label{font-size:11px;letter-spacing:.18em;color:rgba(255,241,212,.6)}
 .lb-info-credit-name{font-family:var(--font-body);font-weight:700;font-size:13.5px;letter-spacing:.02em;color:var(--color-cream-light)}
@@ -46,7 +46,7 @@
 /* Like button — same pill as the credit chip, so the info bar keeps one shape.
    .lb-info is pointer-events:none (it must not eat backdrop clicks that close
    the lightbox), so the button opts itself back in. */
-.lb-like{display:inline-flex;align-items:center;gap:8px;padding:7px 16px;background:var(--alpha-dark-80);border:1.5px dashed var(--alpha-cream-55);border-radius:9999px;color:var(--alpha-cream-80);font-family:var(--font-mono);font-size:13px;line-height:1;cursor:pointer;pointer-events:auto;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);box-shadow:0 6px 20px var(--alpha-black-45);transition:border-color .18s,color .18s,transform .12s}
+.lb-like{display:inline-flex;align-items:center;gap:8px;padding:7px 16px;background:var(--alpha-dark-80);border:1.5px dashed var(--alpha-cream-55);border-radius:9999px;color:var(--alpha-cream-80);font-family:var(--font-mono);font-size:13px;line-height:1;cursor:pointer;pointer-events:auto;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);box-shadow:0 6px 20px var(--alpha-black-45);transition:border-color .18s,color .18s,transform .12s}
 .lb-like:hover{border-color:var(--color-pink);color:var(--color-cream-light)}
 .lb-like:active{transform:scale(.94)}
 .lb-like.is-liked{border-style:solid;border-color:var(--color-pink);color:var(--color-pink)}

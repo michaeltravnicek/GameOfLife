@@ -6,7 +6,7 @@
 @media(max-width:900px){.checkin-banners{top:calc(96px + env(safe-area-inset-top,0px))}}
 @media(max-width:480px){.checkin-banners{top:calc(84px + env(safe-area-inset-top,0px))}}
 
-.checkin-banner{pointer-events:auto;display:flex;align-items:center;gap:14px;padding:13px 14px 13px 16px;border-radius:14px;border:1.5px dashed var(--alpha-cream-30);background:rgba(26,15,10,.9);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:0 14px 38px var(--alpha-black-45);color:var(--color-cream-light);animation:checkin-banner-in .5s cubic-bezier(.22,.68,0,1.2) both}
+.checkin-banner{pointer-events:auto;display:flex;align-items:center;gap:14px;padding:13px 14px 13px 16px;border-radius:14px;border:1.5px dashed var(--alpha-cream-30);background:rgba(26,15,10,.9);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:0 14px 38px var(--alpha-black-45);color:var(--color-cream-light);animation:checkin-banner-in .5s cubic-bezier(.22,.68,0,1.2) both}
 
 .checkin-banner-icon{flex-shrink:0;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;line-height:1;background:var(--alpha-pink-15);border:1.5px dashed rgba(225,84,99,.5)}
 .checkin-banner-text{flex:1;font-family:var(--font-body);font-size:14px;line-height:1.4;display:flex;flex-direction:column;gap:2px;min-width:0}

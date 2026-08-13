@@ -124,7 +124,7 @@
 .auth-page .auth-google{display:flex;align-items:center;justify-content:center;gap:11px;
   width:100%;padding:13px 18px;border-radius:var(--radius-md,10px);
   background:rgba(255,255,255,.05);border:1px solid var(--alpha-cream-20);
-  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
   font-family:var(--font-body);font-size:15px;font-weight:600;
   color:var(--color-cream-light);text-decoration:none;
   transition:background .2s,border-color .2s,transform .12s}

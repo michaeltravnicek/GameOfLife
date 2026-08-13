@@ -34,7 +34,7 @@
    top-right corner, so it never covers the event name. It stays visible once
    the photo is liked (and on touch, where there is no hover) because a hidden
    heart on a liked photo reads as "the like didn't save". */
-.gallery-page .photo-like{position:absolute;top:8px;right:8px;z-index:2;display:inline-flex;align-items:center;gap:6px;padding:6px 11px;border:1.5px dashed var(--alpha-cream-55);border-radius:9999px;background:var(--alpha-dark-80);color:var(--alpha-cream-80);font-family:var(--font-mono);font-size:12px;line-height:1;cursor:pointer;opacity:0;transition:opacity .22s,border-color .18s,color .18s,transform .12s;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.gallery-page .photo-like{position:absolute;top:8px;right:8px;z-index:2;display:inline-flex;align-items:center;gap:6px;padding:6px 11px;border:1.5px dashed var(--alpha-cream-55);border-radius:9999px;background:var(--alpha-dark-80);color:var(--alpha-cream-80);font-family:var(--font-mono);font-size:12px;line-height:1;cursor:pointer;opacity:0;transition:opacity .22s,border-color .18s,color .18s,transform .12s;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
 .gallery-page .photo-item:hover .photo-like,.gallery-page .photo-like:focus-visible,.gallery-page .photo-like.is-liked{opacity:1}
 .gallery-page .photo-like:hover{border-color:var(--color-pink);color:var(--color-cream-light)}
 .gallery-page .photo-like:active{transform:scale(.94)}

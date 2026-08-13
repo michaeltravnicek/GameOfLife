@@ -7,7 +7,7 @@
    StatList row (`.stat-list .ev-info .loc`, used by the event-detail attendee
    lists). Renamed, so this can now be an unscoped shared class and reused on
    any page. The StatList `.loc` is a different thing and keeps its name. */
-.gol-pill{display:inline-flex;align-items:center;gap:7px;font-family:var(--font-hv);font-weight:300;font-style:italic;font-size:12.5px;letter-spacing:.04em;padding:7px 14px;min-height:30px;border-radius:9999px;cursor:pointer;background:rgba(26,15,10,.45);border:1.5px dashed var(--alpha-cream-30);color:var(--alpha-cream-80);transition:all .18s;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.gol-pill{display:inline-flex;align-items:center;gap:7px;font-family:var(--font-hv);font-weight:300;font-style:italic;font-size:12.5px;letter-spacing:.04em;padding:7px 14px;min-height:30px;border-radius:9999px;cursor:pointer;background:rgba(26,15,10,.45);border:1.5px dashed var(--alpha-cream-30);color:var(--alpha-cream-80);transition:all .18s;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
 .gol-pill:hover{color:var(--color-white);border-color:var(--alpha-cream-55)}
 /* a11y: the pill renders 30px tall by design, which is under the 44px minimum
    touch target. Expand the *hit* area with a centred overlay instead of growing

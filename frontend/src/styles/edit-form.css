@@ -83,7 +83,7 @@
 
 /* ── Save bar — slides up when there are unsaved changes. Frost is fine here:
    it's chrome over scrolling content. ── */
-.gol-savebar{position:fixed;left:0;right:0;bottom:0;z-index:50;background:var(--alpha-dark-95);backdrop-filter:blur(16px) saturate(1.15);-webkit-backdrop-filter:blur(16px) saturate(1.15);border-top:1px dashed var(--alpha-cream-20);transform:translateY(110%);transition:transform .28s cubic-bezier(.2,.7,.2,1);box-shadow:0 -14px 36px var(--alpha-black-50)}
+.gol-savebar{position:fixed;left:0;right:0;bottom:0;z-index:50;background:var(--alpha-dark-95);-webkit-backdrop-filter:blur(16px) saturate(1.15);backdrop-filter:blur(16px) saturate(1.15);border-top:1px dashed var(--alpha-cream-20);transform:translateY(110%);transition:transform .28s cubic-bezier(.2,.7,.2,1);box-shadow:0 -14px 36px var(--alpha-black-50)}
 .gol-savebar.visible{transform:translateY(0)}
 .gol-savebar-inner{max-width:1040px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 24px;flex-wrap:wrap}
 .gol-savebar-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
@@ -145,5 +145,5 @@
 /* Mobile: lighten the save bar's blur — the cards are opaque posters now, so
    only this chrome still blurs. */
 @media (max-width:768px){
-  .gol-savebar{backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+  .gol-savebar{-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
 }

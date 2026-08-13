@@ -17,17 +17,17 @@
 .leaderboard-page .tab:hover{color:var(--color-white)}
 .leaderboard-page .tab.on{background:var(--color-pink);color:var(--color-white);box-shadow:0 4px 14px var(--alpha-pink-45)}
 .leaderboard-page .search{flex:1;max-width:290px;min-width:180px;position:relative}
-.leaderboard-page .search input{width:100%;padding:11px 18px 11px 40px;font-family:var(--font-hv);font-size:16px;color:var(--color-cream-light);background:linear-gradient(var(--alpha-dark-60),var(--alpha-dark-60)),var(--tex-brown) 0 0/var(--tex-size) var(--tex-size) repeat;border:1.5px dashed var(--alpha-cream-45);border-radius:9999px;outline:none;transition:border-color .18s;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.leaderboard-page .search input{width:100%;padding:11px 18px 11px 40px;font-family:var(--font-hv);font-size:16px;color:var(--color-cream-light);background:linear-gradient(var(--alpha-dark-60),var(--alpha-dark-60)),var(--tex-brown) 0 0/var(--tex-size) var(--tex-size) repeat;border:1.5px dashed var(--alpha-cream-45);border-radius:9999px;outline:none;transition:border-color .18s;-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
 .leaderboard-page .search input:focus{border-color:var(--color-pink)}
 .leaderboard-page .search input::placeholder{color:rgba(255,241,212,.75);font-style:italic}
 .leaderboard-page .search::before{content:'⌕';position:absolute;left:16px;top:50%;transform:translateY(-50%);color:var(--alpha-cream-80);font-size:14px;pointer-events:none}
 .leaderboard-page .lb-search{flex:1;max-width:290px}
-.leaderboard-page .lb-search .search-input{background:linear-gradient(var(--alpha-dark-60),var(--alpha-dark-60)),var(--tex-brown) 0 0/var(--tex-size) var(--tex-size) repeat;border-color:var(--alpha-cream-45);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.leaderboard-page .lb-search .search-input{background:linear-gradient(var(--alpha-dark-60),var(--alpha-dark-60)),var(--tex-brown) 0 0/var(--tex-size) var(--tex-size) repeat;border-color:var(--alpha-cream-45);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
 .leaderboard-page .lb-search .search-input::placeholder{color:rgba(255,241,212,.75)}
 .leaderboard-page .lb-search::before{color:var(--alpha-cream-80)}
 /* Help affordance — a frosted pill matching the toolbar chrome, but pink-accented
    with a circled "?" badge so it stands out against the photo stage. */
-.leaderboard-page .lb-help-link{display:inline-flex;align-items:center;gap:9px;font-family:var(--font-hv);font-weight:600;font-style:italic;font-size:14px;color:var(--color-cream-light);background:var(--alpha-dark-60);border:1.5px dashed var(--color-pink);border-radius:9999px;padding:9px 18px;text-decoration:none;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 4px 14px rgba(0,0,0,.3);transition:background .18s,color .18s,border-color .18s,box-shadow .18s}
+.leaderboard-page .lb-help-link{display:inline-flex;align-items:center;gap:9px;font-family:var(--font-hv);font-weight:600;font-style:italic;font-size:14px;color:var(--color-cream-light);background:var(--alpha-dark-60);border:1.5px dashed var(--color-pink);border-radius:9999px;padding:9px 18px;text-decoration:none;-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:0 4px 14px rgba(0,0,0,.3);transition:background .18s,color .18s,border-color .18s,box-shadow .18s}
 .leaderboard-page .lb-help-link::before{content:'?';display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:var(--color-pink);color:var(--color-white);font-style:normal;font-weight:700;font-size:12px;flex:none}
 .leaderboard-page .lb-help-link:hover{background:var(--color-pink);color:var(--color-white);border-color:var(--color-pink);box-shadow:0 6px 18px rgba(225,84,99,.5)}
 .leaderboard-page .lb-help-link:hover::before{background:var(--color-white);color:var(--color-pink)}
