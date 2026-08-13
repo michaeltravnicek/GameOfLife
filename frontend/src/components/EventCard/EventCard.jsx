@@ -1,17 +1,25 @@
 import { memo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { fmtDate } from '../../utils/date';
+import { useFitText } from '../../hooks/useFitText';
 import { preloadEventDetail } from '../../services/routePreload';
 import DashedBorder from '../DashedBorder/DashedBorder';
 import './EventCard.css';
 
 function DarkCard({ event }) {
+  // A long name used to wrap to a third line, pushing the date/place/points
+  // down and leaving the card lopsided beside its neighbours. Scale the block
+  // down instead so it stays within three lines — one for "Game of Life", two
+  // for the name — and the name stays whole (no ellipsis). extraHeight is the
+  // wrapper's 2px flex gap, which is not part of any line.
+  const titleRef = useFitText(event.name, { maxLines: 3, minFontSize: 18, extraHeight: 2 });
+
   return (
     <>
       <DashedBorder className="evcard-dark-frame" baseColor="transparent" dashColor="#fff" radius={16} width={2.5} dash={7} gap={12} />
 
       <div className="evcard-dark-inner">
-        <div className="evcard-title-wrap">
+        <div className="evcard-title-wrap" ref={titleRef}>
           <div className="evcard-brand">Game of Life</div>
           <div className="evcard-title">{event.name}</div>
         </div>

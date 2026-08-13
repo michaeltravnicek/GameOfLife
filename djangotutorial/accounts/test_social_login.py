@@ -15,6 +15,7 @@ from allauth.socialaccount.models import SocialAccount, SocialLogin
 
 from accounts.adapters import AccountAdapter, SocialAccountAdapter
 from accounts.models import Profile
+from mysite.test_utils import SpaShellMixin
 
 
 class SocialLoginSettingsTests(TestCase):
@@ -136,9 +137,12 @@ class AccountAdapterTests(TestCase):
         self.assertFalse(AccountAdapter().is_open_for_signup(None))
 
 
-class SocialLoginRoutingTests(TestCase):
+class SocialLoginRoutingTests(SpaShellMixin, TestCase):
     def test_google_login_url_is_served_by_django_not_the_spa(self):
-        # The catch-all reserves /accounts/, so this must not return the SPA shell.
+        # The catch-all reserves /accounts/, so this must not return the SPA
+        # shell. SpaShellMixin is what gives that assertion teeth: without a
+        # shell to serve, every page route 404s and the assertion passes no
+        # matter how the catch-all behaves.
         resp = self.client.get("/accounts/google/login/", follow=False)
         self.assertNotIn(b'id="root"', resp.content)
 

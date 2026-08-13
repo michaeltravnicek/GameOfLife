@@ -9,6 +9,7 @@ from django.test import TestCase, override_settings
 from django.urls import clear_url_caches, reverse
 
 import mysite.urls
+from mysite.test_utils import SpaShellMixin
 
 
 def _reload_urlconf():
@@ -22,7 +23,7 @@ def _reload_urlconf():
     importlib.reload(mysite.urls)
 
 
-class AdminUrlTests(TestCase):
+class AdminUrlTests(SpaShellMixin, TestCase):
     def tearDown(self):
         _reload_urlconf()
 

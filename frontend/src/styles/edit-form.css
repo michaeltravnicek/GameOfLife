@@ -58,6 +58,13 @@
 .gol-grid-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
 .gol-field{display:flex;flex-direction:column;gap:8px}
 .gol-field.gol-full{grid-column:1 / -1}
+/* Fields normally sit in a .gol-grid-2, which spaces them with its own gap.
+   The password card (08) stacks two straight into the block-level card instead,
+   where that gap does not exist — "Staré heslo" and "Nové heslo" were flush,
+   the second label touching the first input. A little more than the 18px grid
+   gap, because these two are not a pair of related fields: mistaking one for
+   the other is exactly the mistake worth designing against. */
+.gol-card > .gol-field + .gol-field{margin-top:var(--space-6)}
 .gol-field label{font-family:var(--font-mono);font-style:italic;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--alpha-cream-65);display:flex;align-items:center;justify-content:space-between;gap:10px}
 .gol-hint{font-family:var(--font-body);font-style:italic;font-size:11px;letter-spacing:.04em;text-transform:none;color:var(--fg-muted-dark)}
 

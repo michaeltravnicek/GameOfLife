@@ -7,12 +7,20 @@
 .evcard-dark:hover .evcard-dark-frame rect{stroke:var(--color-pink)}
 .evcard-dark .evcard-dark-frame{inset:1px;width:calc(100% - 2px);height:calc(100% - 2px)}
 .evcard-dark-inner{width:100%;min-height:150px;padding:18px 18px 14px;background:rgba(0,0,0,.2);border-radius:11px;box-sizing:border-box;display:flex;flex-direction:column;gap:10px}
-.evcard-dark .evcard-title{color:var(--color-heading);font-size:clamp(22px,5vw,30px);font-family:var(--font-event-name);font-weight:400;text-transform:uppercase;line-height:1;letter-spacing:.015em;margin:0}
+/* Size inherited from .evcard-title-wrap, which useFitText scales. break-word
+   covers the one case shrinking cannot: a single token longer than the card,
+   which would overflow sideways at any size rather than wrap. */
+.evcard-dark .evcard-title{color:var(--color-heading);font-size:inherit;font-family:var(--font-event-name);font-weight:400;text-transform:uppercase;line-height:1;letter-spacing:.015em;margin:0;overflow-wrap:break-word}
 .evcard-dark .evcard-meta{display:flex;flex-direction:column;gap:5px;font-family:var(--font-mono);font-style:italic;font-size:13px;font-weight:400;color:rgba(255,255,255,.9);line-height:1.5}
 .evcard-dark .evcard-meta>div{display:flex;align-items:center}
 .evcard-dark .ev-emoji{font-style:normal}
-.evcard-dark .evcard-title-wrap{padding-right:96px;display:flex;flex-direction:column;gap:2px}
-.evcard-dark .evcard-brand{color:var(--color-heading);font-size:clamp(22px,5vw,30px);font-family:var(--font-event-name);font-weight:400;text-transform:uppercase;line-height:1;letter-spacing:.015em}
+/* "Game of Life" + the event name are one typographic block at one size, so the
+   size lives here and both lines inherit it — useFitText shrinks this wrapper
+   when a long name would push the block past three lines, and the two stay
+   matched. Sizing the name alone would leave the boilerplate brand shouting
+   over the event it belongs to. */
+.evcard-dark .evcard-title-wrap{padding-right:96px;display:flex;flex-direction:column;gap:2px;font-size:clamp(22px,5vw,30px);line-height:1}
+.evcard-dark .evcard-brand{color:var(--color-heading);font-size:inherit;font-family:var(--font-event-name);font-weight:400;text-transform:uppercase;line-height:1;letter-spacing:.015em}
 .evcard-dark .evcard-badge{position:absolute;width:126px;height:126px;top:-46px;right:-30px;transform:rotate(12deg) scale(var(--logo-scale,1));object-fit:contain;pointer-events:none;filter:drop-shadow(0px 5px 12px var(--alpha-black-40));z-index:4}
 
 /* ── Light theme (Events list — POSTER skin on the LIGHT texture: cream
@@ -48,6 +56,15 @@
 
 @media(max-width:1024px){
   .evcard-light .evcard-title{font-size:clamp(26px,3.6vw,34px)}
+}
+/* Between ~900px and ~1200px the homepage grid is wider than the viewport can
+   spare: it runs right up against the section's 28px padding, so a card in the
+   last column sits 28px from the screen edge while its sticker reaches 30px out
+   plus ~12px of tilt bleed — 14px of it off-screen. Above 1200px the grid caps
+   at 1100px and centres, which leaves the sticker all the room it needs, so the
+   fuller overhang stays there. */
+@media(min-width:901px) and (max-width:1200px){
+  .evcard-dark .evcard-badge{right:-14px}
 }
 /* From 640px down the events grid is a single column (full-width cards), so the
    title uses ONE fluid size across that whole range — synced with the grid

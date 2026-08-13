@@ -9,6 +9,8 @@ from unittest.mock import patch
 from django.test import TestCase
 from django.urls import reverse
 
+from mysite.test_utils import SpaShellMixin
+
 
 class HealthzTests(TestCase):
     def test_reports_ok_when_both_dependencies_answer(self):
@@ -52,7 +54,7 @@ class HealthzTests(TestCase):
         self.assertEqual(resp["Content-Type"], "application/json")
 
 
-class ApiNotFoundTests(TestCase):
+class ApiNotFoundTests(SpaShellMixin, TestCase):
     def test_unknown_api_path_answers_json(self):
         resp = self.client.get("/api/v1/tohle-neexistuje/")
         self.assertEqual(resp.status_code, 404)
