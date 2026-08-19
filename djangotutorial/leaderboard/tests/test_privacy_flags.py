@@ -261,18 +261,23 @@ class PrivacyFlagTests(TestCase):
 
     def test_toggling_the_flag_evicts_the_cached_board(self):
         """Otherwise the switch looks broken until the TTL runs out."""
-        from leaderboard.cache_config import CACHE_KEY_LEADERBOARD_TOTAL
+        from leaderboard.cache_config import season_leaderboard_key
 
-        cache.set(CACHE_KEY_LEADERBOARD_TOTAL, "SENTINEL", 60)
+        # `season_leaderboard_key("all")` is the key the endpoint reads; the
+        # `leaderboard_data` this used to assert on stopped being written when
+        # the HTML pages went, so the test passed on an empty key either way.
+        key = season_leaderboard_key("all")
+        cache.set(key, "SENTINEL", 60)
         self.set_flags(hide_pts=True)
-        self.assertIsNone(cache.get(CACHE_KEY_LEADERBOARD_TOTAL))
+        self.assertIsNone(cache.get(key))
 
     def test_saving_a_profile_without_touching_the_flag_leaves_the_cache(self):
-        from leaderboard.cache_config import CACHE_KEY_LEADERBOARD_TOTAL
+        from leaderboard.cache_config import season_leaderboard_key
 
-        cache.set(CACHE_KEY_LEADERBOARD_TOTAL, "SENTINEL", 60)
+        key = season_leaderboard_key("all")
+        cache.set(key, "SENTINEL", 60)
         self.set_flags(bio="jen popis")
-        self.assertEqual(cache.get(CACHE_KEY_LEADERBOARD_TOTAL), "SENTINEL")
+        self.assertEqual(cache.get(key), "SENTINEL")
 
     # --- default state ---------------------------------------------------
 

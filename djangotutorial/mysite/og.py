@@ -54,7 +54,7 @@ PLAYER_DESCRIPTION = "Profil hráče v leaderboardu Game of Life."
 DEFAULT_IMAGE = "/img/home-onas-desktop.webp"
 
 # Facebook rejects an og:image over 8 MB and WhatsApp is stricter still. Legacy
-# event photos predate Event.save()'s resize_image() call and run to ~10 MB, so
+# event photos predate Event.save()'s conversion call and run to ~10 MB, so
 # near the limit we hand over the small .mobile.webp sibling instead: a preview
 # that renders beats a full-resolution one the crawler drops. Once the originals
 # are downscaled this branch stops firing and everyone gets the original again.

@@ -96,11 +96,16 @@ class GalleryPaginationApiTests(TestCase):
 
 @override_settings(MEDIA_ROOT=tempfile.mkdtemp())
 class GalleryLikeStateTests(TestCase):
-    """The gallery payload has to carry enough for the client to draw a heart.
+    """Drawing a heart takes two endpoints, and that split is the point.
 
-    Without `id` there is nothing to like, and without `liked_by_me` the button
-    can't show whether *you* already did — the endpoint existed for months with
-    no way to render its own state.
+    The gallery carries what is true for everyone (`id`, `like_count`) and the
+    caller's own likes come from `/photos/liked/`. It used to carry a
+    `liked_by_me` flag as well, which made the response vary by viewer while
+    still being edge-cacheable — and Cloudflare was in fact caching it, so one
+    visitor's likes could be served to the next.
+
+    So the two assertions that matter here are: the gallery has enough to render
+    a heart, and it contains nothing that identifies who asked.
     """
 
     def setUp(self):
@@ -132,7 +137,6 @@ class GalleryLikeStateTests(TestCase):
         row = self._photo_of(self.client.get(self.url).json(), True)
         self.assertEqual(row["id"], self.photo.id)
         self.assertEqual(row["like_count"], 0)
-        self.assertFalse(row["liked_by_me"])
 
     def test_official_photo_is_not_likeable(self):
         # `None` rather than 0: the client uses it to hide the control entirely,
@@ -140,33 +144,62 @@ class GalleryLikeStateTests(TestCase):
         row = self._photo_of(self.client.get(self.url).json(), False)
         self.assertIsNone(row["id"])
         self.assertIsNone(row["like_count"])
-        self.assertFalse(row["liked_by_me"])
 
-    def test_like_count_is_everyones_liked_by_me_is_yours(self):
+    def test_gallery_is_byte_identical_for_everyone(self):
+        """The property that makes it safe to cache — asserted, not assumed."""
         PhotoLike.objects.create(photo=self.photo, auth_user=self.other)
 
-        # Anonymous: sees the count, but is nobody's "me".
+        anonymous = self.client.get(self.url).json()
+        self.client.force_authenticate(user=self.other)   # the one who liked it
+        liker = self.client.get(self.url).json()
+        self.client.force_authenticate(user=self.owner)   # someone who didn't
+        other = self.client.get(self.url).json()
+
+        self.assertEqual(anonymous, liker)
+        self.assertEqual(anonymous, other)
+        self.assertNotIn("liked_by_me", str(anonymous))
+
+    def test_like_count_is_everyones(self):
+        PhotoLike.objects.create(photo=self.photo, auth_user=self.other)
         row = self._photo_of(self.client.get(self.url).json(), True)
         self.assertEqual(row["like_count"], 1)
-        self.assertFalse(row["liked_by_me"])
+
+    def test_my_likes_come_from_the_personal_endpoint(self):
+        PhotoLike.objects.create(photo=self.photo, auth_user=self.other)
+        url = reverse("api-photos-liked")
+
+        # Anonymous has no likes to report and no business asking.
+        self.assertEqual(self.client.get(url).status_code, 403)
 
         # The owner hasn't liked it — someone else did.
         self.client.force_authenticate(user=self.owner)
-        row = self._photo_of(self.client.get(self.url).json(), True)
-        self.assertEqual(row["like_count"], 1)
-        self.assertFalse(row["liked_by_me"])
+        self.assertEqual(self.client.get(url).json()["liked"], [])
 
         # The person who liked it sees their own like.
         self.client.force_authenticate(user=self.other)
-        row = self._photo_of(self.client.get(self.url).json(), True)
-        self.assertEqual(row["like_count"], 1)
-        self.assertTrue(row["liked_by_me"])
+        self.assertEqual(self.client.get(url).json()["liked"], [self.photo.id])
+
+    def test_my_likes_are_one_query_however_many_there_are(self):
+        # The list is sent whole so paging the gallery needs no further round
+        # trips; that is only affordable while it stays a single query.
+        for i in range(5):
+            photo = UserPhoto.objects.create(
+                auth_user=self.owner, event=self.event,
+                image=SimpleUploadedFile(f"q{i}.png", b"dummy", content_type="image/png"),
+            )
+            PhotoLike.objects.create(photo=photo, auth_user=self.other)
+        self.client.force_authenticate(user=self.other)
+        with CaptureQueriesContext(connection) as ctx:
+            resp = self.client.get(reverse("api-photos-liked"))
+        self.assertEqual(len(resp.json()["liked"]), 5)
+        # Session + user lookup ride along; the point is that the like list
+        # itself does not scale with the number of likes.
+        self.assertLessEqual(len(ctx), 3, "liked-photo lookup is not a single query")
 
     def test_like_state_costs_the_same_whatever_the_page_size(self):
-        # The whole point of resolving `liked_by_me` through one `photo_id__in`
-        # set instead of asking per photo. If this regresses, a 60-photo page
-        # quietly becomes 60 extra queries and only ever shows up as "the
-        # gallery got slow".
+        # `like_count` is annotated in the same query as the photos. If this
+        # regresses, a 60-photo page quietly becomes 60 extra COUNT(*)s and only
+        # ever shows up as "the gallery got slow".
         for i in range(9):
             UserPhoto.objects.create(
                 auth_user=self.owner, event=self.event,

@@ -1,10 +1,13 @@
 import { lazy, Suspense, useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  fetchEvents, fetchGallery, fetchSeasons, setPhotoLike, uploadGalleryPhoto,
+  fetchEvents, fetchGallery, fetchLikedPhotos, fetchSeasons, setPhotoLike,
+  uploadGalleryPhoto,
 } from '../../services/api';
 import { usePaginatedQuery } from '../../services/usePaginatedQuery';
-import { prefetchQuery, invalidateQuery, useCachedQuery } from '../../services/queryCache';
+import {
+  prefetchQuery, invalidateQuery, setQueryData, useCachedQuery,
+} from '../../services/queryCache';
 import { useAuth } from '../../context/AuthContext';
 import { reportError } from '../../services/errors';
 import { CACHE_TTL, PAGE_SIZE_GALLERY } from '../../constants/config';
@@ -110,11 +113,25 @@ export default function GalleryPage() {
     }
   };
 
-  // A photo as it should render right now: the server's state, with any local
-  // override laid over it.
+  // Which photos this user has liked. A separate request because /gallery/ is
+  // edge-cached and must stay identical for everyone — see fetchLikedPhotos.
+  // Anonymous visitors never ask (enabled: false); clearCache() on logout drops
+  // this entry, so the hearts empty the moment someone signs out.
+  const { data: likedData } = useCachedQuery('photos:liked', fetchLikedPhotos, {
+    enabled: !!user,
+    ttl: CACHE_TTL.GALLERY,
+  });
+  const likedIds = useMemo(() => new Set(likedData?.liked || []), [likedData]);
+
+  // A photo as it should render right now: the cached public row, plus this
+  // user's like state, plus any local override from a tap this session. Order
+  // matters — the override is the freshest of the three and must win.
   const withLikes = useCallback(
-    (p) => (likeOverrides[p.id] ? { ...p, ...likeOverrides[p.id] } : p),
-    [likeOverrides],
+    (p) => {
+      const base = likedIds.has(p.id) ? { ...p, liked_by_me: true } : p;
+      return likeOverrides[p.id] ? { ...base, ...likeOverrides[p.id] } : base;
+    },
+    [likeOverrides, likedIds],
   );
 
   const toggleLike = useCallback(async (photo) => {
@@ -124,6 +141,8 @@ export default function GalleryPage() {
       navigate(`/prihlasit?from=${encodeURIComponent('/galerie')}`);
       return;
     }
+    // `photo` is already through withLikes at both call sites, so its
+    // liked_by_me reflects the fetched list; the override still wins.
     const current = likeOverrides[photo.id] ?? photo;
     const next = !current.liked_by_me;
     // Paint first: a heart that waits for the network feels broken.
@@ -142,11 +161,24 @@ export default function GalleryPage() {
         ...prev,
         [photo.id]: { liked_by_me: data.liked, like_count: data.count },
       }));
+      // Fold it into the cached like list too. `likeOverrides` is component
+      // state and dies on unmount, so without this a like would un-paint itself
+      // as soon as you left the gallery and came back inside the TTL.
+      setQueryData('photos:liked', (prev) => (prev ? {
+        ...prev,
+        liked: data.liked
+          ? [...new Set([...(prev.liked || []), photo.id])]
+          : (prev.liked || []).filter((id) => id !== photo.id),
+      } : prev));
     } catch (err) {
       // Roll back to whatever we knew before the tap.
       setLikeOverrides((prev) => ({
         ...prev,
-        [photo.id]: { liked_by_me: current.liked_by_me, like_count: current.like_count },
+        // Coerced: liked_by_me is absent from the gallery payload now, so
+        // `current.liked_by_me` is undefined for a photo the user hasn't liked
+        // — and aria-pressed={undefined} drops the attribute, which stops the
+        // button announcing itself as a toggle to a screen reader.
+        [photo.id]: { liked_by_me: !!current.liked_by_me, like_count: current.like_count },
       }));
       reportError('Lajk se nepodařilo uložit.', err);
     }
@@ -276,7 +308,7 @@ export default function GalleryPage() {
                         <button
                           type="button"
                           className={`photo-like${p.liked_by_me ? ' is-liked' : ''}`}
-                          aria-pressed={p.liked_by_me}
+                          aria-pressed={!!p.liked_by_me}
                           aria-label={p.liked_by_me ? 'Zrušit lajk' : 'Líbí se mi'}
                           // The tile itself opens the lightbox; without this the
                           // heart would do both.

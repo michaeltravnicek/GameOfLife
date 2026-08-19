@@ -52,6 +52,31 @@ DATA_UPLOAD_MAX_NUMBER_FIELDS = 1000
 # Ceiling on files per request, enforced by the multi-image upload view.
 MAX_UPLOAD_FILES_PER_REQUEST = 30
 
+# The two per-image limits, applied identically to every format. Env-tunable so
+# they can be changed from Render without a deploy.
+#
+# They guard different things and neither replaces the other. Megabytes bound
+# what crosses the network and lands on disk; megapixels bound RAM, and the two
+# hardly correlate — a 0.1 MB PNG can declare 28 MP and cost ~150 MB the instant
+# it is decoded. Raising IMAGE_MAX_MEGAPIXELS is the one that can OOM the
+# instance; measure with imagelab/07_memory.py before touching it.
+IMAGE_MAX_UPLOAD_MB = int(os.getenv("IMAGE_MAX_UPLOAD_MB", 15))
+IMAGE_MAX_MEGAPIXELS = int(os.getenv("IMAGE_MAX_MEGAPIXELS", 24))
+
+# How many images the WHOLE INSTANCE may decode at once, and how long an upload
+# waits for its turn. This is what makes the worker count a free choice: without
+# it the memory budget is "workers x peak", with it "(workers-1) x floor + peak".
+# See the long note in leaderboard/image_utils.py — it has the arithmetic.
+#
+# Raise SLOTS only together with the instance size: each extra slot needs about
+# another 185 MB. WAIT_SECONDS trades a slow upload against a rejected one; on
+# timeout the upload is refused with 503 rather than decoded outside the budget.
+# It is capped by the gunicorn thread pool (a waiting upload holds one of six
+# request slots) and by gunicorn's own timeout, not by the memory budget — see
+# the note in image_utils.py. 0 means refuse immediately.
+IMAGE_DECODE_SLOTS = int(os.getenv("IMAGE_DECODE_SLOTS", 1))
+IMAGE_DECODE_WAIT_SECONDS = float(os.getenv("IMAGE_DECODE_WAIT_SECONDS", 5))
+
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = MODE != "PRODUCTION"
@@ -776,6 +801,35 @@ if not DEBUG:
     # stays off, so "/" and SPA routes fall through to the react_index view
     # (which sets the CSRF cookie).
     WHITENOISE_ROOT = os.path.join(STATIC_ROOT, 'react')
+
+    # ── Cache lifetime of the SPA bundle ────────────────────────────────
+    #
+    # WhiteNoise can only recognise a file as immutable when its URL sits under
+    # STATIC_URL: whitenoise/middleware.py starts immutable_file_test with
+    # `if not url.startswith(self.static_prefix): return False`. The Vite build
+    # is served from WHITENOISE_ROOT at the site root instead (/assets/...), so
+    # every hashed chunk fell through to the default `max-age=60` -- measured on
+    # production, which meant every visitor revalidated the whole bundle once a
+    # minute and Cloudflare copied that TTL to the edge.
+    #
+    # Vite puts a content hash in the filename, so those files genuinely never
+    # change: a new build writes a new name. Telling WhiteNoise so is what turns
+    # them into `max-age=10 years, immutable`.
+    #
+    # The regex must stay narrow. It is the ONLY thing standing between a
+    # filename and a ten-year cache entry no deploy can recall, so it matches
+    # what Vite actually emits (name-HASH.js / .css, hash >= 8 chars) and
+    # nothing else. index.html is not matched -- it must never be immutable,
+    # since it is what points at the current hashes.
+    WHITENOISE_IMMUTABLE_FILE_TEST = r"^/assets/.+-[A-Za-z0-9_-]{8,}\.(js|css)$"
+
+    # Everything else under the SPA root (/img/, /fonts/, /gallery/, /logos/)
+    # has stable, unhashed names, so it cannot be immutable -- an hour is the
+    # trade: re-generating an image under the same name is invisible to a
+    # browser that already has it for up to that long. `npm run images` output
+    # is versioned by content in practice (new photos get new names), so this
+    # bites only when a file is deliberately replaced in place.
+    WHITENOISE_MAX_AGE = int(os.getenv("WHITENOISE_MAX_AGE", "3600"))
 else:
     _staticfiles_storage = {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"}
 
@@ -784,7 +838,11 @@ STORAGES = {
     "staticfiles": _staticfiles_storage,
 }
 
-WHITENOISE_AUTOREFRESH = True
+# Re-stat the filesystem on every request instead of indexing it once at boot.
+# That is a development convenience -- in production the files cannot change
+# under a running process (a deploy starts a new one), so it only buys a syscall
+# per static request. It was previously on unconditionally.
+WHITENOISE_AUTOREFRESH = DEBUG
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field

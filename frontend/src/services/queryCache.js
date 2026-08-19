@@ -18,6 +18,7 @@ import {
  * Public API:
  *   useCachedQuery(key, fetcher, options)  -> { data, error, loading, refetch }
  *   prefetchQuery(key, fetcher, options)    -> Promise<value>  (fire and forget)
+ *   setQueryData(key, value | updater)      -> void  (write, no fetch)
  *   invalidateQuery(key | predicate)        -> void
  *   clearCache()                            -> void  (e.g. on logout)
  */
@@ -109,6 +110,25 @@ export function prefetchQuery(key, fetcher, { ttl = DEFAULT_TTL_MS } = {}) {
   const entry = getEntry(key);
   if (entry && Date.now() - entry.fetchedAt < ttl) return Promise.resolve(entry.value);
   return dedupedFetch(key, fetcher).catch(() => undefined);
+}
+
+/**
+ * Write a value straight into the cache, no request.
+ *
+ * For mutations whose own response already tells us the new state: invalidating
+ * would throw away what we just learned and fetch it back. Pass a value or an
+ * updater `(prev) => next`.
+ *
+ * Returns without writing when the key holds nothing yet — there is no prior
+ * state to amend, and fabricating a partial one would be worse than letting the
+ * next real fetch supply the truth.
+ */
+export function setQueryData(key, updater) {
+  const entry = getEntry(key);
+  if (!entry) return;
+  const next = typeof updater === 'function' ? updater(entry.value) : updater;
+  if (next === undefined) return;
+  setEntry(key, next);
 }
 
 /** Drop matching entries; pass a string for exact match or a predicate fn. */

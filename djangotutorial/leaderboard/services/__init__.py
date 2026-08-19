@@ -16,7 +16,7 @@ from .catalog import (
 )
 from .events import EVENTS_LIST_FIELDS, add_event_images, list_events
 from .feedback import admin_feedback_list
-from .gallery import create_user_photo, gallery_page
+from .gallery import create_user_photo, gallery_page, liked_photo_ids
 from .home import active_checkin_events, home_stats, pick_hero_events
 from .leaderboard import (
     attach_profile_usernames,
@@ -40,7 +40,7 @@ __all__ = [
     "season_dict", "seasons_cached",
     "EVENTS_LIST_FIELDS", "add_event_images", "list_events",
     "admin_feedback_list",
-    "create_user_photo", "gallery_page",
+    "create_user_photo", "gallery_page", "liked_photo_ids",
     "active_checkin_events", "home_stats", "pick_hero_events",
     "attach_profile_usernames", "cached_leaderboard_entries", "create_leaderboard",
     "entries_payload", "leaderboard_for_season", "leaderboard_total", "player_payload",

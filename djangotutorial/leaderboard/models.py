@@ -30,6 +30,16 @@ class Season(models.Model):
     def __str__(self):
         return self.name
 
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        from .cache_config import invalidate_season_caches
+        invalidate_season_caches()
+
+    def delete(self, *args, **kwargs):
+        super().delete(*args, **kwargs)
+        from .cache_config import invalidate_season_caches
+        invalidate_season_caches()
+
 
 class Category(models.Model):
     name = models.CharField(max_length=50, unique=True)
@@ -107,10 +117,9 @@ class Badge(models.Model):
         if self.image:
             # Rendered inside a small box (scaled by image_scale), so 512 is
             # plenty. No .mobile.webp sibling — at this size it would save
-            # nothing and only add a file. resize_image no-ops on SVG and GIF,
-            # which must keep their original bytes.
-            from .image_utils import resize_image
-            resize_image(self.image, max_width=512, max_height=512, quality=90)
+            # nothing and only add a file. SVG artwork is passed over untouched.
+            from .image_utils import process_image_field
+            process_image_field(self, "image")
 
     def __str__(self):
         return self.name
@@ -229,15 +238,22 @@ class Event(models.Model):
             self.slug = slug
         super().save(*args, **kwargs)
         if self.image:
-            from .image_utils import resize_image, make_webp_variant
-            resize_image(self.image, max_width=1200, max_height=1200, quality=85)
-            make_webp_variant(self.image)
+            from .image_utils import process_image_field
+            process_image_field(self, "image")
         # Best-effort: a cache outage must not break saving an event.
         from .cache_config import invalidate_event_caches
         invalidate_event_caches()
 
     def __str__(self):
         return f"{self.name} - {self.date} - {self.place} - {self.sheet_id}"
+
+    def delete(self, *args, **kwargs):
+        """Same eviction as save(). Without it a deleted event lingered in the
+        hero carousel (1 h TTL) and the city filter (30 min) — the one moment a
+        stale cache is most obvious, because someone just removed the thing."""
+        super().delete(*args, **kwargs)
+        from .cache_config import invalidate_event_caches
+        invalidate_event_caches()
 
     @property
     def checkin_window_end(self):
@@ -258,9 +274,13 @@ class ImageToEvent(models.Model):
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
         if self.image:
-            from .image_utils import resize_image, make_webp_variant
-            resize_image(self.image, max_width=1024, max_height=1024, quality=75)
-            make_webp_variant(self.image)
+            from .image_utils import process_image_field
+            process_image_field(self, "image")
+        from .cache_config import invalidate_hero_cache
+        invalidate_hero_cache()
+
+    def delete(self, *args, **kwargs):
+        super().delete(*args, **kwargs)
         from .cache_config import invalidate_hero_cache
         invalidate_hero_cache()
 
@@ -480,9 +500,8 @@ class UserPhoto(models.Model):
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
         if self.image:
-            from .image_utils import resize_image, make_webp_variant
-            resize_image(self.image, max_width=1600, max_height=1600, quality=80)
-            make_webp_variant(self.image)
+            from .image_utils import process_image_field
+            process_image_field(self, "image")
 
     def __str__(self):
         return f"{self.auth_user} → {self.event or 'bez akce'}"

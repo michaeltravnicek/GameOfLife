@@ -44,6 +44,7 @@ from leaderboard.services import (
     create_user_photo,
     gallery_page,
     home_stats,
+    liked_photo_ids,
     list_events,
     pick_hero_events,
     player_payload,
@@ -307,10 +308,17 @@ def event_feedback(request, slug):
     ],
     responses=LeaderboardResponseSerializer,
 )
+@cache_control(public=True, max_age=60)
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def leaderboard_view(request):
-    """Season-scoped leaderboard. ?season_id=<id|active|all> (default active), ?limit=N."""
+    """Season-scoped leaderboard. ?season_id=<id|active|all> (default active), ?limit=N.
+
+    Identical for every viewer -- players who hide their points are off the board
+    for everyone, including themselves (see `ranked_players`) -- so it is safe to
+    cache publicly. 60 s rather than EDGE_TTL_PUBLIC because this is the page
+    people refresh right after a check-in to watch themselves move.
+    """
     try:
         season, cache_id = resolve_season(request.GET.get("season_id"))
     except Season.DoesNotExist:
@@ -326,8 +334,25 @@ def leaderboard_view(request):
                     status=status.HTTP_200_OK)
 
 
+# ── How long the EDGE may hold a public response ──────────────────────────
+#
+# Short on purpose, and shorter than the server-side TTLs in cache_config.py.
+# The two caches are not the same thing: the Redis entry is dropped the moment
+# an Event or Season changes (model save()/delete()), so a long TTL there costs
+# nothing. Nothing can reach into Cloudflare, so whatever max_age says here is
+# how long a stale answer keeps being handed out after an admin fixes something.
+#
+# This was not theoretical: hero_view advertised an hour, so a deleted event
+# stayed in the homepage carousel for up to an hour after its cache key had
+# already been evicted server-side.
+#
+# 300 s keeps the origin protected (a burst still collapses onto one request)
+# while making an admin edit show up inside the span of noticing it.
+EDGE_TTL_PUBLIC = 300
+
+
 @extend_schema(tags=["Leaderboard"], responses=SeasonsResponseSerializer)
-@cache_control(public=True, max_age=3600)
+@cache_control(public=True, max_age=EDGE_TTL_PUBLIC)
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def seasons_list(request):
@@ -378,12 +403,20 @@ def player_season_detail(request, user_id, season_id):
     parameters=[_SEASON_FILTER_PARAM, _offset_param(0), _limit_param(60, 200)],
     responses=GalleryResponseSerializer,
 )
+@cache_control(public=True, max_age=60)
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def gallery_view(request):
     """Combined gallery (official + user photos), date-desc, offset/limit paginated.
 
     Optional ?season_id filters to photos whose event falls within that season.
+
+    Cacheable because the payload no longer varies by viewer: whether *you* liked
+    a photo comes from `photos_liked` below. Keep it that way -- adding a
+    per-user field here puts one visitor's data in a CDN object served to the
+    next. The 60 s is short on purpose: `like_count` lives in this response, so a
+    fresh like shows up for everyone within a minute (the person who tapped sees
+    it immediately, from the response to their own PUT).
     """
     offset = parse_int_param(request.GET.get("offset"), 0, min_val=0)
     limit = parse_int_param(request.GET.get("limit"), 60, min_val=1, max_val=200)
@@ -403,7 +436,7 @@ def gallery_view(request):
 
 
 @extend_schema(tags=["Home"], responses=StatsResponseSerializer)
-@cache_control(public=True, max_age=1800)
+@cache_control(public=True, max_age=EDGE_TTL_PUBLIC)
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def stats_view(request):
@@ -412,7 +445,7 @@ def stats_view(request):
 
 
 @extend_schema(tags=["Home"], responses=HeroResponseSerializer)
-@cache_control(public=True, max_age=3600)
+@cache_control(public=True, max_age=EDGE_TTL_PUBLIC)
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def hero_view(request):
@@ -479,7 +512,7 @@ def event_checkin(request, slug):
 @extend_schema(tags=["Profiles"], responses=OpenApiTypes.OBJECT)
 # Public and identical for everyone — the questions are the same for all
 # members; only the answers are personal, and those ride on the profile payload.
-@cache_control(public=True, max_age=300)
+@cache_control(public=True, max_age=EDGE_TTL_PUBLIC)
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def profile_questions_list(request):
@@ -496,7 +529,7 @@ def profile_questions_list(request):
 # 5 min, not an hour: categories are now created from the event form, and a
 # browser/CDN copy outliving the server-side cache would hide a category the
 # author just added from the next page load.
-@cache_control(public=True, max_age=300)
+@cache_control(public=True, max_age=EDGE_TTL_PUBLIC)
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def categories_list(request):
@@ -562,6 +595,29 @@ def photo_upload(request):
     except LookupError as exc:
         return Response({"error": str(exc)}, status=status.HTTP_404_NOT_FOUND)
     return Response(payload, status=status.HTTP_201_CREATED)
+
+
+@extend_schema(tags=['Gallery'],
+    responses=inline_serializer("PhotoLikedResponse", {
+        "liked": drf_serializers.ListField(child=drf_serializers.IntegerField()),
+    }),
+)
+@never_cache
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def photos_liked(request):
+    """Ids of the gallery photos the caller has liked. Response: `{liked: [id, ...]}`.
+
+    The personalised half of the gallery, kept apart from the photo list so that
+    list can be cached at the edge (see `gallery_view`). `no-store` here is not
+    decoration: this response IS the per-user part, and it is the one thing on
+    the gallery a shared cache must never hold.
+
+    Returns every like the user has, not just the visible page: it is a list of
+    integers for one person, and sending it whole means paging the gallery costs
+    no further round trips.
+    """
+    return Response({"liked": liked_photo_ids(request.user)}, status=status.HTTP_200_OK)
 
 
 @extend_schema(tags=['Gallery'],
@@ -642,6 +698,7 @@ def admin_feedbacks(request):
 
 
 @extend_schema(tags=["Events"], responses=BadgeSerializer(many=True))
+@cache_control(public=True, max_age=EDGE_TTL_PUBLIC)
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def badges_list(request):
@@ -708,12 +765,16 @@ def event_update(request, slug):
 def event_delete(request, slug):
     """Delete an event (admin only).
 
-    Cascades to awarded points, RSVPs, feedback and photos — leaderboard
-    totals change, so the points-dependent caches are dropped.
+    Cascades to awarded points, RSVPs, feedback and photos, so both cache
+    families have to go: the event-dependent keys (hero, cities, stats — evicted
+    by Event.delete()) and the boards, whose totals just changed.
     """
     event = get_object_or_404(Event, slug=slug)
     with transaction.atomic():
         event.delete()
+    # Event.delete() drops the event-dependent keys itself; this covers the
+    # cascade, which does not go through UserToEvent.delete() and so cannot
+    # evict the boards on its own.
     from leaderboard.cache_config import invalidate_points_dependent_caches
     invalidate_points_dependent_caches()
     # 204: the resource is gone, there is nothing meaningful to return.

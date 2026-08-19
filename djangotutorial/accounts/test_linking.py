@@ -7,7 +7,7 @@ from django.urls import reverse
 from accounts import matching
 from accounts.models import Profile
 from leaderboard import merging
-from leaderboard.cache_config import CACHE_KEY_LEADERBOARD_TOTAL
+from leaderboard.cache_config import season_leaderboard_key
 from leaderboard.models import User as LeaderboardUser
 
 User = get_user_model()
@@ -184,9 +184,14 @@ class MergeAdminTests(TestCase):
                          self.own_player)
 
     def test_merging_evicts_the_leaderboard_cache(self):
-        cache.set(CACHE_KEY_LEADERBOARD_TOTAL, "SENTINEL", 60)
+        # The all-time board lives under the per-season family ("all"), which is
+        # what the endpoint actually reads. This used to assert on a standalone
+        # `leaderboard_data` key that nothing wrote any more, so it passed
+        # whether or not the real board was evicted.
+        key = season_leaderboard_key("all")
+        cache.set(key, "SENTINEL", 60)
         self._merge()
-        self.assertIsNone(cache.get(CACHE_KEY_LEADERBOARD_TOTAL))
+        self.assertIsNone(cache.get(key))
 
     def test_merged_player_disappears_from_the_queue(self):
         self._merge()

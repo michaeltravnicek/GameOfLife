@@ -520,6 +520,11 @@ class PlayerDetailSerializer(serializers.Serializer):
 
 
 class GalleryPhotoSerializer(serializers.Serializer):
+    # No per-viewer field here on purpose: this payload is edge-cached, so
+    # anything identifying the caller would be served to the next visitor.
+    # Who liked what comes from /photos/liked/ instead.
+    id = serializers.IntegerField(allow_null=True)
+    like_count = serializers.IntegerField(allow_null=True)
     url = serializers.URLField()
     url_mobile = serializers.URLField(allow_null=True)
     event_name = serializers.CharField(allow_blank=True)

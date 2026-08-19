@@ -6,7 +6,7 @@ from django.core.cache import cache
 from django.db import connection
 from django.http import Http404, HttpResponse, JsonResponse
 from django.middleware.csrf import get_token
-from django.views.decorators.cache import never_cache
+from django.views.decorators.cache import cache_control, never_cache
 from django.views.decorators.csrf import ensure_csrf_cookie
 
 from . import og
@@ -44,9 +44,22 @@ def _shell_html(index_path):
     return html
 
 
+@cache_control(no_cache=True, must_revalidate=True)
 @ensure_csrf_cookie
 def react_index(request):
     """Serve the built React index.html for any non-API/non-admin route.
+
+    Never cached, and said out loud rather than left to luck. The shell names
+    the current hashed bundle files, which are themselves cached for years -- so
+    a stale shell points a browser at chunks a later deploy has already deleted,
+    and the site fails to boot with no error a user could act on. It also
+    carries per-route OG tags and sets the CSRF cookie.
+
+    Today `Set-Cookie` alone happens to keep CDNs off it. That is a side effect
+    of ensure_csrf_cookie, not a decision, and it would silently stop being true
+    the moment the cookie moved elsewhere. `no-cache` (revalidate, don't reuse
+    blindly) rather than `no-store`: the browser may keep the copy, it just has
+    to ask first, which a 304 answers cheaply.
 
     The shell's <title> is swapped for per-route Open Graph tags on the way out
     (see `mysite.og`) so link previews work -- crawlers never run React, so this

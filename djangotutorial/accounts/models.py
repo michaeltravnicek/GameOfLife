@@ -124,9 +124,9 @@ class Profile(models.Model):
             invalidate_points_dependent_caches()
 
         if self.photo:
-            from leaderboard.image_utils import resize_image, make_webp_variant
-            resize_image(self.photo, max_width=400, max_height=400, quality=85)
-            make_webp_variant(self.photo, max_width=200, quality=60)
+            from leaderboard.image_utils import process_image_field
+            process_image_field(self, "photo")
+
     def grant_django_admin_access(self):
         """Give the linked account is_staff + is_superuser so /admin/ works.
 

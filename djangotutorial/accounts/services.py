@@ -211,8 +211,8 @@ def anonymize_account(user):
 def _delete_file_and_variants(field_file):
     """Remove an uploaded file and the WebP sibling generated next to it.
 
-    `make_webp_variant` writes 'foo.jpg.mobile.webp' alongside 'foo.jpg'; a
-    plain .delete() would leave that copy of the image behind.
+    `make_webp_variant` writes 'foo.mobile.webp' alongside 'foo.webp'; a plain
+    .delete() would leave that copy of the image behind.
     """
     from leaderboard.image_utils import variant_name
 

@@ -243,7 +243,12 @@
   --tex-light:    url('/img/Grain_texture_light.webp');
   --tex-light-2:  url('/img/Grain_texture_light2.webp');
 
-  --tex-size:   240px;  /* = seamless mirror-tile; displays 1:1 (crisp) */
+  /* Repeat period of the grain, and the size the 1500px tile is shrunk to (the
+     shrink is what makes the grain fine — see scripts/optimize-images.js). A short
+     period reads as a pattern on a big surface: 240px meant 24 copies on a 1440x900
+     board, 1200px means 2. Must stay in step with the script, which prints the
+     value to use. */
+  --tex-size:   1200px;
   --grain-opacity: 0.15;
 }
 

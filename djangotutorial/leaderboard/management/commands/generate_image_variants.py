@@ -1,48 +1,54 @@
-"""Backfill mobile WebP variants -- and, opt-in, downscale oversized originals.
+"""Backfill mobile WebP variants -- and, opt-in, convert originals to WebP.
 
-New uploads are handled in each model's ``save()`` (resize, then variant); this
+New uploads are handled in each model's ``save()`` (convert, then variant); this
 command applies the same treatment to images that predate those changes.
 
     python3 manage.py generate_image_variants                 # variants only
     python3 manage.py generate_image_variants --force         # regenerate variants
     python3 manage.py generate_image_variants --resize --dry-run   # preview
-    python3 manage.py generate_image_variants --resize        # ALSO shrink originals
+    python3 manage.py generate_image_variants --resize        # ALSO convert originals
 
-``--resize`` is opt-in and IRREVERSIBLE: it rewrites the stored file in place at
-the same limits ``save()`` uses, so the full-resolution upload is gone
-afterwards. Back up MEDIA_ROOT first, and keep it off the automatic deploy path
-in build.sh unless you've decided you never want the originals back.
+``--resize`` is opt-in and IRREVERSIBLE: it re-encodes each original as WebP at
+the limits ``save()`` uses, so the full-resolution upload is gone afterwards.
+Back up MEDIA_ROOT first, and keep it off the automatic deploy path in build.sh
+unless you've decided you never want the originals back.
+
+It also **renames the stored file** (``foo.jpg`` -> ``foo.webp``) and writes the
+new key back to the database row. Two consequences worth knowing:
+
+  * Every affected image URL changes, so anything holding an old URL (a CDN
+    cache, a shared link, a screenshot in a chat) stops resolving. Purge the
+    Cloudflare cache afterwards.
+  * Re-encoding an already-lossy JPEG stacks a second generation of loss. It is
+    modest, but the original is not recoverable once this has run.
 
 Without ``--resize`` the command behaves exactly as before -- variants only,
 nothing destructive.
 """
+from django.apps import apps
 from django.core.management.base import BaseCommand
 
-from accounts.models import Profile
 from leaderboard.image_utils import (
-    make_webp_variant, needs_resize, resize_image, variant_name,
+    UPLOAD_LIMITS, make_webp_variant, needs_processing, process_upload,
+    variant_name,
 )
-from leaderboard.models import Badge, Event, ImageToEvent, UserPhoto
 
-# (queryset, field name, resize_image kwargs, make_webp_variant kwargs).
-# Mirrors each model's save() — keep the limits in sync with it.
-# A `None` in the last slot means "resize only, no .mobile.webp sibling".
-TARGETS = [
-    (Event.objects.exclude(image="").filter(image__isnull=False), "image",
-     {"max_width": 1200, "max_height": 1200, "quality": 85}, {}),
-    # Badge artwork = the event logos, which were never processed before this,
-    # so 2000x2000 exports accumulated. resize_image leaves the SVG and GIF ones
-    # untouched by design.
-    (Badge.objects.exclude(image="").filter(image__isnull=False), "image",
-     {"max_width": 512, "max_height": 512, "quality": 90}, None),
-    (ImageToEvent.objects.exclude(image="").filter(image__isnull=False), "image",
-     {"max_width": 1024, "max_height": 1024, "quality": 75}, {}),
-    (UserPhoto.objects.exclude(image="").filter(image__isnull=False), "image",
-     {"max_width": 1600, "max_height": 1600, "quality": 80}, {}),
-    (Profile.objects.exclude(photo="").filter(photo__isnull=False), "photo",
-     {"max_width": 400, "max_height": 400, "quality": 85},
-     {"max_width": 200, "quality": 60}),
-]
+
+def targets():
+    """(queryset, field, (w, h, cap), variant_kwargs) for every registered field.
+
+    Derived from image_utils.UPLOAD_LIMITS rather than listed again here. The
+    limits used to be duplicated in both places, which meant a change to a
+    model's save() silently left the backfill converting to the old dimensions --
+    and nothing failed, the files just came out wrong.
+    """
+    for key, (max_width, max_height, cap, variant_kwargs) in UPLOAD_LIMITS.items():
+        app_label, model_name, field_name = key.split(".")
+        model = apps.get_model(app_label, model_name)
+        queryset = (model.objects
+                    .exclude(**{field_name: ""})
+                    .filter(**{f"{field_name}__isnull": False}))
+        yield queryset, field_name, (max_width, max_height, cap), variant_kwargs
 
 
 def _mb(num_bytes):
@@ -60,7 +66,8 @@ class Command(BaseCommand):
         )
         parser.add_argument(
             "--resize", action="store_true",
-            help="Also downscale oversized originals in place (IRREVERSIBLE).",
+            help="Also convert originals to WebP under the cap, renaming the "
+                 "stored file and updating the row (IRREVERSIBLE).",
         )
         parser.add_argument(
             "--dry-run", action="store_true",
@@ -78,7 +85,7 @@ class Command(BaseCommand):
         made = skipped = missing = resized = 0
         saved_bytes = 0
 
-        for qs, field_name, resize_kwargs, variant_kwargs in TARGETS:
+        for qs, field_name, limits, variant_kwargs in targets():
             for obj in qs.iterator():
                 field = getattr(obj, field_name)
                 # Storage-abstracted so backfill runs against local disk or S3/R2.
@@ -86,27 +93,31 @@ class Command(BaseCommand):
                     missing += 1
                     continue
 
-                # Resize first: the variant must be derived from the final
+                # Convert first: the variant must be derived from the final
                 # original, exactly as in save().
                 shrunk = False
-                if do_resize and needs_resize(
-                    field,
-                    resize_kwargs["max_width"],
-                    resize_kwargs["max_height"],
-                ):
+                if do_resize and needs_processing(field, *limits):
                     before = field.storage.size(field.name)
+                    old_name = field.name
                     if dry_run:
                         resized += 1
-                        self.stdout.write(f"  ~ would resize {field.name} ({_mb(before)})")
+                        self.stdout.write(f"  ~ would convert {old_name} ({_mb(before)})")
                         continue
-                    resize_image(field, **resize_kwargs)
+                    stored = process_upload(field, *limits)
+                    if stored:
+                        # process_upload moved the file; the row must follow it
+                        # or the record points at a key that no longer exists.
+                        field.name = stored
+                        obj.__class__.objects.filter(pk=obj.pk).update(**{field_name: stored})
                     after = field.storage.size(field.name)
                     if after < before:
                         saved_bytes += before - after
                         resized += 1
                         shrunk = True
-                        self.stdout.write(
-                            f"  ↓ {field.name}  {_mb(before)} → {_mb(after)}")
+                        arrow = f"  ↓ {old_name}  {_mb(before)} → {_mb(after)}"
+                        if stored:
+                            arrow += f"  (→ {stored})"
+                        self.stdout.write(arrow)
 
                 if dry_run or variant_kwargs is None:
                     continue
@@ -121,12 +132,12 @@ class Command(BaseCommand):
 
         if dry_run:
             self.stdout.write(self.style.SUCCESS(
-                f"\nDry run — {resized} originals would be resized, "
+                f"\nDry run — {resized} originals would be converted, "
                 f"missing files {missing}."
             ))
             return
 
         summary = f"Done — generated {made}, skipped {skipped}, missing files {missing}."
         if do_resize:
-            summary += f" Resized {resized} originals, freed {_mb(saved_bytes)}."
+            summary += f" Converted {resized} originals, freed {_mb(saved_bytes)}."
         self.stdout.write(self.style.SUCCESS(summary))

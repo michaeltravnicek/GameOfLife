@@ -33,6 +33,7 @@ urlpatterns = [
     path("badges/", views.badges_list, name="api-badges"),
     path("badges/create/", views.badge_create, name="api-badge-create"),
     path("photos/", views.photo_upload, name="api-photo-upload"),
+    path("photos/liked/", views.photos_liked, name="api-photos-liked"),
     path("photos/<int:photo_id>/like/", views.photo_like, name="api-photo-like"),
     path("admin/feedbacks/", views.admin_feedbacks, name="api-admin-feedbacks"),
 ]

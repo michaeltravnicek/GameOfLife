@@ -7,7 +7,13 @@ Anything that reads or writes the Django cache must import from here so:
 """
 
 # ── Leaderboard rankings ───────────────────────────────────────────────
-CACHE_KEY_LEADERBOARD_TOTAL = "leaderboard_data"
+#
+# Every board -- all-time included -- lives under the per-season family below;
+# "all" is the season id for all-time. There used to be a separate
+# `leaderboard_data` key for the total board, plus `events_list` and
+# `home_context` from the days of server-rendered HTML pages. Nothing read or
+# wrote any of the three, so evicting them was theatre: a delete of a key that
+# was never set, in a function whose job is to make stale data disappear.
 CACHE_TTL_LEADERBOARD = 5 * 60  # 5 min — points change with new check-ins
 
 # Per-season leaderboards are cached under a dynamic key (one per season id).
@@ -19,21 +25,14 @@ def season_leaderboard_key(season_id):
     """Cache key for a single season's leaderboard (``"all"`` for all-time)."""
     return f"{CACHE_KEY_LEADERBOARD_SEASON_PREFIX}:{season_id}"
 
-# ── Home (HTML legacy + API) ───────────────────────────────────────────
+# ── Home ───────────────────────────────────────────────────────────────
 CACHE_KEY_HERO_IMAGES = "home_hero_images"
 CACHE_TTL_HERO_IMAGES = 60 * 60  # 1 hour — hero photos rarely change
 
-CACHE_KEY_HOME_CONTEXT = "home_context"
-CACHE_TTL_HOME_CONTEXT = 5 * 60  # 5 min — stats/upcoming
-
-# Used only by /api/home/ (separate cache from the HTML home_context).
 CACHE_KEY_HOME_STATS = "api_home_stats"
 CACHE_TTL_HOME_STATS = 30 * 60  # 30 min — counts barely move
 
-# ── Events list (HTML legacy + API) ────────────────────────────────────
-CACHE_KEY_EVENTS_LIST = "events_list"
-CACHE_TTL_EVENTS_LIST = 5 * 60
-
+# ── Events ─────────────────────────────────────────────────────────────
 # Cities filter for /api/events/. Changes only when an Event is added/edited.
 CACHE_KEY_EVENTS_CITIES = "api_events_cities"
 CACHE_TTL_EVENTS_CITIES = 30 * 60
@@ -52,7 +51,6 @@ CACHE_KEY_PROFILE_QUESTIONS = "api_profile_questions"
 CACHE_TTL_PROFILE_QUESTIONS = 60 * 60  # 1 hour
 
 # ── Short alias (legacy name still used across the codebase) ───────────
-CACHE_KEY = CACHE_KEY_LEADERBOARD_TOTAL
 CACHE_TTL = CACHE_TTL_LEADERBOARD
 
 
@@ -60,9 +58,7 @@ CACHE_TTL = CACHE_TTL_LEADERBOARD
 # (Used by Event.save() — keep this list in sync with what each endpoint reads.)
 EVENT_DEPENDENT_CACHE_KEYS = (
     CACHE_KEY_HERO_IMAGES,
-    CACHE_KEY_HOME_CONTEXT,
     CACHE_KEY_HOME_STATS,
-    CACHE_KEY_EVENTS_LIST,
     CACHE_KEY_EVENTS_CITIES,
     CACHE_KEY_CATEGORIES,
 )
@@ -70,7 +66,6 @@ EVENT_DEPENDENT_CACHE_KEYS = (
 # Keys that must be dropped whenever a UserToEvent (= scored attendance) changes.
 # The leaderboards (total + every season) and the home stats depend on points totals.
 USER_TO_EVENT_DEPENDENT_CACHE_KEYS = (
-    CACHE_KEY_LEADERBOARD_TOTAL,
     CACHE_KEY_HOME_STATS,
 )
 
@@ -147,6 +142,19 @@ def _season_leaderboard_keys():
     except Exception:  # noqa: BLE001 — no DB yet (migrations, early boot)
         logger.debug("Season lookup failed while evicting; using the pattern only.")
     return [season_leaderboard_key(season_id) for season_id in ids]
+
+
+def invalidate_season_caches():
+    """Drop everything a Season change touches (Season.save()/delete()).
+
+    Two things go stale, and the second is the one that bites. The season list
+    itself is cached for an hour -- add a season and the selector would not show
+    it. Worse, the boards are keyed by season id and scored on the season's date
+    window, so moving a start or end date leaves a board that is now computed
+    from the wrong dates sitting under the right key.
+    """
+    _evict((CACHE_KEY_SEASONS,) + tuple(_season_leaderboard_keys()),
+           pattern=f"{CACHE_KEY_LEADERBOARD_SEASON_PREFIX}:*")
 
 
 def invalidate_points_dependent_caches():

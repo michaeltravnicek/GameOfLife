@@ -15,6 +15,9 @@ vi.mock('../../services/api', () => ({
   fetchSeasons: vi.fn(),
   uploadGalleryPhoto: vi.fn(),
   setPhotoLike: vi.fn(),
+  // The gallery no longer says who liked what — that arrives separately, so
+  // the page cannot be rendered without this one.
+  fetchLikedPhotos: vi.fn(),
 }));
 
 let authUser = { username: 'honza' };
@@ -25,7 +28,9 @@ vi.mock('../../context/AuthContext', () => ({
 const reportError = vi.fn();
 vi.mock('../../services/errors', () => ({ reportError: (...a) => reportError(...a) }));
 
-import { fetchGallery, fetchEvents, fetchSeasons, setPhotoLike } from '../../services/api';
+import {
+  fetchGallery, fetchEvents, fetchLikedPhotos, fetchSeasons, setPhotoLike,
+} from '../../services/api';
 import { clearCache } from '../../services/queryCache';
 import GalleryPage from './GalleryPage';
 
@@ -39,14 +44,14 @@ const photo = (over = {}) => ({
   is_user_photo: true,
   uploaded_by: 'Petra N.',
   like_count: 2,
-  liked_by_me: false,
   ...over,
 });
 
-const renderGallery = async (photos) => {
+const renderGallery = async (photos, { liked = [] } = {}) => {
   fetchGallery.mockResolvedValue({ photos, count: photos.length, has_more: false });
   fetchEvents.mockResolvedValue({ events: [] });
   fetchSeasons.mockResolvedValue({ seasons: [] });
+  fetchLikedPhotos.mockResolvedValue({ liked });
   const view = render(<MemoryRouter><GalleryPage /></MemoryRouter>);
   await screen.findAllByRole('button', { name: /líbí se mi|zrušit lajk/i });
   return view;
@@ -106,6 +111,24 @@ describe('gallery photo likes', () => {
     expect(navigate).toHaveBeenCalledWith('/prihlasit?from=%2Fgalerie');
   });
 
+  it('paints hearts from the separate likes call, not from the gallery', async () => {
+    // The whole point of the split: /gallery/ is the same for everyone and
+    // cacheable, so "I liked this" has to arrive on its own request.
+    await renderGallery([photo()], { liked: [7] });
+
+    expect(screen.getAllByRole('button', { name: 'Zrušit lajk' })[0])
+      .toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('does not ask for likes when nobody is logged in', async () => {
+    authUser = null;
+    await renderGallery([photo()]);
+
+    // The endpoint is authenticated; calling it as a guest would just 403 and
+    // add a request to every anonymous visit.
+    expect(fetchLikedPhotos).not.toHaveBeenCalled();
+  });
+
   it('shows no like button on official event photos', async () => {
     // They arrive with id: null — PhotoLike hangs off UserPhoto only.
     fetchGallery.mockResolvedValue({
@@ -115,6 +138,7 @@ describe('gallery photo likes', () => {
     });
     fetchEvents.mockResolvedValue({ events: [] });
     fetchSeasons.mockResolvedValue({ seasons: [] });
+    fetchLikedPhotos.mockResolvedValue({ liked: [] });
     render(<MemoryRouter><GalleryPage /></MemoryRouter>);
 
     await screen.findByText('Letní grilovačka');

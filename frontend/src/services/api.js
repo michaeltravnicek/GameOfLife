@@ -165,6 +165,12 @@ export const fetchCheckinEvents = () => api.get('/checkin-events/').then((r) => 
 // --- Gallery / Categories ---
 export const fetchGallery = (params = {}) =>
   api.get('/gallery/', { params }).then((r) => r.data);
+// Which photos *I* have liked, as a list of ids. Separate from the gallery on
+// purpose: /gallery/ is the same bytes for everyone and is cached at the CDN,
+// so the per-user half has to travel on its own uncacheable request. Only call
+// it when logged in — it 403s for anonymous visitors, who have no likes anyway.
+export const fetchLikedPhotos = () =>
+  api.get('/photos/liked/').then((r) => r.data);
 // The questions members answer on their profile. Authored in Django admin, so
 // the list is the same for everyone — the answers ride on the profile payload.
 export const fetchProfileQuestions = () =>

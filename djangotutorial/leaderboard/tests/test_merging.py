@@ -14,7 +14,7 @@ from django.utils import timezone
 
 from accounts.models import Profile
 from leaderboard import merging
-from leaderboard.cache_config import CACHE_KEY_LEADERBOARD_TOTAL
+from leaderboard.cache_config import season_leaderboard_key
 from leaderboard.models import (
     Badge, Event, EventFeedback, User as LeaderboardUser, UserBadge, UserToEvent,
 )
@@ -146,9 +146,15 @@ class MergeMovesHistoryTests(TestCase):
         self.assertEqual(target.email, "ucet@example.com")
 
     def test_merge_evicts_the_leaderboard_cache(self):
-        cache.set(CACHE_KEY_LEADERBOARD_TOTAL, "SENTINEL", 60)
+        # The all-time board is the "all" member of the per-season key family --
+        # which is what /api/v1/leaderboard/ actually reads. This assertion used
+        # to name a standalone `leaderboard_data` key that nothing had written
+        # since the HTML pages were removed, so it held whether or not the real
+        # board was ever evicted.
+        key = season_leaderboard_key("all")
+        cache.set(key, "SENTINEL", 60)
         merging.merge_players(self.archive, self.target)
-        self.assertIsNone(cache.get(CACHE_KEY_LEADERBOARD_TOTAL))
+        self.assertIsNone(cache.get(key))
 
 
 class MergedPlayerVisibilityTests(TestCase):
@@ -286,9 +292,10 @@ class UnmergeTests(TestCase):
 
     def test_unmerge_evicts_the_leaderboard_cache(self):
         merging.merge_players(self.archive, self.target)
-        cache.set(CACHE_KEY_LEADERBOARD_TOTAL, "SENTINEL", 60)
+        key = season_leaderboard_key("all")
+        cache.set(key, "SENTINEL", 60)
         merging.unmerge_players(self.archive)
-        self.assertIsNone(cache.get(CACHE_KEY_LEADERBOARD_TOTAL))
+        self.assertIsNone(cache.get(key))
 
 
 class BadgeSignalDuringMergeTests(TestCase):

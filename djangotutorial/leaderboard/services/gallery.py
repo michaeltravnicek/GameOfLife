@@ -1,4 +1,10 @@
-"""Combined gallery (official + user photos) with bounded merge-pagination."""
+"""Combined gallery (official + user photos) with bounded merge-pagination.
+
+The page this builds is deliberately identical for every viewer, which is what
+lets it be cached at the edge. Who liked what is NOT in it -- that is one small
+query behind `liked_photo_ids`, which the client overlays. See the note on
+`gallery_page` for why the two were split.
+"""
 from datetime import datetime, timezone as _tz
 
 from django.db.models import Count, F
@@ -91,7 +97,6 @@ def gallery_page(offset, limit, request, season=None):
             "is_user_photo": False,
             "uploaded_by": "",
             "like_count": None,
-            "liked_by_me": False,
         })
     for up in user_photos[:upper]:
         photos.append({
@@ -110,34 +115,31 @@ def gallery_page(offset, limit, request, season=None):
                 or "Hráč"
             ),
             "like_count": up.like_count,
-            "liked_by_me": False,  # filled in below for the sliced page only
         })
 
     photos.sort(key=lambda p: p["event_date"] or _SORT_FALLBACK, reverse=True)
-    page = photos[offset:upper]
-    _mark_liked_by(page, getattr(request, "user", None))
-    return page, total
+    return photos[offset:upper], total
 
 
-def _mark_liked_by(page, user):
-    """Set ``liked_by_me`` on the page's user photos, in one query.
+def liked_photo_ids(user):
+    """Ids of the user photos ``user`` has liked, as a list.
 
-    Deliberately runs *after* the slice: the merge above builds up to
-    ``offset+limit`` rows from each source, but only the sliced page is ever
-    rendered, so asking about the rest would be work thrown away. Anonymous
-    visitors skip the query entirely — they still see the counts, which is what
-    makes the login prompt on tap worth following.
+    Split out of the gallery payload on purpose. The gallery page is the same
+    bytes for everyone, so it can be cached at the edge; the moment it carried a
+    per-viewer ``liked_by_me`` flag, a CDN storing it handed one visitor's likes
+    to the next. (That was not hypothetical -- Cloudflare was observed serving a
+    cached /api/v1/gallery/ to requests that carried a different session cookie.)
+
+    So the flag lives here instead, behind its own ``no-store`` endpoint, and the
+    client paints the hearts on top of the cached list.
+
+    Anonymous users never reach this -- the endpoint requires authentication and
+    the frontend skips the call, so a logged-out visit is still a single request.
     """
     if user is None or not user.is_authenticated:
-        return
-    ids = [p["id"] for p in page if p["id"] is not None]
-    if not ids:
-        return
-    liked = set(
+        return []
+    return list(
         PhotoLike.objects
-        .filter(auth_user=user, photo_id__in=ids)
+        .filter(auth_user=user)
         .values_list("photo_id", flat=True)
     )
-    for p in page:
-        if p["id"] in liked:
-            p["liked_by_me"] = True

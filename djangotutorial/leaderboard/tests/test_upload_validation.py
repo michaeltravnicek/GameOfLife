@@ -24,6 +24,42 @@ def _png_bytes(size):
         Image.MAX_IMAGE_PIXELS = previous
 
 
+def _jpeg_bytes(size):
+    buf = io.BytesIO()
+    Image.new("RGB", size, (10, 20, 30)).save(buf, format="JPEG", quality=70)
+    return buf.getvalue()
+
+
+class SameLimitForEveryFormatTests(TestCase):
+    """One rule, whatever the format — a user should never have to know that
+    their PNG is judged differently from their JPEG.
+
+    The RAM gap behind it is real (a PNG pixel costs several times a JPEG pixel,
+    because only JPEG can be decoded at reduced scale) but it is handled by
+    serialising decodes in image_utils._DECODE_SLOT, not by a different limit.
+    """
+
+    def test_png_and_jpeg_of_the_same_size_are_treated_alike(self):
+        with self.settings(IMAGE_MAX_MEGAPIXELS=1):  # 1 MP; fixtures stay small
+            for name, data, content_type in (
+                ("a.png", _png_bytes((1200, 1200)), "image/png"),
+                ("a.jpg", _jpeg_bytes((1200, 1200)), "image/jpeg"),
+            ):
+                with self.subTest(file=name):
+                    upload = SimpleUploadedFile(name, data, content_type=content_type)
+                    with self.assertRaises(ValueError) as ctx:
+                        validate_upload(upload)
+                    self.assertIn("Rozlišení", str(ctx.exception))
+
+    def test_message_quotes_the_configured_limit(self):
+        with self.settings(IMAGE_MAX_MEGAPIXELS=2):
+            png = SimpleUploadedFile("a.png", _png_bytes((2000, 2000)),
+                                     content_type="image/png")
+            with self.assertRaises(ValueError) as ctx:
+                validate_upload(png)
+        self.assertIn("2 megapixel", str(ctx.exception))
+
+
 class ValidateUploadTests(TestCase):
     def test_rejects_decompression_bomb(self):
         # ~1 MB on disk, ~900 megapixels decoded.
