@@ -121,6 +121,17 @@ else:
 # PROXY_COUNT until computed_client_ip equals your own public IP.
 PROXY_COUNT = int(os.getenv("PROXY_COUNT", "1" if DEBUG else "2"))
 
+# Shared secret proving a request came through the Cloudflare edge rather than
+# straight at Render's ingress. A Cloudflare Transform Rule sets the matching
+# X-Origin-Verify header on every forwarded request; see
+# mysite.middleware.RequireCloudflareOriginMiddleware for why this exists at all
+# (Render has no inbound IP firewall, and the origin address is already public).
+#
+# Unset = disabled, which is the correct default: ship the code, confirm at
+# /whoami/ that the header actually arrives, and only then set the variable.
+# Setting it before the Transform Rule is live 403s the whole site.
+ORIGIN_SHARED_SECRET = os.getenv("ORIGIN_SHARED_SECRET", "")
+
 # Only trust the SSL proxy header in production (behind a real proxy).
 # In local dev with DEBUG=True, trusting this header causes Django to
 # mis-detect HTTPS and mark CSRF cookies as Secure, which breaks forms over HTTP.
@@ -342,6 +353,10 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 MIDDLEWARE = [
+    # First: a request that did not come through Cloudflare is rejected before
+    # any other middleware reads its headers. Inert unless ORIGIN_SHARED_SECRET
+    # is set.
+    'mysite.middleware.RequireCloudflareOriginMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     # Stamps the CSP header on every response (enforced unless CSP_REPORT_ONLY=1).

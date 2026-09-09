@@ -1,3 +1,4 @@
+import hmac
 import logging
 import os
 
@@ -216,6 +217,19 @@ def whoami(request):
         chain[0] if chain else request.META.get("REMOTE_ADDR")
     )
 
+    # Whether the Cloudflare Transform Rule is actually stamping requests. This
+    # has to be checkable *before* ORIGIN_SHARED_SECRET is set, because setting
+    # it while the rule is misconfigured 403s the whole site — so report the
+    # match without ever echoing the secret itself.
+    supplied = request.headers.get("X-Origin-Verify", "")
+    configured = conf.ORIGIN_SHARED_SECRET
+    if not supplied:
+        origin_verify = "header absent — request did not come through Cloudflare"
+    elif not configured:
+        origin_verify = "header present, ORIGIN_SHARED_SECRET unset (not enforcing yet)"
+    else:
+        origin_verify = "match" if hmac.compare_digest(supplied, configured) else "MISMATCH"
+
     return JsonResponse({
         "PROXY_COUNT": proxies,
         "x_forwarded_for": chain,
@@ -223,5 +237,7 @@ def whoami(request):
         "remote_addr": request.META.get("REMOTE_ADDR"),
         "cf_connecting_ip": request.META.get("HTTP_CF_CONNECTING_IP"),
         "computed_client_ip": client_ip,
+        "origin_verify": origin_verify,
+        "origin_verify_enforced": bool(configured),
         "hint": "computed_client_ip must equal your own public IP address",
     })

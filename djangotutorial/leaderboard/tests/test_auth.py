@@ -13,7 +13,7 @@ from django.utils.http import urlsafe_base64_encode
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APIClient
 
-from accounts.api.throttles import LoginThrottle
+from accounts.api.throttles import LoginThrottle, PasswordResetThrottle
 
 
 class PasswordResetApiTests(TestCase):
@@ -183,6 +183,26 @@ class AuthThrottleTests(TestCase):
                 self.assertEqual(resp.status_code, 401)  # under the limit: normal auth failure
             blocked = self.client.post(self.url, data=creds, format="json")
             self.assertEqual(blocked.status_code, 429)  # 4th request in the window is throttled
+
+    def test_password_reset_throttled_for_authenticated_caller(self):
+        # Regression (audit 2026-08-26): these throttles used to subclass
+        # AnonRateThrottle, whose cache key is None — no limit — for any request
+        # carrying a session cookie. The endpoints are AllowAny, so an attacker
+        # registered once, kept the cookie, and looped password-reset unmetered.
+        UserModel = get_user_model()
+        UserModel.objects.create_user(
+            username="cookie_holder", email="holder@example.com", password="pw-12345",
+        )
+        self.client.login(username="cookie_holder", password="pw-12345")
+        url = reverse("api-password-reset")
+        body = {"email": "holder@example.com"}
+        with mock.patch.dict(PasswordResetThrottle.THROTTLE_RATES, {"password_reset": "3/hour"}):
+            for _ in range(3):
+                self.assertEqual(
+                    self.client.post(url, data=body, format="json").status_code, 200
+                )
+            blocked = self.client.post(url, data=body, format="json")
+            self.assertEqual(blocked.status_code, 429)
 
 
 class SessionOnlyAuthTests(TestCase):

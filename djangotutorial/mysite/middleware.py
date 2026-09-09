@@ -1,5 +1,56 @@
 """Project-local middleware."""
+import hmac
+
 from django.conf import settings
+from django.http import HttpResponseForbidden
+
+
+class RequireCloudflareOriginMiddleware:
+    """Reject traffic that did not arrive through the Cloudflare proxy.
+
+    Render gives every web service a public ingress with no inbound IP firewall,
+    so the usual "allow only Cloudflare's IP ranges at the origin" cannot be done
+    here. Hiding the origin address is not a substitute: the A record pointed
+    straight at Render before the Cloudflare migration, and historical-DNS
+    services keep that forever.
+
+    So instead of secrecy, this checks for something only Cloudflare can supply.
+    A Transform Rule stamps ``X-Origin-Verify`` on every request it forwards; a
+    request that arrives without it did not come through the edge, which means it
+    also skipped the WAF, the rate limits and Access on the admin path. Those get
+    403 before any view — and, importantly, before anything trusts their headers:
+    a direct caller can forge X-Forwarded-For freely, which is what would
+    otherwise make the per-IP throttle and the (ip, username) axes lockout
+    evadable.
+
+    Deliberately inert until ORIGIN_SHARED_SECRET is set, so the code can ship and
+    be verified (see /whoami/) before enforcement is switched on. Turning it on is
+    an env-var change, not a deploy — and turning it back off is too, which is the
+    escape hatch if the Transform Rule ever stops firing.
+    """
+
+    #: Render's health check reaches the service on its internal network, never
+    #: through the *site's* Cloudflare zone, so it can never carry the header.
+    #: Everything here is unauthenticated and side-effect free.
+    #:
+    #: Note the missing trailing slash: the route is "healthz/", and APPEND_SLASH
+    #: would redirect "/healthz" to it — but this middleware runs before
+    #: CommonMiddleware, so a health check configured without the slash would be
+    #: 403'd before the redirect could happen, and Render would kill the service.
+    EXEMPT_PREFIXES = ("/healthz",)
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+        self.secret = getattr(settings, "ORIGIN_SHARED_SECRET", "")
+
+    def __call__(self, request):
+        if self.secret and not request.path.startswith(self.EXEMPT_PREFIXES):
+            # compare_digest: the header is attacker-supplied, so keep the
+            # comparison constant-time rather than leaking the prefix length.
+            supplied = request.headers.get("X-Origin-Verify", "")
+            if not hmac.compare_digest(supplied, self.secret):
+                return HttpResponseForbidden("direct origin access denied")
+        return self.get_response(request)
 
 
 class AdminCSPExemptMiddleware:
