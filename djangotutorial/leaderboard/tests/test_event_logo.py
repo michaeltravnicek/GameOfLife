@@ -8,11 +8,14 @@ guard now belongs to BadgeWriteSerializer.
 """
 from datetime import timedelta
 
-from django.core.files.uploadedfile import SimpleUploadedFile
+from django.core.files.uploadedfile import SimpleUploadedFile, TemporaryUploadedFile
+from django.http import QueryDict
 from django.test import TestCase
 from django.utils import timezone
 
-from leaderboard.api.serializers import BadgeWriteSerializer, EventWriteSerializer
+from leaderboard.api.serializers import (
+    BadgeWriteSerializer, EventWriteSerializer, _shallow_copy,
+)
 from leaderboard.models import Badge, Event
 
 _SVG = b'<svg xmlns="http://www.w3.org/2000/svg"><rect width="10" height="10"/></svg>'
@@ -106,6 +109,45 @@ class EventArtworkTests(TestCase):
         s = EventWriteSerializer(event, data={"badge": ""}, partial=True)
         self.assertTrue(s.is_valid(), s.errors)
         self.assertIsNone(s.save().badge_id)
+
+    def test_empty_badge_clears_the_link_alongside_a_large_upload(self):
+        """The production 500: clearing the badge while replacing the poster.
+
+        `to_internal_value` copies the incoming data to rewrite badge "" -> None.
+        On a multipart request that data is a QueryDict whose copy() is a
+        DEEPCOPY, and DRF puts the uploaded files in it -- so a poster over
+        FILE_UPLOAD_MAX_MEMORY_SIZE, which Django spools to a
+        TemporaryUploadedFile wrapping a BufferedRandom, made the copy raise
+        `TypeError: cannot pickle 'BufferedRandom' instances`.
+
+        The dict-based test above cannot catch it: a plain dict copies shallowly.
+        """
+        badge = Badge.objects.create(name="Karaoke")
+        event = Event.objects.create(
+            name="Akce", place="Brno", points=10,
+            date=timezone.now() + timedelta(days=1), badge=badge,
+        )
+
+        spooled = TemporaryUploadedFile("poster.png", "image/png", len(_PNG), "utf-8")
+        self.addCleanup(spooled.close)
+        spooled.write(_PNG)
+        spooled.seek(0)
+
+        data = QueryDict(mutable=True)
+        data["badge"] = ""
+        data["name"] = "Akce"
+        # Multi-value key: the shallow rebuild must not flatten it to one value.
+        data.setlist("category", ["1", "2"])
+        data["image"] = spooled
+
+        # The crash was here, before any field validation ran. Whether the made-up
+        # category pks validate is beside the point -- it must not raise TypeError.
+        EventWriteSerializer(event, data=data, partial=True).is_valid()
+
+        copied = _shallow_copy(data)
+        self.assertEqual(copied.getlist("category"), ["1", "2"])
+        self.assertIs(copied["image"], spooled,
+                      "the upload must be carried by reference, never copied")
 
     def test_svg_poster_image_still_rejected(self):
         # The poster `image` is resized by Pillow, so SVG there must NOT pass.

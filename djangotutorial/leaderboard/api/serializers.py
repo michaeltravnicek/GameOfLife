@@ -1,5 +1,6 @@
 import re
 
+from django.http import QueryDict
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
@@ -352,6 +353,28 @@ class BlankableFloatField(_BlankToNone, serializers.FloatField):
     pass
 
 
+def _shallow_copy(data):
+    """Copy request data WITHOUT deep-copying the uploaded files inside it.
+
+    QueryDict.copy() is a deepcopy, and on a multipart request DRF's
+    ``request.data`` carries the uploaded file objects alongside the fields. Any
+    file over FILE_UPLOAD_MAX_MEMORY_SIZE (5 MB here) is a TemporaryUploadedFile
+    wrapping a BufferedRandom, which cannot be pickled -- so the copy raised
+    ``TypeError: cannot pickle 'BufferedRandom' instances`` and editing an event
+    with a large poster answered 500.
+
+    Rebuilding the QueryDict with setlist keeps multi-value keys intact (the
+    category checkboxes rely on that) and carries the file objects by reference,
+    which is what we want: nothing here mutates them.
+    """
+    if hasattr(data, "lists"):
+        copied = QueryDict(mutable=True)
+        for key, values in data.lists():
+            copied.setlist(key, values)
+        return copied
+    return data.copy()   # a plain dict from a JSON request; already shallow
+
+
 class EventWriteSerializer(serializers.ModelSerializer):
     """Input side of event create (POST, full) and update (PATCH, partial).
 
@@ -396,7 +419,7 @@ class EventWriteSerializer(serializers.ModelSerializer):
         # A <select> with nothing chosen posts "" in multipart form data, which
         # PrimaryKeyRelatedField rejects as an invalid pk. Treat it as "clear".
         if hasattr(data, "copy") and data.get("badge", None) == "":
-            data = data.copy()
+            data = _shallow_copy(data)
             data["badge"] = None
         return super().to_internal_value(data)
 
