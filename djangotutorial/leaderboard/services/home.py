@@ -1,7 +1,6 @@
 """Home page data: hero carousel, about-stats, and the active check-in feed."""
 from datetime import timedelta
 
-from django.conf import settings
 from django.core.cache import cache
 from django.db.models import Sum
 from django.utils import timezone
@@ -23,7 +22,6 @@ def pick_hero_events(count=5):
         return cached
 
     now = timezone.now()
-    media_url = settings.MEDIA_URL
     events = list(
         Event.objects
         .only("name", "date", "slug", "image")
@@ -39,7 +37,12 @@ def pick_hero_events(count=5):
             continue
         seen_names.add(event.name)
         result.append({
-            "url": f"{media_url}{event.image}",
+            # Both URLs must come from the storage backend, never from
+            # MEDIA_URL: on S3/R2 the backend answers with the CDN host while
+            # MEDIA_URL stays "/media/", a local-disk route holding nothing
+            # uploaded after the cutover. Hand-building this one left the hero
+            # serving mobile variants from the CDN and 404ing the full sizes.
+            "url": event.image.url,
             "url_mobile": variant_url(event.image),
             "name": event.name,
             "date": event.date,

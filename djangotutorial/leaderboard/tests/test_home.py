@@ -1,8 +1,10 @@
 from datetime import timedelta
+from unittest import mock
 
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
-from django.test import TestCase
+from django.core.files.storage import FileSystemStorage
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
@@ -10,6 +12,7 @@ from rest_framework.test import APIClient
 
 from accounts.models import Profile
 from leaderboard.models import Event, User as LeaderboardUser, UserToEvent
+from leaderboard.services.home import pick_hero_events
 
 from .helpers import BRNO_LAT, BRNO_LON, make_profile_for
 
@@ -105,3 +108,32 @@ class HeroApiTests(TestCase):
         self.assertIn("hero_events", resp.json())
         self.assertIsInstance(resp.json()["hero_events"], list)
         self.assertIn("max-age", resp["Cache-Control"])
+
+    @override_settings(MEDIA_URL="/media/")
+    def test_hero_url_comes_from_the_storage_backend(self):
+        """The full-size URL must be asked of storage, not built from MEDIA_URL.
+
+        On S3/R2 the backend answers with the CDN host while MEDIA_URL keeps its
+        local default, so a hand-built URL points at a disk route that holds
+        nothing uploaded after the cutover. This once shipped: the hero served
+        mobile variants from the CDN and 404'd every full-size image beside them.
+        """
+        event = Event.objects.create(
+            sheet_id="hero1", sheet_list_id="x", name="Hero", place="Brno",
+            points=10, date=timezone.now() - timedelta(days=1),
+            visible_to_users=True, image="event_images/hero.webp",
+        )
+        cache.clear()
+
+        # Stand in for R2: a backend whose url() owes nothing to MEDIA_URL.
+        # Patching the concrete class rather than default_storage, which is a
+        # lazy proxy and has no url attribute of its own.
+        cdn = "https://img.example.com/event_images/hero.webp"
+        with mock.patch.object(FileSystemStorage, "url", return_value=cdn):
+            hero = pick_hero_events()
+
+        self.assertEqual([h["url"] for h in hero], [cdn])
+        self.assertFalse(
+            hero[0]["url"].startswith("/media/"),
+            "hero URL was built from MEDIA_URL instead of the storage backend",
+        )
