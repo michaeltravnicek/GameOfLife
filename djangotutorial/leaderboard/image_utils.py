@@ -235,8 +235,14 @@ def variant_url(field_file, request=None, suffix="mobile"):
     return request.build_absolute_uri(url) if request else url
 
 
-def make_webp_variant(field_file, max_width=768, quality=55, suffix="mobile"):
+def make_webp_variant(field_file, max_width=900, quality=60, suffix="mobile"):
     """Write a small WebP sibling next to an uploaded image (for mobile srcset).
+
+    Width, not quality, is what shows here. Measured on a real event photo
+    (script/image_quality_compare.py): 768 q55 -> 768 q65 costs 5 kB and is
+    almost indistinguishable, while 768 -> 900 at a barely higher quality is
+    visibly sharper for 14 kB. A phone viewport is ~390 CSS px at 3x, so 768 was
+    already being upscaled on the devices most of this audience uses.
 
     Produces ``<name>.<suffix>.webp`` alongside the (already resized) original.
     Regenerated on every save and best-effort: a failure here must never break a
@@ -496,10 +502,16 @@ def decode_slot():
             )
         time.sleep(_DECODE_POLL_SECONDS)
 
-# Per-model ceilings on the stored file. Nothing but a pathological upload ever
-# reaches them -- the biggest real photo in the library lands at ~330 kB -- so
-# these are a guard rail, not a routine quality reduction.
-CAP_EVENT_IMAGE = 1000 * 1024
+# Per-model ceilings on the stored file. These are a guard rail against a
+# pathological upload, not a routine quality reduction -- if a cap starts binding
+# on ordinary photos it is silently undoing the dimensions chosen below, because
+# the shrink loop drops quality to the floor and then scales the image down.
+#
+# CAP_EVENT_IMAGE is sized against the measured worst case: the largest real
+# photo in the library (4000x2667) encodes to 968 kB at 2400 px / q80, so 1500 kB
+# leaves ~55 % headroom for busier material. Re-measure with
+# script/image_quality_compare.py if the dimensions change again.
+CAP_EVENT_IMAGE = 1500 * 1024
 CAP_GALLERY_PHOTO = 700 * 1024
 CAP_ARTWORK = 700 * 1024
 
@@ -534,13 +546,22 @@ def webp_name(name):
 #         variant_kwargs=None means "no .mobile.webp sibling" -- at small sizes
 #         a variant saves nothing and only adds a file to store and serve.
 UPLOAD_LIMITS = {
-    "leaderboard.Event.image":        (1200, 1200, CAP_EVENT_IMAGE, {}),
+    # 2400 px because the poster is the one image shown large on a desktop, and
+    # 1200 px visibly upscales there. Measured: it costs nothing for the bulk of
+    # the library, whose stored files are already 1200 px or smaller and cannot
+    # grow -- thumbnail() only shrinks. It buys detail on newly uploaded
+    # originals, which is where the headroom actually exists.
+    "leaderboard.Event.image":        (2400, 2400, CAP_EVENT_IMAGE, {}),
     "leaderboard.ImageToEvent.image": (1024, 1024, CAP_GALLERY_PHOTO, {}),
     # The gallery grid serves the variant; this original is only fetched when
     # someone opens the lightbox to actually look at the photo, which is the
     # wrong place to economise. Hence the largest dimensions of the lot.
     "leaderboard.UserPhoto.image":    (1600, 1600, CAP_GALLERY_PHOTO, {}),
-    "leaderboard.Badge.image":        (512, 512, CAP_ARTWORK, None),
+    # Event logos live here. 512 px left visibly soft edges on the lettering --
+    # some events render the badge at logo_scale 2.0, and a 2x display doubles
+    # that again. Flat artwork compresses so well that the fix is nearly free:
+    # measured 28 kB -> 54 kB for four times the pixels.
+    "leaderboard.Badge.image":        (768, 768, CAP_ARTWORK, None),
     "accounts.Profile.photo":         (400, 400, CAP_ARTWORK,
                                        {"max_width": 200, "quality": 60}),
 }

@@ -423,12 +423,17 @@ class BadgeArtworkTests(TestCase):
         badge.refresh_from_db()
         self.assertEqual(badge.image.name, "badges/big.webp")
         converted = os.path.join(self.tmp.name, badge.image.name)
+        # From the config, not a literal -- see the note in
+        # test_resize_converts_and_repoints_the_row.
+        max_w, _max_h, _cap, _variant = image_utils.UPLOAD_LIMITS[
+            "leaderboard.Badge.image"
+        ]
         with Image.open(converted) as img:
-            self.assertLessEqual(img.width, 512)
+            self.assertLessEqual(img.width, max_w)
         self.assertLess(os.path.getsize(converted), before)
 
     def test_artwork_gets_no_webp_sibling(self):
-        """At 512px a variant would save nothing and only add a file."""
+        """Artwork is small enough that a variant would only add a file."""
         badge, _ = self._badge_with_image()
         call_command("generate_image_variants", resize=True, stdout=StringIO())
         badge.refresh_from_db()
@@ -501,9 +506,15 @@ class BackfillCommandTests(TestCase):
         event.refresh_from_db()
         self.assertEqual(event.image.name, "event_images/legacy.webp")
         converted = os.path.join(self.tmp.name, event.image.name)
+        # Read the ceiling from the config rather than restating it: the point of
+        # the test is that --resize honours whatever UPLOAD_LIMITS says, and a
+        # hardcoded number here just goes stale the next time it is tuned.
+        max_w, max_h, _cap, _variant = image_utils.UPLOAD_LIMITS[
+            "leaderboard.Event.image"
+        ]
         with Image.open(converted) as img:
-            self.assertLessEqual(img.width, 1200)
-            self.assertLessEqual(img.height, 1200)
+            self.assertLessEqual(img.width, max_w)
+            self.assertLessEqual(img.height, max_h)
         self.assertLess(os.path.getsize(converted), before)
         self.assertFalse(os.path.exists(path))
 
