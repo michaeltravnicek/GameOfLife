@@ -29,6 +29,27 @@ time, so the budget becomes:
 
     1 × 286  +  2 × 60  = 406 MB     46 MB above the 60 MB safety margin
 
+## That budget predates R2 — re-do it before trusting the worker count
+
+Enabling S3/R2 media costs **+40 MB in every worker**, measured: importing
+`storages.backends.s3` pulls in boto3/botocore (+19 MB) and building the S3
+client loads botocore's service model (+21 MB). An idle worker is ~100 MB, not
+~60 MB, from the first request that touches media onwards. The sum above becomes:
+
+    1 × 326  +  2 × 100 = 526 MB     OVER a 512 MB instance
+
+So the three workers that fit before R2 do not fit after it. Either drop to
+WEB_CONCURRENCY=2 (env, no deploy):
+
+    1 × 326  +  1 × 100 = 426 MB     86 MB of margin
+
+or lower IMAGE_MAX_MEGAPIXELS, which shrinks the 286 MB peak proportionally —
+16 MP puts it near 190 MB and three workers fit again. Doing both is comfortable.
+
+Dropping a worker costs less after R2 than it would have before: media no longer
+occupies a worker for the length of a file transfer, which was the main reason
+the concurrency ceiling mattered.
+
 Measured, not estimated — `imagelab/07_memory.py` prints exactly this sum and
 recomputes it for other instance sizes:
 
