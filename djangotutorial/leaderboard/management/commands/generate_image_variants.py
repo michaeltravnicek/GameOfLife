@@ -29,13 +29,14 @@ from django.apps import apps
 from django.core.management.base import BaseCommand
 
 from leaderboard.image_utils import (
-    UPLOAD_LIMITS, make_webp_variant, needs_processing, process_upload,
+    ENFORCED_ASPECT, UPLOAD_LIMITS, make_webp_variant, needs_processing,
+    process_upload,
     variant_name,
 )
 
 
 def targets():
-    """(queryset, field, (w, h, cap), variant_kwargs) for every registered field.
+    """(queryset, field, (w, h, cap, aspect), variant_kwargs) for every field.
 
     Derived from image_utils.UPLOAD_LIMITS rather than listed again here. The
     limits used to be duplicated in both places, which meant a change to a
@@ -48,7 +49,12 @@ def targets():
         queryset = (model.objects
                     .exclude(**{field_name: ""})
                     .filter(**{f"{field_name}__isnull": False}))
-        yield queryset, field_name, (max_width, max_height, cap), variant_kwargs
+        # The enforced aspect ratio rides along in the same tuple as the size
+        # limits, for the reason in this docstring: anything the backfill reads
+        # from somewhere other than the registry eventually disagrees with what
+        # save() does, silently and in the files rather than in a traceback.
+        limits = (max_width, max_height, cap, ENFORCED_ASPECT.get(key))
+        yield queryset, field_name, limits, variant_kwargs
 
 
 def _mb(num_bytes):

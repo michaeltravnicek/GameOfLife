@@ -566,6 +566,65 @@ UPLOAD_LIMITS = {
                                        {"max_width": 200, "quality": 60}),
 }
 
+# Fields whose stored image is centre-cropped to a fixed aspect ratio.
+#
+# The ratio is written long-side-first and applied ACCORDING TO THE SOURCE'S OWN
+# ORIENTATION: (4, 3) means 4:3 for a landscape or square upload and 3:4 for a
+# portrait one. Forcing every image into a landscape frame instead would take
+# 44 % off the height of an upright group photo, which is where the heads are.
+#
+# Cropping happens before the LANCZOS pass, so the pixels are dropped before the
+# expensive resize rather than after it. It is irreversible: the pipeline runs on
+# upload and no untouched original is kept.
+#
+# Not applied to animations -- cropping every frame multiplies the cost of the
+# one path that already holds all frames in memory at once, and an animated
+# poster is a rarity. _prepare_animation ignores this registry.
+ENFORCED_ASPECT = {
+    "leaderboard.Event.image": (4, 3),
+    "leaderboard.ImageToEvent.image": (4, 3),
+}
+
+
+def aspect_for(instance_or_model, field_name):
+    """Enforced ratio for this field, or None. Unregistered fields keep theirs."""
+    return ENFORCED_ASPECT.get(field_key(instance_or_model, field_name))
+
+
+def _target_ratio(width, height, ratio):
+    """The width/height the source should end up at, following its orientation."""
+    long_side, short_side = ratio
+    return (long_side / short_side) if width >= height else (short_side / long_side)
+
+
+def _aspect_ok(width, height, ratio, tolerance=0.01):
+    """True when these dimensions already sit on the enforced ratio.
+
+    The tolerance absorbs the rounding in a previous crop -- without it a stored
+    image would fail the check forever and be re-encoded on every save, losing a
+    generation of quality each time.
+    """
+    if not ratio or not width or not height:
+        return True
+    return abs((width / height) - _target_ratio(width, height, ratio)) <= tolerance
+
+
+def _crop_to_aspect(img, ratio):
+    """Centre-crop to the enforced ratio. Returns the image unchanged if it fits."""
+    if not ratio:
+        return img
+    width, height = img.size
+    if _aspect_ok(width, height, ratio):
+        return img
+    target = _target_ratio(width, height, ratio)
+    if (width / height) > target:          # too wide: trim the sides
+        new_width, new_height = round(height * target), height
+    else:                                   # too tall: trim top and bottom
+        new_width, new_height = width, round(width / target)
+    left, top = (width - new_width) // 2, (height - new_height) // 2
+    return img.crop((left, top, left + new_width, top + new_height))
+
+
 # Fields deliberately left unprocessed. Empty today; anything added here needs a
 # comment saying why, because the coverage test treats it as a waiver.
 UPLOAD_EXEMPT = set()
@@ -616,7 +675,8 @@ def process_image_field(instance, field_name):
         return
     max_width, max_height, cap, variant_kwargs = limits_for(instance, field_name)
 
-    stored = process_upload(field, max_width, max_height, cap)
+    stored = process_upload(field, max_width, max_height, cap,
+                            aspect=aspect_for(instance, field_name))
     if stored:
         field.name = stored
         models.Model.save(instance, update_fields=[field_name])
@@ -690,7 +750,7 @@ def _encode_under_cap(frames, max_bytes, quality=WEBP_QUALITY,
     return payload  # best effort: over the cap, but far smaller than the input
 
 
-def _prepare_still(img, max_width, max_height):
+def _prepare_still(img, max_width, max_height, aspect=None):
     """One frame, decoded as cheaply as the format allows.
 
     Memory is the constraint here, not speed: the instance has 512 MB and a
@@ -711,7 +771,7 @@ def _prepare_still(img, max_width, max_height):
     except (AttributeError, ValueError, OSError):
         pass  # not a JPEG, or already loaded — nothing lost
     ImageOps.exif_transpose(img, in_place=True)
-    out = _normalise_mode(img)
+    out = _crop_to_aspect(_normalise_mode(img), aspect)
     if out.width > max_width or out.height > max_height:
         out.thumbnail((max_width, max_height), Image.LANCZOS)
     return [out]
@@ -755,7 +815,7 @@ def _inspect(data):
         return None
 
 
-def needs_processing(field_file, max_width, max_height, max_bytes):
+def needs_processing(field_file, max_width, max_height, max_bytes, aspect=None):
     """True when ``process_upload`` would actually rewrite this file.
 
     Split out so a bulk backfill can dry-run. Storage-abstracted, so it works
@@ -770,13 +830,18 @@ def needs_processing(field_file, max_width, max_height, max_bytes):
     probe = _inspect(data)
     if probe is None:
         return False
-    fmt, width, height, _animated = probe
+    fmt, width, height, animated = probe
     already_webp = fmt == "WEBP" and os.path.splitext(name)[1].lower() == ".webp"
     fits = width <= max_width and height <= max_height and len(data) <= max_bytes
+    # An already-converted file that sits on the wrong ratio is not done: without
+    # this the backfill would report nothing to do and the crop would only ever
+    # reach images uploaded after the registry entry was added.
+    if not animated and not _aspect_ok(width, height, aspect):
+        return True
     return not (already_webp and fits)
 
 
-def process_upload(field_file, max_width, max_height, max_bytes):
+def process_upload(field_file, max_width, max_height, max_bytes, aspect=None):
     """Store this upload as WebP, downscaled and under `max_bytes`.
 
     Returns the new storage key when it changed (the caller must persist it on
@@ -824,7 +889,7 @@ def process_upload(field_file, max_width, max_height, max_bytes):
                 frames = _prepare_animation(img, max_width, max_height)
             else:
                 extra = {}
-                frames = _prepare_still(img, max_width, max_height)
+                frames = _prepare_still(img, max_width, max_height, aspect)
             # Encoding stays inside the `with`: the still path deliberately does
             # not copy the decoded image, so `img` must still be open here.
             payload = _encode_under_cap(frames, max_bytes, **extra)
