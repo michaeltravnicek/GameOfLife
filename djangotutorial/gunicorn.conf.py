@@ -50,10 +50,40 @@ Dropping a worker costs less after R2 than it would have before: media no longer
 occupies a worker for the length of a file transfer, which was the main reason
 the concurrency ceiling mattered.
 
-Measured, not estimated — `imagelab/07_memory.py` prints exactly this sum and
-recomputes it for other instance sizes:
+## Re-measuring it
 
-    INSTANCE_MB=1024 WEB_CONCURRENCY=6 /usr/bin/python3 imagelab/07_memory.py
+`script/memory_budget.py` prints every figure above and recomputes the table for
+other instance sizes and worker counts. It measures each configuration in a fresh
+subprocess, because ru_maxrss is a high-water mark that never comes down:
+
+    .venv/bin/python script/memory_budget.py
+    .venv/bin/python script/memory_budget.py --instance 1024 --workers 4
+
+(It replaces `imagelab/07_memory.py`, which the earlier numbers came from and
+which is not in the repo — so the budget could not be re-derived when R2 and the
+larger poster dimensions changed it.)
+
+Measured 2026-09-10, with R2 on and Event.image at 2400 px:
+
+    idle worker                    58 MB   ->  87 MB with boto3 loaded
+    peak, ordinary JPEG upload    175 MB   (was 93 MB at a 1200 px target)
+    peak, 24 MP RGBA upload       383 MB   (the old note here said 286 — stale)
+
+The 24 MP figure is the tail, not the normal case, and it is the one that decides
+the worker count because it is what OOMs. It scales with IMAGE_MAX_MEGAPIXELS,
+measured:
+
+    24 MP -> 383 MB     16 MP -> 311 MB     12 MP -> 296 MB     8 MP -> 247 MB
+
+Against a 512 MB instance with a 60 MB margin (452 MB usable), with R2 on:
+
+    workers    ordinary upload      24 MP worst case    16 MP worst case
+       3            379 MB ok            586 MB OVER         515 MB OVER
+       2            292 MB ok            499 MB OVER         428 MB ok
+
+So WEB_CONCURRENCY=2 together with IMAGE_MAX_MEGAPIXELS=16 is the combination
+that survives its own worst case. The largest real photo in the library is
+10.7 MP, so a 16 MP ceiling rejects nothing that actually gets uploaded.
 
 ## Before raising this further
 
