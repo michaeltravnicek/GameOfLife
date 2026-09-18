@@ -74,15 +74,27 @@ import logging
 import threading
 from contextlib import contextmanager
 
+from django.db import transaction
+
 logger = logging.getLogger(__name__)
 
 
 def _evict(keys=(), pattern=None):
-    """Best-effort cache eviction. A cache outage must never break a DB write.
+    """Best-effort cache eviction, now and again once the transaction commits.
 
-    `delete_pattern` is django-redis-specific, so it's skipped on backends that
-    lack it (e.g. LocMemCache in tests). Any backend error is logged and swallowed.
+    Inside `transaction.atomic` the write is invisible to other requests until
+    commit, so a read landing between this eviction and the commit re-caches
+    the old snapshot for a full TTL. The second eviction closes that window.
     """
+    _evict_now(keys, pattern)
+    if transaction.get_connection().in_atomic_block:
+        transaction.on_commit(lambda: _evict_now(keys, pattern))
+
+
+def _evict_now(keys=(), pattern=None):
+    """`delete_pattern` is django-redis-specific, so it's skipped on backends
+    that lack it (LocMemCache). Any backend error is logged and swallowed — a
+    cache outage must never break a DB write."""
     from django.core.cache import cache
 
     try:

@@ -90,7 +90,7 @@ def gallery_page(offset, limit, request, season=None):
             # "likeable, nobody has yet".
             "id": None,
             "url": request.build_absolute_uri(img.image.url),
-            "url_mobile": variant_url(img.image, request),
+            "url_mobile": variant_url(img.image, request, check_exists=False),
             "event_name": img.event.name if img.event else "",
             "event_slug": img.event.slug if img.event else "",
             "event_date": img.event.date if img.event else None,
@@ -102,7 +102,7 @@ def gallery_page(offset, limit, request, season=None):
         photos.append({
             "id": up.pk,
             "url": request.build_absolute_uri(up.image.url),
-            "url_mobile": variant_url(up.image, request),
+            "url_mobile": variant_url(up.image, request, check_exists=False),
             "event_name": up.event.name if up.event else "",
             "event_slug": up.event.slug if up.event else "",
             "event_date": up.event.date if up.event else None,

@@ -10,7 +10,6 @@ from django.urls import reverse
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 
-from rest_framework.authtoken.models import Token
 from rest_framework.test import APIClient
 
 from accounts.api.throttles import LoginThrottle, PasswordResetThrottle
@@ -240,11 +239,9 @@ class SessionOnlyAuthTests(TestCase):
         )
         self.assertEqual(resp.status_code, 200)
         self.assertNotIn("token", resp.json())
-        self.assertFalse(Token.objects.filter(user=self.user).exists())
 
     def test_token_header_does_not_authenticate(self):
-        token = Token.objects.create(user=self.user)
-        self.client.credentials(HTTP_AUTHORIZATION=f"Token {token.key}")
+        self.client.credentials(HTTP_AUTHORIZATION="Token 0123456789abcdef")
         resp = self.client.get(reverse("api-me"))
         self.assertEqual(resp.status_code, 200)
         # Authenticated *nothing*: the token is not a credential any more.

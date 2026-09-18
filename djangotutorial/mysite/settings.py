@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 import os
 import sys
 from datetime import timedelta
+from urllib.parse import urlparse
 
 import dj_database_url
 from django.core.exceptions import ImproperlyConfigured
@@ -250,7 +251,11 @@ if not DEBUG and ADMIN_URL == "admin/":
 # that failure is visible server-side. Rather than weaken script-src site-wide,
 # AdminCSPExemptMiddleware adds 'unsafe-inline' to script-src for the admin path
 # only (see mysite/middleware.py), so enforcement is safe for the admin too.
-_csp_media_host = os.getenv("MEDIA_S3_CUSTOM_DOMAIN", "")
+# No custom domain: FileField.url points at the endpoint host, so allow that.
+_csp_media_host = (
+    os.getenv("MEDIA_S3_CUSTOM_DOMAIN", "")
+    or urlparse(os.getenv("MEDIA_S3_ENDPOINT", "")).netloc
+)
 _csp_extra_connect = [
     o.strip() for o in os.getenv("CSP_EXTRA_CONNECT_SRC", "").split(",") if o.strip()
 ]
@@ -326,7 +331,6 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.sitemaps',  # /sitemap.xml (no sites framework needed; uses the request host)
     'rest_framework',
-    'rest_framework.authtoken',
     'drf_spectacular',
     'corsheaders',
     'axes',
@@ -709,15 +713,23 @@ USE_I18N = True
 
 USE_TZ = True
 
-CACHES = {
-    "default": {
-        "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": os.environ.get("REDIS_URL", "redis://127.0.0.1:6379/1"),
-        "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+# Redis when REDIS_URL is set (production), otherwise an in-process cache so a
+# dev checkout works without one. LocMemCache is per worker, so it is not a
+# production option: throttle counters and evictions would not be shared.
+if os.environ.get("REDIS_URL"):
+    CACHES = {
+        "default": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": os.environ["REDIS_URL"],
+            "OPTIONS": {
+                "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            }
         }
     }
-}
+else:
+    CACHES = {
+        "default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"},
+    }
 
 # Tests share Redis with the running dev server, so cached responses written
 # by test fixtures (stats, hero, events list) would be served live for up to

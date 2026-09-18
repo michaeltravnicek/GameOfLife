@@ -218,18 +218,18 @@ def _overwrite(field_file, name, data):
     storage.save(name, ContentFile(data))
 
 
-def variant_url(field_file, request=None, suffix="mobile"):
+def variant_url(field_file, request=None, suffix="mobile", check_exists=True):
     """URL of an image's generated variant, or None if it hasn't been produced yet.
 
-    Existence-checked so legacy images (before a backfill) simply fall back to the
-    original instead of serving a 404 in a srcset. NOTE: on remote storage
-    ``exists`` is a network round-trip (a HEAD) per call — fine for the single-
-    object detail endpoint, and the Phase-2 backfill guarantees variants exist so
-    the check can later be dropped for R2.
+    ``check_exists`` asks the storage whether the variant is there, so a legacy
+    image (before a backfill) falls back to the original instead of a 404 in a
+    srcset. On remote storage that is a HEAD per call — fine for a single
+    object, wrong for a list. List endpoints pass ``check_exists=False``; the
+    ``generate_image_variants`` backfill in build.sh guarantees the variants.
     """
     if not field_file or not getattr(field_file, "name", None):
         return None
-    if not field_file.storage.exists(variant_name(field_file.name, suffix)):
+    if check_exists and not field_file.storage.exists(variant_name(field_file.name, suffix)):
         return None
     url = variant_name(field_file.url, suffix)
     return request.build_absolute_uri(url) if request else url
@@ -263,8 +263,9 @@ def make_webp_variant(field_file, max_width=900, quality=60, suffix="mobile"):
             img.thumbnail((max_width, max_width * 6), Image.LANCZOS)
             out = io.BytesIO()
             img.save(out, "WEBP", quality=quality, method=WEBP_METHOD)
-    except (OSError, IOError):
-        # Not an image or file is corrupt — leave it alone.
+    except (OSError, IOError, DecodeBusy):
+        # Not an image, corrupt, or no decode slot free — the original is
+        # already stored, so the variant is simply skipped until the backfill.
         return
     _overwrite(field_file, variant_name(name, suffix), out.getvalue())
 
@@ -830,15 +831,19 @@ def needs_processing(field_file, max_width, max_height, max_bytes, aspect=None):
     probe = _inspect(data)
     if probe is None:
         return False
+    return not _is_final(name, data, probe, max_width, max_height, max_bytes, aspect)
+
+
+def _is_final(name, data, probe, max_width, max_height, max_bytes, aspect):
+    """True when the stored file needs no work: WebP, in bounds, under the cap
+    and on the enforced ratio. The one predicate both ``needs_processing`` and
+    ``process_upload`` use, so the backfill and the save path cannot disagree
+    on what "done" means."""
     fmt, width, height, animated = probe
     already_webp = fmt == "WEBP" and os.path.splitext(name)[1].lower() == ".webp"
     fits = width <= max_width and height <= max_height and len(data) <= max_bytes
-    # An already-converted file that sits on the wrong ratio is not done: without
-    # this the backfill would report nothing to do and the crop would only ever
-    # reach images uploaded after the registry entry was added.
-    if not animated and not _aspect_ok(width, height, aspect):
-        return True
-    return not (already_webp and fits)
+    on_ratio = animated or _aspect_ok(width, height, aspect)
+    return already_webp and fits and on_ratio
 
 
 def process_upload(field_file, max_width, max_height, max_bytes, aspect=None):
@@ -869,12 +874,9 @@ def process_upload(field_file, max_width, max_height, max_bytes, aspect=None):
     probe = _inspect(data)
     if probe is None:
         return None  # unreadable or not an image — leave it alone
-    fmt, width, height, animated = probe
-
-    if (fmt == "WEBP" and os.path.splitext(name)[1].lower() == ".webp"
-            and width <= max_width and height <= max_height
-            and len(data) <= max_bytes):
+    if _is_final(name, data, probe, max_width, max_height, max_bytes, aspect):
         return None
+    fmt, width, height, animated = probe
 
     try:
         # Held across decode AND encode: both hold the full bitmap, so releasing

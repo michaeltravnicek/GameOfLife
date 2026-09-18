@@ -249,39 +249,6 @@ class RenderAndInjectTests(TestCase):
                        'property="og:site_name"', 'name="twitter:card"'):
             self.assertIn(needle, html)
 
-    def test_optional_fields_emit_nothing_when_unset(self):
-        """Nobody sets canonical/robots/jsonld yet — the output must not change."""
-        html = og.render_tags(og.metadata_for(self.factory.get("/")))
-        self.assertNotIn("rel=\"canonical\"", html)
-        self.assertNotIn('name="robots"', html)
-        self.assertNotIn("ld+json", html)
-
-    def test_optional_fields_render_when_set(self):
-        from dataclasses import replace
-
-        meta = replace(
-            og.metadata_for(self.factory.get("/")),
-            canonical="https://example.com/x",
-            robots="noindex, follow",
-            jsonld={"@type": "Event", "name": "Akce"},
-        )
-        html = og.render_tags(meta)
-        self.assertIn('<link rel="canonical" href="https://example.com/x" />', html)
-        self.assertIn('<meta name="robots" content="noindex, follow" />', html)
-        self.assertIn('<script type="application/ld+json">', html)
-
-    def test_jsonld_cannot_break_out_of_the_script_tag(self):
-        """HTML-escaping would corrupt JSON, so `<` is escaped JSON-side instead."""
-        tag = og._jsonld_tag({"name": "</script><script>alert(1)</script>"})
-        self.assertNotIn("<script>alert", tag)
-        self.assertIn("\\u003c/script", tag)
-        # Still valid JSON, and the escape decodes back to the original text.
-        import json
-        payload = tag.split(">", 1)[1].rsplit("<", 1)[0]
-        self.assertEqual(
-            json.loads(payload)["name"], "</script><script>alert(1)</script>"
-        )
-
 
 class ReactIndexViewTests(TestCase):
     """End-to-end: the HTML Django actually serves carries the tags."""

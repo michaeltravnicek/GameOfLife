@@ -15,7 +15,13 @@ from django.db import migrations
 
 
 def purge_tokens(apps, schema_editor):
-    Token = apps.get_model("authtoken", "Token")
+    # `rest_framework.authtoken` has since left INSTALLED_APPS. On a database
+    # that predates that, the table is still there and gets emptied; on a
+    # fresh one there is nothing to purge.
+    try:
+        Token = apps.get_model("authtoken", "Token")
+    except LookupError:
+        return
     Token.objects.all().delete()
 
 
@@ -23,7 +29,6 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ("accounts", "0007_profile_gdpr_consent_at_profile_gdpr_consent_version"),
-        ("authtoken", "0003_tokenproxy"),
     ]
 
     operations = [

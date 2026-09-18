@@ -14,12 +14,10 @@ class SeasonAdmin(admin.ModelAdmin):
     list_filter = ("is_active",)
 
     def save_model(self, request, obj, form, change):
-        # At most one active season (enforced by the season_single_active DB
-        # constraint). Activating this one deactivates the rest first, so the
-        # save can't collide with an already-active season. The admin wraps the
-        # change form in a transaction, so the two writes are atomic.
+        # The admin wraps the change form in a transaction, so the two writes
+        # are atomic.
         if obj.is_active:
-            Season.objects.exclude(pk=obj.pk).update(is_active=False)
+            Season.deactivate_others(obj.pk)
         super().save_model(request, obj, form, change)
 
 
@@ -78,7 +76,7 @@ class EventRSVPAdmin(admin.ModelAdmin):
 class EventFeedbackAdmin(admin.ModelAdmin):
     list_display = ("user", "event", "rating", "source", "updated_at")
     list_filter = ("event", "rating", "source")
-    search_fields = ("user__name", "user__number")
+    search_fields = ("user__name", "user__email")
 
 
 @admin.register(LastUpdate)

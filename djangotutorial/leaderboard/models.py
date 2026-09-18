@@ -1,7 +1,9 @@
+from datetime import timedelta
+
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
-from django.db import models
+from django.db import models, transaction
 from django.utils.text import slugify
 
 
@@ -29,6 +31,20 @@ class Season(models.Model):
 
     def __str__(self):
         return self.name
+
+    @classmethod
+    def deactivate_others(cls, pk):
+        """Switch off every season except `pk`, so the one at `pk` can be
+        activated without tripping `season_single_active`."""
+        cls.objects.exclude(pk=pk).update(is_active=False)
+
+    def activate(self):
+        """Make this the single active season."""
+        with transaction.atomic():
+            type(self).deactivate_others(self.pk)
+            if not self.is_active:
+                self.is_active = True
+                self.save(update_fields=["is_active"])
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
@@ -255,13 +271,17 @@ class Event(models.Model):
         from .cache_config import invalidate_event_caches
         invalidate_event_caches()
 
+    # Check-in opens this long before `date`, and — when no end_date is set —
+    # closes this long after it.
+    CHECKIN_PRE_WINDOW = timedelta(minutes=30)
+    CHECKIN_DEFAULT_LENGTH = timedelta(hours=4)
+
     @property
     def checkin_window_end(self):
         """End of the check-in window; None when the event has no dates at all."""
-        from datetime import timedelta
         if self.end_date:
             return self.end_date
-        return self.date + timedelta(hours=4) if self.date else None
+        return self.date + self.CHECKIN_DEFAULT_LENGTH if self.date else None
 
 
 class ImageToEvent(models.Model):

@@ -147,3 +147,13 @@ class Command(BaseCommand):
         if do_resize:
             summary += f" Converted {resized} originals, freed {_mb(saved_bytes)}."
         self.stdout.write(self.style.SUCCESS(summary))
+
+        if resized:
+            # The conversions above wrote the new keys with queryset.update(),
+            # which skips the models' save() eviction; the hero carousel and
+            # the boards' avatar URLs would otherwise point at deleted files.
+            from leaderboard.cache_config import (
+                invalidate_event_caches, invalidate_points_dependent_caches,
+            )
+            invalidate_event_caches()
+            invalidate_points_dependent_caches()

@@ -31,7 +31,6 @@ Three layers, deliberately kept apart:
 
 Adding a route means writing a resolver and adding one line to `_ROUTES`.
 """
-import json
 import logging
 import re
 from dataclasses import dataclass, replace
@@ -82,9 +81,6 @@ class PageMeta:
     description: str
     url: str
     image: str | None = None
-    canonical: str | None = None
-    robots: str | None = None
-    jsonld: dict | None = None
     exists: bool = True
 
 
@@ -360,20 +356,6 @@ def metadata_for(request):
     return _defaults(request)
 
 
-def _jsonld_tag(data):
-    """Render a JSON-LD block.
-
-    HTML escaping is WRONG inside <script>: the browser does not decode entities
-    there, so `escape()` would turn a quote into a literal `&quot;` and break the
-    JSON. The one real hazard is a `</script>` sequence in the data closing the
-    tag early, so every `<` goes out as the `\\u003c` escape -- still valid JSON,
-    and impossible to break out of.
-    """
-    payload = json.dumps(data, ensure_ascii=False, separators=(",", ":"))
-    payload = payload.replace("<", "\\u003c")
-    return f'<script type="application/ld+json">{payload}</script>'
-
-
 def render_tags(meta):
     """`PageMeta` -> the ``<head>`` block, with every value escaped for its context."""
     title = escape(meta.title)
@@ -398,12 +380,6 @@ def render_tags(meta):
         tags.append('<meta name="twitter:card" content="summary_large_image" />')
     else:
         tags.append('<meta name="twitter:card" content="summary" />')
-    if meta.canonical:
-        tags.append(f'<link rel="canonical" href="{escape(meta.canonical)}" />')
-    if meta.robots:
-        tags.append(f'<meta name="robots" content="{escape(meta.robots)}" />')
-    if meta.jsonld:
-        tags.append(_jsonld_tag(meta.jsonld))
     return "\n    ".join(tags)
 
 

@@ -18,12 +18,14 @@ class Command(BaseCommand):
         apply = options["apply"]
         changed = 0
         # Only sheet-created events — manually created events got a real date
-        # in the create form and must not be touched.
-        for event in Event.objects.filter(sheet_id__isnull=False).order_by("id"):
+        # in the create form and must not be touched. `sheet_id` is "" (not
+        # NULL) on those, so the filter has to be on the empty string.
+        for event in Event.objects.exclude(sheet_id="").order_by("id"):
             parsed = parse_event_date_from_name(event.name)
-            if parsed is None or parsed.date() == event.date.date():
+            current = event.date.date() if event.date else None
+            if parsed is None or parsed.date() == current:
                 continue
-            self.stdout.write(f"{event.id:4}  {event.name!r}: {event.date.date()} -> {parsed.date()}")
+            self.stdout.write(f"{event.id:4}  {event.name!r}: {current} -> {parsed.date()}")
             if apply:
                 event.date = parsed
                 event.save(update_fields=["date"])

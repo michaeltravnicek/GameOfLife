@@ -90,7 +90,9 @@ def merge_players(source, target, performed_by=None, automatic=False):
     it. Refuses (MergeError) rather than half-merging: the whole thing is one
     transaction.
     """
-    from .cache_config import invalidate_points_dependent_caches
+    from .cache_config import (
+        invalidate_points_dependent_caches, suspend_points_cache_invalidation,
+    )
     from .models import EventFeedback, User, UserBadge, UserToEvent
 
     # Lock both rows for the duration: two admins merging the same archive
@@ -105,66 +107,67 @@ def merge_players(source, target, performed_by=None, automatic=False):
 
     moved = {"attendance": 0, "attendance_points_kept": 0, "badges": 0, "feedback": 0}
 
-    target_points = {
-        row.event_id: row
-        for row in UserToEvent.objects.filter(user=target)
-    }
-    for row in UserToEvent.objects.filter(user=source):
-        clash = target_points.get(row.event_id)
-        if clash is None:
-            row.user = target
-            row.save(update_fields=["user"])
-            moved["attendance"] += 1
-            continue
-        # Same event on both sides: keep the better score, drop the duplicate.
-        if row.points > clash.points:
-            clash.points = row.points
-            clash.save(update_fields=["points"])
-            moved["attendance_points_kept"] += 1
-        row.delete()
-
-    target_badges = set(
-        UserBadge.objects.filter(user=target).values_list("badge_id", flat=True)
-    )
-    for row in UserBadge.objects.filter(user=source):
-        if row.badge_id in target_badges:
-            row.delete()  # already collected; the earlier award stays
-            continue
-        row.user = target
-        row.save(update_fields=["user"])
-        moved["badges"] += 1
-
-    target_feedback = {
-        row.event_id: row for row in EventFeedback.objects.filter(user=target)
-    }
-    for row in EventFeedback.objects.filter(user=source):
-        clash = target_feedback.get(row.event_id)
-        if clash is None:
-            row.user = target
-            row.save(update_fields=["user"])
-            moved["feedback"] += 1
-            continue
-        # Rated the same event on both sides: the later rating wins, because it
-        # is the opinion this person arrived at last.
-        if row.created_at and clash.created_at and row.created_at > clash.created_at:
-            clash.delete()
-            row.user = target
-            row.save(update_fields=["user"])
-            moved["feedback"] += 1
-        else:
+    with suspend_points_cache_invalidation():
+        target_points = {
+            row.event_id: row
+            for row in UserToEvent.objects.filter(user=target)
+        }
+        for row in UserToEvent.objects.filter(user=source):
+            clash = target_points.get(row.event_id)
+            if clash is None:
+                row.user = target
+                row.save(update_fields=["user"])
+                moved["attendance"] += 1
+                continue
+            # Same event on both sides: keep the better score, drop the duplicate.
+            if row.points > clash.points:
+                clash.points = row.points
+                clash.save(update_fields=["points"])
+                moved["attendance_points_kept"] += 1
             row.delete()
 
-    # The e-mail is the one exact identity key there is, and it is unique, so it
-    # cannot sit on both rows. It belongs to whoever is still on the leaderboard
-    # -- otherwise a later signup with that address resolves to a merged ghost.
-    if source.email and not target.email:
-        target.email, source.email = source.email, None
-        source.save(update_fields=["email"])
-        target.save(update_fields=["email"])
+        target_badges = set(
+            UserBadge.objects.filter(user=target).values_list("badge_id", flat=True)
+        )
+        for row in UserBadge.objects.filter(user=source):
+            if row.badge_id in target_badges:
+                row.delete()  # already collected; the earlier award stays
+                continue
+            row.user = target
+            row.save(update_fields=["user"])
+            moved["badges"] += 1
 
-    source.merged_into = target
-    source.merged_at = timezone.now()
-    source.save(update_fields=["merged_into", "merged_at"])
+        target_feedback = {
+            row.event_id: row for row in EventFeedback.objects.filter(user=target)
+        }
+        for row in EventFeedback.objects.filter(user=source):
+            clash = target_feedback.get(row.event_id)
+            if clash is None:
+                row.user = target
+                row.save(update_fields=["user"])
+                moved["feedback"] += 1
+                continue
+            # Rated the same event on both sides: the later rating wins, because it
+            # is the opinion this person arrived at last.
+            if row.created_at and clash.created_at and row.created_at > clash.created_at:
+                clash.delete()
+                row.user = target
+                row.save(update_fields=["user"])
+                moved["feedback"] += 1
+            else:
+                row.delete()
+
+        # The e-mail is the one exact identity key there is, and it is unique, so it
+        # cannot sit on both rows. It belongs to whoever is still on the leaderboard
+        # -- otherwise a later signup with that address resolves to a merged ghost.
+        if source.email and not target.email:
+            target.email, source.email = source.email, None
+            source.save(update_fields=["email"])
+            target.save(update_fields=["email"])
+
+        source.merged_into = target
+        source.merged_at = timezone.now()
+        source.save(update_fields=["merged_into", "merged_at"])
 
     invalidate_points_dependent_caches()
     logger.info(

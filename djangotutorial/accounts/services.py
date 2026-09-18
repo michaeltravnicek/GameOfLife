@@ -6,7 +6,6 @@ from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.tokens import default_token_generator
 from django.core.exceptions import ValidationError
 from django.db.models import Count, Sum
-from django.db.models.functions import Coalesce
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -22,7 +21,7 @@ from leaderboard.models import (
     UserToEvent,
 )
 from leaderboard.privacy import public_handle, visibility_for
-from leaderboard.services import season_rank
+from leaderboard.services import all_time_rank, season_rank
 from leaderboard.services.badges import badges_for
 
 from .models import Profile
@@ -332,12 +331,7 @@ def profile_payload(profile_user, request):
         )
         total_points = agg["total_points"] or 0
         total_events = agg["total_events"] or 0
-        if total_points > 0:
-            rank = (
-                LeaderboardUser.objects
-                .annotate(tp=Coalesce(Sum("usertoevent__points"), 0))
-                .filter(tp__gt=total_points).count()
-            ) + 1
+        rank = all_time_rank(total_points)
 
     upcoming_rsvps = []
     if profile and not gates.hide_events:

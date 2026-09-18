@@ -226,6 +226,21 @@ def cached_leaderboard_entries(season, cache_id):
     return entries
 
 
+def all_time_rank(total_points):
+    """1-based all-time rank of a player holding `total_points`; None at zero.
+
+    Counted over `ranked_players()` so it agrees with the board — the same
+    person must not get one rank on /players/ and another on /profiles/.
+    """
+    if total_points <= 0:
+        return None
+    return (
+        ranked_players()
+        .annotate(tp=Coalesce(Sum("usertoevent__points"), 0))
+        .filter(tp__gt=total_points).count()
+    ) + 1
+
+
 def player_payload(lb_user, request=None):
     """Public profile for a leaderboard user by id — works whether or not they
     have a registered account (leaderboard users come from the Google Sheets sync).
@@ -242,14 +257,7 @@ def player_payload(lb_user, request=None):
     )
     total_points = agg["total_points"] or 0
     events_count = agg["events_count"] or 0
-
-    rank = None
-    if total_points > 0:
-        rank = (
-            ranked_players()
-            .annotate(tp=Coalesce(Sum("usertoevent__points"), 0))
-            .filter(tp__gt=total_points).count()
-        ) + 1
+    rank = all_time_rank(total_points)
 
     # Local imports — avoid app-load cycle (accounts depends on leaderboard).
     from accounts.models import Profile

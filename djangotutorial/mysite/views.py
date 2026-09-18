@@ -71,11 +71,17 @@ def react_index(request):
     """
     index_path = _resolve_index_path()
     html = _shell_html(index_path)
+    exists = True
     try:
-        html = og.inject(html, og.metadata_for(request))
+        meta = og.metadata_for(request)
+        html = og.inject(html, meta)
+        exists = meta.exists
     except Exception:  # noqa: BLE001 -- metadata is decoration; never 500 the SPA
         logger.warning("OG tag injection failed (serving plain shell).", exc_info=True)
-    return HttpResponse(html, content_type="text/html")
+    # A URL naming content that does not exist (an unknown event slug) gets the
+    # shell with a 404 status, so search engines drop it instead of filing a
+    # soft 404; the SPA renders its own not-found page either way.
+    return HttpResponse(html, content_type="text/html", status=200 if exists else 404)
 
 
 @never_cache

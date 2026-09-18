@@ -1,8 +1,8 @@
 import gc
 import re
-from datetime import datetime
 
 from django.db import reset_queries
+from django.utils import timezone
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 
@@ -35,7 +35,7 @@ def insert_event(sheet_id: str, sheet: dict):
             "place": "Brno",
             # The event's real date (parsed from the sheet title) — NOT the
             # sync time, which lands the points on the wrong day in profiles.
-            "date": parse_event_date_from_name(sheet_name) or datetime.now(),
+            "date": parse_event_date_from_name(sheet_name) or timezone.now(),
         }
     )
     if created:
@@ -116,6 +116,18 @@ def resolve_player(rec: tuple, cols: dict[str, int]) -> User | None:
     return User.objects.create(name=name)
 
 
+def _parse_points(raw: str) -> int | None:
+    """Integer points from a sheet cell, or None when the cell is empty or junk.
+
+    Sheets hand every value over as a string; comparing that to the stored
+    integer would flag every row as changed on every sync.
+    """
+    try:
+        return int(raw)
+    except (TypeError, ValueError):
+        return None
+
+
 def insert_rec(event: Event, rec: tuple, cols: dict[str, int]):
     user = resolve_player(rec, cols)
     if user is None:
@@ -128,10 +140,8 @@ def insert_rec(event: Event, rec: tuple, cols: dict[str, int]):
         print(f"Skipping {user} — did not attend")
         return
 
-    points_index = cols.get("points")
-    if points_index is not None:
-        points = rec[points_index]
-    else:
+    points = _parse_points(cell(rec, cols.get("points")))
+    if points is None:
         points = event.points
 
     ute, created = UserToEvent.objects.get_or_create(
@@ -184,7 +194,11 @@ def insert_feedback(event: Event, user: User, rec: tuple, cols: dict[str, int]):
     )
 
 
-def handle_attendance(sheet_id: str, sheet_list_id: str, records: list[tuple[str]], run_all: bool):
+def handle_attendance(sheet_id: str, sheet_list_id: str, records: list[tuple[str]]):
+    """Import every data row of one sheet. Always a full pass: insert_rec is
+    idempotent, and there is no reliable way to tell which rows are new — the
+    event's attendance count includes web check-ins and admin edits that never
+    came from the sheet, so a positional slice skips real rows."""
     try:
         event = Event.objects.get(sheet_id=sheet_id, sheet_list_id=sheet_list_id)
     except Event.DoesNotExist:
@@ -194,26 +208,11 @@ def handle_attendance(sheet_id: str, sheet_list_id: str, records: list[tuple[str
         return
 
     cols = header_map(records[0])
-
-    # The incremental slice below assumes row N of the sheet is the Nth
-    # attendance row. Feedback breaks that: people edit a rating in days after
-    # the event, on a row that was already imported, and "Ne" rows now produce
-    # no UserToEvent at all so the count drifts from the row offset. When the
-    # sheet carries feedback columns, rescan everything — insert_rec is
-    # idempotent and these sheets are one page per event.
-    has_feedback_cols = "rating" in cols or "comment" in cols
-
-    if run_all or has_feedback_cols:
-        new_records = records[1:]
-    else:
-        existing_count = UserToEvent.objects.filter(event=event).count()
-        new_records = records[1+existing_count:] if existing_count < len(records) else []
-
-    for rec in new_records:
+    for rec in records[1:]:
         insert_rec(event, rec, cols)
 
 
-def main(run_all: bool):
+def main(run_all: bool = True):
     print("Running")
     creds = service_account.Credentials.from_service_account_file(
         SERVICE_ACCOUNT_FILE, scopes=SCOPES
@@ -235,37 +234,38 @@ def main(run_all: bool):
     from leaderboard.cache_config import (
         invalidate_points_dependent_caches, suspend_points_cache_invalidation,
     )
-    with suspend_points_cache_invalidation():
-        for sheet_info in sheets.get("files", []):
-            sheet_id = sheet_info["id"]
+    try:
+        with suspend_points_cache_invalidation():
+            for sheet_info in sheets.get("files", []):
+                sheet_id = sheet_info["id"]
 
-            spreadsheet = service_sheets.spreadsheets().get(
-                spreadsheetId=sheet_id
-            ).execute()
-
-            for sheet_meta in spreadsheet.get("sheets", []):
-                title = sheet_meta["properties"]["title"]
-                print(f"Processing sheet: {title}")
-                insert_event(sheet_id, sheet_meta)
-
-                result = service_sheets.spreadsheets().values().get(
-                    spreadsheetId=sheet_id,
-                    range=title
+                spreadsheet = service_sheets.spreadsheets().get(
+                    spreadsheetId=sheet_id
                 ).execute()
 
-                sheet_list_id = str(sheet_meta["properties"]["sheetId"])
-                handle_attendance(sheet_id, sheet_list_id, result.get("values", []), run_all)
+                for sheet_meta in spreadsheet.get("sheets", []):
+                    title = sheet_meta["properties"]["title"]
+                    print(f"Processing sheet: {title}")
+                    insert_event(sheet_id, sheet_meta)
 
-                del result
-                reset_queries()
-                gc.collect()
+                    result = service_sheets.spreadsheets().values().get(
+                        spreadsheetId=sheet_id,
+                        range=title
+                    ).execute()
+
+                    sheet_list_id = str(sheet_meta["properties"]["sheetId"])
+                    handle_attendance(sheet_id, sheet_list_id, result.get("values", []))
+
+                    del result
+                    reset_queries()
+                    gc.collect()
+    finally:
+        # The one eviction for the whole run — also after a failed run, since
+        # rows written before the failure are committed and the boards are stale.
+        invalidate_points_dependent_caches()
 
     del service_sheets, sheets, service
     gc.collect()
-
-    # Points changed → drop the leaderboard / stats caches. This is the one
-    # eviction for the whole run (see suspend_points_cache_invalidation).
-    invalidate_points_dependent_caches()
 
 
 def run_google_sheet_sync(run_all=True):

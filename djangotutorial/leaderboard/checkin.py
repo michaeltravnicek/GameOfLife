@@ -5,7 +5,6 @@ Tests target this function directly; the API view is a thin shim over it.
 """
 
 from dataclasses import dataclass
-from datetime import timedelta
 from math import asin, cos, isfinite, radians, sin, sqrt
 from typing import Optional
 
@@ -51,7 +50,7 @@ def validate_and_record_checkin(event, auth_user, latitude, longitude) -> Checki
         return CheckinResult(ok=False, status=400, error="Tato akce nemá aktivní check-in.")
 
     now = timezone.now()
-    window_open = event.date - timedelta(minutes=30)
+    window_open = event.date - event.CHECKIN_PRE_WINDOW
     if not (window_open <= now <= event.checkin_window_end):
         return CheckinResult(ok=False, status=400, error="Check-in je mimo časové okno akce.")
 

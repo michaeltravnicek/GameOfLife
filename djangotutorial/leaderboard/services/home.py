@@ -1,8 +1,6 @@
 """Home page data: hero carousel, about-stats, and the active check-in feed."""
-from datetime import timedelta
-
 from django.core.cache import cache
-from django.db.models import Sum
+from django.db.models import Q, Sum
 from django.utils import timezone
 
 from leaderboard.cache_config import (
@@ -97,7 +95,13 @@ def active_checkin_events(user):
             latitude__isnull=False,
             longitude__isnull=False,
             visible_to_users=True,
-            date__lte=now + timedelta(minutes=30),
+            date__lte=now + Event.CHECKIN_PRE_WINDOW,
+        )
+        # Lower bound on the window, so this stays a handful of rows instead
+        # of every geo-located event ever held.
+        .filter(
+            Q(end_date__gte=now)
+            | Q(end_date__isnull=True, date__gte=now - Event.CHECKIN_DEFAULT_LENGTH)
         )
         .order_by("date")
     )

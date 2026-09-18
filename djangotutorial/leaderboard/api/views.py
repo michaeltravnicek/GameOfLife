@@ -56,6 +56,7 @@ from leaderboard.services import (
     season_payload,
     seasons_cached,
     set_attendance,
+    visible_event_or_404,
 )
 from leaderboard.utils import parse_int_param
 
@@ -201,15 +202,7 @@ def events_list(request):
 @permission_classes([AllowAny])
 def event_detail(request, slug):
     """Full detail for a single event (hidden events are 404 for non-admin)."""
-    event = get_object_or_404(Event, slug=slug)
-    if not event.visible_to_users:
-        # Hidden events: admin sees everything; close + photographer see only
-        # the ones explicitly flagged visible_to_close; everyone else gets 404.
-        allowed = is_admin(request.user) or (
-            is_close_or_above(request.user) and event.visible_to_close
-        )
-        if not allowed:
-            return Response({"error": "Akce nenalezena."}, status=status.HTTP_404_NOT_FOUND)
+    event = visible_event_or_404(request, slug)
     serializer = EventDetailSerializer(event, context={"request": request})
     return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -232,7 +225,7 @@ def event_rsvp(request, slug):
     # Lock the event row so the capacity check + create below are serialized:
     # without it two concurrent requests can both pass the count check and
     # oversell the event (TOCTOU).
-    event = get_object_or_404(Event.objects.select_for_update(), slug=slug)
+    event = visible_event_or_404(request, slug, Event.objects.select_for_update())
 
     if request.method == "DELETE":
         # Leaving is always allowed, including after the event. Someone who
@@ -277,7 +270,7 @@ def event_rsvp(request, slug):
 @transaction.atomic
 def event_feedback(request, slug):
     """Create or update the current user's 1–10 rating + comment for an event."""
-    event = get_object_or_404(Event, slug=slug)
+    event = visible_event_or_404(request, slug)
     serializer = FeedbackSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
 
@@ -485,12 +478,13 @@ def checkin_events_view(request):
 @transaction.atomic
 def event_checkin(request, slug):
     """Submit geo-verified attendance. Body: {latitude, longitude}."""
-    event = get_object_or_404(
+    event = visible_event_or_404(
+        request, slug,
         Event.objects.only(
-            "id", "slug", "name", "date", "end_date",
-            "points", "latitude", "longitude", "checkin_radius",
+            "id", "slug", "name", "date", "end_date", "points",
+            "latitude", "longitude", "checkin_radius",
+            "visible_to_users", "visible_to_close",
         ),
-        slug=slug,
     )
     serializer = CheckinSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
