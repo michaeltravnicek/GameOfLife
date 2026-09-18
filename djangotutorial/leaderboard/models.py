@@ -85,10 +85,8 @@ class Category(models.Model):
 class Badge(models.Model):
     """A collectible emblem, shared by the events that award it.
 
-    This is also the one and only home of event artwork. Events used to carry
-    their own `logo` ImageField, which meant re-uploading the same file for every
-    edition -- 135 logo files on disk turned out to be 7 distinct images, one of
-    them stored 72 times. The artwork lives here once and events point at it.
+    Also the one home of event artwork: the logo lives here once and every
+    edition of the event points at it.
 
     Attending an event that has a badge earns the attendee a copy in their
     collection -- see UserBadge and leaderboard.signals. So attaching a badge to
@@ -320,10 +318,8 @@ class ActivePlayerManager(models.Manager):
 class User(models.Model):
     """A player on the leaderboard. Exists with or without a site account.
 
-    Identity used to be the phone number: the Google Form asked for one and
-    ``number`` was the key the sheet sync matched on. That field is gone
-    (migration 0026) — a phone number collected only to act as a join key is
-    data with no purpose, which is exactly what data minimisation forbids.
+    Identity is the e-mail where the form collected one, otherwise the name
+    (see tasks.resolve_player); no phone number is stored.
 
     Since registration creates a player (accounts.services.ensure_leaderboard_user),
     an account *is* a player and the identity is exact for everyone who signed up.
@@ -397,12 +393,8 @@ class UserToEvent(models.Model):
     def __str__(self):
         return f"{self.user} → {self.event}"
 
-    # Attendance is the leaderboard's only input, so every write has to evict it.
-    # The four *callers* that create attendance (check-in, the sync, the award
-    # command, the admin attendance editor) used to each remember this on their
-    # own -- and the admin, which is the documented way to top up somebody whose
-    # phone failed, did not. Doing it here means a row cannot be written from
-    # anywhere without the board following.
+    # Attendance is the leaderboard's only input, so every write evicts it here
+    # rather than in each caller (check-in, the sync, the award command, admin).
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
         from .cache_config import invalidate_points_dependent_caches

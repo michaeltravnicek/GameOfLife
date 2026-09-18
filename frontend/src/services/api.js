@@ -1,7 +1,5 @@
 import axios from 'axios';
 
-// Hoisted: this runs on every unsafe request, and rebuilding the RegExp each
-// call re-compiles the same pattern for nothing.
 const CSRF_COOKIE_RE = /(^| )csrftoken=([^;]+)/;
 
 function readCsrfCookie() {

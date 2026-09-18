@@ -22,30 +22,14 @@ export function extractApiError(err, fallback) {
 }
 
 /**
- * The one and only way to surface a failed action to the user.
+ * The one way to surface a failed action: every catch block funnels through
+ * this — never `alert()` or a silent `.catch(() => {})`.
  *
- * RULE: every catch block in this codebase MUST funnel through this helper.
- * No `alert()`, no silent `.catch(() => {})`, no per-page improvisation.
+ *   apiCall().catch(reportError('Nepodařilo se uložit změny.'));   // as a handler
+ *   reportError('Nepodařilo se uložit změny.', err);                // in try/catch
  *
- * Two usage shapes:
- *
- *   // 1. As a Promise .catch handler (most common):
- *   apiCall().catch(reportError('Nepodařilo se uložit změny.'));
- *
- *   // 2. Inside try/catch:
- *   try {
- *     await apiCall();
- *   } catch (err) {
- *     reportError('Nepodařilo se uložit změny.', err);
- *   }
- *
- * Behavior:
- *   - Shows an error toast.
- *   - Uses the server-provided `error` field from the response if present
- *     (axios path: err.response.data.error), otherwise the fallback string.
- *   - In dev: logs the full error to the console for debugging.
- *
- * `title` defaults to "Chyba" — override per-domain when useful.
+ * Shows an error toast with the server's message when there is one, else
+ * `fallback`; logs the error in dev. `title` defaults to "Chyba".
  */
 export function reportError(fallback, errMaybe, { title = 'Chyba' } = {}) {
   const handler = (err) => {

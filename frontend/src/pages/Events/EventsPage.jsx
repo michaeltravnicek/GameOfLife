@@ -24,8 +24,6 @@ export default function EventsPage() {
   const [season, setSeason] = useState('all'); // 'all' or a season id (as string)
   const [query, setQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
-  // Cities are returned only on the first page; we keep them locally so
-  // they survive filter changes.
 
   // Season is now the primary filter (replaces the old upcoming/past/all tabs).
   // Tab keys are strings; 'all' = every season.

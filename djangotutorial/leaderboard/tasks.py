@@ -266,13 +266,3 @@ def main(run_all: bool = True):
 
     del service_sheets, sheets, service
     gc.collect()
-
-
-def run_google_sheet_sync(run_all=True):
-    """Thin alias for `main`, kept as the named entry point for the sync.
-
-    Previously decorated with django-background-tasks' @background, but no
-    `process_tasks` worker was ever run, so the queued task never executed.
-    The sync actually runs via `manage.py sync_sheets` (see build.sh).
-    """
-    main(run_all)

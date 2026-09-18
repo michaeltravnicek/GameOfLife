@@ -53,7 +53,7 @@ Stay on Render's managed PostgreSQL. Supabase evaluated and rejected.
 ### When to revisit Supabase
 - If Render's DB pricing becomes a concern at scale
 - If real-time subscriptions (live leaderboard) become a priority — Supabase has first-class WebSocket support
-- If file storage (event images, profile photos) needs a CDN — Supabase Storage with a CDN would be better than Render's disk
+- ~~If file storage needs a CDN~~ — resolved: media moved to Cloudflare R2 (2026-09)
 
 ---
 
@@ -62,12 +62,15 @@ Stay on Render's managed PostgreSQL. Supabase evaluated and rejected.
 ### Single Django service handles:
 - Web server (Gunicorn)
 - Static files (WhiteNoise)
-- Media files (uploaded images on Render disk — ephemeral on free tier, persistent on paid)
-- Cron job (Google Sheets sync at 4 AM, registered in `build.sh`)
+- Media files: uploads go to Cloudflare R2 (`storages` S3 backend, served from
+  `img.gameofyolo.com`); the `/media/` route remains for a cutover with `MEDIA_S3_ENABLED=0`
+- Cron job (Google Sheets sync), configured in the Render dashboard
 
 ### RAM usage
-- Gunicorn workers: ~50–80 MB each
-- Total Render service: ~150–250 MB depending on worker count
+Measured, not estimated — see `gunicorn.conf.py`: an idle worker is ~60 MB, ~100 MB once boto3
+is loaded for R2, and one image decode peaks at 286 MB. Decodes are serialised across the
+instance by a file lock, so the budget is `(workers − 1) × idle + peak`; on a 512 MB instance
+that means two workers after R2. `script/memory_budget.py` recomputes the table.
 
 ### Why the React SPA did NOT need a second service
 The SPA is a static bundle, not an SSR app, so WhiteNoise serves it from the existing Django

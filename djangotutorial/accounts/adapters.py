@@ -29,21 +29,13 @@ class SocialAccountAdapter(DefaultSocialAccountAdapter):
     def is_open_for_signup(self, request, sociallogin):
         """Google signup stays open even though allauth's own signup is closed.
 
-        This override is not optional. allauth's default implementation delegates
-        straight to the *account* adapter, which returns False above — so without
-        it every first-time Google user reaches the callback and is bounced to
-        allauth's bare `signup_closed.html`, a template this project does not
-        style. Google login then works only for accounts that already exist.
-
-        Closing allauth's signup was about the password door: registration must
-        go through register_api so GDPR consent and the username rules are
-        applied. The Google path has its own equivalents in save_user() below,
-        so it does not need that door shut too.
-
-        Note what this does NOT reopen: signing in with Google still cannot
-        attach to a pre-existing local account, because
-        SOCIALACCOUNT_EMAIL_AUTHENTICATION and _AUTO_CONNECT are both off. This
-        only permits creating a genuinely new user.
+        allauth's default delegates to the account adapter, which returns False
+        above; without this every first-time Google user is bounced to an
+        unstyled `signup_closed.html`. The password door stays shut so that
+        registration goes through register_api (consent, username rules) —
+        save_user() below applies the same to the Google path. This does not let
+        a Google login attach to an existing local account: both
+        SOCIALACCOUNT_EMAIL_AUTHENTICATION and _AUTO_CONNECT are off.
         """
         return True
 

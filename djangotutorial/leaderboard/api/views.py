@@ -327,20 +327,10 @@ def leaderboard_view(request):
                     status=status.HTTP_200_OK)
 
 
-# ── How long the EDGE may hold a public response ──────────────────────────
-#
-# Short on purpose, and shorter than the server-side TTLs in cache_config.py.
-# The two caches are not the same thing: the Redis entry is dropped the moment
-# an Event or Season changes (model save()/delete()), so a long TTL there costs
-# nothing. Nothing can reach into Cloudflare, so whatever max_age says here is
-# how long a stale answer keeps being handed out after an admin fixes something.
-#
-# This was not theoretical: hero_view advertised an hour, so a deleted event
-# stayed in the homepage carousel for up to an hour after its cache key had
-# already been evicted server-side.
-#
-# 300 s keeps the origin protected (a burst still collapses onto one request)
-# while making an admin edit show up inside the span of noticing it.
+# How long the EDGE may hold a public response. Shorter than the Redis TTLs on
+# purpose: Redis is evicted on model save()/delete(), Cloudflare cannot be, so
+# this is how long an admin edit can stay invisible. 300 s still collapses a
+# burst onto one origin request.diff --git a/djangotutorial/leaderboard/cache_config.py b/djangotutorial/leaderboard/cache_config.py
 EDGE_TTL_PUBLIC = 300
 
 

@@ -55,30 +55,13 @@ urlpatterns = [
     path("api/v1/profiles/", include("accounts.api.profiles_urls")),
 ]
 
-# Serve user-uploaded media (event images, profile photos, gallery uploads).
-#
-# IMPORTANT: `django.conf.urls.static.static()` returns NOTHING when DEBUG=False,
-# and WhiteNoise only serves STATIC_ROOT — never MEDIA_ROOT. The React catch-all
-# below also explicitly excludes `/media/`. So in production (Render, DEBUG=False)
-# every /media/<path> request 404s, which is why uploaded images vanish while
-# static assets work. Serving through Django's `serve` view works in all envs.
-#
-# CACHING: `serve` sends no Cache-Control at all, so Cloudflare classed every
-# image as `cf-cache-status: DYNAMIC` and forwarded 100% of image traffic to
-# Render — a CDN sitting in front of the site while providing no relief for the
-# single heaviest thing it serves. Declaring the response public and cacheable
-# lets the edge (and the browser) hold it, so a worker isn't tied up per image.
-#
-# Safe here because media filenames are effectively immutable: Django appends a
-# random suffix on collision, so replacing an event image produces a NEW URL
-# rather than changing the bytes behind an existing one. `immutable` is left
-# off deliberately — it forbids revalidation entirely, and a month is a long
-# time to be unable to correct a mistake.
-# The other half of the problem is the `Vary: origin` that django-cors-headers
-# stamps on every response — Cloudflare only varies its cache on
-# Accept-Encoding and commonly treats any other Vary as uncacheable. It cannot
-# be stripped here (CorsMiddleware adds it after the view returns); it is
-# scoped away from /media/ by CORS_URLS_REGEX in settings.py instead.
+# Serve user-uploaded media from local disk. `static()` does nothing when
+# DEBUG=False and WhiteNoise serves only STATIC_ROOT, so this route exists in
+# every environment; with R2 enabled the storage backend hands out CDN URLs and
+# it is only hit during a cutover. Public + cacheable because filenames are
+# effectively immutable (Django appends a random suffix on collision); the
+# `immutable` directive is left off so a mistake can still be corrected within
+# a month. `Vary: origin` is kept off this route by CORS_URLS_REGEX in settings.
 _media_prefix = settings.MEDIA_URL.lstrip("/")
 _media_max_age = int(os.getenv("MEDIA_CACHE_SECONDS", 60 * 60 * 24 * 30))  # 30 days
 _cached_media = cache_control(public=True, max_age=_media_max_age)(serve_media)

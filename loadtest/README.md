@@ -9,11 +9,11 @@ Answers two questions with numbers instead of guesses:
 1. How many concurrent visitors does the app handle before it degrades?
 2. Is the limit the **API** or the **media files**?
 
-Media is currently served by Django itself
-([mysite/urls.py](../djangotutorial/mysite/urls.py) → `django.views.static.serve`),
-which ties up a worker for the whole file transfer. If the media-only run
-collapses far earlier than the API-only run, that's the case for moving images
-to S3/R2 — measured, not assumed.
+Historically media was served by Django itself (`django.views.static.serve`),
+which tied up a worker for the whole file transfer; the media-only run
+collapsing far earlier than the API-only run was the measured case for moving
+images to R2, which has since happened. Locally the `/media/` route still
+serves from disk, so the media tag still measures that path.
 
 ## Rules for a meaningful result
 

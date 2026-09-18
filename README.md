@@ -1,11 +1,9 @@
 # GameOfLive
 
-Tento projekt je udělán pro gameofyolo jako webová stránka, kde se zapisují lidem jejich body a zobrazují akce:
+Leaderboard pro [gameofyolo.com](https://www.gameofyolo.com/): akce, body, žebříček, profily
+a galerie. Django + DRF API s React SPA, nasazené jako jedna služba na Renderu.
 
-https://www.gameofyolo.com/
-
-Server běží automaticky na renderu, sám jsem ho konfiguroval a je napojen na google forms, kde přes dotázniky a dotazy na google sheets 
-se v databázi aktualizují nové informace.
-
-
-https://render.com/docs/deploy-django#updating-an-existing-django-project
+- [CLAUDE.md](CLAUDE.md) — orientace v repozitáři, konvence, jak spustit a otestovat
+- [djangotutorial/ARCHITECTURE.md](djangotutorial/ARCHITECTURE.md) — proč to je postavené takhle
+- [security/RUNBOOK.md](security/RUNBOOK.md) — kroky v Cloudflare / Render / Google Cloud, které nejdou udělat z kódu
+- [loadtest/](loadtest/README.md) — zátěžové testy

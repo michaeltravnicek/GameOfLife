@@ -53,18 +53,11 @@ ALLOWED_IMAGE_FORMATS = {"JPEG", "PNG", "WEBP", "GIF"}
 # limit because "15 MB is surely enough" is how the instance gets OOM-killed by
 # a file that fits comfortably under the byte limit.
 DEFAULT_MAX_UPLOAD_MB = 15
-# 24 MP is where the memory budget lands, measured with imagelab/07_memory.py.
-#
-# The worst case is one decode of a PNG at the limit WITH AN ALPHA CHANNEL --
-# the alpha matters and was missed at first: PNG cannot be decoded at reduced
-# scale the way JPEG can, and dropping a useless alpha means both the RGBA and
-# the RGB raster are live at once. That is +94 MB over the same image without
-# alpha, and it is not an exotic file: it is every screenshot and every logo
-# exported from Figma.
-#
-# Only one image decodes at a time on the whole instance (see the decode slot
-# below), so the budget is peak + the other workers sitting at their ~60 MB
-# floor. On 512 MB with three workers:
+# 24 MP is where the memory budget lands (imagelab/07_memory.py). The worst case
+# is a PNG at the limit with an alpha channel: PNG cannot decode at reduced
+# scale like JPEG, and dropping the alpha keeps RGBA and RGB live at once
+# (+94 MB). One decode at a time on the instance (decode slot below), so the
+# budget is peak + the other workers at their ~60 MB floor. 512 MB, 3 workers:
 #
 #   MP    peak     3 workers   spare over the 60 MB safety margin
 #   30    ~350 MB   470 MB     none — do not
@@ -72,10 +65,8 @@ DEFAULT_MAX_UPLOAD_MB = 15
 #   20    242 MB    362 MB     90 MB
 #   16    207 MB    327 MB     125 MB
 #
-# 24 MP is 6000x4000 — a full-frame camera's native resolution, and far above
-# what a phone produces. The 15 MB byte limit turns away most bigger files
-# anyway; this is the guard for the small-file-huge-canvas case that the byte
-# limit cannot see.
+# 6000x4000 is a full-frame camera. The byte limit turns away most bigger files;
+# this guards the small-file-huge-canvas case the byte limit cannot see.
 DEFAULT_MAX_MEGAPIXELS = 24
 
 
@@ -96,32 +87,11 @@ def max_image_pixels():
 # the functions above are what the checks actually consult.
 MAX_UPLOAD_BYTES = DEFAULT_MAX_UPLOAD_MB * 1024 * 1024
 
-# Decompression-bomb ceiling. Bytes on disk say nothing about memory cost: a
-# ~1 MB PNG can declare 50000x50000 px, and PIL allocates the *decoded* bitmap
-# (w * h * 4 bytes) the moment process_upload() touches it — one request is enough
-# to OOM the dyno.
-#
-# Sized against the 512 MB instance, measured rather than guessed: an idle worker
-# sits at ~60 MB RSS, so the decode budget is what is left of 512 once the other
-# workers are counted. Only one decode runs at a time instance-wide (decode slot
-# below), so it is one peak, not one per worker -- see the table above.
-#
-# The cost of this number: a phone shooting at its full 48 MP sensor resolution
-# is now rejected. Most phones bin down to 12 MP by default, and the 15 MB
-# MAX_UPLOAD_BYTES already turns away most true 48 MP files, so this bites
-# rarely.
-#
-# The same ceiling for every format, but the cost behind it is not the same.
-# `_prepare_still` runs `Image.draft()`, which asks the JPEG decoder for a 1/2 to
-# 1/8 scale image directly, so a 28 MP JPEG never materialises at full size and
-# costs ~40 MB. PNG and WebP have no equivalent: every declared pixel becomes
-# three bytes of RAM, and the same 28 MP costs ~150 MB.
-#
-# That gap is handled by the decode slot below rather than by a lower limit for PNG,
-# so the rule stays one number the user can understand.
-#
-# Numbers from imagelab/07_memory.py — re-run it rather than reasoning about any
-# change to them.
+# Decompression-bomb ceiling: PIL allocates the decoded bitmap (w × h × 4 bytes)
+# the moment process_upload() touches it, whatever the file size. Sized by the
+# table above. JPEG decodes at reduced scale (`Image.draft()`, ~40 MB at 28 MP);
+# PNG and WebP cannot (~150 MB) — the decode slot absorbs that gap, so the rule
+# stays one number for every format.
 MAX_IMAGE_PIXELS = DEFAULT_MAX_MEGAPIXELS * 1_000_000
 
 # Belt and braces: make PIL itself raise instead of merely warning if anything
@@ -272,23 +242,11 @@ def make_webp_variant(field_file, max_width=900, quality=60, suffix="mobile"):
 
 # ── Uploads are stored as WebP ────────────────────────────────────────────────
 #
-# One target format for every upload, whatever came in. Formats used to be
-# preserved, which meant a PNG screenshot stayed a 3 MB PNG forever: PNG is
-# lossless, so there was no quality knob to turn and `optimize=True` saved 0 %.
-#
-# WebP replaces the whole branchy mess with one path, and it is smaller at equal
-# quality because it predicts each block from its already-decoded neighbours and
-# stores only the residual. It also carries an alpha channel in lossy mode, which
-# JPEG cannot do at all -- that is what makes a single format possible here:
-# transparent logos and photos can share one encoder.
-#
-# The numbers below are measured, not guessed. imagelab/ in the repo root
-# reproduces every one of them:
-#   * imagelab/06_why_webp.py  -- where the saving comes from (+65 % on flat
-#     artwork, +30 % on photos, +17 % on noise) and why blocking stays at the
-#     level of the uncompressed original even at low quality.
-#   * imagelab/01_ladder.py    -- the knee of the size/quality curve.
-#   * imagelab/04_cap.py       -- what this does to the existing library.
+# One target format for every upload: smaller than JPEG at equal quality, and
+# lossy WebP carries alpha, so transparent logos and photos share one encoder.
+# The numbers below are measured; imagelab/ in the repo root reproduces them
+# (06_why_webp.py for the saving, 01_ladder.py for the quality knee,
+# 04_cap.py for the effect on the existing library).
 WEBP_QUALITY = 80          # WebP q80 matches JPEG q85 perceptually (measured)
 WEBP_QUALITY_FLOOR = 75    # below the knee: each step costs quality, saves ~5 kB
 WEBP_QUALITY_STEP = 5
@@ -316,32 +274,13 @@ MAX_ANIMATION_PIXELS = 12_000_000   # ~36 MB of RGB bitmap across all frames
 
 # ── Only N images are decoded AT ONCE ON THE WHOLE INSTANCE ──────────────────
 #
-# This is the setting that decides how many gunicorn workers fit in RAM, so it
-# is worth understanding rather than tuning by feel.
-#
-# Decoding is the only part of this app whose memory cost is chosen by the user
-# rather than by us. A 24 MP PNG with an alpha channel peaks at 286 MB of RSS;
-# an idle worker sits near 60 MB. So the budget is NOT "workers x peak" unless
-# every worker can decode at the same time -- and stopping that is exactly what
-# this lock does:
-#
-#     workers x peak             = 3 x 286      = 858 MB   OOM on a 512 MB box
-#     (workers-1) x floor + peak = 2 x 60 + 286 = 406 MB   fits, 46 MB over the
-#                                                          60 MB safety margin
-#
-# A per-process semaphore (what this used to be) cannot give the second line: it
-# stops two threads of ONE worker decoding together, but three workers still
-# decode three images at once. So the lock has to be host-wide, which means it
-# cannot live in Python memory -- hence flock() on a file, which every process on
-# the instance can see and which the kernel releases automatically if a worker is
-# killed. (A Redis lock would also work, but it can go stale, costs a network
-# round trip, and would make uploads fail whenever the cache is down.)
-#
-# The cost is that a second uploader waits. Uploads are rare here, the wait is
-# seconds, and the slot is taken per IMAGE rather than per request -- so a bulk
-# upload of 30 photos releases it 30 times instead of holding it throughout.
-#
-# Both knobs are settings, so the instance can be resized without a deploy:
+# Decoding is the one memory cost the user chooses: a 24 MP PNG with alpha
+# peaks at 286 MB against a ~60 MB idle worker. Serialising decodes across the
+# instance makes the budget "(workers-1) x floor + peak" (406 MB on 512 MB)
+# instead of "workers x peak" (858 MB). A per-process semaphore cannot do that,
+# hence flock() on a file: every worker sees it and the kernel releases it if a
+# worker dies. The slot is taken per image, so a bulk upload releases it between
+# photos. gunicorn.conf.py has the worker arithmetic.
 #
 #   IMAGE_DECODE_SLOTS         concurrent decodes per instance   (default 1)
 #   IMAGE_DECODE_WAIT_SECONDS  how long an upload waits for one  (default 5)
@@ -350,25 +289,9 @@ MAX_ANIMATION_PIXELS = 12_000_000   # ~36 MB of RGB bitmap across all frames
 # i.e. a 1 GB instance. Verify with imagelab/07_memory.py, which measures the cross-process
 # case explicitly.
 DEFAULT_DECODE_SLOTS = 1
-# Wait briefly, then refuse -- the middle of three options, and the reason for
-# each bound is worth writing down.
-#
-# Refusing immediately (a bare LOCK_NB, which is what WAIT_SECONDS=0 gives you)
-# turns the lock from a short queue into a pure capacity guard. It costs no
-# latency but pays in errors, and the error lands on someone who has just picked
-# a photo and pressed upload -- the worst possible moment to be told "no". Two
-# uploads arriving a second apart is the NORMAL case, not an overload, and both
-# should succeed.
-#
-# Waiting long is bounded by two things that have nothing to do with memory.
-# A waiting request holds a gunicorn thread, and there are only
-# WEB_CONCURRENCY x GUNICORN_THREADS = 6 of them: at 20 s, six queued uploads
-# make the whole site unresponsive for 20 s. And the wait must finish well
-# inside gunicorn's `timeout` (30 s, set explicitly in gunicorn.conf.py) plus
-# the decode itself, so the refusal comes from this code as a clean 503 rather
-# than from the arbiter killing a worker mid-request.
-#
-# 5 s covers a decode or two (1-3 s each) and leaves the timeout a wide margin.
+# Refusing at once (WAIT=0) errors the normal case of two uploads a second
+# apart; waiting long holds one of the six gunicorn threads and must finish well
+# inside gunicorn's 30 s timeout. 5 s covers a decode or two (1-3 s each).diff --git a/djangotutorial/leaderboard/tasks.py b/djangotutorial/leaderboard/tasks.py
 DEFAULT_DECODE_WAIT_SECONDS = 5.0
 # Sweep interval while waiting: short enough to pick up a freed slot promptly,
 # long enough not to spin a core on a busy instance.

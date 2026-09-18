@@ -8,12 +8,8 @@ Anything that reads or writes the Django cache must import from here so:
 
 # ── Leaderboard rankings ───────────────────────────────────────────────
 #
-# Every board -- all-time included -- lives under the per-season family below;
-# "all" is the season id for all-time. There used to be a separate
-# `leaderboard_data` key for the total board, plus `events_list` and
-# `home_context` from the days of server-rendered HTML pages. Nothing read or
-# wrote any of the three, so evicting them was theatre: a delete of a key that
-# was never set, in a function whose job is to make stale data disappear.
+# Every board, all-time included, lives under the per-season family below;
+# "all" is the season id for all-time.diff --git a/djangotutorial/leaderboard/models.py b/djangotutorial/leaderboard/models.py
 CACHE_TTL_LEADERBOARD = 5 * 60  # 5 min — points change with new check-ins
 
 # Per-season leaderboards are cached under a dynamic key (one per season id).

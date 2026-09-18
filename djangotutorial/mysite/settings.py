@@ -186,29 +186,16 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_REFERRER_POLICY = "same-origin"
 X_FRAME_OPTIONS = "DENY"
 
-# Where the Django admin is mounted. Override in production, e.g.
-# ADMIN_URL=sprava-x7k2/
-#
-# This is obscurity, not security, and it is worth being precise about why it is
-# still here: it does not make the admin harder to break into, it makes the
-# background noise go away. Every bot on the internet probes /admin/ constantly,
-# so those log lines mean nothing. Move the path and the constant scanning stops
-# -- and then a single hit on the real admin URL is a signal worth reading.
-#
-# The actual protection is the edge auth layer in front of it (Cloudflare
-# Access); see security/RUNBOOK.md. Two things must track this value: the SPA
-# catch-all in urls.py, and robots.txt, which deliberately stops listing the path
-# once it is non-default -- publishing a secret URL in robots.txt would undo the
-# entire point.
+# Where the Django admin is mounted (e.g. ADMIN_URL=sprava-x7k2/). Obscurity,
+# not security: it removes the bot noise on /admin/ so a hit on the real path
+# is a signal. The real protection is Cloudflare Access (security/RUNBOOK.md).
+# The SPA catch-all in urls.py and robots.txt both track this value; robots.txt
+# stops listing the path once it is non-default.
 ADMIN_URL = os.getenv("ADMIN_URL", "admin/").strip().lstrip("/")
 if not ADMIN_URL.endswith("/"):
     ADMIN_URL += "/"
 
-# Leaving the admin at the default /admin/ in production defeats the point above:
-# it's the one path every bot on the internet already hammers, so a real
-# break-in attempt is indistinguishable from the constant background scanning.
-# Refuse to boot on the default in production — same fail-loud stance as
-# DJANGO_SECRET_KEY / ALLOWED_HOSTS. Set ADMIN_URL (e.g. ADMIN_URL=sprava-x7k2/).
+# Production refuses the default — the same fail-loud stance as DJANGO_SECRET_KEY.
 if not DEBUG and ADMIN_URL == "admin/":
     raise ImproperlyConfigured(
         "ADMIN_URL must be overridden when MODE=PRODUCTION "
@@ -223,16 +210,9 @@ if not DEBUG and ADMIN_URL == "admin/":
 # source. Everything else in this file tries to stop the injection happening;
 # this limits the damage when something slips through.
 #
-# ENFORCED by default (report-only ships the header but blocks nothing, so it
-# stops no XSS). The policy is derived from what the app loads today; the
-# allowlist below is asserted in tests against the real asset inventory so it
-# can't silently drift and start blocking legitimate resources. For a cautious
-# first-week rollout on a new domain, set CSP_REPORT_ONLY=1 to watch the
-# violation reports first, then drop the flag. In DEBUG it's report-only so local
-# tooling isn't blocked. The enforce/report-only switch lives at the bottom of
-# this block.
-#
-# The allowlist is small and every entry is here for a reason:
+# The allowlist is asserted in tests against the real asset inventory, so it
+# cannot drift and start blocking legitimate resources. The enforce/report-only
+# switch is at the bottom of this block. Every entry is here for a reason:
 #   fonts.googleapis.com  — the stylesheet linked from index.html
 #   fonts.gstatic.com     — the font files that stylesheet points at
 #   *.tile.openstreetmap.org — Leaflet map tiles on the event detail page
@@ -246,11 +226,8 @@ if not DEBUG and ADMIN_URL == "admin/":
 # script-src stays strict. Note that 'unsafe-inline' is NOT in script-src, which
 # is where it would actually matter.
 #
-# The admin ships inline <script> blocks, so a strict script-src can break its
-# widgets (date pickers, inline formsets) — and unlike the SPA, nothing about
-# that failure is visible server-side. Rather than weaken script-src site-wide,
-# AdminCSPExemptMiddleware adds 'unsafe-inline' to script-src for the admin path
-# only (see mysite/middleware.py), so enforcement is safe for the admin too.
+# The admin's inline <script> blocks get 'unsafe-inline' for the admin path only
+# (AdminCSPExemptMiddleware), so script-src stays strict for the site itself.
 # No custom domain: FileField.url points at the endpoint host, so allow that.
 _csp_media_host = (
     os.getenv("MEDIA_S3_CUSTOM_DOMAIN", "")
@@ -286,16 +263,9 @@ _CSP_DIRECTIVES = {
     "object-src": ["'none'"],
 }
 
-# Enforced by default: report-only ships the header but blocks nothing, so an
-# XSS that lands runs freely — the policy has to actually enforce to be worth
-# having. The admin's inline scripts (the reason enforcement was held back) are
-# handled by AdminCSPExemptMiddleware, which adds 'unsafe-inline' to script-src
-# for the admin path only, so a strict site-wide policy can't break its widgets.
-#
-# Set CSP_REPORT_ONLY=1 for a cautious first-week rollout on a new domain —
-# watch the violation reports, then drop the flag to enforce. In DEBUG the
-# policy is report-only so local tooling isn't blocked. (Legacy CSP_ENFORCE=1
-# still forces enforcement.)
+# Enforced by default — report-only ships the header but blocks nothing. Set
+# CSP_REPORT_ONLY=1 for a cautious first week on a new domain, then drop it.
+# DEBUG is report-only so local tooling isn't blocked (CSP_ENFORCE=1 overrides).
 _csp_report_only = os.getenv("CSP_REPORT_ONLY") == "1" or (
     DEBUG and os.getenv("CSP_ENFORCE") != "1"
 )
@@ -510,17 +480,9 @@ else:
     CORS_ALLOWED_ORIGINS = []
     CORS_ALLOW_CREDENTIALS = False
 
-# Apply CORS handling to the API only.
-#
-# By default django-cors-headers processes every response, including /media/,
-# and stamps `Vary: origin` on each one. Cloudflare only varies its cache on
-# Accept-Encoding and treats other Vary values as uncacheable — so that header
-# alone can keep every image at `cf-cache-status: DYNAMIC`, sending 100% of
-# image traffic to the origin no matter what Cache-Control says.
-#
-# Safe: only XHR/fetch calls need CORS, and those all live under /api/. Images
-# rendered in <img> tags are not subject to CORS at all. This would only matter
-# if JS read an image via fetch()/canvas.
+# CORS on the API only: django-cors-headers stamps `Vary: origin` on every
+# response it touches, and a Vary other than Accept-Encoding can stop Cloudflare
+# caching the response — keep it off /media/ and the static files.
 CORS_URLS_REGEX = r"^/api/.*$"
 
 # Version of the privacy policy currently in force, stored alongside each
@@ -829,33 +791,14 @@ if not DEBUG:
     # (which sets the CSRF cookie).
     WHITENOISE_ROOT = os.path.join(STATIC_ROOT, 'react')
 
-    # ── Cache lifetime of the SPA bundle ────────────────────────────────
-    #
-    # WhiteNoise can only recognise a file as immutable when its URL sits under
-    # STATIC_URL: whitenoise/middleware.py starts immutable_file_test with
-    # `if not url.startswith(self.static_prefix): return False`. The Vite build
-    # is served from WHITENOISE_ROOT at the site root instead (/assets/...), so
-    # every hashed chunk fell through to the default `max-age=60` -- measured on
-    # production, which meant every visitor revalidated the whole bundle once a
-    # minute and Cloudflare copied that TTL to the edge.
-    #
-    # Vite puts a content hash in the filename, so those files genuinely never
-    # change: a new build writes a new name. Telling WhiteNoise so is what turns
-    # them into `max-age=10 years, immutable`.
-    #
-    # The regex must stay narrow. It is the ONLY thing standing between a
-    # filename and a ten-year cache entry no deploy can recall, so it matches
-    # what Vite actually emits (name-HASH.js / .css, hash >= 8 chars) and
-    # nothing else. index.html is not matched -- it must never be immutable,
-    # since it is what points at the current hashes.
+    # WhiteNoise only auto-detects immutable files under STATIC_URL, and the
+    # Vite build is served from the site root, so its content-hashed chunks are
+    # named here explicitly. Narrow on purpose — it hands out a ten-year cache no
+    # deploy can recall — and it must never match index.html.
     WHITENOISE_IMMUTABLE_FILE_TEST = r"^/assets/.+-[A-Za-z0-9_-]{8,}\.(js|css)$"
 
-    # Everything else under the SPA root (/img/, /fonts/, /gallery/, /logos/)
-    # has stable, unhashed names, so it cannot be immutable -- an hour is the
-    # trade: re-generating an image under the same name is invisible to a
-    # browser that already has it for up to that long. `npm run images` output
-    # is versioned by content in practice (new photos get new names), so this
-    # bites only when a file is deliberately replaced in place.
+    # Unhashed names under the SPA root (/img/, /fonts/, /gallery/, /logos/):
+    # an hour, so a file replaced in place is stale for at most that long.
     WHITENOISE_MAX_AGE = int(os.getenv("WHITENOISE_MAX_AGE", "3600"))
 else:
     _staticfiles_storage = {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"}

@@ -153,22 +153,15 @@ export default function EventDetailPage() {
     }
   };
 
-  // Lazy: only admins ever open this tab, so nobody else pays for the fetch.
-  // Loads once when the tab is first opened for this event.
-  // Fetching on demand, which is a side effect by definition. `loadAttendance`
-  // is redefined every render, so listing it as a dependency would re-fetch in
-  // a loop; the `attLoaded` guard is what actually makes this run once.
+  // Lazy: only admins open this tab. `loadAttendance` is redefined every
+  // render, so it is not a dependency; the `attLoaded` guard makes this run once.
   useEffect(() => {
     if (isAdmin && adminView === 'ucast' && !attLoaded) loadAttendance();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAdmin, adminView, attLoaded]);
 
-  // A route-param change (navigating between events) doesn't remount this
-  // component, so stale attendance from the last event has to be dropped
-  // explicitly.
-  // Resetting per-event state on a route change. React Router reuses this
-  // component across events, so without this the previous event's roster and
-  // rating leak onto the next one.
+  // React Router reuses this component across events, so per-event state
+  // (roster, rating) is reset explicitly on a route change.
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     attRunRef.current += 1;
@@ -869,9 +862,8 @@ export default function EventDetailPage() {
         </div>
       </Modal>
 
-      {/* Feedback pop-up — the same modal shell as the survey prompt. Opens
-          automatically for attendees who haven't rated yet, or on demand from
-          the "Ohodnotit akci" / "Upravit hodnocení" buttons. */}
+      {/* Feedback pop-up — opened from the "Ohodnotit akci" / "Upravit
+          hodnocení" buttons, never on its own. */}
       <Modal open={fbOpen} onClose={closeFeedback} labelledBy="fb-modal-title">
         <div className="gol-modal-eyebrow">— Zpětná vazba —</div>
         <h3 id="fb-modal-title" className="gol-modal-title">

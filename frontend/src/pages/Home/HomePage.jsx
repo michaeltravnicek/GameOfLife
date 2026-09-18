@@ -90,10 +90,8 @@ export default function HomePage() {
   const galSnapId = useRef(0);
   const GAL_SLIDE_MS = 600; // slightly over the .55s CSS transition
 
-  // Recentre to the middle copy whenever the image set changes (data loads).
-  // Re-centring the looping carousel on the middle copy once the image set
-  // loads. Position is genuine UI state the user then drives by scrolling,
-  // so it cannot be derived from the images.
+  // Recentre on the middle copy whenever the image set changes. Position is
+  // UI state the user then drives, so it cannot be derived from the images.
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     setGalAnim(false);

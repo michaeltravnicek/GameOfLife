@@ -124,17 +124,10 @@ def gallery_page(offset, limit, request, season=None):
 def liked_photo_ids(user):
     """Ids of the user photos ``user`` has liked, as a list.
 
-    Split out of the gallery payload on purpose. The gallery page is the same
-    bytes for everyone, so it can be cached at the edge; the moment it carried a
-    per-viewer ``liked_by_me`` flag, a CDN storing it handed one visitor's likes
-    to the next. (That was not hypothetical -- Cloudflare was observed serving a
-    cached /api/v1/gallery/ to requests that carried a different session cookie.)
-
-    So the flag lives here instead, behind its own ``no-store`` endpoint, and the
+    Kept out of the gallery payload on purpose: that page is edge-cached and
+    identical for everyone, so a per-viewer flag in it would hand one visitor's
+    likes to the next. This lives behind its own ``no-store`` endpoint and the
     client paints the hearts on top of the cached list.
-
-    Anonymous users never reach this -- the endpoint requires authentication and
-    the frontend skips the call, so a logged-out visit is still a single request.
     """
     if user is None or not user.is_authenticated:
         return []
