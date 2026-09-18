@@ -32,8 +32,9 @@ export function AuthProvider({ children }) {
     const data = await apiLogin(identifier, password, remember);
     // New user identity: drop all cached responses that may have been
     // computed against the anonymous user (RSVPs, profile-specific data).
-    clearCache();
+    // The user is set first so the refetches run as the new identity.
     setUser(data.user);
+    clearCache();
     const name = data.user?.first_name || data.user?.full_name || data.user?.username || 'hráči';
     toast.success(`Ahoj, ${name}! Můžeš pokračovat ve hře.`, { title: 'Přihlášení proběhlo' });
     return data.user;
@@ -41,8 +42,8 @@ export function AuthProvider({ children }) {
 
   const register = useCallback(async (payload) => {
     const data = await apiRegister(payload);
-    clearCache();
     setUser(data.user);
+    clearCache();
     const name = data.user?.first_name || data.user?.full_name || data.user?.username || 'nováčku';
     toast.success(`Vítej v Game of Life, ${name}! Hra začíná.`, {
       title: 'Účet vytvořen',
@@ -64,8 +65,10 @@ export function AuthProvider({ children }) {
         console.error('Logout request failed:', err);
       }
     }
-    clearCache();
+    // Same order as login: signed-in-only queries (`enabled: !!user`) see the
+    // logged-out state before the cache eviction asks them to refetch.
     setUser(null);
+    clearCache();
     toast.info('Byl jsi odhlášen. Brzy nashle!', { title: 'Odhlášení' });
   }, []);
 

@@ -33,6 +33,7 @@ export const CACHE_TTL = {
 };
 
 export const CACHE_MAX_AGE_MS = 30 * 60 * 1000;  // 30 min — drop entirely
+export const CACHE_MAX_ENTRIES = 200;            // oldest evicted beyond this
 
 // ── Network resilience ────────────────────────────────────────────────
 //

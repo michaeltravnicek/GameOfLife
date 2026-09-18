@@ -44,8 +44,9 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     const status = error?.response?.status;
-    const url = error?.config?.url || '';
-    const isProbe = AUTH_PROBE_PATHS.some((p) => url.includes(p));
+    // Exact path match: `includes` made `/auth/me/delete/` a "probe" too.
+    const path = (error?.config?.url || '').split('?')[0];
+    const isProbe = AUTH_PROBE_PATHS.includes(path);
     const onAuthPage = /\/(prihlasit|registrace)/.test(window.location.pathname);
     if (status === 401 && !isProbe && !onAuthPage) {
       const from = window.location.pathname + window.location.search;

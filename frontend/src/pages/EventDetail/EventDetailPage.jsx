@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
   fetchEventAttendees,
@@ -28,6 +28,7 @@ import { fmtDateShort, fmtTime, dayName } from '../../utils/date';
 import { isMobileViewport } from '../../utils/img';
 import { toFormUrls } from '../../utils/formUrl';
 import { shareLink } from '../../utils/shareUrl';
+import { pressable } from '../../utils/a11y';
 import { toast } from '../../components/Toast/ToastProvider';
 import './EventDetailPage.css';
 
@@ -132,17 +133,23 @@ export default function EventDetailPage() {
   // No auto-prompt: the rating modal opens only from the "★ Ohodnotit akci"
   // button in the feedback section — never on its own on landing.
 
+  // Bumped on every load and on every event change, so a roster that arrives
+  // after the user has moved on to another event is dropped, not shown.
+  const attRunRef = useRef(0);
+
   const loadAttendance = async () => {
+    const run = ++attRunRef.current;
     setAttLoading(true);
     try {
       const [a, r] = await Promise.all([fetchEventAttendees(slug), fetchEventRsvps(slug)]);
+      if (run !== attRunRef.current) return;
       setAttendees(a.attendees || []);
       setRsvps(r.rsvps || []);
       setAttLoaded(true);
     } catch (err) {
-      reportError('Nepodařilo se načíst účast.', err);
+      if (run === attRunRef.current) reportError('Nepodařilo se načíst účast.', err);
     } finally {
-      setAttLoading(false);
+      if (run === attRunRef.current) setAttLoading(false);
     }
   };
 
@@ -164,9 +171,11 @@ export default function EventDetailPage() {
   // rating leak onto the next one.
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
+    attRunRef.current += 1;
     setAttLoaded(false);
     setAttendees([]);
     setRsvps([]);
+    setAttLoading(false);
     setAdminView('popis');
     // Feedback state is per-event; clear it so navigating between events never
     // carries one event's rating (or "done" state) onto the next.
@@ -315,7 +324,7 @@ export default function EventDetailPage() {
     setUploading(true);
     try {
       await uploadEventImages(slug, files);
-      invalidateQuery(`event:${slug}`);
+      // In place: an invalidate would blank the page to "Načítám…" mid-upload.
       await refetchEvent();
     } catch (err) {
       reportError('Nahrání obrázků se nepodařilo.', err);
@@ -561,7 +570,7 @@ export default function EventDetailPage() {
               {displayImages.length > 0 && (
                 <div className="collage" data-count={imgCount}>
                   {displayImages.map((src, i) => (
-                    <figure key={i} onClick={() => openLb(i)}>
+                    <figure key={i} {...pressable(() => openLb(i))}>
                       <img src={src} alt={`Galerie ${i + 1}`} loading="lazy" />
                     </figure>
                   ))}

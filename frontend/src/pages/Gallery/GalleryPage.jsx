@@ -5,9 +5,7 @@ import {
   uploadGalleryPhoto,
 } from '../../services/api';
 import { usePaginatedQuery } from '../../services/usePaginatedQuery';
-import {
-  prefetchQuery, invalidateQuery, setQueryData, useCachedQuery,
-} from '../../services/queryCache';
+import { refetchQuery, setQueryData, useCachedQuery } from '../../services/queryCache';
 import { useAuth } from '../../context/AuthContext';
 import { reportError } from '../../services/errors';
 import { CACHE_TTL, PAGE_SIZE_GALLERY } from '../../constants/config';
@@ -18,6 +16,7 @@ import PillTabs from '../../components/PillTabs/PillTabs';
 import Button from '../../components/Button/Button';
 import Modal from '../../components/Modal/Modal';
 import { fmtDateShort, monthLabel } from '../../utils/date';
+import { pressable } from '../../utils/a11y';
 import './GalleryPage.css';
 
 // Lightbox loaded only when user opens a fullscreen photo.
@@ -25,6 +24,7 @@ const Lightbox = lazy(() => import('../../components/Lightbox/Lightbox'));
 
 const PAGE_SIZE = PAGE_SIZE_GALLERY;
 
+const EMPTY_OVERRIDES = {};
 const extractPhotos = (r) => r.photos || [];
 const extractHasMore = (r) => !!r.has_more;
 const extractCount = (r) => r.count ?? 0;
@@ -35,8 +35,17 @@ export default function GalleryPage() {
   // Like state the user has changed since the page loaded, keyed by photo id.
   // The photo list itself is owned by usePaginatedQuery's cache, so overriding
   // here is what lets a tap paint instantly without invalidating the page (and
-  // re-fetching 60 photos) on every heart.
-  const [likeOverrides, setLikeOverrides] = useState({});
+  // re-fetching 60 photos) on every heart. Tagged with the user it belongs to:
+  // after a logout on this page the hearts must not stay lit.
+  const owner = user?.username ?? null;
+  const [likeState, setLikeState] = useState({ owner, byId: {} });
+  const likeOverrides = likeState.owner === owner ? likeState.byId : EMPTY_OVERRIDES;
+  const setLikeOverride = useCallback((id, value) => {
+    setLikeState((prev) => ({
+      owner,
+      byId: { ...(prev.owner === owner ? prev.byId : {}), [id]: value },
+    }));
+  }, [owner]);
   const [activeSeason, setActiveSeason] = useState('all'); // 'all', a season id (string), or 'unknown'
   const [lbOpen, setLbOpen] = useState(false);
   const [lbPhotos, setLbPhotos] = useState([]);
@@ -102,8 +111,8 @@ export default function GalleryPage() {
         event: uploadEvent,
         caption: uploadCaption.trim(),
       });
-      invalidateQuery('gallery:first');
-      await prefetchQuery('gallery:first', () => fetchGallery({ limit: PAGE_SIZE, offset: 0 }));
+      // In place, so the grid keeps showing while the new photo lands.
+      await refetchQuery('gallery:first', () => fetchGallery({ limit: PAGE_SIZE, offset: 0 }));
       setUploadOpen(false);
       resetUploadModal();
     } catch (err) {
@@ -146,21 +155,15 @@ export default function GalleryPage() {
     const current = likeOverrides[photo.id] ?? photo;
     const next = !current.liked_by_me;
     // Paint first: a heart that waits for the network feels broken.
-    setLikeOverrides((prev) => ({
-      ...prev,
-      [photo.id]: {
-        liked_by_me: next,
-        like_count: Math.max(0, (current.like_count ?? 0) + (next ? 1 : -1)),
-      },
-    }));
+    setLikeOverride(photo.id, {
+      liked_by_me: next,
+      like_count: Math.max(0, (current.like_count ?? 0) + (next ? 1 : -1)),
+    });
     try {
       // PUT/DELETE are idempotent, so a double-tap settles on the real state
       // rather than inverting it.
       const data = await setPhotoLike(photo.id, next);
-      setLikeOverrides((prev) => ({
-        ...prev,
-        [photo.id]: { liked_by_me: data.liked, like_count: data.count },
-      }));
+      setLikeOverride(photo.id, { liked_by_me: data.liked, like_count: data.count });
       // Fold it into the cached like list too. `likeOverrides` is component
       // state and dies on unmount, so without this a like would un-paint itself
       // as soon as you left the gallery and came back inside the TTL.
@@ -171,18 +174,15 @@ export default function GalleryPage() {
           : (prev.liked || []).filter((id) => id !== photo.id),
       } : prev));
     } catch (err) {
-      // Roll back to whatever we knew before the tap.
-      setLikeOverrides((prev) => ({
-        ...prev,
-        // Coerced: liked_by_me is absent from the gallery payload now, so
-        // `current.liked_by_me` is undefined for a photo the user hasn't liked
-        // — and aria-pressed={undefined} drops the attribute, which stops the
-        // button announcing itself as a toggle to a screen reader.
-        [photo.id]: { liked_by_me: !!current.liked_by_me, like_count: current.like_count },
-      }));
+      // Roll back to whatever we knew before the tap. Coerced: liked_by_me is
+      // absent from the gallery payload for an unliked photo, and
+      // aria-pressed={undefined} drops the attribute.
+      setLikeOverride(photo.id, {
+        liked_by_me: !!current.liked_by_me, like_count: current.like_count,
+      });
       reportError('Lajk se nepodařilo uložit.', err);
     }
-  }, [likeOverrides, navigate, user]);
+  }, [likeOverrides, navigate, setLikeOverride, user]);
 
   // Seasons drive the calendar grouping (replaces the old per-month buckets).
   // Newest season first so the most recent photos lead.
@@ -299,7 +299,7 @@ export default function GalleryPage() {
                 {monthPhotos.map((raw, i) => {
                   const p = withLikes(raw);
                   return (
-                    <div key={i} className="photo-item" onClick={() => openLb(monthPhotos, i)}>
+                    <div key={i} className="photo-item" {...pressable(() => openLb(monthPhotos, i))}>
                       {/* Grid tiles are ~330px wide — the 768px variant is enough
                           on every viewport; the lightbox opens the original.
                           LazyImg fetches only on-screen tiles + ~one row ahead. */}

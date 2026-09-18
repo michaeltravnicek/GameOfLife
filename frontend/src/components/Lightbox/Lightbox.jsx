@@ -5,6 +5,7 @@ import './Lightbox.css';
 // Keep in sync with --lb-slide-dur in Lightbox.css — how long the outgoing
 // image layer stays mounted so its slide-out keyframe can finish.
 const LB_SLIDE_MS = 420;
+const FOCUSABLE = 'button:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 /**
  * Full-screen image lightbox rendered via React portal.
@@ -47,6 +48,7 @@ export default function Lightbox({
   // Without this, closing the lightbox drops focus on document.body and the
   // keyboard user loses their place in the page.
   const previousFocusRef = useRef(null);
+  const overlayRef = useRef(null);
 
   // Directional slide state: the image currently sliding out (`out`), which way
   // we're moving, and an `id` that bumps every step. The id is folded into the
@@ -79,10 +81,28 @@ export default function Lightbox({
   useEffect(() => {
     if (!open) return undefined;
     previousFocusRef.current = document.activeElement;
+    // Move focus in and keep Tab inside, as Modal does: a dialog the keyboard
+    // can tab out of leaves the user on the page underneath with no way back.
+    const overlay = overlayRef.current;
+    const focusables = () => Array.from(overlay?.querySelectorAll(FOCUSABLE) || []);
+    focusables()[0]?.focus();
     const onKey = (e) => {
       if (e.key === 'Escape') onClose();
       if (e.key === 'ArrowLeft') goPrev();
       if (e.key === 'ArrowRight') goNext();
+      if (e.key === 'Tab') {
+        const items = focusables();
+        if (items.length === 0) return;
+        const first = items[0];
+        const last = items[items.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
     };
     document.addEventListener('keydown', onKey);
     return () => {
@@ -107,7 +127,11 @@ export default function Lightbox({
 
   return createPortal(
     <div
+      ref={overlayRef}
       className="lb-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-label={altText || 'Fotografie'}
       // Clicking the dark backdrop (overlay or the empty stage around the photo)
       // closes; clicking the photo itself does not.
       onClick={(e) => {

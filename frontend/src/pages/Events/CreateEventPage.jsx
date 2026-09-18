@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { createEvent, fetchCategories, fetchBadges } from '../../services/api';
+import { invalidateQuery } from '../../services/queryCache';
 import { extractApiError, reportError } from '../../services/errors';
 import { useEventForm, buildEventFormData } from './eventForm';
 import EventFormSections from './EventFormSections';
@@ -18,18 +19,22 @@ export default function CreateEventPage() {
   } = useEventForm();
 
   useEffect(() => {
+    let cancelled = false;
     // Badges are the logo picker's options, so they gate the form the same way
     // categories do — load both before showing it.
     Promise.all([fetchCategories(), fetchBadges()])
       .then(([cats, badgeData]) => {
+        if (cancelled) return;
         if (cats?.categories) setAllCategories(cats.categories);
         if (badgeData?.badges) setBadges(badgeData.badges);
         setLoading(false);
       })
       .catch((err) => {
+        if (cancelled) return;
         reportError('Nepodařilo se načíst kategorie a odznaky.', err);
         setLoading(false);
       });
+    return () => { cancelled = true; };
   }, [setAllCategories, setBadges]);
 
   const handleSave = async () => {
@@ -38,6 +43,8 @@ export default function CreateEventPage() {
     try {
       const formData = buildEventFormData(form, { poster, allCategories, categories });
       const event = await createEvent(formData);
+      // Cached lists would keep omitting the new event until their TTL.
+      invalidateQuery((k) => k.startsWith('events:') || k === 'hero' || k === 'checkin-events');
       navigate(`/events/${event.slug}`);
     } catch (err) {
       setSaveError(extractApiError(err, 'Chyba při vytváření akce.'));

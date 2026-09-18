@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import {
-  CACHE_MAX_AGE_MS, CACHE_TTL, QUERY_MAX_RETRIES, QUERY_RETRY_BASE_MS,
+  CACHE_MAX_AGE_MS, CACHE_MAX_ENTRIES, CACHE_TTL, QUERY_MAX_RETRIES, QUERY_RETRY_BASE_MS,
 } from '../constants/config';
 
 /**
@@ -54,7 +54,14 @@ function getEntry(key) {
 }
 
 function setEntry(key, value) {
+  // Re-insert so the Map's insertion order doubles as recency; the oldest
+  // entries go first when the cache is full. Without a bound every search
+  // string and every visited event stays in memory for the whole session.
+  cache.delete(key);
   cache.set(key, { value, fetchedAt: Date.now() });
+  while (cache.size > CACHE_MAX_ENTRIES) {
+    cache.delete(cache.keys().next().value);
+  }
   notify(key);
 }
 
@@ -131,6 +138,16 @@ export function setQueryData(key, updater) {
   setEntry(key, next);
 }
 
+/**
+ * Refetch a key in place: subscribers keep their current value until the new
+ * one lands, instead of blanking to a loading state as `invalidateQuery` does.
+ * For "I just changed this and want to show the result on the page I'm on".
+ */
+export function refetchQuery(key, fetcher) {
+  cache.delete(key);
+  return dedupedFetch(key, fetcher);
+}
+
 /** Drop matching entries; pass a string for exact match or a predicate fn. */
 export function invalidateQuery(keyOrPredicate) {
   if (typeof keyOrPredicate === 'function') {
@@ -184,6 +201,9 @@ export function useCachedQuery(key, fetcher, options = {}) {
   const [data, setData] = useState(initialEntry?.value);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(enabled && !initialFresh);
+  // Bumped when the entry is dropped from under us (invalidateQuery,
+  // clearCache) so the effect re-runs and refetches through its normal path.
+  const [generation, setGeneration] = useState(0);
 
   // Keep the latest fetcher in a ref so changing it doesn't retrigger the effect.
   // Callers pass an inline arrow, so the fetcher is a new function every
@@ -205,28 +225,30 @@ export function useCachedQuery(key, fetcher, options = {}) {
 
     let cancelled = false;
 
-    // Subscribe to broadcast updates from siblings / refetches.
-    // When an entry is dropped (clearCache on logout/login, invalidateQuery),
-    // we refetch instead of just blanking — otherwise the page sits on empty
-    // state until the user navigates away and back.
+    // Subscribe to broadcast updates from siblings / refetches. When the entry
+    // is dropped (clearCache on logout/login, invalidateQuery) the effect is
+    // re-run rather than fetching here: that way the fetch sees the `enabled`
+    // of the *next* render — a logout that disables a query must not fire it
+    // one last time as the now-anonymous user.
     const unsubscribe = subscribe(key, () => {
       if (cancelled) return;
       const next = getEntry(key);
       if (next) {
         setData(next.value);
+        setError(null);
         return;
       }
       setData(undefined);
       setLoading(true);
-      dedupedFetch(key, () => fetcherRef.current())
-        .then((value) => { if (!cancelled) { setData(value); setError(null); } })
-        .catch((e) => { if (!cancelled) setError(e); })
-        .finally(() => { if (!cancelled) setLoading(false); });
+      setGeneration((g) => g + 1);
     });
 
     const entry = getEntry(key);
     const now = Date.now();
 
+    // A new key starts clean: the previous key's data and error must not show
+    // (or be acted on) while this one loads.
+    setError(null);
     if (entry) {
       const age = now - entry.fetchedAt;
       setData(entry.value);
@@ -242,6 +264,7 @@ export function useCachedQuery(key, fetcher, options = {}) {
         setLoading(true);
       }
     } else {
+      setData(undefined);
       setLoading(true);
     }
 
@@ -263,14 +286,10 @@ export function useCachedQuery(key, fetcher, options = {}) {
       cancelled = true;
       unsubscribe();
     };
-  }, [key, enabled, ttl, maxAge]);
+  }, [key, enabled, ttl, maxAge, generation]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
-  const refetch = () => {
-    // Forget cached value so the next consumer fetches fresh.
-    cache.delete(key);
-    return dedupedFetch(key, () => fetcherRef.current());
-  };
+  const refetch = () => refetchQuery(key, () => fetcherRef.current());
 
   return { data, error, loading, refetch };
 }

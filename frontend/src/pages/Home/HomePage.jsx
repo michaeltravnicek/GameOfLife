@@ -101,14 +101,19 @@ export default function HomePage() {
   }, [galImages, galN]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
+  const galSnapTimer = useRef(null);
+  useEffect(() => () => clearTimeout(galSnapTimer.current), []);
+
   const galGoTo = useCallback((pos) => {
     if (galN < 2) return;
     setGalAnim(true);
     setGalPos(pos);
     const id = ++galSnapId.current;
     // After the slide finishes, snap back into the middle copy (seamless: the
-    // target slide shows the same image). Guarded so a newer click wins.
-    setTimeout(() => {
+    // target slide shows the same image). Guarded so a newer click wins, and
+    // cleared on unmount so it cannot fire into an unmounted page.
+    clearTimeout(galSnapTimer.current);
+    galSnapTimer.current = setTimeout(() => {
       if (id !== galSnapId.current) return;
       setGalAnim(false);
       setGalPos((p) => ((p - galN) % galN + galN) % galN + galN);

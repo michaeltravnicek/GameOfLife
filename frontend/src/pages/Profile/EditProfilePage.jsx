@@ -11,6 +11,7 @@ import {
   apiDeleteAccount, apiPasswordChange,
 } from '../../services/api';
 import { useBeforeUnload } from '../../hooks/useBeforeUnload';
+import { invalidateQuery } from '../../services/queryCache';
 import { reportError, extractApiError } from '../../services/errors';
 import { initials } from '../../utils/name';
 import './EditProfilePage.css';
@@ -21,10 +22,10 @@ const BIO_MAX = 220;
 const ANSWER_MAX = 500;
 
 const SOCIALS = [
-  { key: 'instagram', ico: 'IG', pre: 'instagram.com/', placeholder: 'uživatel' },
-  { key: 'strava', ico: 'ST', pre: 'strava.com/athletes/', placeholder: 'uživatel' },
-  { key: 'spotify', ico: 'SP', pre: 'spotify.com/user/', placeholder: 'uživatel' },
-  { key: 'tiktok', ico: 'TT', pre: 'tiktok.com/@', placeholder: 'uživatel' },
+  { key: 'instagram', label: 'Instagram', ico: 'IG', pre: 'instagram.com/', placeholder: 'uživatel' },
+  { key: 'strava', label: 'Strava', ico: 'ST', pre: 'strava.com/athletes/', placeholder: 'uživatel' },
+  { key: 'spotify', label: 'Spotify', ico: 'SP', pre: 'spotify.com/user/', placeholder: 'uživatel' },
+  { key: 'tiktok', label: 'TikTok', ico: 'TT', pre: 'tiktok.com/@', placeholder: 'uživatel' },
 ];
 
 export default function EditProfilePage() {
@@ -69,6 +70,7 @@ export default function EditProfilePage() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
+    let cancelled = false;
     Promise.all([
       fetchMe().then((data) => {
         const username = data.user?.username;
@@ -78,6 +80,7 @@ export default function EditProfilePage() {
       fetchProfileQuestions(),
     ])
       .then(([profile, cats, qs]) => {
+        if (cancelled) return;
         if (profile) {
           setForm({
             first_name: profile.first_name || '',
@@ -117,9 +120,11 @@ export default function EditProfilePage() {
         setLoading(false);
       })
       .catch((err) => {
+        if (cancelled) return;
         reportError('Nepodařilo se načíst profil.', err);
         setLoading(false);
       });
+    return () => { cancelled = true; };
   }, []);
 
   const markDirty = () => {
@@ -163,6 +168,11 @@ export default function EditProfilePage() {
       questions.forEach((q) => formData.append(`answer_${q.id}`, answers[q.id] || ''));
 
       await updateProfile(formData);
+      // The public profile, the board rows carrying this name/avatar, and the
+      // nav's own copy of the user all render from caches that just went stale.
+      invalidateQuery((k) => k.startsWith('profile:') || k.startsWith('player:')
+        || k.startsWith('leaderboard:'));
+      await refreshAuth();
       setDirty(false);
       setSaved(true);
       setBarVisible(true);
@@ -410,7 +420,7 @@ export default function EditProfilePage() {
                   <span className="ep-ico">{s.ico}</span>
                   <div className="ep-combo">
                     <span className="ep-pre">{s.pre}</span>
-                    <input className="gol-input" value={socials[s.key]} onChange={setSocial(s.key)} placeholder={s.placeholder} />
+                    <input className="gol-input" aria-label={s.label} value={socials[s.key]} onChange={setSocial(s.key)} placeholder={s.placeholder} />
                   </div>
                 </div>
               ))}

@@ -4,8 +4,10 @@ import {
   useCachedQuery,
   prefetchQuery,
   invalidateQuery,
+  refetchQuery,
   clearCache,
 } from './queryCache';
+import { CACHE_MAX_ENTRIES } from '../constants/config';
 
 describe('queryCache', () => {
   beforeEach(() => {
@@ -126,5 +128,89 @@ describe('queryCache', () => {
     );
     expect(result.current.error).toBeNull();
     expect(fetcher).toHaveBeenCalledTimes(2);
+  });
+
+  // Regressions from the September review — see the plan's frontend section.
+
+  it('a key change clears the previous key\'s data while the new one loads', async () => {
+    const fetcher = vi.fn((key) => Promise.resolve({ key }));
+    let resolveB;
+    const fetchFor = (key) => (key === 'b'
+      ? new Promise((r) => { resolveB = r; })
+      : fetcher(key));
+    const { result, rerender } = renderHook(
+      ({ key }) => useCachedQuery(key, () => fetchFor(key), { ttl: 60_000 }),
+      { initialProps: { key: 'a' } },
+    );
+    await waitFor(() => expect(result.current.data).toEqual({ key: 'a' }));
+
+    rerender({ key: 'b' });
+    // Event A must not be rendered (or acted on) as if it were event B.
+    await waitFor(() => expect(result.current.loading).toBe(true));
+    expect(result.current.data).toBeUndefined();
+
+    resolveB({ key: 'b' });
+    await waitFor(() => expect(result.current.data).toEqual({ key: 'b' }));
+  });
+
+  it('a key change clears the previous key\'s error', async () => {
+    const err = Object.assign(new Error('nope'), { response: { status: 404 } });
+    const fetchFor = (key) => (key === 'missing'
+      ? Promise.reject(err)
+      : Promise.resolve({ key }));
+    const { result, rerender } = renderHook(
+      ({ key }) => useCachedQuery(key, () => fetchFor(key), { ttl: 60_000 }),
+      { initialProps: { key: 'missing' } },
+    );
+    await waitFor(() => expect(result.current.error).toBe(err));
+
+    rerender({ key: 'present' });
+    await waitFor(() => expect(result.current.data).toEqual({ key: 'present' }));
+    expect(result.current.error).toBeNull();
+  });
+
+  it('an eviction does not refetch a query that has since been disabled', async () => {
+    // Logout: the user is cleared first, then the cache. The signed-in-only
+    // query must not fire one last time as the anonymous user.
+    const fetcher = vi.fn().mockResolvedValue({ liked: [1] });
+    const { result, rerender } = renderHook(
+      ({ enabled }) => useCachedQuery('liked', fetcher, { ttl: 60_000, enabled }),
+      { initialProps: { enabled: true } },
+    );
+    await waitFor(() => expect(result.current.data).toEqual({ liked: [1] }));
+    expect(fetcher).toHaveBeenCalledTimes(1);
+
+    rerender({ enabled: false });
+    clearCache();
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(fetcher).toHaveBeenCalledTimes(1);
+  });
+
+  it('refetchQuery keeps subscribers on their current value until the new one lands', async () => {
+    let resolveNext;
+    const fetcher = vi.fn()
+      .mockResolvedValueOnce({ n: 1 })
+      .mockImplementationOnce(() => new Promise((r) => { resolveNext = r; }));
+    const { result } = renderHook(() => useCachedQuery('k', fetcher, { ttl: 60_000 }));
+    await waitFor(() => expect(result.current.data).toEqual({ n: 1 }));
+
+    const pending = refetchQuery('k', fetcher);
+    await waitFor(() => expect(resolveNext).toBeTypeOf('function'));
+    expect(result.current.data).toEqual({ n: 1 });  // no blank frame
+    resolveNext({ n: 2 });
+    await pending;
+    await waitFor(() => expect(result.current.data).toEqual({ n: 2 }));
+  });
+
+  it('evicts the oldest entries once the cache is full', async () => {
+    const fetcher = vi.fn().mockResolvedValue({});
+    for (let i = 0; i < CACHE_MAX_ENTRIES + 5; i += 1) {
+      await prefetchQuery(`fill:${i}`, fetcher);
+    }
+    expect(fetcher).toHaveBeenCalledTimes(CACHE_MAX_ENTRIES + 5);
+    await prefetchQuery('fill:0', fetcher);  // the first one is gone
+    expect(fetcher).toHaveBeenCalledTimes(CACHE_MAX_ENTRIES + 6);
+    await prefetchQuery(`fill:${CACHE_MAX_ENTRIES + 4}`, fetcher);  // the last is still there
+    expect(fetcher).toHaveBeenCalledTimes(CACHE_MAX_ENTRIES + 6);
   });
 });

@@ -26,12 +26,14 @@ export default function EditEventPage() {
   } = useEventForm();
 
   useEffect(() => {
+    let cancelled = false;
     Promise.all([
       fetchEventDetail(slug),
       fetchCategories(),
       fetchBadges(),
     ])
       .then(([event, cats, badgeData]) => {
+        if (cancelled) return;
         if (event) {
           setForm(eventToForm(event));
           if (event.image) poster.setPreview(event.image);
@@ -46,9 +48,11 @@ export default function EditEventPage() {
         setLoading(false);
       })
       .catch((err) => {
+        if (cancelled) return;
         reportError('Nepodařilo se načíst akci.', err);
         setLoading(false);
       });
+    return () => { cancelled = true; };
     // Only re-run for a different event; the setters/pickers are stable.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug]);
@@ -59,6 +63,10 @@ export default function EditEventPage() {
     try {
       const formData = buildEventFormData(form, { poster, allCategories, categories });
       await updateEvent(slug, formData);
+      // The detail page we land on, and every list/carousel that shows this
+      // event, would otherwise serve the pre-edit copy from the cache.
+      invalidateQuery((k) => k === `event:${slug}` || k.startsWith('events:')
+        || k === 'hero' || k === 'checkin-events');
       navigate(`/events/${slug}`);
     } catch (err) {
       setSaveError(extractApiError(err, 'Chyba při aktualizaci akce.'));
