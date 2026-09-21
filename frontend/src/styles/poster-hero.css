@@ -1,0 +1,35 @@
+/* ══ Poster hero ════════════════════════════════════════════════════════════
+   The full-bleed photo header shared by the event detail, profile and player
+   pages — the three used to carry byte-identical copies of these rules that
+   drifted on hero height (100vh vs 88vh) and grain. Import it from the page
+   JSX next to the page's own stylesheet.
+
+   The page sets --poster-width (content width of the back strip) and gives
+   .poster-img its picture: an <img> (event detail) or a background-image
+   (profile / player) — both are covered below.                                */
+.poster{position:relative;min-height:88vh;display:flex;flex-direction:column;justify-content:flex-end;overflow:hidden;background:var(--color-dark-brown);z-index:1}
+.poster-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 30%;background-size:cover;background-position:center 45%;background-repeat:no-repeat;filter:saturate(.85) contrast(1.06);transform:scale(1.04);z-index:0}
+.poster-grain{position:absolute;inset:0;background:var(--tex-brown) 0 0/var(--tex-size) var(--tex-size) repeat;opacity:var(--grain-opacity);mix-blend-mode:overlay;pointer-events:none;z-index:0}
+.poster-vignette{position:absolute;inset:0;background:linear-gradient(180deg,var(--alpha-navy-35) 0%,var(--alpha-dark-20) 30%,var(--alpha-dark-55) 70%,var(--alpha-dark-90) 100%);pointer-events:none;z-index:0}
+.poster-top{position:relative;z-index:2;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:138px 24px 32px;text-align:center}
+.badges{position:relative;z-index:2;display:inline-flex;gap:8px;justify-content:center;margin-bottom:26px;flex-wrap:wrap}
+
+/* ── Body + back strip ── dark brown grain under everything below the poster. */
+.poster-body,.back-strip{position:relative;z-index:1;background:var(--color-dark-brown) var(--tex-brown-2) 0 0/var(--tex-size) var(--tex-size) repeat}
+.back-strip{padding:32px 24px 64px}
+.back-strip-inner{max-width:var(--poster-width,920px);margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+
+@media(max-width:768px){
+  .poster-top{padding:110px 18px 22px}
+  .back-strip-inner{justify-content:center}
+}
+@media(max-width:480px){
+  .poster{min-height:560px}
+  .poster-top{padding:96px 14px 22px}
+  .back-strip{padding:24px 14px 48px}
+}
+@media(max-width:375px){
+  .poster-top{padding:88px 12px 18px}
+  .back-strip{padding:20px 12px 40px}
+  .back-strip-inner{flex-direction:column;align-items:stretch;text-align:center;gap:14px}
+}

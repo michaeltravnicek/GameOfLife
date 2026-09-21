@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { fetchEvents, fetchSeasons } from '../../services/api';
 import { usePaginatedQuery } from '../../services/usePaginatedQuery';
 import { useCachedQuery } from '../../services/queryCache';
@@ -10,6 +9,11 @@ import EventCard from '../../components/EventCard/EventCard';
 import PillTabs from '../../components/PillTabs/PillTabs';
 import SearchInput from '../../components/SearchInput/SearchInput';
 import PageHero from '../../components/PageHero/PageHero';
+import PageStage from '../../components/PageStage/PageStage';
+import PageState from '../../components/PageState/PageState';
+import LoadMore from '../../components/LoadMore/LoadMore';
+import Badge from '../../components/Badge/Badge';
+import Button from '../../components/Button/Button';
 import { useReveal } from '../../hooks/useReveal';
 import './EventsPage.css';
 
@@ -139,9 +143,8 @@ export default function EventsPage() {
   const [pastRef, pastIn] = useReveal({ threshold: 0.01, rootMargin: '0px 0px 80px 0px' });
 
   return (
-    <div className="events-page">
-      <div className="stage" />
-      <div className="grain" />
+    <div className="events-page has-stage">
+      <PageStage image="gal0" position="center 28%" tint="calm" />
 
       <PageHero
         eyebrow={`Kalendář`}
@@ -169,7 +172,7 @@ export default function EventsPage() {
       </section>
 
       {filtersOpen && (
-        <section id="filter-panel" className="gol-tex filter-panel">
+        <section id="filter-panel" className="gol-card filter-panel">
           <div className="fp-group fp-search">
             <SearchInput
               value={query}
@@ -215,21 +218,21 @@ export default function EventsPage() {
 
       {isAdmin && (
         <section className="admin-row">
-          <Link to="/events/vytvorit" className="admin-btn create-btn">+ Vytvořit akci</Link>
-          <Link to="/sprava/zpetna-vazba" className="admin-btn">Zpětná vazba</Link>
+          <Button as="link" to="/events/vytvorit" variant="admin">+ Vytvořit akci</Button>
+          <Button as="link" to="/sprava/zpetna-vazba" variant="admin">Zpětná vazba</Button>
         </section>
       )}
 
       <main className="events-main">
-        {loading && <div className="empty">Načítám akce…</div>}
-        {empty && <div className="empty">Žádné akce nenalezeny.</div>}
+        {loading && <PageState kind="loading" text="Načítám akce…" />}
+        {empty && <PageState kind="empty" text="Žádné akce nenalezeny." />}
         {error && (
-          <div className="events-error">
-            <p>Akce se nepodařilo načíst. Zkontroluj připojení a zkus to znovu.</p>
-            <button type="button" className="gol-pill" onClick={handleRetry} disabled={retrying}>
-              {retrying ? 'Načítám…' : 'Zkusit znovu'}
-            </button>
-          </div>
+          <PageState
+            kind="error"
+            text="Akce se nepodařilo načíst. Zkontroluj připojení a zkus to znovu."
+            onRetry={handleRetry}
+            busy={retrying}
+          />
         )}
 
         {upcoming.length > 0 && (
@@ -239,7 +242,7 @@ export default function EventsPage() {
               {upcoming.map((ev) => (
                 <div key={ev.id} className={`ev-wrap${isAdmin && !ev.visible_to_users ? ' ev-hidden' : ''}`}>
                   <EventCard event={ev} theme="light" />
-                  {isAdmin && !ev.visible_to_users && <span className="ev-hidden-badge">Skryto</span>}
+                  {isAdmin && !ev.visible_to_users && <Badge tone="gold" className="ev-hidden-badge">Skryto</Badge>}
                 </div>
               ))}
             </div>
@@ -252,7 +255,7 @@ export default function EventsPage() {
               {past.map((ev) => (
                 <div key={ev.id} className={`ev-wrap${isAdmin && !ev.visible_to_users ? ' ev-hidden' : ''}`}>
                   <EventCard event={ev} theme="light" />
-                  {isAdmin && !ev.visible_to_users && <span className="ev-hidden-badge">Skryto</span>}
+                  {isAdmin && !ev.visible_to_users && <Badge tone="gold" className="ev-hidden-badge">Skryto</Badge>}
                 </div>
               ))}
             </div>
@@ -260,16 +263,7 @@ export default function EventsPage() {
         )}
 
         {hasMore && !loading && (
-          <div className="load-more-row">
-            <button
-              type="button"
-              className="gol-pill"
-              onClick={loadMore}
-              disabled={loadingMore}
-            >
-              {loadingMore ? 'Načítám…' : `Načíst další (${totalCount - events.length})`}
-            </button>
-          </div>
+          <LoadMore onClick={loadMore} busy={loadingMore} remaining={totalCount - events.length} />
         )}
       </main>
     </div>

@@ -1,4 +1,9 @@
-
 .sec-hdr-heading{font-family:var(--font-display);letter-spacing:.04em;color:var(--color-heading);text-transform:uppercase;line-height:.95;margin-bottom:22px}
-.sec-hdr-heading-md{font-size:clamp(38px,4.4vw,54px)}
+.sec-hdr-heading-md{font-size:var(--text-section)}
 .sec-hdr-heading-sm{font-size:clamp(32px,3.8vw,48px)}
+.sec-hdr-heading .pink{color:var(--color-pink)}
+/* On the photo stage (no card behind it) the heading needs its own shadow. */
+.sec-hdr-heading--on-photo{text-shadow:0 2px 18px var(--alpha-black-55)}
+/* Eyebrow with a quiet note on its right edge (profile sections). */
+.sec-hdr-eyebrow--meta{justify-content:space-between;gap:14px}
+.sec-hdr-meta{color:var(--alpha-cream-55);font-size:var(--text-label);letter-spacing:.16em;font-weight:400;font-style:italic}

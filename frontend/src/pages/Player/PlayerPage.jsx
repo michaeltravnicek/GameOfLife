@@ -2,6 +2,8 @@ import { useMemo, useState } from 'react';
 import { Navigate, useParams } from 'react-router-dom';
 import PillTabs from '../../components/PillTabs/PillTabs';
 import Button from '../../components/Button/Button';
+import Badge from '../../components/Badge/Badge';
+import PageState from '../../components/PageState/PageState';
 import { useSeasonView } from '../Profile/useSeasonView';
 import { ProfileCredits, EventsSections, PointsSections } from '../Profile/profileSections';
 import { fetchPlayer, fetchPlayerSeason } from '../../services/api';
@@ -9,6 +11,7 @@ import { useCachedQuery } from '../../services/queryCache';
 import { CACHE_TTL } from '../../constants/config';
 import { shareLink } from '../../utils/shareUrl';
 import { initials } from '../../utils/name';
+import '../../styles/poster-hero.css';
 import '../Profile/ProfilePage.css';
 import './PlayerPage.css';
 
@@ -74,12 +77,16 @@ export default function PlayerPage() {
     return <Navigate to={`/profil/${player.profile_username}`} replace />;
   }
 
-  if (playerLoading && !player) return <div className="profile-page player-anon"><div style={{ padding: '2rem', textAlign: 'center' }}>Načítám hráče…</div></div>;
+  if (playerLoading && !player) return <div className="profile-page player-anon"><PageState kind="loading" fill text="Načítám hráče…" /></div>;
   if (playerError) {
-    const msg = playerError.response?.status === 404 ? 'Hráč nenalezen' : 'Nepodařilo se načíst hráče';
-    return <div className="profile-page player-anon"><div style={{ padding: '2rem', textAlign: 'center', color: '#e15463' }}>Chyba: {msg}</div></div>;
+    const notFound = playerError.response?.status === 404;
+    return (
+      <div className="profile-page player-anon">
+        <PageState kind={notFound ? 'empty' : 'error'} fill text={notFound ? 'Hráč nenalezen.' : 'Hráče se nepodařilo načíst.'} />
+      </div>
+    );
   }
-  if (!player || !st) return <div className="profile-page player-anon"><div style={{ padding: '2rem', textAlign: 'center' }}>Hráč nenalezen</div></div>;
+  if (!player || !st) return <div className="profile-page player-anon"><PageState kind="empty" fill text="Hráč nenalezen." /></div>;
 
   const avatarInitials = initials(player.name, '?');
 
@@ -105,8 +112,8 @@ export default function PlayerPage() {
 
         <div className="poster-top">
           <div className="badges">
-            {st.rank && <span className="ev-pill live">★ #{st.rank} Leaderboard</span>}
-            <span className="ev-pill">Sezóna {st.label}</span>
+            {st.rank && <Badge tone="live">★ #{st.rank} Leaderboard</Badge>}
+            <Badge>Sezóna {st.label}</Badge>
           </div>
           <div className="poster-avatar">{avatarInitials}</div>
           <h1 className="poster-name">{player.name}</h1>
@@ -123,7 +130,7 @@ export default function PlayerPage() {
         </div>
       </div>
 
-      <div className="body-wrap">
+      <div className="poster-body">
         <main className="profile-main">
           <section className="profile-view" key={activeView}>
             {activeView === 'events' && (

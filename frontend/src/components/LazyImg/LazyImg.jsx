@@ -44,7 +44,7 @@ export default function LazyImg({ src, alt = '', className = '', margin = '400px
 
   return (
     <span ref={ref} className={`lazyimg${loaded ? ' is-loaded' : ''} ${className}`} style={!loaded ? { aspectRatio: ratio } : undefined}>
-      {near && <img src={src} alt={alt} onLoad={() => setLoaded(true)} />}
+      {near && <img src={src} alt={alt} decoding="async" onLoad={() => setLoaded(true)} />}
     </span>
   );
 }

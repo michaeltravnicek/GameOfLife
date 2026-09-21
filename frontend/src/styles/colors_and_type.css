@@ -80,94 +80,157 @@
 
 /* TODO: buttons are meant to run on Helvetica World, not Helvetica Regular.
    Drop HelveticaWorld-Regular.ttf + HelveticaWorld-Bold.ttf into public/fonts,
-   uncomment, and point --font-hv-world at it (it already falls back to
-   --font-hv, so .btn picks it up with no further edits):
+   and uncomment. --font-body already lists 'Helvetica World' first, so every
+   button and paragraph picks it up with no further edits:
    @font-face { font-family: 'Helvetica World'; src: url('/fonts/HelveticaWorld-Regular.ttf') format('truetype'); font-weight: 400; font-style: normal; font-display: swap; }
    @font-face { font-family: 'Helvetica World'; src: url('/fonts/HelveticaWorld-Bold.ttf') format('truetype'); font-weight: 700; font-style: normal; font-display: swap; }
 */
 
+/* ── Breakpoints ────────────────────────────────────────────────────────────
+   CSS custom properties cannot be used in @media, so the scale lives here as
+   a comment and is enforced by scripts/check-css.js:
+
+     375 · 480 · 640 · 768 · 900 · 1100   (max-width)
+     769 · 901 · 1101                     (min-width complements)
+
+   Nothing else. Snap a new rule to the nearest width, never invent one. */
+
 :root {
+  /* ── Base colours ── */
   --color-white:          #ffffff;
   --color-black:          #1a1a1a;
   --color-cream-light:    #fff1d4;
   --color-cream-lighter:  #fff4e1;
   --color-pink:           #e15463;   /* GOL_Web_Manual_2026 */
+  --color-pink-hover:     #cf4453;   /* every pink surface on hover */
+  --color-pink-light:     #ffb0b8;   /* error text, soft pink accents */
   --color-purple:         #2d2a8e;
-  --color-logo-purple:    rgba(71, 81, 133, 1);
+  --color-logo-purple:    #475185;
   --color-dark-brown:     #1a0f0a;
+  --color-panel:          #150c08;   /* ticket inner panel, tooltips */
   --color-brown:          #3a2418;
-  --color-tan:            #c4a882;
+  --color-ledge:          #504d4d;   /* 3D button border + ledge */
   --color-gold:           #f5c842;
-  --color-success:        #7fd674;
-  --color-pink-dark:      #c1394a;
-  --color-pink-light:     #ffb0b8;
-  --color-blue:           #9cc9ff;
-  --color-green:          #9eff5b;
+  --color-success:        #7fd674;   /* success text / icon / glow */
+  --color-success-fill:   #4a8a5e;   /* filled success surface under white text */
+  --color-success-fill-hover: #3d7a52;
 
-  /* Alpha tokens (ported from claudedesign mockups) */
-  --alpha-success-60:     rgba(127, 214, 116, 0.6);
-  --alpha-gold-60:        rgba(245, 200, 66, 0.6);
-  --alpha-gold-40:        rgba(245, 200, 66, 0.4);
-  --alpha-gold-15:        rgba(245, 200, 66, 0.15);
-  --alpha-cream-95:       rgba(255, 241, 212, 0.95);
-  --alpha-cream-80:       rgba(255, 241, 212, 0.8);
-  --alpha-cream-70:       rgba(255, 241, 212, 0.7);
-  --alpha-cream-65:       rgba(255, 241, 212, 0.65);
-  --alpha-cream-55:       rgba(255, 241, 212, 0.55);
-  --alpha-cream-45:       rgba(255, 241, 212, 0.45);
-  --alpha-cream-30:       rgba(255, 241, 212, 0.3);
-  --alpha-cream-20:       rgba(255, 241, 212, 0.2);
-  --alpha-cream-10:       rgba(255, 241, 212, 0.1);
-  --alpha-cream-05:       rgba(255, 241, 212, 0.05);
-  --alpha-dark-95:        rgba(26, 15, 10, 0.95);
-  --alpha-dark-80:        rgba(26, 15, 10, 0.8);
-  --alpha-dark-60:        rgba(26, 15, 10, 0.6);
-  --alpha-dark-55:        rgba(26, 15, 10, 0.55);
-  --alpha-black-75:       rgba(0, 0, 0, 0.75);
-  --alpha-black-60:       rgba(0, 0, 0, 0.6);
-  --alpha-black-50:       rgba(0, 0, 0, 0.5);
-  --alpha-black-45:       rgba(0, 0, 0, 0.45);
-  --alpha-black-40:       rgba(0, 0, 0, 0.4);
-  --alpha-black-35:       rgba(0, 0, 0, 0.35);
-  --alpha-pink-45:        rgba(225, 84, 99, 0.45);
-  --alpha-pink-40:        rgba(225, 84, 99, 0.4);
-  --alpha-pink-35:        rgba(225, 84, 99, 0.35);
-  --alpha-pink-20:        rgba(225, 84, 99, 0.2);
-  --alpha-pink-15:        rgba(225, 84, 99, 0.15);
-  --alpha-pink-10:        rgba(225, 84, 99, 0.1);
-  --alpha-purple-20:      rgba(45, 42, 142, 0.2);
-  --alpha-purple-35:      rgba(45, 42, 142, 0.35);
-  --alpha-white-45:       rgba(255, 255, 255, 0.45);
-  --alpha-white-10:       rgba(255, 255, 255, 0.1);
-  --alpha-blue-40:        rgba(120, 180, 255, 0.4);
-  --alpha-blue-15:        rgba(120, 180, 255, 0.15);
-  --alpha-green-40:       rgba(158, 255, 91, 0.4);
-  --alpha-green-15:       rgba(158, 255, 91, 0.15);
-  --alpha-ink-35:         rgba(26, 26, 26, 0.35);
-  --alpha-dark-text-80:   rgba(26, 15, 10, 0.8);
+  /* ── Alpha scales ── one family per base colour, steps only where used.
+     Snap to the nearest step; add a step only when ≥2 sites need it. */
+  --alpha-cream-95:  rgba(255, 241, 212, 0.95);
+  --alpha-cream-90:  rgba(255, 241, 212, 0.9);
+  --alpha-cream-85:  rgba(255, 241, 212, 0.85);
+  --alpha-cream-80:  rgba(255, 241, 212, 0.8);
+  --alpha-cream-75:  rgba(255, 241, 212, 0.75);
+  --alpha-cream-70:  rgba(255, 241, 212, 0.7);
+  --alpha-cream-65:  rgba(255, 241, 212, 0.65);
+  --alpha-cream-60:  rgba(255, 241, 212, 0.6);
+  --alpha-cream-55:  rgba(255, 241, 212, 0.55);
+  --alpha-cream-45:  rgba(255, 241, 212, 0.45);
+  --alpha-cream-40:  rgba(255, 241, 212, 0.4);
+  --alpha-cream-35:  rgba(255, 241, 212, 0.35);
+  --alpha-cream-30:  rgba(255, 241, 212, 0.3);
+  --alpha-cream-25:  rgba(255, 241, 212, 0.25);
+  --alpha-cream-20:  rgba(255, 241, 212, 0.2);
+  --alpha-cream-15:  rgba(255, 241, 212, 0.15);
+  --alpha-cream-10:  rgba(255, 241, 212, 0.1);
+  --alpha-cream-05:  rgba(255, 241, 212, 0.05);
 
-  --bg-primary:           var(--color-cream-light);
-  --bg-dark:              var(--color-black);
-  --bg-purple:            var(--color-purple);
-  --bg-hero-overlay:      rgba(26, 26, 26, 0.6);
+  --alpha-dark-95:   rgba(26, 15, 10, 0.95);
+  --alpha-dark-90:   rgba(26, 15, 10, 0.9);
+  --alpha-dark-80:   rgba(26, 15, 10, 0.8);
+  --alpha-dark-75:   rgba(26, 15, 10, 0.75);
+  --alpha-dark-70:   rgba(26, 15, 10, 0.7);
+  --alpha-dark-65:   rgba(26, 15, 10, 0.65);
+  --alpha-dark-60:   rgba(26, 15, 10, 0.6);
+  --alpha-dark-55:   rgba(26, 15, 10, 0.55);
+  --alpha-dark-50:   rgba(26, 15, 10, 0.5);
+  --alpha-dark-45:   rgba(26, 15, 10, 0.45);
+  --alpha-dark-30:   rgba(26, 15, 10, 0.3);
+  --alpha-dark-20:   rgba(26, 15, 10, 0.2);
 
-  --fg-primary:           var(--color-black);
-  --fg-on-dark:           var(--color-cream-light);
-  --fg-on-purple:         var(--color-cream-light);
-  --fg-accent:            var(--color-pink);
-  --fg-muted:             rgba(26, 26, 26, 0.55);
-  --fg-muted-dark:        rgba(255, 241, 212, 0.6);
+  --alpha-black-95:  rgba(0, 0, 0, 0.95);
+  --alpha-black-75:  rgba(0, 0, 0, 0.75);
+  --alpha-black-70:  rgba(0, 0, 0, 0.7);
+  --alpha-black-60:  rgba(0, 0, 0, 0.6);
+  --alpha-black-55:  rgba(0, 0, 0, 0.55);
+  --alpha-black-50:  rgba(0, 0, 0, 0.5);
+  --alpha-black-45:  rgba(0, 0, 0, 0.45);
+  --alpha-black-40:  rgba(0, 0, 0, 0.4);
+  --alpha-black-35:  rgba(0, 0, 0, 0.35);
+  --alpha-black-30:  rgba(0, 0, 0, 0.3);
+  --alpha-black-25:  rgba(0, 0, 0, 0.25);
+  --alpha-black-20:  rgba(0, 0, 0, 0.2);
 
-  --btn-primary-bg:       var(--color-pink);
-  --btn-primary-text:     var(--color-white);
-  --btn-primary-hover:    #c8404f;
-  --btn-outline-border:   var(--color-cream-light);
-  --btn-outline-text:     var(--color-cream-light);
+  --alpha-white-90:  rgba(255, 255, 255, 0.9);
+  --alpha-white-85:  rgba(255, 255, 255, 0.85);
+  --alpha-white-70:  rgba(255, 255, 255, 0.7);
+  --alpha-white-60:  rgba(255, 255, 255, 0.6);
+  --alpha-white-55:  rgba(255, 255, 255, 0.55);
+  --alpha-white-50:  rgba(255, 255, 255, 0.5);
+  --alpha-white-35:  rgba(255, 255, 255, 0.35);
+  --alpha-white-30:  rgba(255, 255, 255, 0.3);
+  --alpha-white-20:  rgba(255, 255, 255, 0.2);
+  --alpha-white-15:  rgba(255, 255, 255, 0.15);
+  --alpha-white-10:  rgba(255, 255, 255, 0.1);
+  --alpha-white-05:  rgba(255, 255, 255, 0.05);
 
-  --border-card:          3px solid #ffffff;
-  --border-card-dark:     3px solid rgba(26,26,26,.9);
+  --alpha-pink-95:   rgba(225, 84, 99, 0.95);
+  --alpha-pink-70:   rgba(225, 84, 99, 0.7);
+  --alpha-pink-60:   rgba(225, 84, 99, 0.6);
+  --alpha-pink-55:   rgba(225, 84, 99, 0.55);
+  --alpha-pink-50:   rgba(225, 84, 99, 0.5);
+  --alpha-pink-45:   rgba(225, 84, 99, 0.45);
+  --alpha-pink-40:   rgba(225, 84, 99, 0.4);
+  --alpha-pink-35:   rgba(225, 84, 99, 0.35);
+  --alpha-pink-30:   rgba(225, 84, 99, 0.3);
+  --alpha-pink-20:   rgba(225, 84, 99, 0.2);
+  --alpha-pink-15:   rgba(225, 84, 99, 0.15);
+  --alpha-pink-10:   rgba(225, 84, 99, 0.1);
+  --alpha-pink-05:   rgba(225, 84, 99, 0.05);
 
-  /* role-based font tokens */
+  --alpha-purple-55: rgba(45, 42, 142, 0.55);
+  --alpha-purple-20: rgba(45, 42, 142, 0.2);
+  --alpha-purple-15: rgba(45, 42, 142, 0.15);
+  --alpha-purple-10: rgba(45, 42, 142, 0.1);
+
+  /* navy = #0a1232 (frosted nav glass, poster vignette tops) */
+  --alpha-navy-80:   rgba(10, 18, 50, 0.8);
+  --alpha-navy-70:   rgba(10, 18, 50, 0.7);
+  --alpha-navy-50:   rgba(10, 18, 50, 0.5);
+  --alpha-navy-35:   rgba(10, 18, 50, 0.35);
+
+  --alpha-gold-80:   rgba(245, 200, 66, 0.8);
+  --alpha-gold-60:   rgba(245, 200, 66, 0.6);
+  --alpha-gold-55:   rgba(245, 200, 66, 0.55);
+  --alpha-gold-40:   rgba(245, 200, 66, 0.4);
+  --alpha-gold-20:   rgba(245, 200, 66, 0.2);
+  --alpha-gold-15:   rgba(245, 200, 66, 0.15);
+  --alpha-gold-10:   rgba(245, 200, 66, 0.1);
+
+  --alpha-success-60: rgba(127, 214, 116, 0.6);
+  --alpha-success-20: rgba(127, 214, 116, 0.2);
+  --alpha-success-10: rgba(127, 214, 116, 0.1);
+  --alpha-success-fill-35: rgba(74, 138, 94, 0.35);
+
+
+  /* ink = --color-black at alpha, for text/rules on the cream ticket */
+  --alpha-ink-80:    rgba(26, 26, 26, 0.8);
+  --alpha-ink-70:    rgba(26, 26, 26, 0.7);
+  --alpha-ink-45:    rgba(26, 26, 26, 0.45);
+  --alpha-ink-35:    rgba(26, 26, 26, 0.35);
+  --alpha-ink-30:    rgba(26, 26, 26, 0.3);
+  --alpha-ink-25:    rgba(26, 26, 26, 0.25);
+  --alpha-ink-05:    rgba(26, 26, 26, 0.05);
+
+  /* silver = #d2d2d7, bronze = #cd7f32 (2nd / 3rd place) */
+  --alpha-silver-85: rgba(210, 210, 215, 0.85);
+  --alpha-silver-70: rgba(210, 210, 215, 0.7);
+  --alpha-silver-10: rgba(210, 210, 215, 0.1);
+  --alpha-bronze-95: rgba(205, 127, 50, 0.95);
+  --alpha-bronze-75: rgba(205, 127, 50, 0.75);
+  --alpha-bronze-10: rgba(205, 127, 50, 0.1);
+
   /* Headings sit one step whiter than body cream — the manual's #fff4e1. */
   --color-heading:        var(--color-cream-lighter);
 
@@ -179,62 +242,68 @@
      Ringold ships in five cuts per the manual — Sans, Clarendon, Gym, Slab,
      Soft. Only Gym and Sans have font files here, so the others fall back to
      Gym until their .ttf lands. 'Helvetica World' likewise falls back to the
-     plain Helvetica files that are present. */
-  --font-display:         'Ringold Gym', sans-serif;          /* velké nadpisy */
-  --font-event-name:      'Ringold Gym', sans-serif;          /* Název akce */
-  --font-leaderboard:     'Ringold Gym', sans-serif;          /* Top 10 leaderboard */
-  --font-sans:            'Ringold Sans', 'Ringold Gym', sans-serif;
-  --font-nav:             'IBM Plex Mono', ui-monospace, monospace; /* navigation bar */
+     plain Helvetica files that are present.
+
+     Three roles, three tokens. Display = big headings, event names, the
+     leaderboard. Mono = navigation and every label / eyebrow / pill. Body =
+     running text and buttons. */
+  --font-display:         'Ringold Gym', sans-serif;
   --font-mono:            'IBM Plex Mono', ui-monospace, monospace;
   --font-body:            'Helvetica World', 'Helvetica', Arial, sans-serif;
-  --font-hv:              var(--font-body);                   /* alias, kept for existing call sites */
-  --font-hv-world:        var(--font-body);                   /* alias */
 
-  --text-xs:    0.75rem;
-  --text-sm:    0.875rem;
-  --text-base:  1rem;
-  --text-lg:    1.125rem;
-  --text-xl:    1.25rem;
-  --text-2xl:   1.5rem;
-  --text-3xl:   2rem;
-  --text-4xl:   3rem;
-  --text-5xl:   4.5rem;
-  --text-hero:  7rem;
+  /* ── Type scale ──
+     Small sizes: eight steps, nothing in between. Fractional sizes round up.
+     Display: three clamps. Figures (ranks, points, year marks) are not on the
+     scale and stay literal. */
+  --text-micro:     10px;   /* stamps, counts, tiny pills */
+  --text-label:     11px;   /* section eyebrows, field labels, crumbs */
+  --text-meta:      12px;   /* dates, hints, meta rows, form buttons */
+  --text-label-lg:  13px;   /* group labels, filter chips, nav avatar */
+  --text-body-sm:   14px;   /* taglines, hero eyebrows, empty states, big buttons */
+  --text-body:      15px;   /* running text, inputs, toasts */
+  --text-body-lg:   16px;   /* nav items, auth inputs (16 = no iOS zoom) */
+  --text-lead:      18px;   /* intros, list headers */
 
-  --leading-tight:  1.1;
-  --leading-snug:   1.3;
-  --leading-normal: 1.6;
-  --leading-loose:  1.8;
+  --text-page-title: clamp(60px, 8.4vw, 116px);   /* redefined per breakpoint below */
+  --text-section:    clamp(38px, 4.4vw, 54px);
+  --text-card-title: clamp(26px, 3vw, 36px);
 
-  --tracking-wide:    0.08em;
-  --tracking-wider:   0.14em;
-  --tracking-widest:  0.22em;
-
-  --weight-regular: 400;
-  --weight-medium:  500;
-  --weight-bold:    700;
-  --weight-black:   900;
-
-  --space-1:   0.25rem;
-  --space-2:   0.5rem;
-  --space-3:   0.75rem;
-  --space-4:   1rem;
-  --space-5:   1.25rem;
   --space-6:   1.5rem;
   --space-8:   2rem;
-  --space-10:  2.5rem;
-  --space-12:  3rem;
-  --space-16:  4rem;
-  --space-20:  5rem;
-  --space-24:  6rem;
 
-  --radius-sm:   6px;
-  --radius-md:   12px;
-  --radius-lg:   20px;
-  --radius-pill: 9999px;
+  /* ── Radii ── */
+  --radius-card:         14px;    /* poster card, floating cards, toasts */
+  --radius-ticket:       16px;    /* ticket frame, outer */
+  --radius-ticket-inner: 11px;    /* ticket panel, inner */
+  --radius-md:           12px;    /* modal, image previews */
+  --radius-input:        10px;
+  --radius-pill:         9999px;
 
-  --shadow-card:  0 4px 24px rgba(0, 0, 0, 0.2);
-  --shadow-btn:   0 2px 12px rgba(225, 84, 99, 0.35);
+  /* ── Focus ── the one keyboard focus ring (global.css applies it). */
+  --focus-ring: 2px solid var(--color-pink);
+
+  /* ── Shadows ── */
+  --shadow-poster:    0 16px 40px var(--alpha-black-50);
+  --shadow-glow-pink: 0 6px 22px var(--alpha-pink-40);
+
+  /* ── Stacking ── every fixed / floating layer picks from this ladder.
+     Local 0–5 stacking inside a component stays literal. */
+  --z-stage:    -2;    /* fixed photo backdrop */
+  --z-grain:    -1;    /* fixed grain overlay */
+  --z-banner:   30;    /* check-in banner */
+  --z-sticky:   50;    /* save bar, profile action bar */
+  --z-nav:      100;
+  --z-nav-menu: 110;   /* user menu, mobile drop — never open together */
+  --z-overlay:  400;   /* lightbox */
+  --z-modal:    500;
+  --z-toast:    600;
+  --z-skip:     700;   /* skip link must beat everything */
+
+  /* ── Motion ── hover / state transitions. Choreographed keyframe
+     animations keep their own timings. */
+  --dur-fast: .15s;
+  --dur-base: .2s;
+  --dur-slow: .3s;
 
   --tex-purple:   url('/img/Grain_texture_purple.webp');
   --tex-brown:    url('/img/Grain_texture_brown.webp');
@@ -252,4 +321,8 @@
   --grain-opacity: 0.15;
 }
 
-h1,h2,h3,h4{font-weight:400}
+/* Page titles are one word in Ringold Gym and cannot wrap, so the scale steps
+   down with the viewport. 13.6vw is the widest that still clears "Leaderboard"
+   (the longest title) inside the 375px content box. */
+@media (max-width:640px){ :root{ --text-page-title: clamp(52px, 13vw, 100px) } }
+@media (max-width:375px){ :root{ --text-page-title: clamp(40px, 13.6vw, 80px) } }

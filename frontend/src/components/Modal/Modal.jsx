@@ -63,8 +63,8 @@ export default function Modal({ open, onClose, children, labelledBy, width }) {
     <div className="modal-overlay" role="dialog" aria-modal="true" aria-labelledby={labelledBy}>
       <div ref={cardRef} tabIndex={-1} className="modal-card" style={width ? { maxWidth: `${width}px` } : undefined}>
         <DashedBorder
-          baseColor="rgba(255,241,212,0.18)"
-          dashColor="rgba(255,241,212,0.85)"
+          baseColor="var(--alpha-cream-20)"
+          dashColor="var(--alpha-cream-85)"
           radius={12}
           width={1.5}
           dash={6}

@@ -14,6 +14,9 @@ import { useBeforeUnload } from '../../hooks/useBeforeUnload';
 import { invalidateQuery } from '../../services/queryCache';
 import { reportError, extractApiError } from '../../services/errors';
 import { initials } from '../../utils/name';
+import PageStage from '../../components/PageStage/PageStage';
+import PageState from '../../components/PageState/PageState';
+import '../../styles/edit-form.css';
 import './EditProfilePage.css';
 
 const BIO_MAX = 220;
@@ -253,16 +256,15 @@ export default function EditProfilePage() {
   }, [btnSaved]);
 
   if (loading) {
-    return <div className="gol-form-page editprofile-page"><div style={{ padding: '2rem', textAlign: 'center' }}>Načítání profilu…</div></div>;
+    return <div className="gol-form-page editprofile-page"><PageState kind="loading" fill text="Načítání profilu…" /></div>;
   }
 
   const fullName = `${form.first_name || ''} ${form.last_name || ''}`.trim();
   const avatarInitials = initials(fullName, 'GO');
 
   return (
-    <div className="gol-form-page editprofile-page">
-      <div className="ep-stage" aria-hidden="true" />
-      <div className="gol-grain" aria-hidden="true" />
+    <div className="gol-form-page editprofile-page has-stage">
+      <PageStage image="gal3" position="center 30%" tint="alive" />
 
       <section className="gol-head">
         <div className="gol-crumb">— <Link to={`/profil/${form.username}`}>Profil</Link> · Upravit —</div>

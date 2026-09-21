@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useRef } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import Nav from './components/Nav/Nav';
 import Footer from './components/Footer/Footer';
+import PageState from './components/PageState/PageState';
 
 // Eager: only the home page. Everything else is split into its own chunk
 // and downloaded on-demand the first time the route is visited.
@@ -57,11 +58,7 @@ function Layout({ children, withChrome = true }) {
 }
 
 function RouteFallback() {
-  return (
-    <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,241,212,.55)', fontFamily: 'var(--font-mono)', fontStyle: 'italic', fontSize: 14, letterSpacing: '.14em' }}>
-      Načítám…
-    </div>
-  );
+  return <PageState kind="loading" fill text="Načítám…" />;
 }
 
 export default function App() {

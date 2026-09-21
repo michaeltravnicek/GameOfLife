@@ -7,7 +7,7 @@
    StatList row (`.stat-list .ev-info .loc`, used by the event-detail attendee
    lists). Renamed, so this can now be an unscoped shared class and reused on
    any page. The StatList `.loc` is a different thing and keeps its name. */
-.gol-pill{display:inline-flex;align-items:center;gap:7px;font-family:var(--font-hv);font-weight:300;font-style:italic;font-size:12.5px;letter-spacing:.04em;padding:7px 14px;min-height:30px;border-radius:9999px;cursor:pointer;background:rgba(26,15,10,.45);border:1.5px dashed var(--alpha-cream-30);color:var(--alpha-cream-80);transition:all .18s;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.gol-pill{display:inline-flex;align-items:center;gap:7px;font-family:var(--font-body);font-weight:300;font-style:italic;font-size:var(--text-label-lg);letter-spacing:.04em;padding:7px 14px;min-height:30px;border-radius:var(--radius-pill);cursor:pointer;background:var(--alpha-dark-45);border:1.5px dashed var(--alpha-cream-30);color:var(--alpha-cream-80);transition:all var(--dur-base);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
 .gol-pill:hover{color:var(--color-white);border-color:var(--alpha-cream-55)}
 /* a11y: the pill renders 30px tall by design, which is under the 44px minimum
    touch target. Expand the *hit* area with a centred overlay instead of growing
@@ -23,12 +23,12 @@
    Two roles, site-wide. Everything else was a near-copy under a different name
    (.page-eyebrow, .sec-hdr-eyebrow, .about-eyebrow, per-page .sec-eyebrow …).
 
-   gol-eyebrow      page/hero level — 13px, wide tracking, flanked by ✦
+   gol-eyebrow      page/hero level — 18px, wide tracking, flanked by ✦
    gol-sec-eyebrow  section level   — 11px, sits above a section heading
    Pages add only their own delta (layout, a different colour on a photo). */
-.gol-eyebrow{font-family:var(--font-mono);font-style:italic;font-size:13px;letter-spacing:.3em;text-transform:uppercase;color:var(--color-pink);margin-bottom:8px;display:inline-flex;align-items:center;gap:10px}
-.gol-eyebrow::before,.gol-eyebrow::after{content:'✦';font-size:11px;opacity:.9}
-.gol-sec-eyebrow{font-family:var(--font-mono);font-style:italic;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--color-pink);margin-bottom:8px;display:flex;align-items:center;gap:10px}
+.gol-eyebrow{font-family:var(--font-mono);font-style:italic;font-size:var(--text-lead);letter-spacing:.28em;text-transform:uppercase;color:var(--color-pink);margin-bottom:8px;display:inline-flex;align-items:center;gap:10px}
+.gol-eyebrow::before,.gol-eyebrow::after{content:'✦';font-size:var(--text-label-lg);opacity:.9}
+.gol-sec-eyebrow{font-family:var(--font-mono);font-style:italic;font-size:var(--text-label);letter-spacing:.22em;text-transform:uppercase;color:var(--color-pink);margin-bottom:8px;display:flex;align-items:center;gap:10px}
 
 /* ── Dark page shell — the base every dark reading page shares ──
    (event detail, o-bodech, historie). Pages keep their own class alongside for
@@ -75,9 +75,9 @@
 .gol-credits::before{content:'';position:absolute;left:50%;transform:translateX(-50%);top:0;width:min(820px,calc(100% - 48px));height:1px;background:repeating-linear-gradient(90deg,var(--alpha-cream-45) 0 6px,transparent 6px 12px)}
 .gol-credit{flex:1;max-width:280px;min-width:0;padding:0 18px;text-align:center;color:var(--color-cream-light)}
 .gol-credit + .gol-credit{border-left:1px solid var(--alpha-cream-20)}
-.gol-credit-label{font-family:var(--font-mono);font-style:italic;font-size:10.5px;letter-spacing:.28em;text-transform:uppercase;color:var(--color-pink);margin-bottom:10px}
+.gol-credit-label{font-family:var(--font-mono);font-style:italic;font-size:var(--text-label);letter-spacing:.28em;text-transform:uppercase;color:var(--color-pink);margin-bottom:10px}
 .gol-credit-value{font-family:var(--font-display);font-size:clamp(38px,5vw,64px);letter-spacing:.04em;line-height:.95;color:var(--color-white);text-shadow:0 4px 28px var(--alpha-black-60)}
-.gol-credit-sub{font-family:var(--font-body);font-style:italic;font-size:13px;color:var(--alpha-cream-80);margin-top:8px;text-shadow:0 2px 10px var(--alpha-black-60);line-height:1.4}
+.gol-credit-sub{font-family:var(--font-body);font-style:italic;font-size:var(--text-label-lg);color:var(--alpha-cream-80);margin-top:8px;text-shadow:0 2px 10px var(--alpha-black-60);line-height:1.4}
 
 /* Narrow screens. The strip had no responsive rules at all, so a 3-up strip on
    a 360px phone gave each column ~110px while the value stayed at its 38px
@@ -86,7 +86,7 @@
    give first (the figure is the point of the strip), so shrink those hardest
    and the value only as far as it takes to fit. A 4-up strip cannot fit at all
    at this width and wraps instead — see the historie page. */
-@media (max-width:600px){
+@media (max-width:640px){
   /* flex-end bottom-aligns the columns, which is fine while the sub lines all
      wrap to the same height and ragged once they don't — on a phone the profile
      strip's "0 měst · sezóna ukončena" ran to two lines while "zatím bez bodů"
@@ -95,11 +95,78 @@
      figures follow. */
   .gol-credits{padding:26px 10px 44px;align-items:flex-start}
   .gol-credit{padding:0 7px;max-width:none}
-  .gol-credit-label{font-size:9.5px;letter-spacing:.14em;margin-bottom:7px}
+  .gol-credit-label{font-size:var(--text-micro);letter-spacing:.14em;margin-bottom:7px}
   .gol-credit-value{font-size:clamp(24px,7.4vw,38px)}
-  .gol-credit-sub{font-size:11.5px;margin-top:6px}
+  .gol-credit-sub{font-size:var(--text-meta);margin-top:6px}
 }
 
-/* ── Admin action button (Events list + Event detail) ── */
-.events-page .admin-btn,.event-detail-page .admin-btn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:var(--radius-pill);border:1px solid var(--alpha-gold-40);color:var(--color-gold);background:var(--alpha-gold-15);text-decoration:none;font-family:var(--font-mono);font-size:var(--text-sm);letter-spacing:.03em;transition:background .15s}
+/* ── Admin action button (Events list + Event detail) ──
+   Kept as an alias of <Button variant="admin"> (Button.css) until the last
+   caller is migrated. */
+.events-page .admin-btn,.event-detail-page .admin-btn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:var(--radius-pill);border:1px solid var(--alpha-gold-40);color:var(--color-gold);background:var(--alpha-gold-15);text-decoration:none;font-family:var(--font-mono);font-size:var(--text-body-sm);letter-spacing:.03em;transition:background var(--dur-fast)}
 .events-page .admin-btn:hover,.event-detail-page .admin-btn:hover{background:var(--alpha-gold-40)}
+
+
+/* ══ Poster card ════════════════════════════════════════════════════════════
+   The homepage lb-card material: opaque dark brown + blue grain, solid black
+   border with a fat bottom edge, one shadow. The card for PHOTO pages (the
+   ticket skin, see StatList/TicketFrame, is the card for TEXTURE pages).
+   Was declared nine times over — home, historie ×2, privacy, o bodech,
+   leaderboard, auth, StatList and the edit forms — with the radius and the
+   shadow drifting on each copy. */
+.gol-card{position:relative;background:var(--color-dark-brown) var(--tex-blue) 0 0/var(--tex-size) var(--tex-size) repeat;border:2px solid var(--color-black);border-bottom:8px solid var(--color-black);border-radius:var(--radius-card);padding:26px;overflow:hidden;box-shadow:var(--shadow-poster)}
+.gol-card--flush{padding:0}                                   /* list containers */
+.gol-card--lift{transition:transform var(--dur-slow),border-color var(--dur-slow)}
+.gol-card--lift:hover{transform:translateY(-3px);border-color:var(--color-pink)}
+.gol-card--danger,.gol-danger-card{border-color:var(--alpha-pink-45)}
+
+/* ── Pull quote ── italic lead paragraph with a dashed pink edge and a big
+   opening quote mark. Was .about-quote (profile) and .intro-quote (o bodech). */
+.gol-quote{font-family:var(--font-body);font-style:italic;font-size:clamp(20px,2.2vw,26px);line-height:1.5;color:var(--alpha-cream-95);max-width:62ch;position:relative;padding-left:24px;border-left:2px dashed var(--alpha-pink-45)}
+.gol-quote::before{content:'"';position:absolute;left:-2px;top:-22px;font-family:var(--font-display);font-size:80px;line-height:1;color:var(--alpha-pink-35)}
+.gol-quote--on-photo{text-shadow:0 2px 10px var(--alpha-black-55)}
+.gol-quote--lead{margin-bottom:28px}
+
+/* ── CTA footer ── centred label + row of buttons that closes a reading page.
+   Was .cta-foot on both historie and o bodech. */
+.gol-cta-foot{position:relative;z-index:2;max-width:780px;margin:40px auto 0;padding:0 24px 80px;text-align:center}
+.gol-cta-foot-label{font-family:var(--font-mono);font-style:italic;font-size:var(--text-label-lg);letter-spacing:.22em;text-transform:uppercase;color:var(--alpha-cream-65);margin-bottom:18px}
+.gol-cta-foot-row{display:inline-flex;gap:12px;flex-wrap:wrap;justify-content:center}
+@media(max-width:640px){
+  .gol-cta-foot{padding:0 16px 60px}
+  /* Keep both buttons on one row, splitting the width evenly. */
+  .gol-cta-foot-row{flex-wrap:nowrap;gap:8px;width:100%}
+  .gol-cta-foot-row .btn{flex:1;min-width:0;padding-left:12px;padding-right:12px;font-size:var(--text-label)}
+}
+
+/* ── Hero divider ── the short dashed rule under a page hero. The mockups had
+   it under every interior hero; PageHero renders it with `divider`. */
+.gol-divider{width:120px;height:1px;margin:18px auto 0;background:repeating-linear-gradient(90deg,var(--alpha-cream-45) 0 6px,transparent 6px 12px)}
+
+/* ── Spinner ── the small ring next to "Načítám…" (PageState). The button's
+   own .btn-spinner stays white-on-pink; this one sits on the dark page. */
+.gol-spinner{width:18px;height:18px;border:2px solid var(--alpha-cream-30);border-top-color:var(--color-pink);border-radius:50%;animation:gol-spin .7s linear infinite;flex-shrink:0}
+@keyframes gol-spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.gol-spinner{animation-duration:1.6s}}
+
+/* ── Stamps ── rotated "rubber stamp" marks. Two kinds:
+   gol-stamp        outlined pink, big display type — the closing stamp on
+                    historie / o bodech ("hist-coda-stamp", "obo-cta-stamp")
+   gol-stamp--gold  solid gold sticker with a dashed dark edge — "first",
+                    "brzy" ("first-stamp", "soon-stamp") */
+.gol-stamp{display:inline-flex;align-items:center;gap:14px;padding:14px 26px;border:2.5px solid var(--color-pink);border-radius:4px;font-family:var(--font-display);font-size:28px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-pink);transform:rotate(-3.5deg);background:var(--alpha-pink-10);box-shadow:inset 0 0 0 1px var(--alpha-pink-20),0 6px 18px var(--alpha-black-35)}
+.gol-stamp-arrow{font-family:var(--font-body);font-style:italic;font-weight:300;font-size:32px;line-height:.8}
+.gol-stamp--gold{display:inline-block;padding:6px 18px 3px;border:2px dashed var(--color-dark-brown);border-radius:6px;font-family:var(--font-display);font-size:var(--text-lead);letter-spacing:.14em;text-transform:uppercase;color:var(--color-dark-brown);background:var(--color-gold);transform:rotate(-3deg);box-shadow:0 6px 18px var(--alpha-black-35)}
+@media(max-width:640px){
+  .gol-stamp{font-size:22px;padding:12px 18px}
+  .gol-stamp--gold{font-size:var(--text-body);padding:5px 14px 2px;letter-spacing:.1em}
+}
+
+/* ── Checkbox ── the one checkbox on the site: a small square with a dashed
+   edge that fills pink when ticked. Was hand-drawn on the login "Zůstat
+   přihlášen" row while the registration consent box fell back to the native
+   OS control. Put `gol-check` on the <input type="checkbox">. */
+.gol-check{appearance:none;-webkit-appearance:none;width:18px;height:18px;flex:0 0 auto;border-radius:4px;border:1.5px dashed var(--alpha-cream-45);background:var(--alpha-white-05);cursor:pointer;position:relative;transition:background var(--dur-base),border-color var(--dur-base)}
+.gol-check:hover{border-color:var(--alpha-cream-80)}
+.gol-check:checked{background:var(--color-pink);border-color:var(--color-pink);border-style:solid}
+.gol-check:checked::after{content:'';position:absolute;left:5px;top:2px;width:5px;height:9px;border:solid var(--color-white);border-width:0 2px 2px 0;transform:rotate(45deg)}

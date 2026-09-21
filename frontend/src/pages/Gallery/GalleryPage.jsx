@@ -10,6 +10,9 @@ import { useAuth } from '../../context/AuthContext';
 import { reportError } from '../../services/errors';
 import { CACHE_TTL, PAGE_SIZE_GALLERY } from '../../constants/config';
 import PageHero from '../../components/PageHero/PageHero';
+import PageStage from '../../components/PageStage/PageStage';
+import PageState from '../../components/PageState/PageState';
+import LoadMore from '../../components/LoadMore/LoadMore';
 import LazyImg from '../../components/LazyImg/LazyImg';
 import Reveal from '../../components/Reveal/Reveal';
 import PillTabs from '../../components/PillTabs/PillTabs';
@@ -17,6 +20,7 @@ import Button from '../../components/Button/Button';
 import Modal from '../../components/Modal/Modal';
 import { fmtDateShort, monthLabel } from '../../utils/date';
 import { pressable } from '../../utils/a11y';
+import '../../styles/edit-form.css';
 import './GalleryPage.css';
 
 // Lightbox loaded only when user opens a fullscreen photo.
@@ -58,7 +62,7 @@ export default function GalleryPage() {
   const [uploadCaption, setUploadCaption] = useState('');
 
   const {
-    items: photos, hasMore, totalCount, loading, loadingMore, loadMore,
+    items: photos, hasMore, totalCount, loading, loadingMore, loadMore, error, retry,
   } = usePaginatedQuery({
     cacheKey: 'gallery:first',
     fetcher: (offset, limit) => fetchGallery({ limit, offset }),
@@ -247,6 +251,13 @@ export default function GalleryPage() {
 
   const n = photos.length;
 
+  // A failed first page must not read as "the gallery is empty".
+  const [retrying, setRetrying] = useState(false);
+  const handleRetry = useCallback(() => {
+    setRetrying(true);
+    Promise.resolve(retry()).catch(() => {}).finally(() => setRetrying(false));
+  }, [retry]);
+
   const openLb = (list, i) => {
     setLbPhotos(list);
     setLbIndex(i);
@@ -255,8 +266,8 @@ export default function GalleryPage() {
   const lbStep = (d) => setLbIndex((i) => (i + d + lbPhotos.length) % lbPhotos.length);
 
   return (
-    <div className="gallery-page">
-      <div className="bg-texture" />
+    <div className="gallery-page has-stage">
+      <PageStage image="gal11" position="center 30%" tint="calm" />
 
       <PageHero
         className="gallery-hero"
@@ -266,22 +277,25 @@ export default function GalleryPage() {
 
       {canUpload && (
         <div className="gal-upload">
-          <button type="button" className="gal-upload-btn" onClick={() => setUploadOpen(true)}>
+          <Button variant="pill" onClick={() => setUploadOpen(true)}>
             + Nahrát fotku do galerie
-          </button>
+          </Button>
         </div>
       )}
 
-      {loading && (
-        <p style={{ textAlign: 'center', padding: '60px 20px', color: 'rgba(255,241,212,.6)' }}>
-          Načítám galerii…
-        </p>
+      {loading && <PageState kind="loading" text="Načítám galerii…" />}
+
+      {!loading && error && n === 0 && (
+        <PageState
+          kind="error"
+          text="Galerii se nepodařilo načíst. Zkontroluj připojení a zkus to znovu."
+          onRetry={handleRetry}
+          busy={retrying}
+        />
       )}
 
-      {!loading && n === 0 && (
-        <p style={{ textAlign: 'center', padding: '60px 20px', color: 'rgba(255,241,212,.6)' }}>
-          V galerii zatím nejsou žádné fotografie.
-        </p>
+      {!loading && !error && n === 0 && (
+        <PageState kind="empty" text="V galerii zatím nejsou žádné fotografie." />
       )}
 
       {n > 0 && (
@@ -332,16 +346,7 @@ export default function GalleryPage() {
           ))}
 
           {hasMore && (
-            <div className="load-more-row">
-              <button
-                type="button"
-                className="gol-tex sf-chip"
-                onClick={loadMore}
-                disabled={loadingMore}
-              >
-                {loadingMore ? 'Načítám…' : `Načíst další (${totalCount - n})`}
-              </button>
-            </div>
+            <LoadMore onClick={loadMore} busy={loadingMore} remaining={totalCount - n} />
           )}
         </div>
       )}
@@ -386,7 +391,7 @@ export default function GalleryPage() {
           <label htmlFor="gal-event-select" className="gal-upload-label">Z jaké akce?</label>
           <select
             id="gal-event-select"
-            className="gal-upload-select"
+            className="gol-input gal-upload-select"
             value={uploadEvent}
             onChange={(e) => setUploadEvent(e.target.value)}
             disabled={uploading}
@@ -405,7 +410,7 @@ export default function GalleryPage() {
           <input
             id="gal-caption"
             type="text"
-            className="gal-upload-input"
+            className="gol-input"
             value={uploadCaption}
             onChange={(e) => setUploadCaption(e.target.value)}
             maxLength={255}

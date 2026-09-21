@@ -1,0 +1,23 @@
+/* Fixed photo backdrop for poster pages — see PageStage.jsx.
+   100lvh so the mobile URL-bar collapse never leaves a seam at the bottom.
+   The photo sits at --z-stage, the grain at --z-grain, both behind the page's
+   normal-flow content; the page root must not paint its own background. */
+.page-stage{position:fixed;inset:0;bottom:auto;height:100vh;height:100lvh;z-index:var(--z-stage);pointer-events:none;background:var(--stage-m) var(--stage-pos)/cover no-repeat;filter:saturate(.75) contrast(1.02);transform:scale(1.05)}
+@media(min-width:769px){.page-stage{background-image:var(--stage-d)}}
+
+/* Tint — the darkening gradient over the photo. Three steps, nothing between.
+   ::before adds a light band (30% at most) along the top for every tint, so the nav
+   and the hero eyebrow never land on a bright sky. */
+.page-stage::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,var(--alpha-dark-30) 0%,var(--alpha-dark-20) 190px,transparent 360px)}
+.page-stage::after{content:'';position:absolute;inset:0}
+.page-stage--alive::after{background:linear-gradient(180deg,var(--alpha-purple-10) 0%,var(--alpha-dark-80) 100%)}
+.page-stage--calm::after{background:radial-gradient(ellipse at 50% 8%,var(--alpha-purple-20) 0%,transparent 30%),linear-gradient(180deg,var(--alpha-purple-15) 0%,var(--alpha-dark-55) 50%,var(--alpha-dark-80) 100%)}
+.page-stage--dim::after{background:radial-gradient(ellipse at 50% 0%,var(--alpha-purple-20) 0%,transparent 38%),linear-gradient(180deg,var(--alpha-dark-55) 0%,var(--alpha-dark-80) 38%,var(--alpha-dark-95) 100%)}
+
+/* Grain overlay. */
+.page-grain{position:fixed;inset:0;bottom:auto;height:100vh;height:100lvh;z-index:var(--z-grain);pointer-events:none;background:var(--tex-brown) 0 0/var(--tex-size) var(--tex-size) repeat;opacity:var(--grain-opacity);mix-blend-mode:overlay}
+.page-grain--blue{background-image:var(--tex-blue)}
+
+/* The page root of a stage page: transparent so the photo shows, and a
+   positioning context for the mobile absolute re-anchor in global.css. */
+.has-stage{position:relative;background:transparent}

@@ -5,6 +5,7 @@ import { extractApiError } from '../../services/errors';
 import { useToast } from '../../components/Toast/ToastProvider';
 import FormInput from '../../components/FormInput/FormInput';
 import Button from '../../components/Button/Button';
+import PageStage from '../../components/PageStage/PageStage';
 import '../Login/AuthPage.css';
 
 const MIN_LEN = 8;
@@ -46,11 +47,11 @@ export default function ResetPasswordPage() {
   };
 
   return (
-    <div className="auth-page auth-poster">
-      <div className="stage" aria-hidden="true" />
+    <div className="auth-page has-stage">
+      <PageStage image="gal12" position="center 30%" tint="alive" />
 
       <section className="auth-container">
-        <div className="auth-card">
+        <div className="gol-card auth-card">
           <img className="auth-badge" src="/img/GOL_C50_transparent.webp" alt="" width="126" height="126" />
           <div className="auth-card-inner">
             <div className="auth-card-tag">Game of Life · Sezóna 2025/26</div>

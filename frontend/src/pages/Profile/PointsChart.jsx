@@ -61,8 +61,8 @@ export default function PointsChart({ stats, today }) {
       <svg ref={svgRef} className="chart-svg" viewBox="0 0 900 280" preserveAspectRatio="none">
         <defs>
           <linearGradient id="chart-grad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="rgba(225,84,99,.35)" />
-            <stop offset="100%" stopColor="rgba(225,84,99,0)" />
+            <stop offset="0%" style={{ stopColor: 'var(--alpha-pink-35)' }} />
+            <stop offset="100%" stopColor="transparent" />
           </linearGradient>
         </defs>
         <g className="chart-grid">

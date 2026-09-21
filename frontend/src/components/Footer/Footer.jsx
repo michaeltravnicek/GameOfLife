@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom';
 import './Footer.css';
 
+const INSTAGRAM_URL = import.meta.env.VITE_INSTAGRAM_URL;
+
 export default function Footer() {
   return (
     <footer>
@@ -11,12 +13,14 @@ export default function Footer() {
           <Link className="ft-link" to="/events">Kalendář</Link>
           <Link className="ft-link" to="/galerie">Galerie</Link>
           <Link className="ft-link" to="/leaderboard">Leaderboard</Link>
-          <a className="ft-link" style={{ marginTop: 14 }} href="#">Instagram</a>
-          <a className="ft-link" href="https://www.facebook.com/profile.php?id=61576755543429&sk=followers&locale=cs_CZ" target="_blank" rel="noopener noreferrer">Facebook</a>
+          {/* Instagram: set VITE_INSTAGRAM_URL in frontend/.env.production once the
+              handle is known; the link stays out until then. */}
+          {INSTAGRAM_URL && <a className="ft-link ft-link--gap" href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer">Instagram</a>}
+          <a className={`ft-link${INSTAGRAM_URL ? '' : ' ft-link--gap'}`} href="https://www.facebook.com/profile.php?id=61576755543429&sk=followers&locale=cs_CZ" target="_blank" rel="noopener noreferrer">Facebook</a>
           <a className="ft-link" href="https://www.tiktok.com/@gameofyolo" target="_blank" rel="noopener noreferrer">TikTok</a>
           {/* Reachable from every page, not just registration — the policy has
               to be findable by someone who never signed up. */}
-          <Link className="ft-link" style={{ marginTop: 14 }} to="/ochrana-osobnich-udaju">Ochrana osobních údajů</Link>
+          <Link className="ft-link ft-link--gap" to="/ochrana-osobnich-udaju">Ochrana osobních údajů</Link>
         </div>
         <div className="ft-right">
           <div className="ft-logo"><img className="ft-logo-img" src="/assets/gameoflive-onrender-com-english-us-by-html-to-design-free-version-0905-gol-logo-bw-1.svg" alt="" aria-hidden="true" /> GAME OF LIFE</div>

@@ -4,6 +4,9 @@ import L from 'leaflet';
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
+// Imported here, not in main.jsx: this component is lazy-loaded, so its
+// stylesheet should arrive with it rather than in every page's first paint.
+import 'leaflet/dist/leaflet.css';
 import './EventLocationMap.css';
 
 delete L.Icon.Default.prototype._getIconUrl;
@@ -87,6 +90,7 @@ export default function EventLocationMap({
           </Marker>
         )}
         {interactive && position && radius > 0 && (
+          // check-css: allow — Leaflet writes raw SVG stroke attributes, so no var()
           <Circle center={position} radius={radius} pathOptions={{ color: '#e15463', weight: 1.5, fillOpacity: 0.08 }} />
         )}
         {interactive && onChange && <ClickHandler onChange={onChange} />}

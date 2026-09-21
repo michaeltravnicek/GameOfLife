@@ -1,7 +1,10 @@
 import { QRCodeSVG } from 'qrcode.react';
 import PageHero from '../../components/PageHero/PageHero';
+import PageStage from '../../components/PageStage/PageStage';
+import Badge from '../../components/Badge/Badge';
 import Reveal from '../../components/Reveal/Reveal';
 import Button from '../../components/Button/Button';
+import { SITE_STATS } from '../../constants/siteStats';
 import './HistoriePage.css';
 
 // Support QR: the whole block only renders when this env var holds a value
@@ -9,10 +12,10 @@ import './HistoriePage.css';
 const SUPPORT_QR = import.meta.env.VITE_SUPPORT_QR;
 
 const credits = [
-  { label: '— Rok 0 —', value: '2025', sub: 'První ročník' },
-  { label: '— Akcí —', value: '70+', sub: 'a počítáme dál' },
-  { label: '— Hráčů —', value: '300+', sub: 'z Brna i odjinud' },
-  { label: '— Bodů —', value: '30K+', sub: 'rozdáno do žebříčku' },
+  { label: '— Rok 0 —', value: SITE_STATS.firstYear, sub: 'První ročník' },
+  { label: '— Akcí —', value: SITE_STATS.events, sub: 'a počítáme dál' },
+  { label: '— Hráčů —', value: SITE_STATS.players, sub: 'z Brna i odjinud' },
+  { label: '— Bodů —', value: SITE_STATS.points, sub: 'rozdáno do žebříčku' },
 ];
 
 const years = [
@@ -88,10 +91,10 @@ const years = [
 
 function PhotoCard({ row }) {
   return (
-    <div className={`card${row.muted ? ' muted' : ''}`}>
+    <div className={`gol-card gol-card--flush gol-card--lift card${row.muted ? ' muted' : ''}`}>
       <div className="card-media" style={{ backgroundImage: `url('${row.img}')` }}>
-        {row.first && <span className="first-stamp">{row.first}</span>}
-        <span className="date-stamp">{row.date}</span>
+        {row.first && <span className="gol-stamp--gold first-stamp">{row.first}</span>}
+        <Badge tone="paper" className="date-stamp">{row.date}</Badge>
         <span className="pts-badge">{row.pts}</span>
         {row.evStamp && <img className="ev-stamp" src={row.evStamp} alt="" />}
       </div>
@@ -111,7 +114,7 @@ function PhotoCard({ row }) {
 
 function NoteCard({ row }) {
   return (
-    <div className="card note">
+    <div className="gol-card gol-card--flush gol-card--lift card note">
       <span className="note-mark">&ldquo;</span>
       <div className="card-body">
         <div className="note-date">{row.noteDate}</div>
@@ -124,9 +127,8 @@ function NoteCard({ row }) {
 
 export default function HistoriePage() {
   return (
-    <div className="gol-page historie-page">
-      <div className="stage" aria-hidden="true" />
-      <div className="gol-page-grain" aria-hidden="true" />
+    <div className="historie-page has-stage">
+      <PageStage image="gal7" position="center 30%" tint="alive" />
 
       <PageHero
         eyebrow="Nostalgické momenty"
@@ -161,21 +163,22 @@ export default function HistoriePage() {
       </main>
 
       <div className="hist-coda">
-        <div className="hist-coda-stamp">
+        <div className="gol-stamp">
           <span>Pokračuje</span>
-          <span className="hist-coda-stamp-arrow">→</span>
+          <span className="gol-stamp-arrow">→</span>
         </div>
       </div>
 
-      <section className="cta-foot">
-        <div className="label">— A teď je řada na tobě —</div>
+      <section className="gol-cta-foot">
+        <div className="gol-cta-foot-label">— A teď je řada na tobě —</div>
         <Button as="link" to="/events" size="lg">Zobrazit nadcházející akce <span className="arr" /></Button>
       </section>
 
       {SUPPORT_QR && (
         <Reveal as="section" className="hist-support" aria-label="Podpoř Game of Life">
-          <div className="hist-support-card">
+          <div className="gol-card hist-support-card">
             <div className="hist-support-qr">
+              {/* check-css: allow — the library writes raw SVG fill attributes, so no var() */}
               <QRCodeSVG value={SUPPORT_QR} size={196} bgColor="#fff1d4" fgColor="#1a0f0a" level="M" marginSize={2} />
             </div>
             <div className="hist-support-body">

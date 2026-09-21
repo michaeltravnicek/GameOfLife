@@ -4,11 +4,14 @@ import './Button.css';
 /**
  * Unified button — renders as <button>, <a>, or <Link> depending on `as`.
  *
- * variant : 'nav' | 'action' | 'ghost' | 'frost'   (default: 'nav')
+ * variant : 'nav' | 'action' | 'ghost' | 'frost' | 'pill' | 'admin'   (default: 'nav')
  *   nav    — home-page 3D filled button, for links that navigate somewhere
  *   action — round filled pill, for performing an action (submit, RSVP, share)
  *   ghost  — round outline, for secondary / back / cancel
  *   frost  — nav's 3D shape with a frosted translucent-black surface (dark CTA)
+ *   pill   — the small dashed frosted chip (filters, load more, retry, upload);
+ *            renders the shared .gol-pill, so `size` does not apply
+ *   admin  — gold dashed chip for admin-only actions (edit, upload, manage)
  * size    : 'sm' | 'md' | 'lg'            (default: 'md')
  * as      : 'button' | 'a' | 'link'       (default: 'button')
  */
@@ -26,12 +29,10 @@ export default function Button({
   type = 'button',
   ...rest
 }) {
-  const classes = [
-    'btn',
-    `btn-${variant}`,
-    `btn-${size}`,
-    className,
-  ].filter(Boolean).join(' ');
+  const classes = (variant === 'pill'
+    ? ['gol-pill', className]
+    : ['btn', `btn-${variant}`, `btn-${size}`, className]
+  ).filter(Boolean).join(' ');
 
   const content = (
     <>

@@ -7,6 +7,7 @@ import Button from '../../components/Button/Button';
 import { extractApiError } from '../../services/errors';
 import GoogleSignInButton from '../../components/GoogleSignInButton/GoogleSignInButton';
 import { safeRedirect } from '../../utils/safeRedirect';
+import PageStage from '../../components/PageStage/PageStage';
 import '../Login/AuthPage.css';
 
 export default function RegisterPage() {
@@ -91,11 +92,11 @@ export default function RegisterPage() {
     // auth-poster — shared look of all auth pages: photo bg + one opaque
     // poster card holding the page name; inputs are mini homepage-event-card
     // tickets (AuthPage.css).
-    <div className="auth-page auth-poster">
-      <div className="stage" aria-hidden="true" />
+    <div className="auth-page has-stage">
+      <PageStage image="gal12" position="center 30%" tint="alive" />
 
       <section className="auth-container">
-        <div className="auth-card wide">
+        <div className="gol-card auth-card">
           <div className="auth-card-inner">
             <div className="auth-card-tag">Game of Life · Sezóna 2025/26</div>
             <h2 className="auth-card-title">Registrace</h2>
@@ -140,6 +141,7 @@ export default function RegisterPage() {
                 <label className="auth-consent-row" htmlFor="reg-gdpr">
                   <input
                     id="reg-gdpr"
+                    className="gol-check"
                     type="checkbox"
                     checked={gdpr}
                     onChange={(e) => setGdpr(e.target.checked)}

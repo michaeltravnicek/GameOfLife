@@ -2,12 +2,15 @@
    animation so every page matches the leaderboard reference. */
 .page-hero{position:relative;z-index:2;max-width:1100px;margin:0 auto;padding:148px 24px 16px;text-align:center}
 
-.page-hero-eyebrow{font-size:20px;letter-spacing:.3em;color:var(--color-pink);margin-bottom:10px;display:inline-flex;align-items:center;gap:10px}
-.page-hero-eyebrow::before,.page-hero-eyebrow::after{content:'✦';font-size:13px;opacity:.9}
+/* Every hero sits on a photo. A bare pink line vanished on a bright one (the
+   leaderboard sky) and a frosted chip out-shouted the title, so: plain text
+   with a tight dark halo, plus the stage darkens its top strip (PageStage.css). */
+.page-hero-eyebrow{font-size:var(--text-lead);letter-spacing:.28em;color:var(--color-pink);margin-bottom:10px;display:inline-flex;align-items:center;gap:10px;text-shadow:0 1px 2px var(--alpha-black-75),0 0 10px var(--alpha-black-70),0 0 22px var(--alpha-black-55)}
+.page-hero-eyebrow::before,.page-hero-eyebrow::after{content:'✦';font-size:var(--text-body-sm);opacity:.9}
 
-.page-hero-title{font-family:var(--font-display);font-weight:400;font-size:clamp(70px,10vw,140px);line-height:.92;color:var(--color-heading);text-transform:uppercase;letter-spacing:.03em;text-shadow:0 6px 34px var(--alpha-black-60)}
+.page-hero-title{font-family:var(--font-display);font-weight:400;font-size:var(--text-page-title);line-height:.92;color:var(--color-heading);text-transform:uppercase;letter-spacing:.03em;text-shadow:0 6px 34px var(--alpha-black-60)}
 
-.page-hero-tagline{font-family:var(--font-body);font-weight:300;font-style:italic;font-size:14px;color:var(--alpha-cream-70);max-width:580px;margin:12px auto 0;line-height:1.5}
+.page-hero-tagline{font-family:var(--font-body);font-weight:300;font-style:italic;font-size:var(--text-body-sm);color:var(--alpha-cream-70);max-width:580px;margin:12px auto 0;line-height:1.5}
 
 
 /* ── Entrance animation (staggered fade-up) ── */
@@ -17,28 +20,17 @@
 .page-hero-tagline{animation:heroFade .6s ease both .34s}
 
 @media(prefers-reduced-motion:reduce){
+  .page-hero-eyebrow,.page-hero-title,.page-hero-tagline{animation:none}
 }
 
 /* ── Responsive (matches leaderboard reference) ── */
 @media(max-width:768px){
   .page-hero{padding:120px 20px 14px}
-  .page-hero-tagline{font-size:13px}
+  .page-hero-tagline{font-size:var(--text-label-lg)}
 }
 @media(max-width:640px){
   .page-hero{padding:104px 16px 12px}
-  .page-hero-title{font-size:clamp(52px,13vw,100px)}
 }
-@media(max-width:560px){
+@media(max-width:640px){
   .page-hero{padding:96px 12px 10px}
-}
-/* 15vw put "Leaderboard" — the longest single-word title, and one that cannot
-   wrap — 16px past the content box between 321px and 375px, so the final D sat
-   under the screen edge. 13.6vw is the widest scale that still clears it there
-   (measured: 333px of text in 351px at 375, 319 in 336 at 360), and it stays
-   below the 52px floor the ≤640 rule hands back at 376. */
-@media(max-width:375px){
-  .page-hero-title{font-size:clamp(40px,13.6vw,80px)}
-}
-@media(max-width:320px){
-  .page-hero-title{font-size:36px}
 }

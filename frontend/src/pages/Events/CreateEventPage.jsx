@@ -5,6 +5,9 @@ import { invalidateQuery } from '../../services/queryCache';
 import { extractApiError, reportError } from '../../services/errors';
 import { useEventForm, buildEventFormData } from './eventForm';
 import EventFormSections from './EventFormSections';
+import PageStage from '../../components/PageStage/PageStage';
+import PageState from '../../components/PageState/PageState';
+import '../../styles/edit-form.css';
 import './EventPage.css';
 
 export default function CreateEventPage() {
@@ -54,13 +57,12 @@ export default function CreateEventPage() {
   };
 
   if (loading) {
-    return <div className="gol-form-page event-page"><div style={{ padding: '2rem', textAlign: 'center' }}>Načítání…</div></div>;
+    return <div className="gol-form-page event-page"><PageState kind="loading" fill text="Načítání…" /></div>;
   }
 
   return (
-    <div className="gol-form-page event-page">
-      <div className="ev-stage" aria-hidden="true" />
-      <div className="gol-grain" aria-hidden="true" />
+    <div className="gol-form-page event-page has-stage">
+      <PageStage image="gal2" position="center 30%" tint="dim" />
 
       <section className="gol-head">
         <div className="gol-crumb">— <Link to="/events">Akce</Link> · Vytvořit —</div>

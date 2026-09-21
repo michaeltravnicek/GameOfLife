@@ -2,6 +2,9 @@ import { useMemo, useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import PillTabs from '../../components/PillTabs/PillTabs';
 import Button from '../../components/Button/Button';
+import Badge from '../../components/Badge/Badge';
+import PageState from '../../components/PageState/PageState';
+import SectionHeader from '../../components/SectionHeader/SectionHeader';
 import { TicketFrame } from '../../components/DashedBorder/DashedBorder';
 import { useSeasonView } from './useSeasonView';
 import { ProfileCredits, EventsSections, PointsSections } from './profileSections';
@@ -11,12 +14,17 @@ import { useAuth } from '../../context/AuthContext';
 import { CACHE_TTL } from '../../constants/config';
 import { shareLink } from '../../utils/shareUrl';
 import { initials } from '../../utils/name';
+import '../../styles/poster-hero.css';
 import './ProfilePage.css';
 
 const TODAY = new Date();
 
 // Users often save handles with the "@" — strip it so we don't render "@@".
 const handle = (h) => (h || '').replace(/^@+/, '');
+// The handle is free text from the profile form. Encoding pins it to one path
+// segment on the social site: "x?next=…" or "../accounts/login" would otherwise
+// turn a profile link into whatever page that site resolves it to.
+const seg = (h) => encodeURIComponent(h);
 
 // Czech count agreement: 1 odznak, 2–4 odznaky, 5+ odznaků.
 const badgeWord = (n) => (n === 1 ? 'odznak' : n >= 2 && n <= 4 ? 'odznaky' : 'odznaků');
@@ -81,14 +89,14 @@ export default function ProfilePage() {
 
   // Bare /profil with no username → send to the logged-in user's own profile.
   if (!username) {
-    if (authLoading) return <div className="profile-page"><div style={{ padding: '2rem', textAlign: 'center' }}>Načítání…</div></div>;
+    if (authLoading) return <div className="profile-page"><PageState kind="loading" fill text="Načítám…" /></div>;
     return <Navigate to={user ? `/profil/${user.username}` : '/prihlasit'} replace />;
   }
-  if (loading) return <div className="profile-page"><div style={{ padding: '2rem', textAlign: 'center' }}>Načítání profilu…</div></div>;
-  if (error) return <div className="profile-page"><div style={{ padding: '2rem', textAlign: 'center', color: '#e15463' }}>Chyba: {error}</div></div>;
+  if (loading) return <div className="profile-page"><PageState kind="loading" fill text="Načítám profil…" /></div>;
+  if (error) return <div className="profile-page"><PageState kind="error" fill text={`Profil se nepodařilo načíst: ${error}`} /></div>;
   // `st` is always set once `profile` exists (synthesized when seasonless), so
   // the page renders from profile-level data even for players with no points.
-  if (!profile || !st) return <div className="profile-page"><div style={{ padding: '2rem', textAlign: 'center' }}>Profil nenalezen</div></div>;
+  if (!profile || !st) return <div className="profile-page"><PageState kind="empty" fill text="Profil nenalezen." /></div>;
 
   const avatarInitials = initials(profile.full_name, 'GO');
 
@@ -116,8 +124,8 @@ export default function ProfilePage() {
 
         <div className="poster-top">
           <div className="badges">
-            {st.rank && <span className="ev-pill live">★ #{st.rank} Leaderboard</span>}
-            <span className="ev-pill">Sezóna {st.label}</span>
+            {st.rank && <Badge tone="live">★ #{st.rank} Leaderboard</Badge>}
+            <Badge>Sezóna {st.label}</Badge>
           </div>
           <div className="poster-avatar">
             {profile.photo ? <img src={profile.photo} alt={profile.full_name} /> : avatarInitials}
@@ -136,16 +144,14 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      <div className="body-wrap">
+      <div className="poster-body">
         <main className="profile-main">
           <section className="profile-view" key={view}>
             {view === 'about' && (
               <>
                 <div className="section">
-                  <div className="gol-rule" />
-                  <div className="gol-sec-eyebrow sec-eyebrow"><span>— 01 · O mně —</span><span className="meta">profil &amp; minulost</span></div>
-                  <h2 className="sec-heading">Joy<span className="pink">Maxxer</span></h2>
-                  <p className="about-quote">{profile.bio || 'Bez popisu profilu.'}</p>
+                  <SectionHeader eyebrow="— 01 · O mně —" meta="profil & minulost" heading={<>Joy<span className="pink">Maxxer</span></>} />
+                  <p className="gol-quote">{profile.bio || 'Bez popisu profilu.'}</p>
                   {(profile.city || profile.favourite_categories?.length > 0) && (
                     <div className="about-meta">
                       {profile.city && <span>{profile.city}</span>}
@@ -182,7 +188,7 @@ export default function ProfilePage() {
                       <div className="socials-label">— Najdeš na —</div>
                       <div className="socials-grid">
                         {profile.instagram && (
-                          <a className="social" href={`https://instagram.com/${handle(profile.instagram)}`} target="_blank" rel="noopener noreferrer">
+                          <a className="social" href={`https://instagram.com/${seg(handle(profile.instagram))}`} target="_blank" rel="noopener noreferrer">
                             <TicketFrame />
                             <span className="social-in">
                               <span className="ico">IG</span>
@@ -192,7 +198,7 @@ export default function ProfilePage() {
                           </a>
                         )}
                         {profile.strava && (
-                          <a className="social" href={`https://strava.com/athletes/${profile.strava}`} target="_blank" rel="noopener noreferrer">
+                          <a className="social" href={`https://strava.com/athletes/${seg(profile.strava)}`} target="_blank" rel="noopener noreferrer">
                             <TicketFrame />
                             <span className="social-in">
                               <span className="ico">ST</span>
@@ -202,7 +208,7 @@ export default function ProfilePage() {
                           </a>
                         )}
                         {profile.spotify && (
-                          <a className="social" href={`https://spotify.com/user/${profile.spotify}`} target="_blank" rel="noopener noreferrer">
+                          <a className="social" href={`https://spotify.com/user/${seg(profile.spotify)}`} target="_blank" rel="noopener noreferrer">
                             <TicketFrame />
                             <span className="social-in">
                               <span className="ico">SP</span>
@@ -212,7 +218,7 @@ export default function ProfilePage() {
                           </a>
                         )}
                         {profile.tiktok && (
-                          <a className="social" href={`https://tiktok.com/@${handle(profile.tiktok)}`} target="_blank" rel="noopener noreferrer">
+                          <a className="social" href={`https://tiktok.com/@${seg(handle(profile.tiktok))}`} target="_blank" rel="noopener noreferrer">
                             <TicketFrame />
                             <span className="social-in">
                               <span className="ico">TT</span>
@@ -228,9 +234,7 @@ export default function ProfilePage() {
 
                 {profile.badges?.length > 0 && (
                   <div className="section">
-                    <div className="gol-rule" />
-                    <div className="gol-sec-eyebrow sec-eyebrow"><span>— Sbírka —</span><span className="meta">{profile.badges.length} {badgeWord(profile.badges.length)}</span></div>
-                    <h2 className="sec-heading">Od<span className="pink">znaky</span></h2>
+                    <SectionHeader eyebrow="— Sbírka —" meta={`${profile.badges.length} ${badgeWord(profile.badges.length)}`} heading={<>Od<span className="pink">znaky</span></>} />
                     <div className="badge-grid">
                       {profile.badges.map((b) => (
                         <div className="badge-item" key={b.id} title={b.description || b.name}>

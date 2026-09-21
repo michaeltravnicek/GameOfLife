@@ -5,6 +5,9 @@ import { useCachedQuery } from '../../services/queryCache';
 import { useAuth } from '../../context/AuthContext';
 import PillTabs from '../../components/PillTabs/PillTabs';
 import StatList from '../../components/StatList/StatList';
+import PageHero from '../../components/PageHero/PageHero';
+import PageStage from '../../components/PageStage/PageStage';
+import PageState from '../../components/PageState/PageState';
 import { fmtDate } from '../../utils/date';
 import './FeedbacksPage.css';
 
@@ -16,7 +19,7 @@ const SOURCE_LABEL = { web: 'web', form: 'formulář' };
 const COLUMNS = [
   {
     key: 'user',
-    className: 'fb-player',
+    className: 'fba-player',
     render: (f) => (
       <span title={`${f.user.attended_events} absolvovaných akcí · zdroj: ${SOURCE_LABEL[f.source] ?? f.source}`}>
         {f.user.name}
@@ -25,10 +28,10 @@ const COLUMNS = [
   },
   {
     key: 'rating',
-    className: 'fb-stars',
+    className: 'fba-stars',
     render: (f) => <span aria-label={`${f.rating} z 10`}>★ {f.rating}/10</span>,
   },
-  { key: 'comment', className: 'fb-comment', render: (f) => f.comment || <span className="fb-muted">—</span> },
+  { key: 'comment', className: 'fba-comment', render: (f) => f.comment || <span className="fba-muted">—</span> },
 ];
 const FB_GRID = 'minmax(110px,1fr) 124px 2fr';
 
@@ -56,7 +59,7 @@ export default function FeedbacksPage() {
   const eventSlug = params.get('event');
   const [season, setSeason] = useState('all'); // 'all' or a season id (string)
 
-  const { data, loading } = useCachedQuery('admin:feedbacks', fetchAdminFeedbacks, {
+  const { data, loading, error, refetch } = useCachedQuery('admin:feedbacks', fetchAdminFeedbacks, {
     enabled: isAdmin,
     ttl: 60 * 1000,
   });
@@ -95,38 +98,40 @@ export default function FeedbacksPage() {
   const eventName = eventSlug ? groups[0]?.event?.name : null;
 
   return (
-    <div className="feedbacks-page">
-      <div className="stage" />
-      <div className="grain" />
+    <div className="feedbacks-page has-stage">
+      <PageStage image="gal2" position="center 28%" tint="calm" grain="blue" />
 
-      <header className="fb-head">
-        <div className="gol-sec-eyebrow fb-eyebrow">— Admin —</div>
-        <h1>Zpětná vazba{eventName ? ` · ${eventName}` : ''}</h1>
-      </header>
+      <PageHero
+        eyebrow="Admin"
+        title="Zpětná vazba"
+        tagline={eventName || undefined}
+      />
 
-      <main className="fb-main">
+      <main className="fba-main">
         {!eventSlug && seasons.length > 0 && (
-          <div className="fb-controls">
+          <div className="fba-controls">
             <PillTabs tabs={seasonTabs} active={season} onChange={setSeason} />
           </div>
         )}
 
         {loading && groups.length === 0 ? (
-          <div className="fb-status">Načítám…</div>
+          <PageState kind="loading" text="Načítám zpětnou vazbu…" />
+        ) : error && groups.length === 0 ? (
+          <PageState kind="error" text="Zpětnou vazbu se nepodařilo načíst. Zkus to znovu." onRetry={refetch} busy={loading} />
         ) : groups.length === 0 ? (
-          <div className="fb-status">Zatím žádná zpětná vazba.</div>
+          <PageState kind="empty" text="Zatím žádná zpětná vazba." />
         ) : (
           groups.map((g) => (
-            <section className="fb-group" key={g.event.slug}>
-              <div className="fb-event-head">
-                <div className="fb-event-id">
-                  <Link to={`/events/${g.event.slug}`} className="fb-event-name">{g.event.name}</Link>
-                  <div className="fb-event-date">{fmtDate(g.event.date) || '—'}</div>
+            <section className="fba-group" key={g.event.slug}>
+              <div className="fba-event-head">
+                <div className="fba-event-id">
+                  <Link to={`/events/${g.event.slug}`} className="fba-event-name">{g.event.name}</Link>
+                  <div className="fba-event-date">{fmtDate(g.event.date) || '—'}</div>
                 </div>
                 {g.avg !== null && (
-                  <div className="fb-avg" title={`Průměr z ${g.items.length} hodnocení`}>
-                    <div className="fb-avg-score"><span className="fb-avg-star">★</span> {fmtAvg(g.avg)}<span className="fb-avg-max">/10</span></div>
-                    <div className="fb-avg-label">průměr · {g.items.length} hodnocení</div>
+                  <div className="fba-avg" title={`Průměr z ${g.items.length} hodnocení`}>
+                    <div className="fba-avg-score"><span className="fba-avg-star">★</span> {fmtAvg(g.avg)}<span className="fba-avg-max">/10</span></div>
+                    <div className="fba-avg-label">průměr · {g.items.length} hodnocení</div>
                   </div>
                 )}
               </div>

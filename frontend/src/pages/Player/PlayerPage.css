@@ -3,17 +3,17 @@
    this file only carries the "profil bez účtu" deviations. */
 
 /* Keep the player page's own backdrop so public players stay visually
-   distinguishable from account profiles (which use gal6). */
-.profile-page.player-anon .poster-img{background:url('/img/gal11-mobile.webp') center 28%/cover no-repeat}
+   distinguishable from account profiles (which use gal14). */
+.profile-page.player-anon .poster-img{background-image:url('/img/gal11-mobile.webp');background-position:center 28%}
 @media(min-width:769px){.profile-page.player-anon .poster-img{background-image:url('/img/gal11-desktop.webp')}}
 
 /* Unclaimed avatar: no pink glow, muted dashed ring — the outline of a
    player who hasn't claimed their spot yet. */
-.profile-page.player-anon .poster-avatar{background:var(--alpha-dark-60);border-color:rgba(255,241,212,.35);color:var(--alpha-cream-70)}
+.profile-page.player-anon .poster-avatar{background:var(--alpha-dark-60);border-color:var(--alpha-cream-35);color:var(--alpha-cream-70)}
 
-.profile-page.player-anon .claim-note{font-family:var(--font-body);font-style:italic;font-size:13px;color:rgba(255,241,212,.6);align-self:center}
+.profile-page.player-anon .claim-note{font-family:var(--font-body);font-style:italic;font-size:var(--text-label-lg);color:var(--alpha-cream-60);align-self:center}
 
-@media(max-width:720px){
+@media(max-width:768px){
   /* ProfilePage.css sets .back-actions to flex-wrap:nowrap at this width so the
      account profile's three buttons sit as equal columns. This page puts a
      full-width note in that same row, and nowrap left the note holding the
@@ -26,8 +26,4 @@
 /* Shown when the player hid both their points and their event list, so there is
    no tab left to select. Deliberately quiet: it is a statement of their choice,
    not an error. */
-.profile-page .profile-hidden-note{
-  margin:var(--space-8,3rem) auto;max-width:38ch;text-align:center;
-  font-family:var(--font-mono,monospace);font-size:.82rem;letter-spacing:.04em;
-  opacity:.62;
-}
+.profile-page .profile-hidden-note{margin:var(--space-8) auto;max-width:38ch;text-align:center;font-family:var(--font-mono);font-style:italic;font-size:var(--text-label-lg);letter-spacing:.04em;color:var(--alpha-cream-60)}

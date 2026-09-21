@@ -1,0 +1,2 @@
+.load-more{position:relative;z-index:2;display:flex;justify-content:center;margin-top:32px}
+.load-more .gol-pill[disabled]{opacity:.55;cursor:not-allowed}

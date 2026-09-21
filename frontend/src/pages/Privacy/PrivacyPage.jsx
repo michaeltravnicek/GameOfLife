@@ -1,4 +1,6 @@
-import { Link } from 'react-router-dom';
+import Button from '../../components/Button/Button';
+import PageHero from '../../components/PageHero/PageHero';
+import PageStage from '../../components/PageStage/PageStage';
 import './PrivacyPage.css';
 
 // Keep in sync with PRIVACY_POLICY_VERSION in djangotutorial/mysite/settings.py.
@@ -8,18 +10,17 @@ export const POLICY_VERSION = '2026-07-22';
 
 export default function PrivacyPage() {
   return (
-    <div className="privacy-page">
-      <div className="privacy-stage" aria-hidden="true" />
-      <section className="privacy-container">
-        <header className="privacy-head">
-          <div className="privacy-tag">Game of Life</div>
-          <h1 className="privacy-title">Zásady ochrany osobních údajů</h1>
-          <p className="privacy-meta">
-            Verze {POLICY_VERSION} · účinné od 22. 7. 2026
-          </p>
-        </header>
+    <div className="privacy-page has-stage">
+      <PageStage image="gal12" position="center 30%" tint="calm" />
 
-        <div className="privacy-body">
+      <PageHero
+        eyebrow="Zásady · Game of Life"
+        title={<>Ochrana<br />osobních údajů</>}
+        tagline={`Verze ${POLICY_VERSION} · účinné od 22. 7. 2026`}
+      />
+
+      <section className="privacy-container">
+        <div className="gol-card privacy-body">
           <div className="privacy-todo">
             <strong>Než tohle zveřejníš:</strong> doplň údaje označené
             <code> [DOPLNIT] </code> a nech text zkontrolovat někým, kdo dělá do
@@ -196,7 +197,7 @@ export default function PrivacyPage() {
         </div>
 
         <div className="privacy-foot">
-          <Link className="privacy-back" to="/registrace">← Zpět na registraci</Link>
+          <Button as="link" to="/registrace" variant="frost">← Zpět na registraci</Button>
         </div>
       </section>
     </div>

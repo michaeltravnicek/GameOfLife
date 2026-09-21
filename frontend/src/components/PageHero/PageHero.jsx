@@ -9,12 +9,14 @@ import './PageHero.css';
  * eyebrow  : node   — small label above the heading (gets ✦ flourishes)
  * title    : node   — main heading (string, or JSX for line breaks)
  * tagline  : node   — optional supporting sentence below the heading
+ * divider  : bool   — short dashed rule under the hero (default: true)
  * className: string — extra class on the <header> for page-specific tweaks
  */
 export default function PageHero({
   eyebrow,
   title,
   tagline,
+  divider = true,
   className = '',
 }) {
   return (
@@ -22,6 +24,7 @@ export default function PageHero({
       {eyebrow && <div className="u-label page-hero-eyebrow">{eyebrow}</div>}
       {title && <h1 className="page-hero-title">{title}</h1>}
       {tagline && <p className="page-hero-tagline">{tagline}</p>}
+      {divider && <div className="gol-divider page-hero-divider" aria-hidden="true" />}
     </header>
   );
 }

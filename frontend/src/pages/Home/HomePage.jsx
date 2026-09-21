@@ -9,8 +9,10 @@ import Hero from '../../components/Hero/Hero';
 import CheckinBanner from '../../components/CheckinBanner/CheckinBanner';
 import Button from '../../components/Button/Button';
 import PlayerRow from '../../components/PlayerRow/PlayerRow';
+import PageState from '../../components/PageState/PageState';
 import { useReveal } from '../../hooks/useReveal';
 import { galVariant } from '../../utils/img';
+import { SITE_STATS } from '../../constants/siteStats';
 import './HomePage.css';
 
 const FALLBACK_GAL = ['gal0', 'gal1', 'gal2', 'gal3'].map(galVariant);
@@ -25,12 +27,12 @@ export default function HomePage() {
   // useCachedQuery fires its own request), so there's no waterfall.
   const { data: hero } = useCachedQuery('hero', fetchHero, { ttl: CACHE_TTL.HOME });
   const { data: checkin } = useCachedQuery('checkin-events', fetchCheckinEvents, { ttl: CACHE_TTL.EVENT_DETAIL });
-  const { data: upcomingData } = useCachedQuery(
+  const { data: upcomingData, error: upcomingError, loading: upcomingLoading, refetch: refetchUpcoming } = useCachedQuery(
     'events:upcoming|Vše|',
     () => fetchEvents({ limit: PAGE_SIZE_EVENTS, offset: 0, period: 'upcoming' }),
     { ttl: CACHE_TTL.EVENTS },
   );
-  const { data: lbData } = useCachedQuery(
+  const { data: lbData, error: lbError, loading: lbLoading, refetch: refetchLb } = useCachedQuery(
     'leaderboard:home',
     () => fetchLeaderboard('active', { limit: HOME_TOP_PLAYERS }),
     { ttl: CACHE_TTL.LEADERBOARD },
@@ -129,8 +131,10 @@ export default function HomePage() {
       <section className="events-section">
         <h2 ref={evTitleRef} className={`sec-title reveal${evTitleIn ? ' in' : ''}`}><span className="star sparkle">✨</span> Nadcházející akce <span className="star sparkle">✨</span></h2>
         <div ref={evGridRef} className={`events-grid reveal-stagger${evGridIn ? ' in' : ''}`}>
-          {upcomingEvents.length === 0 && (
-            <p className="events-empty">Žádné nadcházející akce. Sleduj nás na sítích!</p>
+          {/* A failed fetch must not read as "nothing is planned". */}
+          {upcomingEvents.length === 0 && (upcomingError && !upcomingData
+            ? <PageState className="events-state" kind="error" compact text="Akce se nepodařilo načíst." onRetry={refetchUpcoming} busy={upcomingLoading} />
+            : !upcomingLoading && <PageState className="events-state" kind="empty" compact text="Žádné nadcházející akce. Sleduj nás na sítích!" />
           )}
           {upcomingEvents.map((e) => (
             <EventCard key={e.id} event={e} />
@@ -144,11 +148,15 @@ export default function HomePage() {
         <div className="lb-tint" />
         <div className="lb-inner">
           <h2 ref={lbTitleRef} className={`lb-title reveal${lbTitleIn ? ' in' : ''}`}><span className="lb-trophy">🏆</span> Top 10 hráčů <span className="lb-trophy">🏆</span></h2>
-          <div ref={lbCardRef} className={`lb-card reveal-stagger${lbCardIn ? ' in' : ''}`}>
+          <div ref={lbCardRef} className={`gol-card gol-card--flush lb-card reveal-stagger${lbCardIn ? ' in' : ''}`}>
             <div className="lb-head"><div>#</div><div>hráč</div><div className="lb-head-pts">pts</div></div>
             {topPlayers.map((p) => (
               <PlayerRow key={p.id} player={p} />
             ))}
+            {topPlayers.length === 0 && (lbError && !lbData
+              ? <PageState kind="error" compact text="Žebříček se nepodařilo načíst." onRetry={refetchLb} busy={lbLoading} />
+              : !lbLoading && <PageState kind="empty" compact text="Sezóna teprve začíná — zatím nikdo nebodoval." />
+            )}
           </div>
         </div>
       </section>
@@ -175,9 +183,9 @@ export default function HomePage() {
               vzpomínky a odvahu vyzkoušet něco nového.
             </p>
             <div className="stats-row">
-              <div className="stat-item"><div className="stat-num">300+</div><div className="stat-label">Hráčů</div></div>
-              <div className="stat-item"><div className="stat-num">70+</div><div className="stat-label">Eventů</div></div>
-              <div className="stat-item"><div className="stat-num">40000+</div><div className="stat-label">Bodů</div></div>
+              <div className="stat-item"><div className="stat-num">{SITE_STATS.players}</div><div className="stat-label">Hráčů</div></div>
+              <div className="stat-item"><div className="stat-num">{SITE_STATS.events}</div><div className="stat-label">Eventů</div></div>
+              <div className="stat-item"><div className="stat-num">{SITE_STATS.points}</div><div className="stat-label">Bodů</div></div>
             </div>
           </div>
         </div>

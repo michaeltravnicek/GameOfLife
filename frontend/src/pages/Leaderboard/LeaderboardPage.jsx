@@ -7,6 +7,10 @@ import PillTabs from '../../components/PillTabs/PillTabs';
 import SearchInput from '../../components/SearchInput/SearchInput';
 import Avatar from '../../components/Avatar/Avatar';
 import PageHero from '../../components/PageHero/PageHero';
+import PageStage from '../../components/PageStage/PageStage';
+import PageState from '../../components/PageState/PageState';
+import LoadMore from '../../components/LoadMore/LoadMore';
+import Button from '../../components/Button/Button';
 import PlayerRow, { playerLink } from '../../components/PlayerRow/PlayerRow';
 import './LeaderboardPage.css';
 
@@ -39,13 +43,15 @@ export default function LeaderboardPage() {
     ? (activeSeason ? String(activeSeason.id) : 'all')
     : seasonId;
 
-  const { data, loading: queryLoading } = useCachedQuery(
+  const { data, loading: queryLoading, error, refetch } = useCachedQuery(
     `leaderboard:${seasonId}`,
     () => fetchLeaderboard(seasonId),
     { ttl: CACHE_TTL.LEADERBOARD },
   );
   const entries = useMemo(() => data?.entries || [], [data]);
   const loading = queryLoading && entries.length === 0;
+  // A failed load must not read as "nobody on the leaderboard".
+  const failed = !loading && !!error && entries.length === 0;
 
   const q = query.trim().toLowerCase();
   const top3 = entries.slice(0, 3);
@@ -65,9 +71,8 @@ export default function LeaderboardPage() {
   }, [entries, q, restVisible]);
 
   return (
-    <div className="leaderboard-page">
-      <div className="stage" />
-      <div className="grain" />
+    <div className="leaderboard-page has-stage">
+      <PageStage image="gal1" position="center 15%" tint="alive" grain="blue" />
 
       <PageHero
         eyebrow={`Ranking · ${data?.season?.name || 'Celkem'}`}
@@ -84,16 +89,24 @@ export default function LeaderboardPage() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Vyhledat hráče…"
+          variant="frost"
           className="lb-search"
         />
-        <Link to="/o-bodech" className="gol-tex lb-help-link">Co jsou body?</Link>
+        <Button as="link" to="/o-bodech" variant="pill" className="lb-help-link">
+          <span className="lb-help-q" aria-hidden="true">?</span>
+          Co jsou body?
+        </Button>
       </section>
 
       <main className="lb-main">
-        {loading && <div className="empty">Načítám…</div>}
+        {loading && <PageState kind="loading" text="Načítám žebříček…" />}
 
-        {!loading && entries.length === 0 && (
-          <div className="empty">Žádní hráči na žebříčku.</div>
+        {failed && (
+          <PageState kind="error" text="Žebříček se nepodařilo načíst. Zkontroluj připojení a zkus to znovu." onRetry={refetch} busy={queryLoading} />
+        )}
+
+        {!loading && !failed && entries.length === 0 && (
+          <PageState kind="empty" text="Žádní hráči na žebříčku." />
         )}
 
         {!loading && top3.length > 0 && (
@@ -128,10 +141,10 @@ export default function LeaderboardPage() {
         {!loading && rest.length > 0 && (
           <>
             <div className="gol-flank list-label">Další hráči</div>
-            <div className="list">
+            <div className="gol-card gol-card--flush list">
               <div className="list-inner">
                 {visibleRest.length === 0 && q ? (
-                  <div className="empty">Nikdo nenalezen.</div>
+                  <PageState kind="empty" compact text="Nikdo nenalezen." />
                 ) : (
                   visibleRest.map((p) => (
                     <PlayerRow key={p.id} player={p} />
@@ -140,15 +153,10 @@ export default function LeaderboardPage() {
               </div>
             </div>
             {remaining > 0 && (
-              <div className="load-more-row">
-                <button
-                  type="button"
-                  className="gol-pill"
-                  onClick={() => setRestCounts((c) => ({ ...c, [seasonId]: restVisible + REST_PAGE_SIZE }))}
-                >
-                  Načíst další ({remaining})
-                </button>
-              </div>
+              <LoadMore
+                remaining={remaining}
+                onClick={() => setRestCounts((c) => ({ ...c, [seasonId]: restVisible + REST_PAGE_SIZE }))}
+              />
             )}
           </>
         )}

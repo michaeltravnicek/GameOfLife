@@ -15,7 +15,9 @@ describe('NotFoundPage', () => {
   it('names itself as a 404 and offers the way back', () => {
     renderAt();
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(/neexistuje/i);
-    expect(screen.getByText('— Stránka nenalezena —')).toBeInTheDocument();
+    // The eyebrow is the shared .gol-eyebrow; its ✦ flourishes are CSS, so
+    // only the label itself is text.
+    expect(screen.getByText('Stránka nenalezena')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /zpět na hlavní stránku/i })).toHaveAttribute('href', '/');
     expect(screen.getByRole('link', { name: /projít akce/i })).toHaveAttribute('href', '/events');
   });

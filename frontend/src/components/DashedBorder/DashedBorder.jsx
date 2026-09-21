@@ -14,8 +14,8 @@ import './DashedBorder.css';
  * dash / gap : dash and gap lengths in px
  */
 export default function DashedBorder({
-  baseColor = '#e8e8e8',
-  dashColor = '#1d1d1d',
+  baseColor = 'var(--color-cream-light)',
+  dashColor = 'var(--color-black)',
   radius = 14,
   width = 2,
   dash = 5,
@@ -35,7 +35,7 @@ export default function DashedBorder({
         rx={radius}
         ry={radius}
         fill="none"
-        stroke={baseColor}
+        style={{ stroke: baseColor }}
         strokeWidth={width}
       />
       <rect
@@ -44,7 +44,7 @@ export default function DashedBorder({
         rx={radius}
         ry={radius}
         fill="none"
-        stroke={dashColor}
+        style={{ stroke: dashColor }}
         strokeWidth={width}
         strokeDasharray={dashArray}
         strokeLinecap="round"
@@ -57,5 +57,5 @@ export default function DashedBorder({
    evcard-dark cards, reused by the profile info panels and the auth cards.
    Pair with a dark inner panel floating ~7px inside (radius 11). */
 export const TicketFrame = () => (
-  <DashedBorder baseColor="transparent" dashColor="#fff" radius={16} width={2.5} dash={7} gap={12} />
+  <DashedBorder baseColor="transparent" dashColor="var(--color-white)" radius={16} width={2.5} dash={7} gap={12} />
 );

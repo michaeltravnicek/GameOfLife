@@ -1,6 +1,7 @@
 import TicketList from '../../components/StatList/TicketList';
 import { EVENT_COLUMNS, EVENT_LIST_CLASS } from '../../components/StatList/eventColumns';
 import { TicketFrame } from '../../components/DashedBorder/DashedBorder';
+import SectionHeader from '../../components/SectionHeader/SectionHeader';
 import PointsChart from './PointsChart';
 
 // Shared building blocks for the two profile-style pages (ProfilePage and the
@@ -56,9 +57,7 @@ export function EventsSections({ st, upcoming, past, startNum }) {
     <>
       {upcoming.length > 0 && (
         <div className="section">
-          <div className="gol-rule" />
-          <div className="gol-sec-eyebrow sec-eyebrow"><span>— {pad(startNum)} · Nadcházející —</span><span className="meta">+{st.futurePts} pts na cestě</span></div>
-          <h2 className="sec-heading">Co ho <span className="pink">čeká.</span></h2>
+          <SectionHeader eyebrow={`— ${pad(startNum)} · Nadcházející —`} meta={`+${st.futurePts} pts na cestě`} heading={<>Co ho <span className="pink">čeká.</span></>} />
           <TicketList
             className={EVENT_LIST_CLASS}
             columns={EVENT_COLUMNS}
@@ -71,9 +70,7 @@ export function EventsSections({ st, upcoming, past, startNum }) {
       )}
 
       <div className="section">
-        <div className="gol-rule" />
-        <div className="gol-sec-eyebrow sec-eyebrow"><span>— {pad(startNum + 1)} · Absolvované —</span><span className="meta">+{st.pastPts} pts zatím</span></div>
-        <h2 className="sec-heading">Co má <span className="pink">za sebou.</span></h2>
+        <SectionHeader eyebrow={`— ${pad(startNum + 1)} · Absolvované —`} meta={`+${st.pastPts} pts zatím`} heading={<>Co má <span className="pink">za sebou.</span></>} />
         <TicketList
           className={EVENT_LIST_CLASS}
           columns={EVENT_COLUMNS}
@@ -93,9 +90,7 @@ export function PointsSections({ st, cats, today, startNum }) {
   return (
     <>
       <div className="section">
-        <div className="gol-rule" />
-        <div className="gol-sec-eyebrow sec-eyebrow"><span>— {pad(startNum)} · Body v čase —</span><span className="meta">křivka sezóny</span></div>
-        <h2 className="sec-heading">Křivka <span className="pink">sezóny.</span></h2>
+        <SectionHeader eyebrow={`— ${pad(startNum)} · Body v čase —`} meta="křivka sezóny" heading={<>Křivka <span className="pink">sezóny.</span></>} />
 
         <div className="chart-card">
           <TicketFrame />
@@ -108,7 +103,7 @@ export function PointsSections({ st, cats, today, startNum }) {
               <div className="legend">
                 <span><i />Absolvováno</span>
                 <span><i className="dashed" />Nadcházející</span>
-                <span style={{ color: '#f5c842' }}><i style={{ background: '#f5c842' }} />Dnes</span>
+                <span className="today"><i />Dnes</span>
               </div>
             </div>
             <PointsChart stats={st} today={today} />
@@ -118,9 +113,7 @@ export function PointsSections({ st, cats, today, startNum }) {
 
       {cats.sorted.length > 0 && (
         <div className="section">
-          <div className="gol-rule" />
-          <div className="gol-sec-eyebrow sec-eyebrow"><span>— {pad(startNum + 1)} · Kategorie —</span><span className="meta">{cats.sorted.length} kategorií</span></div>
-          <h2 className="sec-heading">V čem <span className="pink">jede.</span></h2>
+          <SectionHeader eyebrow={`— ${pad(startNum + 1)} · Kategorie —`} meta={`${cats.sorted.length} kategorií`} heading={<>V čem <span className="pink">jede.</span></>} />
           <div className="cat-list">
             {cats.sorted.map(([cat, b]) => (
               <div className="cat-row" key={cat}>

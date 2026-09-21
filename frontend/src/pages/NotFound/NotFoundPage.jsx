@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import Button from '../../components/Button/Button';
+import PageStage from '../../components/PageStage/PageStage';
 import { pickQuip } from './quips';
 import './NotFoundPage.css';
 
@@ -17,14 +18,13 @@ export default function NotFoundPage() {
   const [quip] = useState(pickQuip);
 
   return (
-    <div className="notfound-page">
-      <div className="nf-stage" aria-hidden="true" />
-      <div className="gol-page-grain" aria-hidden="true" />
+    <div className="notfound-page has-stage">
+      <PageStage image="gal6" position="center 32%" tint="dim" />
 
       <div className="nf-body">
         <div className="nf-code" aria-hidden="true">404</div>
 
-        <div className="u-label nf-eyebrow">— Stránka nenalezena —</div>
+        <div className="gol-eyebrow nf-eyebrow">Stránka nenalezena</div>
         <h1 className="nf-title">Tahle akce <span className="pink">neexistuje.</span></h1>
         <p className="nf-tagline">{quip}</p>
 

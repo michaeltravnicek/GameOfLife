@@ -16,7 +16,7 @@ function DarkCard({ event }) {
 
   return (
     <>
-      <DashedBorder className="evcard-dark-frame" baseColor="transparent" dashColor="#fff" radius={16} width={2.5} dash={7} gap={12} />
+      <DashedBorder className="evcard-dark-frame" baseColor="transparent" dashColor="var(--color-white)" radius={16} width={2.5} dash={7} gap={12} />
 
       <div className="evcard-dark-inner">
         <div className="evcard-title-wrap" ref={titleRef}>

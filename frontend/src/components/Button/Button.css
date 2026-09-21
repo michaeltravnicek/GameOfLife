@@ -1,4 +1,4 @@
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;cursor:pointer;border-radius:var(--radius-pill);transition:transform .12s,background .18s,border-color .18s,box-shadow .12s,color .18s;text-decoration:none;font-family:var(--font-hv-world);font-weight:700;letter-spacing:.04em;line-height:1;white-space:nowrap}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;cursor:pointer;border-radius:var(--radius-pill);transition:transform var(--dur-fast),background var(--dur-base),border-color var(--dur-base),box-shadow var(--dur-fast),color var(--dur-base);text-decoration:none;font-family:var(--font-body);font-weight:700;letter-spacing:.04em;line-height:1;white-space:nowrap}
 .btn:disabled,.btn[aria-disabled="true"]{opacity:.55;cursor:not-allowed;transform:none !important;pointer-events:none}
 
 /* Variants — two roles plus a quiet sibling:
@@ -8,22 +8,28 @@
    ghost  → round outline. For secondary / back / cancel. */
 /* The chunky bottom "ledge" is a box-shadow (not a border) so the press effect
    below never changes the box height — nothing around the button reflows. */
-.btn-nav{background:var(--color-pink);color:var(--color-white);border:2px solid #504d4d;border-radius:16px;box-shadow:0 4px 0 0 #504d4d,0 8px 22px var(--alpha-pink-40)}
+.btn-nav{background:var(--color-pink);color:var(--color-white);border:2px solid var(--color-ledge);border-radius:16px;box-shadow:0 4px 0 0 var(--color-ledge),0 8px 22px var(--alpha-pink-40)}
 /* Press: face sinks down by the ledge height while the ledge collapses to 0, so
    the base stays put and the button reads as physically pressed. */
-.btn-nav:hover:not(:disabled){background:#cf4453;transform:translateY(4px);box-shadow:0 0 0 0 #504d4d,0 4px 16px var(--alpha-pink-35)}
-.btn-nav:active:not(:disabled){transform:translateY(4px);box-shadow:0 0 0 0 #504d4d,0 3px 12px rgba(225,84,99,.3)}
-.btn-action{background:var(--color-pink);color:var(--color-white);text-transform:uppercase;letter-spacing:.05em;box-shadow:0 6px 22px var(--alpha-pink-40)}
-.btn-action:hover:not(:disabled){background:#cf4453;transform:translateY(-1px)}
-.btn-action.joined{background:#4a8a5e;box-shadow:0 6px 22px rgba(74,138,94,.35)}
-.btn-action.joined:hover:not(:disabled){background:#3d7a52}
-.btn-ghost{background:transparent;color:var(--color-cream-light);border:1.5px solid rgba(255,241,212,.4)}
+.btn-nav:hover:not(:disabled){background:var(--color-pink-hover);transform:translateY(4px);box-shadow:0 0 0 0 var(--color-ledge),0 4px 16px var(--alpha-pink-35)}
+.btn-nav:active:not(:disabled){transform:translateY(4px);box-shadow:0 0 0 0 var(--color-ledge),0 3px 12px var(--alpha-pink-30)}
+.btn-action{background:var(--color-pink);color:var(--color-white);text-transform:uppercase;letter-spacing:.05em;box-shadow:var(--shadow-glow-pink)}
+.btn-action:hover:not(:disabled){background:var(--color-pink-hover);transform:translateY(-1px)}
+.btn-action.joined{background:var(--color-success-fill);box-shadow:0 6px 22px var(--alpha-success-fill-35)}
+.btn-action.joined:hover:not(:disabled){background:var(--color-success-fill-hover)}
+.btn-ghost{background:transparent;color:var(--color-cream-light);border:1.5px solid var(--alpha-cream-40)}
 .btn-ghost:hover:not(:disabled){border-color:var(--color-pink);color:var(--color-pink)}
 /* frost → same chunky 3D shape as nav, but a frosted translucent-black surface.
    Pairs next to the pink nav button as a darker, secondary CTA. */
-.btn-frost{background:rgba(20,13,9,.5);color:var(--color-cream-light);border:2px solid #504d4d;border-radius:16px;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);box-shadow:0 4px 0 0 #504d4d,0 8px 22px var(--alpha-black-45)}
-.btn-frost:hover:not(:disabled){background:rgba(20,13,9,.7);color:var(--color-pink);transform:translateY(4px);box-shadow:0 0 0 0 #504d4d,0 4px 16px var(--alpha-black-40)}
-.btn-frost:active:not(:disabled){transform:translateY(4px);box-shadow:0 0 0 0 #504d4d,0 3px 12px var(--alpha-black-35)}
+.btn-frost{background:var(--alpha-dark-50);color:var(--color-cream-light);border:2px solid var(--color-ledge);border-radius:16px;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);box-shadow:0 4px 0 0 var(--color-ledge),0 8px 22px var(--alpha-black-45)}
+.btn-frost:hover:not(:disabled){background:var(--alpha-dark-70);color:var(--color-pink);transform:translateY(4px);box-shadow:0 0 0 0 var(--color-ledge),0 4px 16px var(--alpha-black-40)}
+.btn-frost:active:not(:disabled){transform:translateY(4px);box-shadow:0 0 0 0 var(--color-ledge),0 3px 12px var(--alpha-black-35)}
+/* admin → gold dashed chip, mono type. Marks an action only admins see, so it
+   never competes with the pink CTAs around it. */
+.btn-admin{gap:6px;padding:9px 16px;font-family:var(--font-mono);font-weight:400;font-size:var(--text-body-sm);letter-spacing:.03em;color:var(--color-gold);background:var(--alpha-gold-15);border:1px dashed var(--alpha-gold-40)}
+.btn-admin:hover:not(:disabled){background:var(--alpha-gold-40);color:var(--color-cream-lighter)}
+/* The dashed pill is disabled through the same opacity as the rest. */
+.gol-pill:disabled,.gol-pill[aria-disabled="true"]{opacity:.55;cursor:not-allowed}
 
 /* Arrow affordance: shaft + head drawn as two pieces so the shaft can stretch
    on its own — a single SVG mask would scale the head along with it. Both use
@@ -37,11 +43,15 @@
 .btn .arr::after{content:'';position:absolute;right:0;top:50%;width:.62em;height:.72em;margin-top:-.36em;background:currentColor;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='11' viewBox='0 0 9 11'%3E%3Cpath d='M1.4 1.4 7 5.5l-5.6 4.1' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='11' viewBox='0 0 9 11'%3E%3Cpath d='M1.4 1.4 7 5.5l-5.6 4.1' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat}
 
 /* Sizes — each sets its own arrow length. */
-.btn-sm{font-size:11px;padding:7px 16px;--arr-w:2.4em}
-.btn-md{font-size:13px;padding:11px 24px;--arr-w:3.1em}
-.btn-lg{font-size:14px;padding:13px 30px;--arr-w:3.9em}
-@media(max-width:480px){.btn-lg{font-size:13px;padding:11px 22px;--arr-w:3.2em}}
+.btn-sm{font-size:var(--text-label);padding:7px 16px;--arr-w:2.4em}
+.btn-md{font-size:var(--text-label-lg);padding:11px 24px;--arr-w:3.1em}
+.btn-lg{font-size:var(--text-body-sm);padding:13px 30px;--arr-w:3.9em}
+@media(max-width:480px){.btn-lg{font-size:var(--text-label-lg);padding:11px 22px;--arr-w:3.2em}}
 
 /* Busy spinner */
-.btn-spinner{width:14px;height:14px;border:2px solid rgba(255,255,255,.35);border-top-color:var(--color-white);border-radius:50%;animation:btn-spin .6s linear infinite;flex-shrink:0}
+.btn-spinner{width:14px;height:14px;border:2px solid var(--alpha-white-35);border-top-color:var(--color-white);border-radius:50%;animation:btn-spin .6s linear infinite;flex-shrink:0}
 @keyframes btn-spin{to{transform:rotate(360deg)}}
+
+/* The busy spinner keeps turning under reduced motion — it is the only cue
+   that anything is happening — but slowly. */
+@media(prefers-reduced-motion:reduce){.btn-spinner{animation-duration:1.6s}}

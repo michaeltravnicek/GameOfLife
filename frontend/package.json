@@ -9,7 +9,7 @@
     "dev": "vite",
     "prebuild": "npm run images",
     "build": "vite build",
-    "lint": "eslint .",
+    "lint": "eslint . && node scripts/check-css.js",
     "preview": "vite preview",
     "test": "vitest",
     "test:run": "vitest run"

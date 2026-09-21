@@ -22,8 +22,9 @@ import {
 
 // Static paths only — dynamic params like `/events/:slug` are preloaded ad-hoc
 // at the call site if we want them (e.g. on EventCard hover).
+// No '/' entry: HomePage is imported statically by App.jsx (it is the eager
+// route), so there is no chunk to warm — only its data, in dataWarmers below.
 const importers = {
-  '/': () => import('../pages/Home/HomePage'),
   '/events': () => import('../pages/Events/EventsPage'),
   '/galerie': () => import('../pages/Gallery/GalleryPage'),
   '/leaderboard': () => import('../pages/Leaderboard/LeaderboardPage'),

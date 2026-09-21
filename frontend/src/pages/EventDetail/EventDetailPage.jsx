@@ -18,7 +18,6 @@ import { useAuth } from '../../context/AuthContext';
 import Button from '../../components/Button/Button';
 import SectionHeader from '../../components/SectionHeader/SectionHeader';
 import Reveal from '../../components/Reveal/Reveal';
-import EventLocationMap from '../../components/EventLocationMap/EventLocationMap';
 import Modal from '../../components/Modal/Modal';
 import PillTabs from '../../components/PillTabs/PillTabs';
 import TicketList from '../../components/StatList/TicketList';
@@ -27,14 +26,23 @@ import SearchInput from '../../components/SearchInput/SearchInput';
 import { fmtDateShort, fmtTime, dayName } from '../../utils/date';
 import { isMobileViewport } from '../../utils/img';
 import { toFormUrls } from '../../utils/formUrl';
+import { safeExternalHref } from '../../utils/safeHref';
 import { shareLink } from '../../utils/shareUrl';
 import { pressable } from '../../utils/a11y';
 import { toast } from '../../components/Toast/ToastProvider';
+import PageState from '../../components/PageState/PageState';
+import Badge from '../../components/Badge/Badge';
+import '../../styles/poster-hero.css';
+import '../../styles/edit-form.css';
 import './EventDetailPage.css';
 
 // Lightbox is only needed once the user clicks on an image — pull it off the
 // critical bundle and load it on demand.
 const Lightbox = lazy(() => import('../../components/Lightbox/Lightbox'));
+// Same for the map: leaflet + react-leaflet is the single largest chunk in the
+// build, and it only matters for events that have coordinates. Loading it with
+// the page made every event detail — with or without a map — pay for it.
+const EventLocationMap = lazy(() => import('../../components/EventLocationMap/EventLocationMap'));
 
 // Usernames are sometimes e-mail addresses, and "@michael@seznam.cz" reads as
 // a typo. Only handle-style usernames get the @ prefix.
@@ -231,8 +239,8 @@ export default function EventDetailPage() {
     return (
       <div className="gol-page event-detail-page">
         <main className="detail-main">
-          <p style={{ textAlign: 'center', padding: '60px 20px' }}>{error}</p>
-          <div style={{ textAlign: 'center' }}>
+          <PageState kind="error" fill text={error} />
+          <div className="detail-error-actions">
             <Button as="link" to="/events" variant="frost">← Zpět na všechny akce</Button>
           </div>
         </main>
@@ -243,7 +251,7 @@ export default function EventDetailPage() {
   if (!event) {
     return (
       <div className="gol-page event-detail-page">
-        <p style={{ textAlign: 'center', padding: '120px 20px', color: '#fff' }}>Načítám…</p>
+        <PageState kind="loading" fill text="Načítám akci…" />
       </div>
     );
   }
@@ -390,6 +398,11 @@ export default function EventDetailPage() {
 
   const openLb = (i) => { setLbIndex(i); setLbOpen(true); };
   const rules = event.rules ? event.rules.split(/\n+/).filter(Boolean) : [];
+  // Outbound links, scheme-checked. The form URL is repaired first (admins
+  // paste the editor URL, which denies access to respondents and carries the
+  // author's Google id); a non-Google survey link is used as-is if it is http(s).
+  const surveyHref = safeExternalHref(toFormUrls(event.survey_url)?.open || event.survey_url);
+  const whatsappHref = safeExternalHref(event.whatsapp_url);
   const displayImages = images.slice(0, 4);
   const imgCount = Math.min(displayImages.length, 4);
 
@@ -415,9 +428,9 @@ export default function EventDetailPage() {
         <div className="poster-vignette" />
         <div className="poster-top">
           <div className="badges">
-            <span className={`ev-pill${!event.is_past ? ' live' : ''}`}>
+            <Badge tone={event.is_past ? 'cream' : 'live'}>
               {event.is_past ? 'Proběhlo' : 'Nadcházející'}
-            </span>
+            </Badge>
           </div>
           {event.logo
             ? <img className="poster-logo" src={event.logo} alt={event.name} style={{ transform: `scale(${event.logo_scale ?? 1})` }} />
@@ -524,7 +537,7 @@ export default function EventDetailPage() {
       </div>
 
       {/* BODY */}
-      <div className="body-wrap">
+      <div className="poster-body">
         <main className="detail-main">
           {(!isAdmin || adminView === 'popis') && (
           <>
@@ -538,11 +551,13 @@ export default function EventDetailPage() {
           {event.latitude != null && event.longitude != null && (
             <Reveal as="section" className="section">
               <SectionHeader eyebrow="— Místo —" heading="Kde nás najdeš" />
-              <EventLocationMap
-                latitude={event.latitude}
-                longitude={event.longitude}
-                popupLabel={event.place}
-              />
+              <Suspense fallback={<div className="event-location-map" aria-busy="true" />}>
+                <EventLocationMap
+                  latitude={event.latitude}
+                  longitude={event.longitude}
+                  popupLabel={event.place}
+                />
+              </Suspense>
             </Reveal>
           )}
 
@@ -571,7 +586,7 @@ export default function EventDetailPage() {
               )}
               {canUpload && (
                 <div className="admin-upload">
-                  <label className="admin-upload-btn">
+                  <label className="gol-pill">
                     {uploading ? 'Nahrávám…' : '+ Nahrát fotky k akci'}
                     <input type="file" accept="image/*" multiple hidden disabled={uploading} onChange={handleUpload} />
                   </label>
@@ -585,9 +600,9 @@ export default function EventDetailPage() {
               <SectionHeader eyebrow="— Zpětná vazba —" heading="Jak se ti akce líbila?" />
               {isAdmin && (
                 <div className="admin-btns">
-                  <Link to={`/sprava/zpetna-vazba?event=${slug}`} className="admin-btn fb-admin-link">
+                  <Button as="link" to={`/sprava/zpetna-vazba?event=${slug}`} variant="admin" className="fb-admin-link">
                     Zobrazit zpětnou vazbu k akci
-                  </Link>
+                  </Button>
                 </div>
               )}
               {!user ? (
@@ -597,9 +612,9 @@ export default function EventDetailPage() {
               ) : fbDone ? (
                 <div className="fb-done">
                   <p className="fb-thanks">Díky za hodnocení!</p>
-                  <button type="button" className="fb-edit-btn" onClick={openFeedback}>
+                  <Button variant="pill" onClick={openFeedback}>
                     Upravit hodnocení
-                  </button>
+                  </Button>
                 </div>
               ) : (
                 <div className="fb-cta">
@@ -833,22 +848,20 @@ export default function EventDetailPage() {
           )}
         </p>
         <div className="survey-modal-links">
-          {event.survey_url && (
+          {surveyHref && (
             <a
               className="survey-modal-link"
-              // Repaired, not raw: admins paste the editor URL, which denies
-              // access to respondents and carries the author's Google id.
-              href={toFormUrls(event.survey_url)?.open || event.survey_url}
+              href={surveyHref}
               target="_blank"
               rel="noopener noreferrer"
             >
               Otevřít formulář ↗
             </a>
           )}
-          {event.whatsapp_url && (
+          {whatsappHref && (
             <a
               className="survey-modal-link"
-              href={event.whatsapp_url}
+              href={whatsappHref}
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -897,7 +910,7 @@ export default function EventDetailPage() {
             <span>Super</span>
           </div>
           <textarea
-            className="fb-comment"
+            className="gol-textarea fb-comment"
             placeholder="Zde je prostor, pokud máte něco na srdíčku…"
             value={comment}
             onChange={(e) => setComment(e.target.value)}
@@ -907,9 +920,9 @@ export default function EventDetailPage() {
             <Button type="submit" variant="action" busy={fbBusy} disabled={!rating}>
               Odeslat hodnocení
             </Button>
-            <button type="button" className="fb-cancel-btn" onClick={closeFeedback}>
+            <Button variant="pill" onClick={closeFeedback}>
               Zavřít
-            </button>
+            </Button>
           </div>
         </form>
       </Modal>
