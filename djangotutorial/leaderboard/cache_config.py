@@ -9,7 +9,7 @@ Anything that reads or writes the Django cache must import from here so:
 # ── Leaderboard rankings ───────────────────────────────────────────────
 #
 # Every board, all-time included, lives under the per-season family below;
-# "all" is the season id for all-time.diff --git a/djangotutorial/leaderboard/models.py b/djangotutorial/leaderboard/models.py
+# "all" is the season id for all-time.
 CACHE_TTL_LEADERBOARD = 5 * 60  # 5 min — points change with new check-ins
 
 # Per-season leaderboards are cached under a dynamic key (one per season id).
@@ -105,8 +105,17 @@ def _evict_now(keys=(), pattern=None):
 
 
 def invalidate_event_caches():
-    """Drop caches that depend on the Event table (called from Event.save())."""
+    """Drop caches that depend on the Event table (Event.save()/delete()).
+
+    The season boards go too: they score attendance by the *event's* date, so
+    moving an event across a season boundary changes who is on which board
+    without a single UserToEvent row being written. Deleting an event is the
+    other case -- the cascade removes attendance without going through
+    UserToEvent.delete(), so nothing else would evict the totals. Routed through
+    the points eviction so a bulk sync (which suspends it) still batches.
+    """
     _evict(EVENT_DEPENDENT_CACHE_KEYS)
+    invalidate_points_dependent_caches()
 
 
 def invalidate_category_cache():

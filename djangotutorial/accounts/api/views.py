@@ -7,12 +7,14 @@ from django.db import transaction
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.views.decorators.cache import never_cache
+from django.views.decorators.csrf import ensure_csrf_cookie
 
 logger = logging.getLogger(__name__)
 
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiExample, extend_schema
 from rest_framework import status
+from rest_framework.authentication import SessionAuthentication
 from rest_framework.decorators import api_view, permission_classes, throttle_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -55,8 +57,31 @@ from accounts.services import (
 )
 
 
+def _enforce_csrf(request):
+    """Login-CSRF guard for the anonymous auth endpoints.
+
+    DRF's SessionAuthentication checks the CSRF token only once a session is
+    already authenticated; for a guest it checks nothing, and `api_view` marks
+    the view csrf_exempt so the middleware stays out too. That left login and
+    registration open to a plain cross-site form POST that signs the victim's
+    browser into an account the attacker controls -- after which the victim's
+    check-ins, photos and profile edits land in that account.
+
+    Runs the same check DRF applies to authenticated calls (csrftoken cookie +
+    X-CSRFToken header). The SPA already sends the header on every unsafe
+    request; the cookie comes from the shell (react_index) or, when the shell
+    is served by the Vite dev server, from /me below. Raises PermissionDenied
+    (403) on failure.
+    """
+    SessionAuthentication().enforce_csrf(request)
+
+
 @extend_schema(tags=["Auth"], responses=MeResponseSerializer)
 @never_cache
+# The first request every page load makes, so it is where the CSRF cookie is
+# guaranteed to exist before login/register POST -- react_index sets it too,
+# but in dev the shell comes from Vite and never passes through Django.
+@ensure_csrf_cookie
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def me_view(request):
@@ -113,6 +138,7 @@ def login_api(request):
     account (the password-reset endpoint hides this the same way). ModelBackend
     already refuses inactive users inside authenticate().
     """
+    _enforce_csrf(request)
     identifier = (request.data.get("identifier") or request.data.get("username") or "").strip()
     password = request.data.get("password") or ""
     if not identifier or not password:
@@ -259,6 +285,7 @@ def register_api(request):
     a ranking, never a write), because self-service claiming would let anyone
     inherit a namesake's history.
     """
+    _enforce_csrf(request)
     form = CustomUserCreationForm(request.data)
     if not form.is_valid():
         return Response({"errors": form.errors}, status=status.HTTP_400_BAD_REQUEST)

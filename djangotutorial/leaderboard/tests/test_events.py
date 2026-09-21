@@ -237,3 +237,26 @@ class EventModelTests(TestCase):
         )
         resp = self.client.get(reverse("api-event-detail", kwargs={"slug": ev.slug}))
         self.assertEqual(resp.json()["survey_url"], "https://example.com/form")
+
+
+class EventDetailQueryCountTests(TestCase):
+    """The detail page renders the badge (logo) and category; without the join
+    each was a query of its own on the busiest single-object endpoint."""
+
+    def test_detail_is_a_handful_of_queries(self):
+        from django.db import connection
+        from django.test.utils import CaptureQueriesContext
+        from leaderboard.models import Badge, Category
+
+        event = Event.objects.create(
+            name="Detail", place="Brno", points=10, date=timezone.now() + timedelta(days=1),
+            badge=Badge.objects.create(name="Odznak"),
+            category=Category.objects.create(name="Sport"),
+        )
+        with CaptureQueriesContext(connection) as ctx:
+            resp = APIClient().get(reverse("api-event-detail", kwargs={"slug": event.slug}))
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json()["category"]["name"], "Sport")
+        # event(+badge+category), rsvp count, attendee count, official images,
+        # user photos. Anonymous, so no session or user lookups.
+        self.assertLessEqual(len(ctx), 5, [q["sql"][:80] for q in ctx.captured_queries])

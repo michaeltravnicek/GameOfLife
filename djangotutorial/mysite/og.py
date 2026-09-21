@@ -312,6 +312,15 @@ def _profile_metadata(request, username):
     """
     from accounts.models import Profile
 
+    # An '@' in the username means a social-login account whose handle is the
+    # e-mail address itself. public_handle never publishes those, so no page
+    # links here -- and answering 404 for an unknown address but 200 for a
+    # registered one would make this route an oracle for which e-mails have an
+    # account, the very thing the login and reset replies are worded to hide.
+    # Same generic card and status either way, without touching the database.
+    if "@" in username:
+        return None
+
     profile = (
         Profile.objects
         .filter(user__username=username)
@@ -391,7 +400,9 @@ _TITLE_RE = re.compile(r"<title>.*?</title>", re.IGNORECASE | re.DOTALL)
 def inject(html, meta):
     """Return `html` with the shell's <title> replaced by the rendered tags."""
     tags = render_tags(meta)
-    html, replaced = _TITLE_RE.subn(tags, html, count=1)
+    # A callable, not a replacement string: `re` would parse backslashes in the
+    # tags as group references, and a player can put "\1" in their own name.
+    html, replaced = _TITLE_RE.subn(lambda _match: tags, html, count=1)
     if not replaced:
         # No <title> to swap (hand-edited shell) -- append instead of silently
         # serving a page with no metadata at all.

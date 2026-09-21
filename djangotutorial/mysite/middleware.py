@@ -47,8 +47,11 @@ class RequireCloudflareOriginMiddleware:
         if self.secret and not request.path.startswith(self.EXEMPT_PREFIXES):
             # compare_digest: the header is attacker-supplied, so keep the
             # comparison constant-time rather than leaking the prefix length.
+            # Compared as bytes: on a str it raises TypeError for anything
+            # outside ASCII, and WSGI delivers headers as latin-1 str — so a
+            # stray byte would have been a 500 from the first middleware.
             supplied = request.headers.get("X-Origin-Verify", "")
-            if not hmac.compare_digest(supplied, self.secret):
+            if not hmac.compare_digest(supplied.encode(), self.secret.encode()):
                 return HttpResponseForbidden("direct origin access denied")
         return self.get_response(request)
 

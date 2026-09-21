@@ -1,7 +1,7 @@
 import gc
 import re
 
-from django.db import reset_queries
+from django.db import IntegrityError, reset_queries, transaction
 from django.utils import timezone
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
@@ -82,7 +82,9 @@ def resolve_player(rec: tuple, cols: dict[str, int]) -> User | None:
         # row would park the points off the leaderboard, where nobody sees them.
         user = User.all_objects.filter(email=email).first()
         if user:
-            return resolve_player_id(user.pk)
+            # Only a merged-away row needs the chain followed; a live one is
+            # the answer already, and re-fetching it cost a query per row.
+            return user if user.merged_into_id is None else resolve_player_id(user.pk)
         # This person may already exist from a name-only sheet. Adopt that row
         # instead of starting a second one — otherwise the same human ends up
         # with their points split across two players.
@@ -128,10 +130,28 @@ def _parse_points(raw: str) -> int | None:
         return None
 
 
-def insert_rec(event: Event, rec: tuple, cols: dict[str, int]):
+class SheetState:
+    """What the database already holds for one event, loaded once per sheet.
+
+    A re-sync is almost entirely rows that are already stored, and the sync
+    used to look each one up as it went: one SELECT per row per table, plus a
+    transaction per row from ``get_or_create``. Two SELECTs per sheet replace
+    that. Rows written during the pass are added to the maps, so a person who
+    appears twice in one sheet (namesakes collapse into one player) is still
+    found on the second row.
+    """
+
+    def __init__(self, event: Event):
+        self.attendance = {u.user_id: u for u in UserToEvent.objects.filter(event=event)}
+        self.feedback = {f.user_id: f for f in EventFeedback.objects.filter(event=event)}
+
+
+def insert_rec(event: Event, rec: tuple, cols: dict[str, int], state: SheetState | None = None):
     user = resolve_player(rec, cols)
     if user is None:
         return
+    if state is None:
+        state = SheetState(event)
 
     # "Zúčastnil/a ses této akce?" == "Ne" -> the person filled the form but did
     # not come. No attendance, no points; their feedback (if any) is not about
@@ -144,20 +164,40 @@ def insert_rec(event: Event, rec: tuple, cols: dict[str, int]):
     if points is None:
         points = event.points
 
-    ute, created = UserToEvent.objects.get_or_create(
-        user=user,
-        event=event,
-        defaults={"points": points},
-    )
-
-    if not created and ute.points != points:
+    ute = state.attendance.get(user.pk)
+    if ute is None:
+        ute = _create_attendance(user, event, points)
+        state.attendance[user.pk] = ute
+    elif ute.points != points:
         ute.points = points
         ute.save(update_fields=["points"])
 
-    insert_feedback(event, user, rec, cols)
+    insert_feedback(event, user, rec, cols, state)
 
 
-def insert_feedback(event: Event, user: User, rec: tuple, cols: dict[str, int]):
+def _create_attendance(user: User, event: Event, points: int) -> UserToEvent:
+    """Insert the row, or adopt the one that appeared since the sheet started.
+
+    The maps in SheetState are loaded once per sheet, and a geo check-in or an
+    admin edit can land between that load and this row. The whole sheet is one
+    transaction now, so a bare IntegrityError here would roll back every row
+    before it -- and `build.sh` runs the sync under errexit, so it would also
+    fail the deploy. A savepoint keeps the collision local, exactly as
+    get_or_create used to.
+    """
+    try:
+        with transaction.atomic():
+            return UserToEvent.objects.create(user=user, event=event, points=points)
+    except IntegrityError:
+        ute = UserToEvent.objects.get(user=user, event=event)
+        if ute.points != points:
+            ute.points = points
+            ute.save(update_fields=["points"])
+        return ute
+
+
+def insert_feedback(event: Event, user: User, rec: tuple, cols: dict[str, int],
+                    state: SheetState | None = None):
     """Store the row's rating + comment, when the sheet carries those columns.
 
     A row with neither a usable rating nor a comment writes nothing — most
@@ -168,8 +208,10 @@ def insert_feedback(event: Event, user: User, rec: tuple, cols: dict[str, int]):
     comment = cell(rec, cols.get("comment"))
     if rating is None and not comment:
         return
+    if state is None:
+        state = SheetState(event)
 
-    existing = EventFeedback.objects.filter(user=user, event=event).first()
+    existing = state.feedback.get(user.pk)
 
     # Feedback typed on the site is the person's own considered answer; never
     # let a form re-import overwrite it.
@@ -183,22 +225,39 @@ def insert_feedback(event: Event, user: User, rec: tuple, cols: dict[str, int]):
             return
         rating = existing.rating
 
-    EventFeedback.objects.update_or_create(
-        user=user,
-        event=event,
-        defaults={
-            "rating": rating,
-            "comment": comment,
-            "source": EventFeedback.SOURCE_FORM,
-        },
-    )
+    if existing is None:
+        try:
+            with transaction.atomic():
+                state.feedback[user.pk] = EventFeedback.objects.create(
+                    user=user, event=event, rating=rating, comment=comment,
+                    source=EventFeedback.SOURCE_FORM,
+                )
+        except IntegrityError:
+            # Written on the web since the sheet was loaded. That answer is the
+            # person's own and outranks the form (see above), so leave it.
+            pass
+    elif (existing.rating, existing.comment, existing.source) != (
+            rating, comment, EventFeedback.SOURCE_FORM):
+        # Only a real change is written: update_or_create saved every row on
+        # every sync, which bumped `updated_at` and so reordered the admin's
+        # feedback list on each nightly run for no reason.
+        existing.rating = rating
+        existing.comment = comment
+        existing.source = EventFeedback.SOURCE_FORM
+        existing.save(update_fields=["rating", "comment", "source", "updated_at"])
 
 
 def handle_attendance(sheet_id: str, sheet_list_id: str, records: list[tuple[str]]):
     """Import every data row of one sheet. Always a full pass: insert_rec is
     idempotent, and there is no reliable way to tell which rows are new — the
     event's attendance count includes web check-ins and admin edits that never
-    came from the sheet, so a positional slice skips real rows."""
+    came from the sheet, so a positional slice skips real rows.
+
+    One transaction per sheet. Row by row, every write was its own commit, and
+    on a hosted Postgres the commit round trip is most of what a row costs. It
+    also means a sheet lands whole or not at all. The badge signal keeps its
+    own savepoint, so one bad award cannot poison the rest of the sheet.
+    """
     try:
         event = Event.objects.get(sheet_id=sheet_id, sheet_list_id=sheet_list_id)
     except Event.DoesNotExist:
@@ -208,8 +267,10 @@ def handle_attendance(sheet_id: str, sheet_list_id: str, records: list[tuple[str
         return
 
     cols = header_map(records[0])
-    for rec in records[1:]:
-        insert_rec(event, rec, cols)
+    with transaction.atomic():
+        state = SheetState(event)
+        for rec in records[1:]:
+            insert_rec(event, rec, cols, state)
 
 
 def main(run_all: bool = True):

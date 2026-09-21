@@ -276,7 +276,12 @@ else:
 
 # CSRF trusted origins for local dev + any hosted domains.
 # Django 4+ requires this for POST from origins not matching the Host header.
-CSRF_TRUSTED_ORIGINS = [
+#
+# The loopback entries exist for local runs only — including a MODE=PRODUCTION
+# checkout served over plain http (HTTPS=0, see HTTPS_ENABLED). On a real HTTPS
+# deployment they would declare any page a process on the visitor's own machine
+# can serve a trusted origin for cross-site POSTs, so they are dropped there.
+CSRF_TRUSTED_ORIGINS = [] if HTTPS_ENABLED else [
     "http://localhost:8000",
     "http://127.0.0.1:8000",
     "http://localhost",
@@ -438,7 +443,24 @@ AXES_USERNAME_CALLABLE = lambda request, credentials: (  # noqa: E731
 ).strip().lower()
 # Must agree with REST_FRAMEWORK["NUM_PROXIES"] — both derive from PROXY_COUNT
 # so they cannot drift apart. None in DEBUG (no proxy in front locally).
-AXES_IPWARE_PROXY_COUNT = None if DEBUG else PROXY_COUNT
+def _axes_ipware_proxy_count(hops):
+    """Translate PROXY_COUNT into what ipware (axes' IP resolver) calls proxy_count.
+
+    The two libraries count differently. DRF's NUM_PROXIES is the number of
+    hops and reads X-Forwarded-For from the right: behind Cloudflare -> Render
+    the header is "<client>, <cloudflare-edge>", and NUM_PROXIES=2 lands on the
+    client. ipware's proxy_count is the number of entries *after* the client's,
+    and it discards the header outright when there are fewer — so handing it
+    the same 2 made it ignore X-Forwarded-For and fall back to REMOTE_ADDR,
+    Render's own address. Every visitor then shared one lockout key: eight bad
+    passwords from anywhere locked any username for everyone, and the
+    trusted-IP exemption in axes_handler trusted the whole internet.
+    Verified by ProxyChainAgreementTests; /whoami/ shows both computations.
+    """
+    return max(hops - 1, 0)
+
+
+AXES_IPWARE_PROXY_COUNT = None if DEBUG else _axes_ipware_proxy_count(PROXY_COUNT)
 
 # Second layer: a failure counter for the *account*, over all IPs.
 #
@@ -640,6 +662,11 @@ DATABASES = {
         default=os.getenv("DATABASE_URL"),
         # Reuse connections for up to 10 min instead of opening one per request.
         conn_max_age=int(os.getenv("CONN_MAX_AGE", "600")),
+        # A pooled connection can die underneath us (Postgres restart, idle
+        # timeout at the provider). Without this each gthread thread finds out
+        # on its next request with a 500; with it Django pings a connection
+        # older than one request before reusing it and reconnects silently.
+        conn_health_checks=True,
     )
 }
 
@@ -692,6 +719,17 @@ else:
     CACHES = {
         "default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"},
     }
+    if not DEBUG and "test" not in sys.argv:
+        # Loud, not fatal (same stance as the SENTRY_DSN warning): the site works
+        # on the fallback, it just misbehaves quietly -- a check-in evicts the
+        # board in one worker while the other two keep serving the stale copy
+        # for up to five minutes, and the per-IP throttles count per worker.
+        print(
+            "WARNING: REDIS_URL is not set — using a per-process LocMemCache. "
+            "Cache evictions and throttle counters will not be shared between "
+            "gunicorn workers.",
+            file=sys.stderr,
+        )
 
 # Tests share Redis with the running dev server, so cached responses written
 # by test fixtures (stats, hero, events list) would be served live for up to

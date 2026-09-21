@@ -303,7 +303,22 @@ def visible_profile_user_or_404(username, request):
     A `members_only` profile 404s for anonymous visitors rather than 403s: a 403
     confirms the account exists, which is precisely what someone hiding their
     profile from the open internet is trying not to publish.
+
+    An e-mail-shaped username belongs to a social-login account (allauth uses
+    the address as the handle). `public_handle` withholds those from every
+    public surface, so nothing links here -- and resolving them for a stranger
+    would turn the endpoint into an oracle for which addresses have an account
+    (200 vs 404), undoing the deliberately generic login / password-reset
+    replies. The owner still needs the lookup (the SPA opens
+    /profil/<username> for "my profile"), and so does an admin.
     """
+    if "@" in username:
+        from .permissions import is_admin
+
+        viewer = request.user
+        if not (viewer.is_authenticated
+                and (viewer.username == username or is_admin(viewer))):
+            raise Http404("Profile not found.")
     profile_user = get_object_or_404(AuthUser, username=username)
     if visibility_for(getattr(profile_user, "profile", None), request.user).members_only:
         raise Http404("Profile is members-only.")
@@ -507,6 +522,7 @@ def update_profile(user, data, files):
             raise ValueError("Přezdívka je obsazena.")
         user.username = new_handle
         handle_changed = True
+    _reject_overlong(user, ("first_name", "last_name", "email", "username"))
     user.save()
 
     # The cached leaderboard row carries `profile_username`, so a rename that
@@ -535,6 +551,7 @@ def update_profile(user, data, files):
         profile.photo = files["photo"]
     elif data.get("remove_photo"):
         profile.photo = None
+    _reject_overlong(profile, ("city", "instagram", "strava", "spotify", "tiktok"))
     profile.save()
 
     if "favourite_categories" in data:
@@ -545,6 +562,19 @@ def update_profile(user, data, files):
         profile.favourite_categories.set(list(Category.objects.filter(id__in=ids)[:3]))
 
     _save_profile_answers(user, data)
+
+
+def _reject_overlong(instance, fields):
+    """Raise ValueError (a 400) for a value longer than its column allows.
+
+    Postgres refuses such a value at save() with a DataError, i.e. a 500 that
+    anyone can trigger from the edit form. SQLite -- the test database -- does
+    not enforce lengths at all, which is why this cannot be left to the DB.
+    """
+    for field in fields:
+        max_length = instance._meta.get_field(field).max_length
+        if max_length and len(getattr(instance, field) or "") > max_length:
+            raise ValueError(f"Pole „{field}“ je příliš dlouhé (max {max_length} znaků).")
 
 
 # One answer is a sentence or two about yourself, not an essay. Enforced here

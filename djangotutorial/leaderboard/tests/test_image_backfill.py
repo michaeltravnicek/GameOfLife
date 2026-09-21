@@ -381,6 +381,41 @@ class ModelSaveTests(TestCase):
         self.assertEqual(event.image.name, "event_images/e.webp")
         self.assertEqual(event.image.storage.open(event.image.name, "rb").read(), first)
 
+    def test_saving_twice_does_not_regenerate_the_variant(self):
+        """An edit that leaves the image alone must not re-download it, decode
+        it and upload a fresh .mobile.webp -- on R2 that was two GETs, a DELETE
+        and a PUT for a typo fix in the description."""
+        event = self._event()
+        self._attach(Event, event.pk, "image", "event_images/e.jpg",
+                     lambda p: _write_jpeg(p, 2000, 1500))
+        event = Event.objects.get(pk=event.pk)
+        event.save()
+        event.refresh_from_db()
+        self.assertTrue(event.image.storage.exists(variant_name(event.image.name)))
+
+        with mock.patch.object(image_utils, "make_webp_variant") as variant:
+            event.description = "opravený překlep"
+            event.save()
+        variant.assert_not_called()
+
+    def test_in_place_rewrite_still_refreshes_the_variant(self):
+        """The one case where the key stays but the bytes change: an oversized
+        legacy .webp re-encoded under its own name. Its variant is stale."""
+        event = self._event()
+        path = self._attach(
+            Event, event.pk, "image", "event_images/big.webp",
+            lambda p: Image.new("RGB", (3000, 2250), "blue").save(p, "WEBP"))
+        with open(variant_name(path), "wb") as fh:
+            fh.write(b"stale")
+        event = Event.objects.get(pk=event.pk)
+
+        with mock.patch.object(image_utils, "make_webp_variant") as variant:
+            event.save()
+        event.refresh_from_db()
+        self.assertEqual(event.image.name, "event_images/big.webp")  # same key
+        self.assertLessEqual(max(Image.open(path).size), 2400)      # but rewritten
+        variant.assert_called_once()
+
     def _user(self):
         from django.contrib.auth.models import User
         return User.objects.create_user(username="hrac", password="x")

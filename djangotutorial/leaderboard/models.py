@@ -220,6 +220,10 @@ class Event(models.Model):
     updated_at = models.DateTimeField(auto_now=True, null=True)
 
     class Meta:
+        # Every events page orders by date (DESC NULLS LAST, then LIMIT), and
+        # the hero, the check-in feed and the upcoming/past filters all range
+        # over it. One index serves all of those; nothing else is filtered on.
+        indexes = [models.Index(fields=["date"], name="event_date_idx")]
         constraints = [
             # DB-level twin of clean(): bulk paths (sheets sync, updates)
             # bypass Python validation, so the pairing rule lives here too.

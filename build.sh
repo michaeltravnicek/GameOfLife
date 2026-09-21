@@ -17,6 +17,12 @@ cd djangotutorial
 mkdir -p staticfiles/react
 if [ -d "../frontend/dist" ]; then
   cp -r ../frontend/dist/* staticfiles/react/
+  # Pre-compress the bundle (.gz/.br siblings WhiteNoise serves on Accept-Encoding).
+  # collectstatic only post-processes files it collects through the finders, and
+  # this directory is staged by hand above, so every chunk left the origin
+  # uncompressed. The edge re-compresses for browsers, but each cache miss
+  # still crossed origin -> Cloudflare at full size.
+  python -m whitenoise.compress staticfiles/react
 fi
 
 python manage.py collectstatic --no-input

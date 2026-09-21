@@ -142,3 +142,42 @@ class SuspendInvalidationTests(TestCase):
         cache.set(self.key, "SENTINEL", 60)
         invalidate_points_dependent_caches()
         self.assertIsNone(cache.get(self.key))
+
+
+class EventChangeEvictsBoardTests(TestCase):
+    """The boards score attendance by the *event's* date, so an Event write can
+    move points between seasons without a single UserToEvent row changing.
+    Event.save()/delete() used to evict only the hero/stats/cities keys."""
+
+    def setUp(self):
+        cache.clear()
+        self.lb = LeaderboardUser.objects.create(name="Petr Sezona")
+        self.s2025 = Season.objects.create(
+            name="2025", start_date="2025-01-01", end_date="2025-12-31")
+        self.s2026 = Season.objects.create(
+            name="2026", start_date="2026-01-01", end_date="2026-12-31", is_active=True)
+        self.event = Event.objects.create(
+            name="Silvestr", points=10,
+            date=timezone.make_aware(timezone.datetime(2025, 12, 31, 20, 0)))
+        UserToEvent.objects.create(user=self.lb, event=self.event, points=10)
+
+    def board(self, season_id):
+        url = reverse("api-leaderboard") + f"?season_id={season_id}"
+        return {e["id"]: e for e in self.client.get(url).json()["entries"]}
+
+    def test_moving_an_event_across_a_season_boundary_moves_the_points(self):
+        self.assertIn(self.lb.id, self.board(self.s2025.id))
+        self.assertNotIn(self.lb.id, self.board(self.s2026.id))
+
+        self.event.date = timezone.make_aware(timezone.datetime(2026, 1, 1, 1, 0))
+        self.event.save()
+
+        self.assertNotIn(self.lb.id, self.board(self.s2025.id))
+        self.assertIn(self.lb.id, self.board(self.s2026.id))
+
+    def test_deleting_an_event_on_the_model_drops_its_points(self):
+        """The Django admin deletes through the model, not the API view, and
+        the cascade never calls UserToEvent.delete()."""
+        self.assertEqual(self.board("all")[self.lb.id]["total_points"], 10)
+        self.event.delete()
+        self.assertEqual(self.board("all")[self.lb.id]["total_points"], 0)

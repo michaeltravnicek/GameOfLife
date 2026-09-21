@@ -202,7 +202,10 @@ def events_list(request):
 @permission_classes([AllowAny])
 def event_detail(request, slug):
     """Full detail for a single event (hidden events are 404 for non-admin)."""
-    event = visible_event_or_404(request, slug)
+    # The serializer renders the badge (logo) and category; join them here
+    # rather than pay two extra queries on the busiest single-object page.
+    event = visible_event_or_404(
+        request, slug, Event.objects.select_related("badge", "category"))
     serializer = EventDetailSerializer(event, context={"request": request})
     return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -330,7 +333,7 @@ def leaderboard_view(request):
 # How long the EDGE may hold a public response. Shorter than the Redis TTLs on
 # purpose: Redis is evicted on model save()/delete(), Cloudflare cannot be, so
 # this is how long an admin edit can stay invisible. 300 s still collapses a
-# burst onto one origin request.diff --git a/djangotutorial/leaderboard/cache_config.py b/djangotutorial/leaderboard/cache_config.py
+# burst onto one origin request.
 EDGE_TTL_PUBLIC = 300
 
 
@@ -841,7 +844,9 @@ def event_signup_form(request, slug):
     page then falls back to an iframe. That is a worse-looking page, not a
     broken one, so it is deliberately not an error status.
     """
-    event = get_object_or_404(Event, slug=slug)
+    # Same visibility gate as RSVP/feedback/check-in: a draft's survey link is
+    # not for members yet, and a 200 here would confirm the hidden slug exists.
+    event = visible_event_or_404(request, slug)
     if not event.survey_url:
         raise Http404("Tato akce nemá dotazník.")
 
@@ -871,7 +876,7 @@ def event_signup_form_submit(request, slug):
     so a stale page would otherwise write junk into the response sheet and
     report success.
     """
-    event = get_object_or_404(Event, slug=slug)
+    event = visible_event_or_404(request, slug)
     if not event.survey_url:
         raise Http404("Tato akce nemá dotazník.")
 

@@ -63,3 +63,10 @@ class OriginLockTests(SimpleTestCase):
         # middleware runs before CommonMiddleware, so a health check configured
         # as "/healthz" must be let through here or the service is killed.
         self.assertEqual(self._response(path="/healthz").status_code, 200)
+
+    @override_settings(ORIGIN_SHARED_SECRET=SECRET)
+    def test_non_ascii_header_is_forbidden_not_a_server_error(self):
+        # WSGI hands headers over as latin-1 str, and hmac.compare_digest raises
+        # TypeError on a non-ASCII str — so a stray byte was a free 500 from the
+        # first middleware in the chain, before anything else could answer.
+        self.assertEqual(self._response(header="tajn\xe9").status_code, 403)

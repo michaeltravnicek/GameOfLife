@@ -209,6 +209,7 @@ def whoami(request):
     If it shows a Cloudflare or Render address instead, adjust the PROXY_COUNT
     environment variable (no redeploy needed) until it doesn't.
     """
+    from axes.helpers import get_client_ip_address
     from django.conf import settings as conf
     from django.http import JsonResponse
 
@@ -222,6 +223,10 @@ def whoami(request):
     client_ip = chain[-proxies] if proxies and len(chain) >= proxies else (
         chain[0] if chain else request.META.get("REMOTE_ADDR")
     )
+    # What the lockout keys on. It goes through ipware, whose proxy_count is
+    # defined differently from DRF's NUM_PROXIES (see _axes_ipware_proxy_count
+    # in settings.py); showing both is what makes a mismatch visible.
+    axes_client_ip = get_client_ip_address(request)
 
     # Whether the Cloudflare Transform Rule is actually stamping requests. This
     # has to be checkable *before* ORIGIN_SHARED_SECRET is set, because setting
@@ -234,7 +239,12 @@ def whoami(request):
     elif not configured:
         origin_verify = "header present, ORIGIN_SHARED_SECRET unset (not enforcing yet)"
     else:
-        origin_verify = "match" if hmac.compare_digest(supplied, configured) else "MISMATCH"
+        # Bytes, not str: compare_digest raises TypeError on a non-ASCII str,
+        # and the header is whatever the caller sent.
+        origin_verify = (
+            "match" if hmac.compare_digest(supplied.encode(), configured.encode())
+            else "MISMATCH"
+        )
 
     return JsonResponse({
         "PROXY_COUNT": proxies,
@@ -243,7 +253,8 @@ def whoami(request):
         "remote_addr": request.META.get("REMOTE_ADDR"),
         "cf_connecting_ip": request.META.get("HTTP_CF_CONNECTING_IP"),
         "computed_client_ip": client_ip,
+        "axes_client_ip": axes_client_ip,
         "origin_verify": origin_verify,
         "origin_verify_enforced": bool(configured),
-        "hint": "computed_client_ip must equal your own public IP address",
+        "hint": "computed_client_ip and axes_client_ip must both equal your own public IP address",
     })

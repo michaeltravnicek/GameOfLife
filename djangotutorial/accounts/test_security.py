@@ -72,14 +72,55 @@ class ProfileUpdateIdentityGuardTests(TestCase):
 
 class ProfilePiiExposureTests(TestCase):
     """A social-login account's username IS the e-mail; the public profile must
-    not echo it as the @handle or the display name."""
+    not echo it as the @handle or the display name -- and, since nothing public
+    links to an e-mail-shaped handle, a stranger looking one up gets a 404
+    rather than an existence oracle (see EmailShapedProfileLookupTests)."""
 
-    def test_email_username_not_published(self):
-        email = "someone@icloud.com"
-        account = AuthUser.objects.create_user(username=email, password="x")
+    def setUp(self):
+        self.email = "someone@icloud.com"
+        account = AuthUser.objects.create_user(username=self.email, password="x")
         lb = LeaderboardUser.objects.create(name="Some One")
         Profile.objects.create(user=account, leaderboard_user=lb)
-        resp = APIClient().get(reverse("api-profile", kwargs={"username": email}))
+        self.url = reverse("api-profile", kwargs={"username": self.email})
+
+    def test_strangers_cannot_look_a_profile_up_by_email(self):
+        self.assertEqual(APIClient().get(self.url).status_code, 404)
+
+    def test_email_username_not_published_to_an_admin_viewer(self):
+        admin = AuthUser.objects.create_user(username="admin", password="x")
+        Profile.objects.create(user=admin, role=Profile.ROLE_ADMIN)
+        client = APIClient()
+        client.force_authenticate(user=admin)
+        resp = client.get(self.url)
         self.assertEqual(resp.status_code, 200)
         self.assertIsNone(resp.json()["username"])
-        self.assertNotIn(email, resp.content.decode())
+        self.assertNotIn(self.email, resp.content.decode())
+
+
+class ProfileUpdateLengthGuardTests(TestCase):
+    """Overlong values must be a 400, not a DataError: Postgres refuses a value
+    longer than the column, and update_profile wrote straight through to
+    user.save() / profile.save(). SQLite (the test database) does not enforce
+    lengths, so the guard has to live in the service, not the database."""
+
+    def setUp(self):
+        self.client = APIClient()
+        self.url = reverse("api-profile-update")
+        self.user = AuthUser.objects.create_user(username="lengthy", password="x")
+        Profile.objects.create(user=self.user)
+        self.client.force_authenticate(user=self.user)
+
+    def test_overlong_account_field_is_rejected(self):
+        resp = self.client.patch(self.url, {"first_name": "x" * 151}, format="multipart")
+        self.assertEqual(resp.status_code, 400)
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.first_name, "")
+
+    def test_overlong_profile_field_is_rejected(self):
+        resp = self.client.patch(self.url, {"city": "y" * 256}, format="multipart")
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(Profile.objects.get(user=self.user).city, "")
+
+    def test_values_at_the_limit_still_save(self):
+        resp = self.client.patch(self.url, {"city": "z" * 100}, format="multipart")
+        self.assertEqual(resp.status_code, 200)

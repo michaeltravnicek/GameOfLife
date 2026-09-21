@@ -12,7 +12,7 @@ from leaderboard.sheet_columns import (
     is_negative_attendance,
     parse_rating,
 )
-from leaderboard.tasks import insert_rec, resolve_player
+from leaderboard.tasks import handle_attendance, insert_rec, resolve_player
 
 # The header of the older forms: they ask for a phone number, which the sync no
 # longer reads (LeaderboardUser.number is gone), and carry no e-mail column.
@@ -298,3 +298,90 @@ class ResolvePlayerAfterMergeTests(TestCase):
         insert_rec(event, ["2026-01-01", "777123456", "Jan Novák", "Ano", "", ""],
                    self.LEGACY)
         self.assertTrue(UserToEvent.objects.filter(user=self.target, event=event).exists())
+
+
+class SyncQueryCountTests(TestCase):
+    """One sheet is one transaction and a re-sync costs about a query per row.
+
+    Before: every row paid a UserToEvent lookup, a feedback lookup, two player
+    fetches and -- via get_or_create -- its own transaction, so a 300-row sheet
+    that had not changed still issued ~900 statements and 300 commits.
+    """
+
+    ROWS = 20
+
+    def setUp(self):
+        self.event = Event.objects.create(
+            sheet_id="s", sheet_list_id="1", name="Velká akce", place="Brno",
+            points=50, date=timezone.now() - timedelta(days=2),
+        )
+        self.records = [HEADER_WITH_EMAIL] + [
+            ["2026-01-01", f"hrac{i}@example.com", f"Hráč Číslo{i}", "Ano", "8", "fajn"]
+            for i in range(self.ROWS)
+        ]
+
+    def _sync(self):
+        from django.db import connection
+        from django.test.utils import CaptureQueriesContext
+        with CaptureQueriesContext(connection) as ctx:
+            handle_attendance("s", "1", self.records)
+        return len(ctx)
+
+    def test_resync_of_unchanged_rows_is_about_one_query_per_row(self):
+        self._sync()
+        self.assertEqual(UserToEvent.objects.filter(event=self.event).count(), self.ROWS)
+        self.assertEqual(EventFeedback.objects.filter(event=self.event).count(), self.ROWS)
+
+        again = self._sync()
+        # Per row: the e-mail lookup. Per sheet: the event, the two preloads,
+        # and the transaction's savepoint pair. Nothing else.
+        self.assertLessEqual(again, self.ROWS + 6, f"{again} queries for {self.ROWS} unchanged rows")
+        self.assertEqual(UserToEvent.objects.filter(event=self.event).count(), self.ROWS)
+
+    def test_every_row_runs_inside_one_transaction_per_sheet(self):
+        """Row by row, each write used to commit on its own (get_or_create's
+        atomic at the top level). One enclosing block per sheet means the
+        depth every row sees is constant and one deeper than outside."""
+        from unittest import mock
+        from django.db import connection
+        from leaderboard import tasks
+
+        outside = len(connection.savepoint_ids)
+        depths = []
+
+        def spy(event, rec, cols, state=None):
+            depths.append(len(connection.savepoint_ids))
+            return real(event, rec, cols, state)
+
+        real = tasks.insert_rec
+        with mock.patch.object(tasks, "insert_rec", side_effect=spy):
+            handle_attendance("s", "1", self.records)
+
+        self.assertEqual(len(depths), self.ROWS)
+        self.assertEqual(set(depths), {outside + 1})
+        self.assertEqual(UserToEvent.objects.filter(event=self.event).count(), self.ROWS)
+
+    def test_a_row_that_appeared_meanwhile_does_not_abort_the_sheet(self):
+        """A check-in landing between the preload and the row must not roll
+        back the whole sheet -- the sync runs during deploys, at any hour."""
+        from unittest import mock
+        from leaderboard import tasks
+
+        real_state = tasks.SheetState
+
+        class RacingState(real_state):
+            def __init__(self, event):
+                super().__init__(event)
+                # After the preload, someone else writes row 3's attendance.
+                racer = resolve_player(self.records_ref[4], self.cols_ref)
+                UserToEvent.objects.create(user=racer, event=event, points=1)
+
+        RacingState.records_ref = self.records
+        RacingState.cols_ref = header_map(HEADER_WITH_EMAIL)
+        with mock.patch.object(tasks, "SheetState", RacingState):
+            handle_attendance("s", "1", self.records)
+
+        self.assertEqual(UserToEvent.objects.filter(event=self.event).count(), self.ROWS)
+        # The sheet's points win over the placeholder, as they always did.
+        racer = User.objects.get(email="hrac3@example.com")
+        self.assertEqual(UserToEvent.objects.get(user=racer, event=self.event).points, 50)

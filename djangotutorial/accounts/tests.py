@@ -66,12 +66,19 @@ class ProfileApiTests(TestCase):
 
     def test_email_username_not_echoed_in_public_profile(self):
         """A social-login account's username IS the e-mail; the public profile
-        must not publish it as the @handle or as the display name."""
+        must not publish it as the @handle or as the display name. Strangers
+        cannot even look the profile up by that key (404, no existence oracle),
+        so the payload is checked as an admin sees it."""
         email = "pat.novak@icloud.com"
         social = AuthUser.objects.create_user(username=email, password="x")
         lb = LeaderboardUser.objects.create(name="Pat Novak")
         Profile.objects.create(user=social, leaderboard_user=lb)
-        resp = self.client.get(reverse("api-profile", kwargs={"username": email}))
+        url = reverse("api-profile", kwargs={"username": email})
+        self.assertEqual(self.client.get(url).status_code, 404)
+        admin = AuthUser.objects.create_user(username="admin", password="x")
+        Profile.objects.create(user=admin, role=Profile.ROLE_ADMIN)
+        self.client.force_authenticate(user=admin)
+        resp = self.client.get(url)
         self.assertEqual(resp.status_code, 200)
         self.assertNotIn(email, resp.content.decode())
         self.assertIsNone(resp.json()["username"])

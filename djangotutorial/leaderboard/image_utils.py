@@ -285,13 +285,11 @@ MAX_ANIMATION_PIXELS = 12_000_000   # ~36 MB of RGB bitmap across all frames
 #   IMAGE_DECODE_SLOTS         concurrent decodes per instance   (default 1)
 #   IMAGE_DECODE_WAIT_SECONDS  how long an upload waits for one  (default 5)
 #
-# Raising SLOTS to 2 needs another whole peak (+226 MB over an idle worker) --
-# i.e. a 1 GB instance. Verify with imagelab/07_memory.py, which measures the cross-process
-# case explicitly.
+# Each extra slot needs another whole peak (~+226 MB) — a 1 GB instance.
 DEFAULT_DECODE_SLOTS = 1
 # Refusing at once (WAIT=0) errors the normal case of two uploads a second
 # apart; waiting long holds one of the six gunicorn threads and must finish well
-# inside gunicorn's 30 s timeout. 5 s covers a decode or two (1-3 s each).diff --git a/djangotutorial/leaderboard/tasks.py b/djangotutorial/leaderboard/tasks.py
+# inside gunicorn's 30 s timeout. 5 s covers a decode or two (1-3 s each).
 DEFAULT_DECODE_WAIT_SECONDS = 5.0
 # Sweep interval while waiting: short enough to pick up a freed slot promptly,
 # long enough not to spin a core on a busy instance.
@@ -599,13 +597,20 @@ def process_image_field(instance, field_name):
         return
     max_width, max_height, cap, variant_kwargs = limits_for(instance, field_name)
 
-    stored = process_upload(field, max_width, max_height, cap,
-                            aspect=aspect_for(instance, field_name))
+    rewritten, stored = _convert(field, max_width, max_height, cap,
+                                 aspect=aspect_for(instance, field_name))
     if stored:
         field.name = stored
         models.Model.save(instance, update_fields=[field_name])
-    if variant_kwargs is not None:
-        make_webp_variant(field, **variant_kwargs)
+    if variant_kwargs is None:
+        return
+    # save() runs on every edit, not just on uploads -- an admin fixing a typo
+    # in the description used to re-download the poster, decode it and upload
+    # a fresh variant (two GETs, a PUT and a DELETE against R2 per save). When
+    # nothing was rewritten and the sibling exists, there is nothing to do.
+    if not rewritten and field.storage.exists(variant_name(field.name)):
+        return
+    make_webp_variant(field, **variant_kwargs)
 
 
 def _normalise_mode(img):
@@ -788,17 +793,29 @@ def process_upload(field_file, max_width, max_height, max_bytes, aspect=None):
     Storage-abstracted (reads and writes via ``field_file.storage``) so it never
     needs a local ``.path`` -- the same code serves local disk and S3/R2.
     """
+    return _convert(field_file, max_width, max_height, max_bytes, aspect)[1]
+
+
+def _convert(field_file, max_width, max_height, max_bytes, aspect=None):
+    """The body of `process_upload`, returning ``(rewritten, new_key)``.
+
+    ``rewritten`` is True whenever bytes were written -- including the in-place
+    case, where an oversized ``.webp`` is re-encoded under its own key and
+    ``new_key`` stays None. ``process_image_field`` needs that distinction to
+    know whether the mobile variant is stale; ``process_upload`` keeps its
+    original key-or-None contract for the backfill and the tests.
+    """
     name = getattr(field_file, "name", None)
     if not name or os.path.splitext(name)[1].lower() in VECTOR_EXTENSIONS:
-        return None
+        return False, None
     data = _read_bytes(field_file)
     if data is None:
-        return None
+        return False, None
     probe = _inspect(data)
     if probe is None:
-        return None  # unreadable or not an image — leave it alone
+        return False, None  # unreadable or not an image — leave it alone
     if _is_final(name, data, probe, max_width, max_height, max_bytes, aspect):
-        return None
+        return False, None
     fmt, width, height, animated = probe
 
     try:
@@ -819,15 +836,15 @@ def process_upload(field_file, max_width, max_height, max_bytes, aspect=None):
             # not copy the decoded image, so `img` must still be open here.
             payload = _encode_under_cap(frames, max_bytes, **extra)
     except (OSError, IOError, ValueError):
-        return None
+        return False, None
     if payload is None:
-        return None
+        return False, None
 
     storage = field_file.storage
     target = webp_name(name)
     if target == name:
         _overwrite(field_file, name, payload)
-        return None  # bytes changed, key did not — no model write needed
+        return True, None  # bytes changed, key did not — no model write needed
 
     # Two uploads in one directory can collide once extensions are normalised
     # ('logo.png' and 'logo.jpg' both want 'logo.webp'), and the second would
@@ -843,4 +860,4 @@ def process_upload(field_file, max_width, max_height, max_bytes, aspect=None):
             storage.delete(name)
     except (OSError, IOError):
         pass  # an orphan costs disk, a raised exception costs the upload
-    return target
+    return True, target
