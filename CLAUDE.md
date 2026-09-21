@@ -144,11 +144,24 @@ memory budget — re-measure with `script/memory_budget.py` before changing work
 
 ## Design system
 
-Tokens are CSS custom properties in `frontend/src/styles/colors_and_type.css`:
-`--color-pink #e15463` (accent / CTA / hover), `--gol-purple #2a2468`, `--gol-dark #1a0f0a`,
-`--gol-cream #fff1d4`, `--gol-gold #f5c842`. The homepage is the reference: hard cuts, opaque
-cards; ticket skin on texture, poster card on photos, frost for chrome only, cream ticket for
-events only.
+Tokens are CSS custom properties in `frontend/src/styles/colors_and_type.css`, and they are the
+**only** place a colour, small font size, radius, z-index layer or breakpoint may be spelled out —
+`npm run lint` runs `scripts/check-css.js`, which fails the build on any literal outside that
+file. Base colours: `--color-pink #e15463` (accent / CTA; `--color-pink-hover` on hover),
+`--color-gold #f5c842` (stamps, admin), `--color-purple #2d2a8e`, `--color-dark-brown #1a0f0a`,
+`--color-panel #150c08`, `--color-cream-light #fff1d4`. Alphas come from the `--alpha-<family>-NN`
+scales (snap to the nearest step). Type: `--text-page-title` / `--text-section` /
+`--text-card-title` plus eight small sizes (`--text-micro` … `--text-lead`). Six breakpoints:
+375 · 480 · 640 · 768 · 900 · 1100.
+
+The homepage is the reference: hard cuts, opaque cards; ticket skin on texture, poster card on
+photos, frost for chrome only, cream ticket for events only. Every other page is built from the
+shared primitives — `PageStage` (fixed photo + grain, three tints), `PageHero`, `.gol-card`
+(poster card, in `styles/shared-ui.css`), `SectionHeader`, `PageState` (loading / empty /
+error), `Badge`, `LoadMore`, `.gol-stamp`, `.gol-quote` — and `styles/poster-hero.css` for the
+three poster-hero pages (event detail, profile, player). Two button systems on purpose:
+`<Button>` for public CTAs, `.gol-btn` for form controls. A visual reference of the whole set is
+the "GOL Design System" artifact.
 
 ## Open items
 

@@ -91,3 +91,5 @@ jobs:
         run: npm ci
       - name: Run tests
         run: npm run test:run
+      - name: Lint (eslint + design-token guard)
+        run: npm run lint
