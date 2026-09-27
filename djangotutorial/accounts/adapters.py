@@ -4,10 +4,14 @@ The OAuth wiring in settings.py is boilerplate. These two classes are where the
 actual decisions live, and both exist to stop a specific attack rather than to
 make anything work.
 """
+import logging
+
 from allauth.account.adapter import DefaultAccountAdapter
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
 from django.conf import settings
 from django.utils import timezone
+
+logger = logging.getLogger(__name__)
 
 
 class AccountAdapter(DefaultAccountAdapter):
@@ -38,6 +42,32 @@ class SocialAccountAdapter(DefaultSocialAccountAdapter):
         SOCIALACCOUNT_EMAIL_AUTHENTICATION and _AUTO_CONNECT are off.
         """
         return True
+
+    def on_authentication_error(self, request, provider, error=None, exception=None,
+                                extra_context=None):
+        """Record why a social login failed.
+
+        allauth's own hook is a no-op, so every failure -- a client secret that
+        no longer matches, an authorization code that arrived twice, a `state`
+        that did not survive the round trip, a consent screen still in Testing
+        that Google refused -- renders the same generic Czech error page and
+        leaves nothing behind. This is the one leg of the flow no test can
+        exercise (it needs a real Google account), which makes it the last place
+        that should be silent.
+
+        ERROR level on purpose: sentry_sdk's logging integration turns a record
+        at this level into an event, so the reason reaches Sentry as well as the
+        Render log. `error` is allauth's AuthError code; `exception` carries
+        Google's own message (invalid_client, invalid_grant, …).
+        """
+        logger.error(
+            "social login failed: provider=%s error=%s exception=%r",
+            getattr(provider, "id", provider), error, exception,
+        )
+        return super().on_authentication_error(
+            request, provider, error=error, exception=exception,
+            extra_context=extra_context,
+        )
 
     def is_auto_signup_allowed(self, request, sociallogin):
         # Skip allauth's intermediate "confirm your details" form. Google already

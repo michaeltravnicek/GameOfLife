@@ -5,6 +5,8 @@ testing it would mostly test allauth. What is worth pinning down is the handful
 of decisions this project makes on top of allauth's defaults — each of which
 turns into a full account compromise if it silently regresses.
 """
+from types import SimpleNamespace
+
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.sessions.middleware import SessionMiddleware
@@ -12,6 +14,7 @@ from django.test import RequestFactory, TestCase
 from django.urls import reverse
 
 from allauth.socialaccount.models import SocialAccount, SocialLogin
+from allauth.socialaccount.providers.oauth2.client import OAuth2Error
 
 from accounts.adapters import AccountAdapter, SocialAccountAdapter
 from accounts.models import Profile
@@ -128,6 +131,23 @@ class SocialAccountAdapterTests(TestCase):
             self.adapter.is_open_for_signup(self._request(), None),
             AccountAdapter().is_open_for_signup(None),
         )
+
+    def test_authentication_error_is_logged(self):
+        # allauth's hook is a no-op, so without the override the only flow that
+        # cannot be tested end-to-end is also the only one leaving no trace.
+        # The reason has to reach the log (and through it Sentry), not just the
+        # generic error page the visitor sees.
+        provider = SimpleNamespace(id="google")
+        with self.assertLogs("accounts.adapters", level="ERROR") as captured:
+            self.adapter.on_authentication_error(
+                self._request(), provider,
+                error="invalid_client",
+                exception=OAuth2Error("unauthorized_client"),
+            )
+        logged = "\n".join(captured.output)
+        self.assertIn("google", logged)
+        self.assertIn("invalid_client", logged)
+        self.assertIn("unauthorized_client", logged)
 
 
 class AccountAdapterTests(TestCase):
