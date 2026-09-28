@@ -21,7 +21,7 @@
 .btn-ghost:hover:not(:disabled){border-color:var(--color-pink);color:var(--color-pink)}
 /* frost → same chunky 3D shape as nav, but a frosted translucent-black surface.
    Pairs next to the pink nav button as a darker, secondary CTA. */
-.btn-frost{background:var(--alpha-dark-50);color:var(--color-cream-light);border:2px solid var(--color-ledge);border-radius:16px;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);box-shadow:0 4px 0 0 var(--color-ledge),0 8px 22px var(--alpha-black-45)}
+.btn-frost{background:var(--glass-tint);color:var(--color-cream-light);border:2px solid var(--color-ledge);border-radius:16px;-webkit-backdrop-filter:var(--frost-blur);backdrop-filter:var(--frost-blur);box-shadow:0 4px 0 0 var(--color-ledge),0 8px 22px var(--alpha-black-45)}
 .btn-frost:hover:not(:disabled){background:var(--alpha-dark-70);color:var(--color-pink);transform:translateY(4px);box-shadow:0 0 0 0 var(--color-ledge),0 4px 16px var(--alpha-black-40)}
 .btn-frost:active:not(:disabled){transform:translateY(4px);box-shadow:0 0 0 0 var(--color-ledge),0 3px 12px var(--alpha-black-35)}
 /* admin → gold dashed chip, mono type. Marks an action only admins see, so it

@@ -2,12 +2,31 @@
    Small pieces that appear on more than one page and were copy-pasted per
    page. Defined once here.                                                   */
 
+/* ── Glass ── the ONE frosted-glass skin. Every translucent control, chip,
+   panel and bar on the site takes its tint, edge, shadow and blur from here,
+   so changing the glass means changing the tokens in colors_and_type.css —
+   never a component or a page. Component and page CSS set shape, type and
+   layout only.
+   In a cascade layer on purpose: anything unlayered beats it regardless of
+   file order, so variants (a pink badge, the selected city chip, a toast's
+   coloured edge, a focused search field) override the skin without
+   specificity games. The nav has its own navy version (Nav.css).
+   Page elements opt in with the `gol-glass` class, which also adds the grain. */
+@layer glass{
+  .gol-glass,
+  .gol-pill,.gol-badge,.pilltabs,.search-input,
+  .toast,.checkin-banner,.lb-like,.lb-info-credit,
+  .gallery-page .photo-like,.event-detail-page .rsvp-bar,.profile-page .action-bar,.gol-savebar{
+    background:var(--glass-tint);border:var(--glass-edge);box-shadow:var(--glass-shadow);
+    -webkit-backdrop-filter:var(--frost-blur);backdrop-filter:var(--frost-blur)}
+}
+
 /* ── Pill button — city filter, "load more", retry (Events + Leaderboard) ──
    Was called `.loc`, which collided with the small italic text inside a
    StatList row (`.stat-list .ev-info .loc`, used by the event-detail attendee
    lists). Renamed, so this can now be an unscoped shared class and reused on
    any page. The StatList `.loc` is a different thing and keeps its name. */
-.gol-pill{display:inline-flex;align-items:center;gap:7px;font-family:var(--font-body);font-weight:300;font-style:italic;font-size:var(--text-label-lg);letter-spacing:.04em;padding:7px 14px;min-height:30px;border-radius:var(--radius-pill);cursor:pointer;background:var(--alpha-dark-45);border:1.5px dashed var(--alpha-cream-30);color:var(--alpha-cream-80);transition:all var(--dur-base);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.gol-pill{display:inline-flex;align-items:center;gap:7px;font-family:var(--font-body);font-weight:300;font-style:italic;font-size:var(--text-label-lg);letter-spacing:.04em;padding:7px 14px;min-height:30px;border-radius:var(--radius-pill);cursor:pointer;color:var(--alpha-cream-80);transition:all var(--dur-base)}
 .gol-pill:hover{color:var(--color-white);border-color:var(--alpha-cream-55)}
 /* a11y: the pill renders 30px tall by design, which is under the 44px minimum
    touch target. Expand the *hit* area with a centred overlay instead of growing
@@ -56,11 +75,13 @@
 
 /* ── Grain overlay on a frosted control ──
    Faint texture over frosted chips/panels so they don't read as flat glass.
-   Drawn as an ::after behind the content (isolation:isolate keeps the negative
-   z-index inside the element). Was copy-pasted onto the gallery chips, the
-   leaderboard help link and the events filter controls. */
-.gol-tex,.gol-pill{position:relative;isolation:isolate}
-.gol-tex::after,.gol-pill::after{content:'';position:absolute;inset:0;border-radius:inherit;background:var(--tex-brown) 0 0/var(--tex-size) var(--tex-size) repeat;opacity:.3;pointer-events:none;z-index:-1}
+   Drawn as an ::after behind the content; `z-index:0` keeps that negative
+   z-index inside the element. It must NOT be `isolation:isolate`, which does
+   the same containing job but also makes the element a backdrop root — and a
+   backdrop root has nothing but itself to blur, so the frost on these controls
+   renders as a flat tint. */
+.gol-tex,.gol-pill,.gol-glass{position:relative;z-index:0}
+.gol-tex::after,.gol-pill::after,.gol-glass::after{content:'';position:absolute;inset:0;border-radius:inherit;background:var(--tex-brown) 0 0/var(--tex-size) var(--tex-size) repeat;opacity:.3;pointer-events:none;z-index:-1}
 
 
 /* ── Credits strip ──────────────────────────────────────────────────────────
@@ -149,18 +170,7 @@
 @keyframes gol-spin{to{transform:rotate(360deg)}}
 @media(prefers-reduced-motion:reduce){.gol-spinner{animation-duration:1.6s}}
 
-/* ── Stamps ── rotated "rubber stamp" marks. Two kinds:
-   gol-stamp        outlined pink, big display type — the closing stamp on
-                    historie / o bodech ("hist-coda-stamp", "obo-cta-stamp")
-   gol-stamp--gold  solid gold sticker with a dashed dark edge — "first",
-                    "brzy" ("first-stamp", "soon-stamp") */
-.gol-stamp{display:inline-flex;align-items:center;gap:14px;padding:14px 26px;border:2.5px solid var(--color-pink);border-radius:4px;font-family:var(--font-display);font-size:28px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-pink);transform:rotate(-3.5deg);background:var(--alpha-pink-10);box-shadow:inset 0 0 0 1px var(--alpha-pink-20),0 6px 18px var(--alpha-black-35)}
-.gol-stamp-arrow{font-family:var(--font-body);font-style:italic;font-weight:300;font-size:32px;line-height:.8}
-.gol-stamp--gold{display:inline-block;padding:6px 18px 3px;border:2px dashed var(--color-dark-brown);border-radius:6px;font-family:var(--font-display);font-size:var(--text-lead);letter-spacing:.14em;text-transform:uppercase;color:var(--color-dark-brown);background:var(--color-gold);transform:rotate(-3deg);box-shadow:0 6px 18px var(--alpha-black-35)}
-@media(max-width:640px){
-  .gol-stamp{font-size:22px;padding:12px 18px}
-  .gol-stamp--gold{font-size:var(--text-body);padding:5px 14px 2px;letter-spacing:.1em}
-}
+/* Stamps are a component — components/Stamp. */
 
 /* ── Checkbox ── the one checkbox on the site: a small square with a dashed
    edge that fills pink when ticked. Was hand-drawn on the login "Zůstat

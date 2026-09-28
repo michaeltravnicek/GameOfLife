@@ -6,6 +6,7 @@ import PageHero from '../../components/PageHero/PageHero';
 import PageStage from '../../components/PageStage/PageStage';
 import PageState from '../../components/PageState/PageState';
 import SectionHeader from '../../components/SectionHeader/SectionHeader';
+import Stamp from '../../components/Stamp/Stamp';
 import StatList from '../../components/StatList/StatList';
 import { eventList, EVENT_LIST_CLASS } from '../../components/StatList/eventColumns';
 import Reveal from '../../components/Reveal/Reveal';
@@ -20,9 +21,9 @@ const EXAMPLE_POOL = 120;
 const EXAMPLE_COLUMNS = eventList({ include: ['cat', 'info', 'dt', 'pts'] });
 
 const rewards = [
-  { ico: '★', title: 'Úrovně podle leaderboardu', text: 'Bronz · Stříbro · Zlato · Legenda. Každá úroveň otevírá vlastní okruh akcí, čepic a vnitřních vtipů, kterým venku nikdo nerozumí.' },
-  { ico: '%', title: 'Slevy na vstupné', text: 'Body půjde uplatnit jako slevu na vstupné na placené akce. Čím víc hraješ, tím levnější další hra. Logické.' },
-  { ico: '+', title: 'Další výhody', text: 'Přednostní registrace na vyprodané akce, merch se slevou, pozvánky na uzavřené nočky. Detaily upřesníme.' },
+  { title: 'Úrovně podle leaderboardu', text: 'Bronz · Stříbro · Zlato · Legenda. Každá úroveň otevírá vlastní okruh akcí, čepic a vnitřních vtipů, kterým venku nikdo nerozumí.' },
+  { title: 'Slevy na vstupné', text: 'Body půjde uplatnit jako slevu na vstupné na placené akce. Čím víc hraješ, tím levnější další hra. Logické.' },
+  { title: 'Další výhody', text: 'Přednostní registrace na vyprodané akce, merch se slevou, pozvánky na uzavřené nočky. Detaily upřesníme.' },
 ];
 
 export default function OBodechPage() {
@@ -80,24 +81,6 @@ export default function OBodechPage() {
           <SectionHeader rule={false} onPhoto eyebrow="— Příklady —" heading={<>Kolik za <span className="pink">co</span></>} />
           <p className="gol-quote gol-quote--on-photo gol-quote--lead">Žádný kalkulátor, žádný vzorec. Vojta přiřkne akci hodnotu předem podle toho, jak je dlouhá, náročná a kolik k ní bude potřeba odvahy. Nové typy akcí mají často vyšší ohodnocení.</p>
 
-          <div className="gol-card gol-card--flush examples">
-            {loading && !data ? (
-              <PageState kind="loading" compact text="Načítám příklady…" />
-            ) : error && !data ? (
-              <PageState kind="error" compact text="Příklady se nepodařilo načíst." onRetry={refetch} busy={loading} />
-            ) : (
-              <StatList
-                className={`${EVENT_LIST_CLASS} examples-list`}
-                columns={EXAMPLE_COLUMNS.columns}
-                gridTemplate={EXAMPLE_COLUMNS.gridTemplate}
-                rows={examples}
-                rowKey={(e) => e.slug}
-                rowLink={(e) => `/events/${e.slug}`}
-                rowClass={() => 'past'}
-                emptyText="Zatím žádné bodované akce."
-              />
-            )}
-          </div>
         </Reveal>
 
         <Reveal as="section" className="section">
@@ -107,8 +90,7 @@ export default function OBodechPage() {
           <div className="rewards">
             {rewards.map((r) => (
               <article key={r.title} className="gol-card gol-card--lift reward">
-                <span className="gol-stamp--gold soon-stamp">★ Brzy</span>
-                <div className="reward-ico">{r.ico}</div>
+                <Stamp tilt={4} className="soon-stamp">★ Brzy</Stamp>
                 <h3 className="reward-title">{r.title}</h3>
                 <p className="reward-text">{r.text}</p>
               </article>
@@ -118,10 +100,6 @@ export default function OBodechPage() {
       </main>
 
       <section className="obo-cta" aria-label="Sleduj nás">
-        <div className="gol-stamp">
-          <span>Brzy</span>
-          <span className="gol-stamp-arrow">→</span>
-        </div>
         <p className="obo-cta-text">Sleduj naše sociální sítě a web, ať ti neunikly nové informace o odměnách a benefitech.</p>
       </section>
 

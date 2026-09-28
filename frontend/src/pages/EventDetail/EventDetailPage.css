@@ -51,8 +51,8 @@
   .event-detail-page .gol-credit:nth-child(3) .gol-credit-sub{display:none}
 }
 
-/* ── RSVP BAR ── frost: chrome, not content. */
-.event-detail-page .rsvp-bar{background:var(--alpha-dark-80);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border-top:1px dashed var(--alpha-cream-20);border-bottom:1px dashed var(--alpha-cream-20);position:relative;z-index:2}
+/* ── RSVP BAR ── the shared glass (shared-ui.css); full width, so no side edges. */
+.event-detail-page .rsvp-bar{border-left:0;border-right:0;position:relative;z-index:2}
 .event-detail-page .rsvp-inner{position:relative;max-width:980px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:18px;padding:18px 24px;flex-wrap:wrap}
 .event-detail-page .rsvp-info{display:flex;align-items:center;gap:16px;flex-wrap:wrap;font-family:var(--font-body);font-size:var(--text-body-sm);color:var(--alpha-cream-85)}
 .event-detail-page .pts-tag{background:var(--color-pink);color:var(--color-white);font-family:var(--font-mono);font-weight:700;font-size:var(--text-meta);letter-spacing:.06em;padding:6px 14px;border-radius:var(--radius-pill);box-shadow:0 4px 14px var(--alpha-pink-40)}

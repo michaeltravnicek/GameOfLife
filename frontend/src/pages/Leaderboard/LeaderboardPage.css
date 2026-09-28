@@ -8,9 +8,9 @@
 
 .leaderboard-page .controls{position:relative;z-index:2;max-width:880px;margin:32px auto 0;padding:0 24px;display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap}
 .leaderboard-page .lb-search{flex:1;max-width:290px}
-/* Help affordance — the shared dashed pill, pink-accented with a circled "?"
-   so it stands out against the photo stage. */
-.leaderboard-page .lb-help-link{gap:9px;font-weight:600;font-size:var(--text-body-sm);color:var(--color-cream-light);border-color:var(--color-pink);padding:9px 18px;box-shadow:0 4px 14px var(--alpha-black-30)}
+/* Help affordance — the shared glass pill with a circled "?" so it stands out
+   against the photo stage. Layout and type only; the skin is shared. */
+.leaderboard-page .lb-help-link{gap:9px;font-weight:600;font-size:var(--text-body-sm);color:var(--color-cream-light);padding:9px 18px}
 .leaderboard-page .lb-help-q{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:var(--color-pink);color:var(--color-white);font-style:normal;font-weight:700;font-size:var(--text-meta);flex:none;transition:background var(--dur-base),color var(--dur-base)}
 .leaderboard-page .lb-help-link:hover{background:var(--color-pink);color:var(--color-white);border-color:var(--color-pink);box-shadow:0 6px 18px var(--alpha-pink-50)}
 .leaderboard-page .lb-help-link:hover .lb-help-q{background:var(--color-white);color:var(--color-pink)}
@@ -61,7 +61,11 @@
 .leaderboard-page .list-inner{position:relative;z-index:1;padding:10px 8px 14px}
 
 /* ── Animations ── (heroFade keyframe is defined in PageHero.css) */
-.leaderboard-page .controls{animation:heroFade .5s ease both .56s}
+/* `backwards`, never `both`: a filled opacity/transform animation stays applied
+   after it ends, which keeps .controls an animated layer — a backdrop root —
+   and the glass controls inside it then have nothing to blur. Fill only the
+   pre-start delay, then let go. */
+.leaderboard-page .controls{animation:heroFade .5s ease backwards .56s}
 
 @keyframes podRise{from{opacity:0;transform:translateY(36px)}to{opacity:1;transform:none}}
 /* `backwards` (not `both`): a filled animation would pin transform:none forever

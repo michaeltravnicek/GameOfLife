@@ -8,7 +8,7 @@
    override below only has to restate those two values. Padding is symmetric —
    the old 18/20/18/18 plus the close button's own 4px made the right gutter
    read 6px wider than the left. */
-.toast{--toast-pad:18px;--toast-icon:32px;pointer-events:auto;display:flex;align-items:flex-start;gap:14px;padding:var(--toast-pad);border-radius:var(--radius-card);border:1.5px dashed var(--alpha-cream-30);background:var(--alpha-dark-95);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:0 14px 38px var(--alpha-black-55);color:var(--color-cream-light);font-family:var(--font-body);font-size:var(--text-body);line-height:1.5;animation:toast-in .28s cubic-bezier(.22,.68,0,1.2) both}
+.toast{--toast-pad:18px;--toast-icon:32px;pointer-events:auto;display:flex;align-items:flex-start;gap:14px;padding:var(--toast-pad);border-radius:var(--radius-card);color:var(--color-cream-light);font-family:var(--font-body);font-size:var(--text-body);line-height:1.5;animation:toast-in .28s cubic-bezier(.22,.68,0,1.2) both}
 
 .toast-icon{flex-shrink:0;width:var(--toast-icon);height:var(--toast-icon);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-weight:700;font-size:var(--text-body-lg);line-height:1}
 /* min-height = icon height, so a message-only toast centres its single line
@@ -26,7 +26,8 @@
 .toast-close{flex-shrink:0;display:flex;align-items:center;justify-content:center;width:var(--toast-icon);height:var(--toast-icon);margin-right:calc(7px - var(--toast-icon)/2);padding:0;background:transparent;border:0;border-radius:50%;color:var(--alpha-cream-55);font-size:22px;line-height:1;cursor:pointer;transition:color var(--dur-fast),background var(--dur-fast)}
 .toast-close:hover{color:var(--color-white);background:var(--alpha-cream-10)}
 
-/* Variant tints. Each variant overrides the dashed border + icon color. */
+/* Variant tints. The skin is the shared glass (shared-ui.css); each variant
+   only recolours its edge and icon. */
 .toast-success{border-color:var(--alpha-success-60)}
 .toast-success .toast-icon{background:var(--alpha-success-20);color:var(--color-success);border:1px dashed var(--alpha-success-60)}
 .toast-error{border-color:var(--alpha-pink-70)}
@@ -44,7 +45,7 @@
 @media(max-width:640px){
   /* Full-bleed: the stack spans the whole screen width, anchored to the bottom. */
   .toast-stack{top:auto;bottom:0;right:0;left:0;max-width:none;gap:0;padding-bottom:env(safe-area-inset-bottom,0)}
-  .toast{--toast-pad:20px;--toast-icon:34px;border-radius:18px 18px 0 0;border-width:1.5px 0 0;font-size:var(--text-body-lg);box-shadow:0 -8px 32px var(--alpha-black-50)}
+  .toast{--toast-pad:20px;--toast-icon:34px;border-radius:18px 18px 0 0;border-width:1px 0 0;font-size:var(--text-body-lg);box-shadow:0 -8px 32px var(--alpha-black-50)}
   .toast + .toast{border-top-width:1px}
   .toast-icon{font-size:var(--text-lead)}
   .toast-title{font-size:var(--text-lead)}

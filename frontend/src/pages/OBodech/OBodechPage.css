@@ -1,6 +1,6 @@
 /* All selectors scoped under .obodech-page. Reading page on a dimmed photo —
    <PageStage image="gal1" tint="dim"> in the JSX; headings are <SectionHeader
-   onPhoto>, lead paragraphs .gol-quote, cards .gol-card, marks .gol-stamp. */
+   onPhoto>, lead paragraphs .gol-quote, cards .gol-card, marks <Stamp>. */
 .obodech-page{min-height:100vh;color:var(--color-cream-light);overflow-x:hidden}
 .obodech-page .gol-credits{align-items:flex-start;max-width:980px;margin:36px auto 0;padding:34px 24px 0}
 .obodech-page .gol-credit{max-width:240px}
@@ -18,14 +18,13 @@
 .obodech-page .examples .stat-list-inner{padding:10px 8px 14px}
 
 .obodech-page .rewards{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
-.obodech-page .soon-stamp{position:absolute;top:14px;right:14px;font-size:var(--text-body-sm);letter-spacing:.18em;padding:5px 12px 2px;transform:rotate(4deg);box-shadow:0 4px 10px var(--alpha-black-35)}
-.obodech-page .reward-ico{width:56px;height:56px;border-radius:50%;background:var(--alpha-pink-15);border:2px dashed var(--alpha-pink-45);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:26px;color:var(--color-pink);margin-bottom:18px}
+/* Placement only — the sticker itself is <Stamp> (components/Stamp). */
+.obodech-page .soon-stamp{position:absolute;top:14px;right:14px;box-shadow:0 4px 10px var(--alpha-black-35)}
 .obodech-page .reward-title{font-family:var(--font-display);font-size:24px;letter-spacing:.02em;text-transform:uppercase;color:var(--color-white);line-height:.95;margin-bottom:10px;padding-right:60px}
 .obodech-page .reward-text{font-family:var(--font-body);font-size:var(--text-body-sm);line-height:1.6;color:var(--alpha-cream-80)}
 
 /* Buttons render through the shared <Button> component (Button.css). */
 .obodech-page .obo-cta{position:relative;z-index:2;max-width:720px;margin:24px auto 0;padding:48px 24px 40px;text-align:center}
-.obodech-page .obo-cta .gol-stamp{margin-bottom:28px}
 .obodech-page .obo-cta-text{font-family:var(--font-body);font-style:italic;font-size:var(--text-lead);line-height:1.55;color:var(--alpha-cream-80);max-width:42ch;margin:0 auto 26px}
 
 @media(max-width:900px){

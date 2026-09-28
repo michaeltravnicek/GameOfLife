@@ -155,10 +155,20 @@ scales (snap to the nearest step). Type: `--text-page-title` / `--text-section` 
 375 · 480 · 640 · 768 · 900 · 1100.
 
 The homepage is the reference: hard cuts, opaque cards; ticket skin on texture, poster card on
-photos, frost for chrome only, cream ticket for events only. Every other page is built from the
+photos, glass for chrome and control surfaces, cream ticket for events only. **Glass is
+defined once**: the `@layer glass` rule at the top of `styles/shared-ui.css` gives every pill,
+badge, tab group, search field, toast, bar and panel its skin from the `--glass-tint` (dark
+brown 80%) / `--glass-edge` / `--glass-shadow` / `--frost-blur` tokens; page elements opt in
+with the `gol-glass` class. Component and page CSS set shape, type and layout only — never a
+background, border or blur on a glass element (variants and states may recolour; being
+unlayered, they win automatically). The nav alone is navy (`--glass-tint-nav`). The fill has
+to stay translucent: a tint over a `--tex-*` grain is opaque and the blur shows nothing, and
+`isolation:isolate` on a glass element or its ancestor cancels the blur (use `z-index:0`), and
+so does an ancestor with a filled (`both`/`forwards`) opacity or transform animation — use
+`backwards`. Every other page is built from the
 shared primitives — `PageStage` (fixed photo + grain, three tints), `PageHero`, `.gol-card`
 (poster card, in `styles/shared-ui.css`), `SectionHeader`, `PageState` (loading / empty /
-error), `Badge`, `LoadMore`, `.gol-stamp`, `.gol-quote` — and `styles/poster-hero.css` for the
+error), `Badge`, `LoadMore`, `Stamp`, `.gol-quote` — and `styles/poster-hero.css` for the
 three poster-hero pages (event detail, profile, player). Two button systems on purpose:
 `<Button>` for public CTAs, `.gol-btn` for form controls. A visual reference of the whole set is
 the "GOL Design System" artifact.

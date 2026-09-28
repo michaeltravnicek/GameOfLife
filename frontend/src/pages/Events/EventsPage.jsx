@@ -154,7 +154,7 @@ export default function EventsPage() {
       <section className="filterbar">
         <button
           type="button"
-          className={`gol-tex filter-toggle${filtersOpen ? ' open' : ''}`}
+          className={`gol-glass filter-toggle${filtersOpen ? ' open' : ''}`}
           onClick={() => setFiltersOpen((o) => !o)}
           aria-expanded={filtersOpen}
           aria-controls="filter-panel"
@@ -164,7 +164,7 @@ export default function EventsPage() {
           {activeFilterCount > 0 && <span className="ft-badge">{activeFilterCount}</span>}
           <span className="ft-chev" aria-hidden="true">{filtersOpen ? '▴' : '▾'}</span>
         </button>
-        <div className="gol-tex filter-count-pill" aria-live="polite">
+        <div className="gol-glass filter-count-pill" aria-live="polite">
           {loading && events.length === 0
             ? '…'
             : <><span className="fc-num">{totalCount}</span><span className="fc-lab">{totalCount >= 1 && totalCount <= 4 ? 'akce' : 'akcí'}</span></>}
@@ -172,7 +172,7 @@ export default function EventsPage() {
       </section>
 
       {filtersOpen && (
-        <section id="filter-panel" className="gol-card filter-panel">
+        <section id="filter-panel" className="gol-glass filter-panel">
           <div className="fp-group fp-search">
             <SearchInput
               value={query}

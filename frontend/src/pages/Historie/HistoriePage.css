@@ -7,7 +7,7 @@
 
 .historie-page main.timeline{position:relative;z-index:2;max-width:1080px;margin:0 auto;padding:48px 24px 100px}
 .historie-page .year-mark{display:flex;align-items:center;gap:18px;margin:40px 0 28px;padding:0 6px}
-.historie-page .year-mark .y{font-family:var(--font-display);font-size:52px;letter-spacing:.06em;color:var(--color-heading);background:var(--color-pink);padding:4px 22px 0;border-radius:var(--radius-pill);box-shadow:var(--shadow-glow-pink);transform:rotate(-1.5deg)}
+.historie-page .year-mark .y{font-family:var(--font-display);font-size:52px;letter-spacing:.06em;color:var(--color-heading);background:var(--color-pink);padding:.02em .42em .14em;border-radius:var(--radius-pill);box-shadow:var(--shadow-glow-pink);transform:rotate(-1.5deg)}
 .historie-page .year-mark.muted .y{background:var(--color-logo-purple);box-shadow:0 6px 22px var(--alpha-black-40)}
 
 .historie-page .spine{position:relative}
@@ -26,10 +26,18 @@
 
 .historie-page .card-media{position:relative;height:180px;background-size:cover;background-position:center;border-bottom:2px solid var(--color-black)}
 .historie-page .card-media::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,var(--alpha-black-35) 100%)}
-/* Date = <Badge tone="paper">, "first" = .gol-stamp--gold; only placement is local. */
-.historie-page .date-stamp{position:absolute;top:12px;left:12px;z-index:2}
-.historie-page .first-stamp{position:absolute;top:12px;left:50%;transform:translateX(-50%) rotate(-3deg);z-index:3}
-.historie-page .pts-badge{position:absolute;top:12px;right:12px;z-index:2;font-family:var(--font-display);font-size:var(--text-lead);letter-spacing:.04em;padding:6px 14px 3px;background:var(--color-pink);color:var(--color-white);border-radius:var(--radius-pill);box-shadow:0 4px 12px var(--alpha-pink-45);transform:rotate(4deg)}
+/* Date = <Badge tone="paper">, "first" = <Stamp> (components/Stamp).
+   One row, not three corners: the three marks are different heights and
+   widths, so pinning each to its own corner left their centres ragged and let
+   the centred sticker ride over the date pill on the narrower cards. A flex
+   row centres them on one line and keeps a gap between them whatever the text
+   does; it wraps rather than overlaps if a card ever gets too narrow. */
+.historie-page .card-stamps{position:absolute;top:12px;left:12px;right:12px;z-index:3;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px 10px}
+.historie-page .date-stamp{letter-spacing:.12em;flex:0 0 auto}
+/* A step down from the shared sticker size: at the two-column desktop width a
+   card is ~470px, and the full-size sticker plus both chips did not fit. */
+.historie-page .first-stamp{flex:0 0 auto}
+.historie-page .pts-badge{flex:0 0 auto;font-family:var(--font-display);font-size:var(--text-lead);letter-spacing:.04em;padding:.28em .8em .4em;background:var(--color-pink);color:var(--color-white);border-radius:var(--radius-pill);box-shadow:0 4px 12px var(--alpha-pink-45);transform:rotate(4deg)}
 .historie-page .ev-stamp{position:absolute;bottom:-14px;right:-10px;width:96px;height:96px;object-fit:contain;pointer-events:none;transform:rotate(-8deg);filter:drop-shadow(0 4px 10px var(--alpha-black-40));z-index:3}
 
 .historie-page .card-body{padding:22px 24px 22px}
@@ -58,7 +66,7 @@
    "Pokračuje" stamp (the old dashed border-top + dark center mask didn't
    work over the photo background and read as a stray line). */
 .historie-page .hist-coda{position:relative;z-index:2;max-width:780px;margin:60px auto 0;padding:60px 24px 30px;text-align:center}
-/* The "Pokračuje" mark is .gol-stamp; the footer is .gol-cta-foot (shared-ui). */
+/* The "Pokračuje" mark is <Stamp tone="outline">; the footer is .gol-cta-foot. */
 
 /* ── SUPPORT QR (env-gated, end of page) ── poster card matching the timeline
    cards; QR sits on a cream tile so it scans, badge marks the reward. */
@@ -88,7 +96,7 @@
   .historie-page .row .card,.historie-page .row.left .card,.historie-page .row.right .card,.historie-page .row:nth-child(even) .card{grid-column:2}
   .historie-page .card-title{font-size:24px}
   .historie-page .year-mark{margin:28px 0 20px}
-  .historie-page .year-mark .y{font-size:40px;padding:3px 16px 0}
+  .historie-page .year-mark .y{font-size:40px;padding-inline:.36em}
 }
 
 /* ── Mobile ── */
@@ -102,10 +110,8 @@
   .historie-page .card-media{height:160px}
   /* Reduce ev-stamp size so it doesn't overflow too much into card-body */
   .historie-page .ev-stamp{width:72px;height:72px;bottom:-8px;right:-6px}
-  .historie-page .first-stamp{font-size:var(--text-body);padding:5px 14px 2px;letter-spacing:.1em}
-  .historie-page .pts-badge{font-size:var(--text-body-lg);padding:5px 11px 2px}
-  /* Move date-stamp to bottom-left so it doesn't clash with centred first-stamp */
-  .historie-page .date-stamp{font-size:var(--text-micro);padding:4px 10px;top:auto;bottom:12px;left:12px}
+  .historie-page .pts-badge{font-size:var(--text-body-lg);padding-inline:.7em}
+  .historie-page .date-stamp{font-size:var(--text-micro);padding:4px 10px}
 
   .historie-page .card-body{padding:16px 16px 18px}
   .historie-page .card-title{font-size:21px;margin-bottom:8px}
@@ -117,7 +123,7 @@
   .historie-page .card.note .card-title{font-size:20px}
   .historie-page .card.note .note-mark{font-size:40px;top:10px;right:14px}
 
-  .historie-page .year-mark .y{font-size:34px;padding:2px 14px 0}
+  .historie-page .year-mark .y{font-size:34px;padding-inline:.34em}
 }
 
 /* ── Small mobile ── */
@@ -130,9 +136,9 @@
 
   .historie-page .card-media{height:144px}
   .historie-page .ev-stamp{width:60px;height:60px;bottom:-6px;right:-4px}
-  .historie-page .first-stamp{font-size:var(--text-label-lg);padding:4px 12px 2px;max-width:calc(100% - 80px);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .historie-page .pts-badge{font-size:var(--text-body-sm);padding:4px 9px 2px;top:8px;right:8px}
-  .historie-page .date-stamp{font-size:var(--text-micro);padding:3px 8px;top:auto;bottom:8px;left:8px}
+  .historie-page .pts-badge{font-size:var(--text-label-lg);padding-inline:.6em}
+  .historie-page .date-stamp{font-size:var(--text-micro);padding:3px 7px;letter-spacing:.04em}
+  .historie-page .card-stamps{top:8px;left:8px;right:8px;gap:6px 8px}
 
   .historie-page .card-body{padding:14px 14px 16px}
   .historie-page .card-tag{font-size:var(--text-micro);letter-spacing:.14em}
@@ -145,7 +151,7 @@
   .historie-page .card.note .note-mark{font-size:34px}
 
   .historie-page .year-mark{margin:22px 0 16px}
-  .historie-page .year-mark .y{font-size:30px;padding:2px 12px 0}
+  .historie-page .year-mark .y{font-size:30px;padding-inline:.32em}
 
   .historie-page .hist-coda{padding:44px 16px 24px}
 }
@@ -169,12 +175,12 @@
   .historie-page .spine::before{left:12px}
   .historie-page .card-media{height:130px}
   .historie-page .ev-stamp{width:50px;height:50px;bottom:-4px;right:-2px}
-  .historie-page .first-stamp{font-size:var(--text-meta);padding:3px 10px 2px;max-width:calc(100% - 70px)}
-  .historie-page .date-stamp{bottom:6px;left:6px;font-size:var(--text-micro);padding:3px 7px}
-  .historie-page .pts-badge{font-size:var(--text-label-lg);padding:3px 8px 2px}
+  .historie-page .date-stamp{font-size:var(--text-micro);padding:3px 7px}
+  .historie-page .card-stamps{top:6px;left:6px;right:6px;gap:5px 6px}
+  .historie-page .pts-badge{font-size:var(--text-label-lg);padding-inline:.6em}
   .historie-page .card-body{padding:12px 12px 14px}
   .historie-page .card-title{font-size:var(--text-lead)}
   .historie-page .card-text{font-size:var(--text-label-lg)}
   .historie-page .card.note .card-title{font-size:var(--text-body-lg)}
-  .historie-page .year-mark .y{font-size:26px;padding:2px 10px 0}
+  .historie-page .year-mark .y{font-size:26px;padding-inline:.3em}
 }

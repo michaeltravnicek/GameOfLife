@@ -1,0 +1,34 @@
+/* Rubber-stamp marks — see Stamp.jsx.
+
+   One shape for every stamp on the site. The edge takes `currentColor`, so a
+   colourway only has to name a fill and an ink and the border follows; that is
+   what keeps the gold sticker and the pink closing stamp identical in
+   everything but colour and scale.
+
+   Vertical padding is in em and weighted toward the bottom. The display face
+   carries a 1.07 ascender against a 0.71 cap height, so its capitals sit low
+   in their line box: equal padding reads bottom-heavy at every size. In em the
+   correction holds as the font-size steps down per breakpoint — which the old
+   per-page pixel paddings could not do, and why the two pages had drifted
+   apart in the first place. */
+.gol-stamp{display:inline-flex;align-items:center;justify-content:center;gap:.45em;font-family:var(--font-display);text-transform:uppercase;letter-spacing:.12em;line-height:1;white-space:nowrap;border:2px dashed currentColor;border-radius:6px;padding:.34em 1em .4em;box-shadow:0 6px 18px var(--alpha-black-35);transform:rotate(var(--stamp-tilt))}
+
+/* Colourways — fill + ink; the dashed edge inherits the ink. */
+.gol-stamp--gold{--stamp-tilt:-3deg;background:var(--color-gold);color:var(--color-dark-brown)}
+.gol-stamp--pink{--stamp-tilt:-3.5deg;background:var(--color-pink);color:var(--color-white)}
+
+/* Scale — padding and gap are in em, so size is one declaration. */
+.gol-stamp--sm{font-size:var(--text-body-sm)}
+.gol-stamp--lg{font-size:28px}
+
+.gol-stamp-arrow{font-family:var(--font-body);font-style:italic;font-weight:300;font-size:1.14em;line-height:.8}
+
+@media(max-width:640px){
+  .gol-stamp{letter-spacing:.1em}
+  .gol-stamp--sm{font-size:var(--text-label-lg)}
+  .gol-stamp--lg{font-size:22px}
+}
+@media(max-width:480px){
+  .gol-stamp{letter-spacing:.06em}
+  .gol-stamp--sm{font-size:var(--text-meta)}
+}

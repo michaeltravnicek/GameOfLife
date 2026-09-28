@@ -1,7 +1,13 @@
 /* Frosted navy pill: a darker translucent navy base, a heavy blur, a thin
    hairline border and a soft top highlight. A faint blue grain sits on top
    (via ::before) just to break up the flat frost — never a full-opacity fill. */
-nav.top{position:fixed;top:calc(24px + env(safe-area-inset-top,0px));left:60px;right:60px;z-index:var(--z-nav);display:flex;align-items:center;justify-content:space-between;padding:2px 13px 2px 36px;border-radius:var(--radius-pill);background:var(--alpha-navy-70);-webkit-backdrop-filter:blur(24px) saturate(125%);backdrop-filter:blur(24px) saturate(125%);border:1px solid var(--alpha-white-15);box-shadow:0 8px 32px var(--alpha-black-30),inset 0 1px 1px var(--alpha-white-15)}
+nav.top{position:fixed;top:calc(24px + env(safe-area-inset-top,0px));left:60px;right:60px;z-index:var(--z-nav);display:flex;align-items:center;justify-content:space-between;padding:2px 13px 2px 36px;border-radius:var(--radius-pill);border:var(--glass-edge);box-shadow:var(--glass-shadow)}
+/* The pill's tint and blur sit on ::after, not on nav.top itself: an element
+   that carries backdrop-filter becomes a backdrop root, and the two menus
+   nested inside the nav would then blur the pill instead of the page — they
+   would open as flat navy panels. On a pseudo-element the frost stays, and
+   the menus keep their own. */
+nav.top::after{content:'';position:absolute;inset:0;border-radius:inherit;background:var(--glass-tint-nav);-webkit-backdrop-filter:var(--frost-blur);backdrop-filter:var(--frost-blur);pointer-events:none;z-index:-2}
 /* Grain overlay: below the links (negative z-index), above the tint, at low
    opacity so it only textures the frost. Shared by the pill and both menus. */
 nav.top::before,.nav-user-menu::before,.nav-drop::before{content:'';position:absolute;inset:0;border-radius:inherit;background:var(--tex-blue) 0 0/var(--tex-size) var(--tex-size) repeat;opacity:.3;pointer-events:none;z-index:-1}
@@ -17,7 +23,7 @@ nav.top::before,.nav-user-menu::before,.nav-drop::before{content:'';position:abs
 
 /* Avatar dropdown (profile + logout) */
 .nav-user{position:relative;display:flex;align-items:center}
-.nav-user-menu{position:absolute;top:calc(100% + 8px);right:0;min-width:184px;background:var(--alpha-navy-80);-webkit-backdrop-filter:blur(24px) saturate(125%);backdrop-filter:blur(24px) saturate(125%);border:1px solid var(--alpha-white-15);border-radius:var(--radius-card);box-shadow:0 14px 36px var(--alpha-black-40),inset 0 1px 1px var(--alpha-white-15);padding:8px;display:none;flex-direction:column;gap:2px;z-index:var(--z-nav-menu)}
+.nav-user-menu{position:absolute;top:calc(100% + 8px);right:0;min-width:184px;background:var(--alpha-navy-80);-webkit-backdrop-filter:var(--frost-blur);backdrop-filter:var(--frost-blur);border:1px solid var(--alpha-white-15);border-radius:var(--radius-card);box-shadow:0 14px 36px var(--alpha-black-40),inset 0 1px 1px var(--alpha-white-15);padding:8px;display:none;flex-direction:column;gap:2px;z-index:var(--z-nav-menu)}
 .nav-user-menu.open{display:flex;animation:navUserPop .18s ease both}
 @keyframes navUserPop{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
 .nav-user-name{font-size:var(--text-label);letter-spacing:.12em;color:var(--alpha-white-55);padding:6px 12px 8px;border-bottom:1px dashed var(--alpha-white-10);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -34,7 +40,7 @@ nav.top::before,.nav-user-menu::before,.nav-drop::before{content:'';position:abs
 .nav-hamburger:hover{color:var(--color-pink)}
 
 /* Mobile dropdown — full-width popup, same visual language as the avatar menu */
-.nav-drop{position:absolute;top:calc(100% + 10px);left:0;right:0;background:var(--alpha-navy-80);-webkit-backdrop-filter:blur(24px) saturate(125%);backdrop-filter:blur(24px) saturate(125%);border:1px solid var(--alpha-white-15);border-radius:20px;box-shadow:0 16px 40px var(--alpha-black-45),inset 0 1px 1px var(--alpha-white-15);padding:10px;display:none;flex-direction:column;gap:2px;z-index:var(--z-nav-menu)}
+.nav-drop{position:absolute;top:calc(100% + 10px);left:0;right:0;background:var(--alpha-navy-80);-webkit-backdrop-filter:var(--frost-blur);backdrop-filter:var(--frost-blur);border:1px solid var(--alpha-white-15);border-radius:20px;box-shadow:0 16px 40px var(--alpha-black-45),inset 0 1px 1px var(--alpha-white-15);padding:10px;display:none;flex-direction:column;gap:2px;z-index:var(--z-nav-menu)}
 .nav-drop.open{display:flex;animation:navUserPop .2s ease both}
 .nav-drop-name{font-size:var(--text-meta);letter-spacing:.12em;color:var(--alpha-white-55);padding:8px 14px 10px;border-bottom:1px dashed var(--alpha-white-10);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .nav-drop-item{font-family:var(--font-mono);font-size:var(--text-lead);font-weight:600;letter-spacing:.02em;color:var(--alpha-white-90);background:none;border:0;cursor:pointer;text-align:left;text-decoration:none;padding:14px 14px;border-radius:10px;transition:background var(--dur-fast),color var(--dur-fast);width:100%}

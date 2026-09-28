@@ -10,14 +10,14 @@ footer{position:relative;z-index:2;background:var(--color-purple);background-ima
 .ft-desc{font-family:var(--font-body);font-size:var(--text-label-lg);font-weight:300;font-style:italic;line-height:1.7;color:var(--alpha-white-90);max-width:440px;margin-bottom:16px}
 .ft-contact{font-family:var(--font-body);font-size:var(--text-label-lg);color:var(--alpha-white-85);line-height:1.7}
 .ft-credit{font-family:var(--font-body);font-size:var(--text-label);font-style:italic;color:var(--alpha-white-60);margin-top:14px}
+.ft-policy{margin-top:14px}
 @media(max-width:640px){
   footer{padding:40px 24px 36px}
   .ft-inner{grid-template-columns:1fr;gap:40px}
   .ft-right{align-items:flex-start;text-align:left}
-  /* The menu stays on phones — a footer that drops its links is unfinished.
-     Two columns so the eight links do not become a wall. */
-  .ft-menu{display:grid;grid-template-columns:1fr 1fr;column-gap:24px}
-  .ft-menu .ft-label{grid-column:1 / -1}
+  /* Phones: the whole menu column goes — the burger nav already carries the
+     routes. Only the policy link stays, and it lives with the logo block. */
+  .ft-menu{display:none}
 }
 @media(max-width:480px){
   footer{padding:32px 16px 28px}

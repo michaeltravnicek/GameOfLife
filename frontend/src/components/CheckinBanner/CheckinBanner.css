@@ -1,12 +1,12 @@
 /* Floating check-in notice — an OVERLAY on the home hero, absolutely
    positioned so it never pushes the page down (the hero fills the viewport;
-   the purple page background behind it must stay hidden). Skin matches the
-   toast vocabulary: dark opaque panel, dashed cream border, pink accents. */
+   the purple page background behind it must stay hidden). Skin is the shared
+   glass (shared-ui.css), like the toasts; pink accents are its own. */
 .checkin-banners{position:absolute;top:calc(110px + env(safe-area-inset-top,0px));left:0;right:0;z-index:var(--z-banner);display:flex;flex-direction:column;gap:10px;padding:0 16px;max-width:1100px;margin:0 auto;pointer-events:none}
 @media(max-width:900px){.checkin-banners{top:calc(96px + env(safe-area-inset-top,0px))}}
 @media(max-width:480px){.checkin-banners{top:calc(84px + env(safe-area-inset-top,0px))}}
 
-.checkin-banner{pointer-events:auto;display:flex;align-items:center;gap:14px;padding:13px 14px 13px 16px;border-radius:var(--radius-card);border:1.5px dashed var(--alpha-cream-30);background:var(--alpha-dark-90);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:0 14px 38px var(--alpha-black-45);color:var(--color-cream-light);animation:checkin-banner-in .5s cubic-bezier(.22,.68,0,1.2) both}
+.checkin-banner{pointer-events:auto;display:flex;align-items:center;gap:14px;padding:13px 14px 13px 16px;border-radius:var(--radius-card);color:var(--color-cream-light);animation:checkin-banner-in .5s cubic-bezier(.22,.68,0,1.2) both}
 
 .checkin-banner-icon{flex-shrink:0;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:var(--text-body);line-height:1;background:var(--alpha-pink-15);border:1.5px dashed var(--alpha-pink-50)}
 .checkin-banner-text{flex:1;font-family:var(--font-body);font-size:var(--text-body-sm);line-height:1.4;display:flex;flex-direction:column;gap:2px;min-width:0}

@@ -21,8 +21,8 @@
 .profile-page .poster-handle{font-family:var(--font-mono);font-style:italic;font-size:var(--text-label-lg);color:var(--alpha-cream-80);letter-spacing:.16em;text-shadow:0 2px 10px var(--alpha-black-50)}
 .profile-page .gol-credit-sub strong{font-style:normal;font-weight:700;letter-spacing:.04em;color:var(--alpha-cream-90);text-transform:uppercase;font-size:var(--text-meta)}
 
-/* ── ACTION BAR ── frost: chrome, not content. */
-.profile-page .action-bar{position:sticky;top:0;z-index:var(--z-sticky);background:var(--alpha-cream-05);-webkit-backdrop-filter:blur(18px) saturate(1.15);backdrop-filter:blur(18px) saturate(1.15);border-top:1px dashed var(--alpha-cream-20);border-bottom:1px dashed var(--alpha-cream-20)}
+/* ── ACTION BAR ── the shared glass (shared-ui.css); full width, so no side edges. */
+.profile-page .action-bar{position:sticky;top:0;z-index:var(--z-sticky);border-left:0;border-right:0}
 .profile-page .action-inner{max-width:1100px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:18px;padding:16px 24px;flex-wrap:wrap}
 
 /* ── BODY ── */
@@ -172,5 +172,5 @@
    cards no longer blur at all (ticket skin), so only the bar needs this. */
 @media (max-width:768px){
   .profile-page .action-bar{
-    -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+    -webkit-backdrop-filter:var(--frost-blur-lite);backdrop-filter:var(--frost-blur-lite)}
 }

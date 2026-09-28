@@ -305,6 +305,28 @@
   --dur-base: .2s;
   --dur-slow: .3s;
 
+  /* ── Frost ── one recipe for every frosted-glass surface: the nav pill and
+     its menus, the floating bars, the filter panel, the pills and chips. The
+     surface names its own tint and edge (navy + hairline for chrome, dark
+     brown + dashed cream on the photo pages); only the blur is shared, so a
+     frost is always the same depth of glass. A frosted surface must keep a
+     translucent fill — a tint over one of the grain textures below is opaque,
+     and blur behind it shows nothing.
+     -lite is for bars pinned over scrolling content on phones, where the
+     full blur costs too much per frame. */
+  --frost-blur:      blur(24px) saturate(125%);
+  --frost-blur-lite: blur(6px);
+
+  /* ── Glass ── the one frosted-glass skin (applied in shared-ui.css, `@layer
+     glass`): a dense dark-brown tint — dense enough that the photo behind reads
+     as blurred colour, not as a picture — a solid white hairline (a dashed edge
+     reads as a chip), and a highlight along the top edge that gives the pane
+     its thickness. The nav alone is navy. Pair with --frost-blur. */
+  --glass-tint:     var(--alpha-dark-80);
+  --glass-tint-nav: var(--alpha-navy-70);
+  --glass-edge:   1px solid var(--alpha-white-15);
+  --glass-shadow: 0 8px 32px var(--alpha-black-30), inset 0 1px 1px var(--alpha-white-15);
+
   --tex-purple:   url('/img/Grain_texture_purple.webp');
   --tex-brown:    url('/img/Grain_texture_brown.webp');
   --tex-brown-2:  url('/img/Grain_texture_brown2.webp');

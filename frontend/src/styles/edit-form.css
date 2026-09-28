@@ -79,9 +79,9 @@
 .gol-commit-row{display:inline-flex;gap:12px;flex-wrap:wrap;justify-content:center;align-items:center}
 .gol-commit-note{font-family:var(--font-mono);font-style:italic;font-size:var(--text-label);letter-spacing:.18em;text-transform:uppercase;color:var(--alpha-cream-55);margin-top:18px}
 
-/* ── Save bar — slides up when there are unsaved changes. Frost is fine here:
-   it's chrome over scrolling content. ── */
-.gol-savebar{position:fixed;left:0;right:0;bottom:0;z-index:var(--z-sticky);background:var(--alpha-dark-95);-webkit-backdrop-filter:blur(16px) saturate(1.15);backdrop-filter:blur(16px) saturate(1.15);border-top:1px dashed var(--alpha-cream-20);transform:translateY(110%);transition:transform var(--dur-slow) cubic-bezier(.2,.7,.2,1);box-shadow:0 -14px 36px var(--alpha-black-50)}
+/* ── Save bar — slides up when there are unsaved changes. The shared glass
+   (shared-ui.css): chrome over scrolling content; a top edge only. ── */
+.gol-savebar{position:fixed;left:0;right:0;bottom:0;z-index:var(--z-sticky);border-width:1px 0 0;transform:translateY(110%);transition:transform var(--dur-slow) cubic-bezier(.2,.7,.2,1);box-shadow:0 -14px 36px var(--alpha-black-50)}
 .gol-savebar.visible{transform:translateY(0)}
 .gol-savebar-inner{max-width:1040px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 24px;flex-wrap:wrap}
 .gol-savebar-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
@@ -143,5 +143,5 @@
 /* Mobile: lighten the save bar's blur — the cards are opaque posters now, so
    only this chrome still blurs. */
 @media (max-width:768px){
-  .gol-savebar{-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+  .gol-savebar{-webkit-backdrop-filter:var(--frost-blur-lite);backdrop-filter:var(--frost-blur-lite)}
 }

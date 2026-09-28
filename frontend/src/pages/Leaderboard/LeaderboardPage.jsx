@@ -89,7 +89,6 @@ export default function LeaderboardPage() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Vyhledat hráče…"
-          variant="frost"
           className="lb-search"
         />
         <Button as="link" to="/o-bodech" variant="pill" className="lb-help-link">

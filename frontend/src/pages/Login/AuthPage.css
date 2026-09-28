@@ -79,7 +79,7 @@
 .auth-page .auth-google{display:flex;align-items:center;justify-content:center;gap:11px;
   width:100%;padding:13px 18px;border-radius:var(--radius-input);
   background:var(--alpha-white-05);border:1px solid var(--alpha-cream-20);
-  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:var(--frost-blur);backdrop-filter:var(--frost-blur);
   font-family:var(--font-body);font-size:var(--text-body);font-weight:600;
   color:var(--color-cream-light);text-decoration:none;
   transition:background var(--dur-base),border-color var(--dur-base),transform var(--dur-fast)}

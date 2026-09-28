@@ -2,6 +2,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import PageHero from '../../components/PageHero/PageHero';
 import PageStage from '../../components/PageStage/PageStage';
 import Badge from '../../components/Badge/Badge';
+import Stamp from '../../components/Stamp/Stamp';
 import Reveal from '../../components/Reveal/Reveal';
 import Button from '../../components/Button/Button';
 import { SITE_STATS } from '../../constants/siteStats';
@@ -93,9 +94,14 @@ function PhotoCard({ row }) {
   return (
     <div className={`gol-card gol-card--flush gol-card--lift card${row.muted ? ' muted' : ''}`}>
       <div className="card-media" style={{ backgroundImage: `url('${row.img}')` }}>
-        {row.first && <span className="gol-stamp--gold first-stamp">{row.first}</span>}
-        <Badge tone="paper" className="date-stamp">{row.date}</Badge>
-        <span className="pts-badge">{row.pts}</span>
+        {/* Date · "first" sticker · points sit in one row rather than being
+            pinned to three corners: a sticker centred on the card overlapped
+            the date pill as soon as either text grew. */}
+        <div className="card-stamps">
+          <Badge tone="paper" className="date-stamp">{row.date}</Badge>
+          {row.first && <Stamp className="first-stamp">{row.first}</Stamp>}
+          <span className="pts-badge">{row.pts}</span>
+        </div>
         {row.evStamp && <img className="ev-stamp" src={row.evStamp} alt="" />}
       </div>
       <div className="card-body">
@@ -163,10 +169,7 @@ export default function HistoriePage() {
       </main>
 
       <div className="hist-coda">
-        <div className="gol-stamp">
-          <span>Pokračuje</span>
-          <span className="gol-stamp-arrow">→</span>
-        </div>
+        <Stamp tone="pink" size="lg" arrow>Pokračuje</Stamp>
       </div>
 
       <section className="gol-cta-foot">
