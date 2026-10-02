@@ -13,9 +13,7 @@ import './styles/global.css';
 initSentry();
 
 // Renders immediately: the session cookie is sent by the browser on AuthContext's
-// initial /auth/me/ call, so there is no stored credential to load first. (The
-// native app used to need a token in memory before the first render; that app is
-// cancelled and the backend no longer accepts token auth.)
+// initial /auth/me/ call, so there is no stored credential to load first.
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <BrowserRouter>

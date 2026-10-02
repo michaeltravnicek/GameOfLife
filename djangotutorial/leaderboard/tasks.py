@@ -133,15 +133,19 @@ def _parse_points(raw: str) -> int | None:
 class SheetState:
     """What the database already holds for one event, loaded once per sheet.
 
-    A re-sync is almost entirely rows that are already stored, and the sync
-    used to look each one up as it went: one SELECT per row per table, plus a
-    transaction per row from ``get_or_create``. Two SELECTs per sheet replace
-    that. Rows written during the pass are added to the maps, so a person who
-    appears twice in one sheet (namesakes collapse into one player) is still
-    found on the second row.
+    A re-sync is almost entirely rows that are already stored, so they are
+    loaded with two SELECTs per sheet instead of one lookup per row. Rows
+    written during the pass are added to the maps, so a person who appears
+    twice in one sheet (namesakes collapse into one player) is still found on
+    the second row.
+
+    ``overwrite_points`` decides whether a stored row takes the sheet's points.
+    The daily run leaves them alone: an admin correction made after the import
+    (a bonus, a fixed typo) must survive the night. A forced run re-imports.
     """
 
-    def __init__(self, event: Event):
+    def __init__(self, event: Event, overwrite_points: bool = True):
+        self.overwrite_points = overwrite_points
         self.attendance = {u.user_id: u for u in UserToEvent.objects.filter(event=event)}
         self.feedback = {f.user_id: f for f in EventFeedback.objects.filter(event=event)}
 
@@ -166,33 +170,38 @@ def insert_rec(event: Event, rec: tuple, cols: dict[str, int], state: SheetState
 
     ute = state.attendance.get(user.pk)
     if ute is None:
-        ute = _create_attendance(user, event, points)
+        ute = _create_attendance(user, event, points, state.overwrite_points)
         state.attendance[user.pk] = ute
-    elif ute.points != points:
-        ute.points = points
-        ute.save(update_fields=["points"])
+    elif state.overwrite_points:
+        _set_points(ute, points)
 
     insert_feedback(event, user, rec, cols, state)
 
 
-def _create_attendance(user: User, event: Event, points: int) -> UserToEvent:
+def _set_points(ute: UserToEvent, points: int):
+    """Save `points` on the row, and only when they differ."""
+    if ute.points != points:
+        ute.points = points
+        ute.save(update_fields=["points"])
+
+
+def _create_attendance(user: User, event: Event, points: int,
+                       overwrite_points: bool) -> UserToEvent:
     """Insert the row, or adopt the one that appeared since the sheet started.
 
     The maps in SheetState are loaded once per sheet, and a geo check-in or an
     admin edit can land between that load and this row. The whole sheet is one
-    transaction now, so a bare IntegrityError here would roll back every row
-    before it -- and `build.sh` runs the sync under errexit, so it would also
-    fail the deploy. A savepoint keeps the collision local, exactly as
-    get_or_create used to.
+    transaction, so a bare IntegrityError here would roll back every row before
+    it -- and `build.sh` runs the sync under errexit, so it would also fail the
+    deploy. The savepoint keeps the collision local.
     """
     try:
         with transaction.atomic():
             return UserToEvent.objects.create(user=user, event=event, points=points)
     except IntegrityError:
         ute = UserToEvent.objects.get(user=user, event=event)
-        if ute.points != points:
-            ute.points = points
-            ute.save(update_fields=["points"])
+        if overwrite_points:
+            _set_points(ute, points)
         return ute
 
 
@@ -238,25 +247,25 @@ def insert_feedback(event: Event, user: User, rec: tuple, cols: dict[str, int],
             pass
     elif (existing.rating, existing.comment, existing.source) != (
             rating, comment, EventFeedback.SOURCE_FORM):
-        # Only a real change is written: update_or_create saved every row on
-        # every sync, which bumped `updated_at` and so reordered the admin's
-        # feedback list on each nightly run for no reason.
+        # Only a real change is written: every save bumps `updated_at`, which
+        # orders the admin's feedback list.
         existing.rating = rating
         existing.comment = comment
         existing.source = EventFeedback.SOURCE_FORM
         existing.save(update_fields=["rating", "comment", "source", "updated_at"])
 
 
-def handle_attendance(sheet_id: str, sheet_list_id: str, records: list[tuple[str]]):
+def handle_attendance(sheet_id: str, sheet_list_id: str, records: list[tuple[str]],
+                      overwrite_points: bool = True):
     """Import every data row of one sheet. Always a full pass: insert_rec is
     idempotent, and there is no reliable way to tell which rows are new — the
     event's attendance count includes web check-ins and admin edits that never
     came from the sheet, so a positional slice skips real rows.
 
-    One transaction per sheet. Row by row, every write was its own commit, and
-    on a hosted Postgres the commit round trip is most of what a row costs. It
-    also means a sheet lands whole or not at all. The badge signal keeps its
-    own savepoint, so one bad award cannot poison the rest of the sheet.
+    One transaction per sheet: on a hosted Postgres the commit round trip is
+    most of what a row costs, and a sheet lands whole or not at all. The badge
+    signal keeps its own savepoint, so one bad award cannot poison the rest of
+    the sheet. See SheetState for `overwrite_points`.
     """
     try:
         event = Event.objects.get(sheet_id=sheet_id, sheet_list_id=sheet_list_id)
@@ -268,12 +277,14 @@ def handle_attendance(sheet_id: str, sheet_list_id: str, records: list[tuple[str
 
     cols = header_map(records[0])
     with transaction.atomic():
-        state = SheetState(event)
+        state = SheetState(event, overwrite_points)
         for rec in records[1:]:
             insert_rec(event, rec, cols, state)
 
 
 def main(run_all: bool = True):
+    """Sync every response sheet. `run_all` re-imports points onto rows that
+    are already stored; without it only new rows and feedback are written."""
     print("Running")
     creds = service_account.Credentials.from_service_account_file(
         SERVICE_ACCOUNT_FILE, scopes=SCOPES
@@ -315,7 +326,8 @@ def main(run_all: bool = True):
                     ).execute()
 
                     sheet_list_id = str(sheet_meta["properties"]["sheetId"])
-                    handle_attendance(sheet_id, sheet_list_id, result.get("values", []))
+                    handle_attendance(sheet_id, sheet_list_id, result.get("values", []),
+                                      overwrite_points=run_all)
 
                     del result
                     reset_queries()

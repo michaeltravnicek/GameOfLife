@@ -55,7 +55,8 @@
 .event-detail-page .rsvp-bar{border-left:0;border-right:0;position:relative;z-index:2}
 .event-detail-page .rsvp-inner{position:relative;max-width:980px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:18px;padding:18px 24px;flex-wrap:wrap}
 .event-detail-page .rsvp-info{display:flex;align-items:center;gap:16px;flex-wrap:wrap;font-family:var(--font-body);font-size:var(--text-body-sm);color:var(--alpha-cream-85)}
-.event-detail-page .pts-tag{background:var(--color-pink);color:var(--color-white);font-family:var(--font-mono);font-weight:700;font-size:var(--text-meta);letter-spacing:.06em;padding:6px 14px;border-radius:var(--radius-pill);box-shadow:0 4px 14px var(--alpha-pink-40)}
+/* <Badge tone="live"> — upright and lower-case, it reads as a number. */
+.event-detail-page .pts-tag{font-style:normal;font-weight:700;font-size:var(--text-meta);letter-spacing:.06em;text-transform:none;padding:6px 14px}
 .event-detail-page .cap-tag{font-family:var(--font-mono);font-style:italic;font-size:var(--text-meta);color:var(--alpha-cream-70)}
 .event-detail-page .rsvp-recap{display:flex;flex-direction:column;align-items:center;gap:4px;width:100%;text-align:center}
 .event-detail-page .recap-eyebrow{font-size:var(--text-label);letter-spacing:.28em}
@@ -169,7 +170,7 @@
    underline or spinner chrome. The global :focus-visible ring marks it as
    editable for keyboard users; the fill change covers the mouse. */
 .event-detail-page .ev-pt{display:flex;align-items:baseline;justify-content:flex-end;gap:5px}
-.event-detail-page .att-pts-input{width:64px;background:transparent;border:0;color:var(--color-gold);font-family:var(--font-display);font-size:24px;line-height:1;letter-spacing:.03em;text-align:right;padding:2px 4px;border-radius:6px;transition:background var(--dur-fast),color var(--dur-fast)}
+.event-detail-page .att-pts-input{width:64px;background:transparent;border:0;color:var(--color-gold);font-family:var(--font-display);font-size:24px;line-height:1;letter-spacing:.03em;text-align:right;padding:2px 4px;border-radius:var(--radius-sm);transition:background var(--dur-fast),color var(--dur-fast)}
 .event-detail-page .att-pts-input:hover:not(:disabled){background:var(--alpha-cream-05)}
 .event-detail-page .att-pts-input:focus{background:var(--alpha-cream-10);color:var(--color-white)}
 .event-detail-page .att-pts-input:disabled{opacity:.45}

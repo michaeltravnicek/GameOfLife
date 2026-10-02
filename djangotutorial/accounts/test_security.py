@@ -121,6 +121,14 @@ class ProfileUpdateLengthGuardTests(TestCase):
         self.assertEqual(resp.status_code, 400)
         self.assertEqual(Profile.objects.get(user=self.user).city, "")
 
+    def test_full_name_longer_than_the_player_name_is_rejected(self):
+        # Each half fits its own column; together they overflow the player row.
+        resp = self.client.patch(
+            self.url, {"first_name": "a" * 150, "last_name": "b" * 150}, format="multipart")
+        self.assertEqual(resp.status_code, 400)
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.first_name, "")
+
     def test_values_at_the_limit_still_save(self):
         resp = self.client.patch(self.url, {"city": "z" * 100}, format="multipart")
         self.assertEqual(resp.status_code, 200)

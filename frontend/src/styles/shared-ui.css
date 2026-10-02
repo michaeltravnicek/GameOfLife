@@ -14,18 +14,22 @@
    Page elements opt in with the `gol-glass` class, which also adds the grain. */
 @layer glass{
   .gol-glass,
-  .gol-pill,.gol-badge,.pilltabs,.search-input,
+  .gol-pill,.gol-badge,.pilltabs,.search-input,.btn-frost,
   .toast,.checkin-banner,.lb-like,.lb-info-credit,
   .gallery-page .photo-like,.event-detail-page .rsvp-bar,.profile-page .action-bar,.gol-savebar{
     background:var(--glass-tint);border:var(--glass-edge);box-shadow:var(--glass-shadow);
     -webkit-backdrop-filter:var(--frost-blur);backdrop-filter:var(--frost-blur)}
+  /* The sticky bars stay pinned over scrolling content, so on phones they
+     take the lighter blur: its per-frame cost is what matters there. */
+  @media (max-width:768px){
+    .profile-page .action-bar,.gol-savebar{
+      -webkit-backdrop-filter:var(--frost-blur-lite);backdrop-filter:var(--frost-blur-lite)}
+  }
 }
 
-/* ── Pill button — city filter, "load more", retry (Events + Leaderboard) ──
-   Was called `.loc`, which collided with the small italic text inside a
-   StatList row (`.stat-list .ev-info .loc`, used by the event-detail attendee
-   lists). Renamed, so this can now be an unscoped shared class and reused on
-   any page. The StatList `.loc` is a different thing and keeps its name. */
+/* ── Pill button — city filter, "load more", retry ──
+   Unscoped, so any page can use it. Not to be confused with the StatList's
+   `.loc`, the small italic place text inside a row. */
 .gol-pill{display:inline-flex;align-items:center;gap:7px;font-family:var(--font-body);font-weight:300;font-style:italic;font-size:var(--text-label-lg);letter-spacing:.04em;padding:7px 14px;min-height:30px;border-radius:var(--radius-pill);cursor:pointer;color:var(--alpha-cream-80);transition:all var(--dur-base)}
 .gol-pill:hover{color:var(--color-white);border-color:var(--alpha-cream-55)}
 /* a11y: the pill renders 30px tall by design, which is under the 44px minimum
@@ -61,16 +65,11 @@
 .gol-page-grain{position:fixed;inset:0;bottom:auto;height:100vh;height:100lvh;z-index:0;pointer-events:none;background:url('/img/Grain_texture_brown.webp') 0 0/var(--tex-size) var(--tex-size) repeat;opacity:var(--grain-opacity);mix-blend-mode:overlay}
 
 /* ── Dashed section rule ──
-   The short dashed divider under a section eyebrow. Was `.sec-rule` (profile)
-   and `.sec-hdr-rule` (SectionHeader component).
-
-   Was also `.gol-sec-rule` (edit-form) at a 0.05-different alpha — now one
-   rule on --alpha-cream-45. */
+   The short dashed divider under a section eyebrow, on every page. */
 .gol-rule{height:1px;background:repeating-linear-gradient(90deg,var(--alpha-cream-45) 0 6px,transparent 6px 12px);margin-bottom:14px}
 
 /* ── Flanking dashed lines ── a centred label with a dashed rule either side.
-   Was duplicated as `.year-mark` (historie), `.list-label` (leaderboard) and
-   `.group-label` (events). Put `gol-flank` on the flex container. */
+   Put `gol-flank` on the flex container. */
 .gol-flank::before,.gol-flank::after{content:'';flex:1;height:1px;background:repeating-linear-gradient(90deg,var(--alpha-cream-30) 0 6px,transparent 6px 12px)}
 
 /* ── Grain overlay on a frosted control ──
@@ -86,12 +85,7 @@
 
 /* ── Credits strip ──────────────────────────────────────────────────────────
    The centred row of big stat figures (label / value / sub) with a dashed rule
-   above it. Existed four times over — profile, event detail, o-bodech and
-   historie — under identical class names but separate per-page rules.
-
-   The dashed rule is drawn as ::before here. Profile and event detail used to
-   render a spare <span class="credits-rule"> element for it; that element is
-   gone, the pseudo replaces it. */
+   above it, drawn as ::before — no extra element needed. */
 .gol-credits{position:relative;z-index:2;display:flex;justify-content:center;align-items:flex-end;gap:0;padding:32px 24px 60px}
 .gol-credits::before{content:'';position:absolute;left:50%;transform:translateX(-50%);top:0;width:min(820px,calc(100% - 48px));height:1px;background:repeating-linear-gradient(90deg,var(--alpha-cream-45) 0 6px,transparent 6px 12px)}
 .gol-credit{flex:1;max-width:280px;min-width:0;padding:0 18px;text-align:center;color:var(--color-cream-light)}
@@ -132,9 +126,7 @@
    The homepage lb-card material: opaque dark brown + blue grain, solid black
    border with a fat bottom edge, one shadow. The card for PHOTO pages (the
    ticket skin, see StatList/TicketFrame, is the card for TEXTURE pages).
-   Was declared nine times over — home, historie ×2, privacy, o bodech,
-   leaderboard, auth, StatList and the edit forms — with the radius and the
-   shadow drifting on each copy. */
+   Pages use this class rather than restating the card. */
 .gol-card{position:relative;background:var(--color-dark-brown) var(--tex-blue) 0 0/var(--tex-size) var(--tex-size) repeat;border:2px solid var(--color-black);border-bottom:8px solid var(--color-black);border-radius:var(--radius-card);padding:26px;overflow:hidden;box-shadow:var(--shadow-poster)}
 .gol-card--flush{padding:0}                                   /* list containers */
 .gol-card--lift{transition:transform var(--dur-slow),border-color var(--dur-slow)}
@@ -176,7 +168,7 @@
    edge that fills pink when ticked. Was hand-drawn on the login "Zůstat
    přihlášen" row while the registration consent box fell back to the native
    OS control. Put `gol-check` on the <input type="checkbox">. */
-.gol-check{appearance:none;-webkit-appearance:none;width:18px;height:18px;flex:0 0 auto;border-radius:4px;border:1.5px dashed var(--alpha-cream-45);background:var(--alpha-white-05);cursor:pointer;position:relative;transition:background var(--dur-base),border-color var(--dur-base)}
+.gol-check{appearance:none;-webkit-appearance:none;width:18px;height:18px;flex:0 0 auto;border-radius:var(--radius-xs);border:1.5px dashed var(--alpha-cream-45);background:var(--alpha-white-05);cursor:pointer;position:relative;transition:background var(--dur-base),border-color var(--dur-base)}
 .gol-check:hover{border-color:var(--alpha-cream-80)}
 .gol-check:checked{background:var(--color-pink);border-color:var(--color-pink);border-style:solid}
 .gol-check:checked::after{content:'';position:absolute;left:5px;top:2px;width:5px;height:9px;border:solid var(--color-white);border-width:0 2px 2px 0;transform:rotate(45deg)}

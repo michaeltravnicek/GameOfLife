@@ -19,14 +19,6 @@
 .auth-page .auth-card-inner{position:relative;z-index:2;padding:38px 40px 40px}
 .auth-page .auth-badge{position:absolute;top:-46px;right:-25px;width:126px;height:126px;transform:rotate(12deg);object-fit:contain;pointer-events:none;filter:drop-shadow(0 5px 12px var(--alpha-black-40));z-index:4}
 
-/* Inputs as mini tickets: the wrap is the white dashed frame, the input the
-   dark panel floating inside it (evcard-dark, shrunk to form scale). */
-.auth-page .form-field-input-wrap{border:2px dashed var(--alpha-white-85);border-radius:var(--radius-card);padding:var(--frame-gap);transition:border-color var(--dur-base)}
-.auth-page .form-field-input-wrap:focus-within{border-color:var(--color-pink)}
-.auth-page .form-field-input{background:var(--alpha-black-30);border-color:transparent;border-radius:9px;padding:13px 16px;color:var(--color-cream-light)}
-.auth-page .form-field-input:focus{background:var(--alpha-black-40);border-color:transparent;box-shadow:none}
-.auth-page .form-field-input.has-error{border-color:var(--alpha-pink-95)}
-.auth-page .form-field-pw-toggle{right:10px}
 
 /* ── CARD HEAD ── the page name lives in the card, at section scale. */
 .auth-page .auth-card-tag{font-family:var(--font-mono);font-size:var(--text-meta);letter-spacing:.22em;text-transform:uppercase;color:var(--color-pink);margin-bottom:8px;font-style:italic}
@@ -35,9 +27,9 @@
 .auth-page .auth-divider{height:1px;background:repeating-linear-gradient(90deg,var(--alpha-cream-30) 0 6px,transparent 6px 12px);margin-bottom:22px}
 
 /* ── MESSAGES ── */
-.auth-page .auth-success{font-family:var(--font-body);font-size:var(--text-body-sm);color:var(--alpha-cream-90);background:var(--alpha-success-10);border:1.5px dashed var(--alpha-success-60);border-radius:8px;padding:14px 16px;line-height:1.55;margin-bottom:18px}
+.auth-page .auth-success{font-family:var(--font-body);font-size:var(--text-body-sm);color:var(--alpha-cream-90);background:var(--alpha-success-10);border:1.5px dashed var(--alpha-success-60);border-radius:var(--radius-sm);padding:14px 16px;line-height:1.55;margin-bottom:18px}
 .auth-page .auth-success strong{color:var(--color-white)}
-.auth-page .auth-error{font-family:var(--font-mono);font-size:var(--text-meta);color:var(--color-pink-light);background:var(--alpha-pink-20);border:1px dashed var(--alpha-pink-60);border-radius:6px;padding:10px 12px;margin:0 0 14px}
+.auth-page .auth-error{font-family:var(--font-mono);font-size:var(--text-meta);color:var(--color-pink-light);background:var(--alpha-pink-20);border:1px dashed var(--alpha-pink-60);border-radius:var(--radius-sm);padding:10px 12px;margin:0 0 14px}
 
 /* ── FORM BITS ── */
 .auth-page .forgot{position:absolute;top:0;right:0;font-family:var(--font-mono);font-style:italic;font-size:var(--text-meta);color:var(--alpha-cream-55);transition:color var(--dur-base);border-bottom:1px solid transparent;text-decoration:none}
@@ -62,42 +54,10 @@
 .auth-page .auth-consent-row a:hover{color:var(--color-gold)}
 .auth-page .auth-consent-err{margin-top:7px;padding-left:28px;font-size:var(--text-label-lg);color:var(--color-pink)}
 
-/* ── GOOGLE SIGN-IN — separator, button, consent note.
-   The button is chrome, not content, so it takes the frost treatment rather
-   than the pink CTA: the primary action on this card is still the password
-   form's submit, and two competing pink buttons would read as a choice between
-   equals. Google's mark keeps its own colours (brand requirement), which is
-   also why it is the only saturated thing here. Keyboard focus uses the global
-   ring (global.css). ── */
-.auth-page .auth-or{display:flex;align-items:center;gap:14px;margin:22px 0 18px;
-  font-family:var(--font-mono);font-size:var(--text-label);letter-spacing:.14em;text-transform:uppercase;
-  color:var(--alpha-cream-60)}
-.auth-page .auth-or::before,
-.auth-page .auth-or::after{content:"";flex:1;height:1px;
-  background:repeating-linear-gradient(90deg,var(--alpha-cream-30) 0 6px,transparent 6px 12px)}
-
-.auth-page .auth-google{display:flex;align-items:center;justify-content:center;gap:11px;
-  width:100%;padding:13px 18px;border-radius:var(--radius-input);
-  background:var(--alpha-white-05);border:1px solid var(--alpha-cream-20);
-  -webkit-backdrop-filter:var(--frost-blur);backdrop-filter:var(--frost-blur);
-  font-family:var(--font-body);font-size:var(--text-body);font-weight:600;
-  color:var(--color-cream-light);text-decoration:none;
-  transition:background var(--dur-base),border-color var(--dur-base),transform var(--dur-fast)}
-.auth-page .auth-google:hover{background:var(--alpha-white-10);border-color:var(--color-pink)}
-.auth-page .auth-google:active{transform:translateY(1px)}
-.auth-page .auth-google-mark{width:19px;height:19px;flex:0 0 auto}
-
-.auth-page .auth-google-note{margin:12px 0 0;text-align:center;
-  font-family:var(--font-mono);font-size:var(--text-meta);line-height:1.6;
-  color:var(--alpha-cream-55)}
-.auth-page .auth-google-note a{color:var(--color-pink);text-decoration:underline;text-underline-offset:3px}
-.auth-page .auth-google-note a:hover{color:var(--color-gold)}
-
 /* ── Responsive ── */
 @media(max-width:640px){
   .auth-page .auth-container{padding:120px 16px 56px}
   .auth-page .auth-card-inner{padding:28px 24px 30px}
-  .auth-page .auth-google{padding:12px 14px;font-size:var(--text-body-sm)}
 }
 @media(max-width:480px){
   .auth-page .auth-container{padding:118px 12px 52px}

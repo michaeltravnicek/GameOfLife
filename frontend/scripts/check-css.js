@@ -75,7 +75,12 @@ for (const f of files) {
   }
   if (!isCss) continue;
 
-  for (const m of scan.matchAll(/border-radius:\s*9{3,4}px/g)) errors.push(`${rel(f)}:${lineOf(scan, m.index)} literal pill radius — use var(--radius-pill)`);
+  // A px radius outside calc() (where it is the offset of a nested corner).
+  for (const m of scan.matchAll(/border(?:-[a-z]+)?-radius:([^;}]*)/g)) {
+    if (!m[1].includes('calc(') && /\d+px/.test(m[1])) {
+      errors.push(`${rel(f)}:${lineOf(scan, m.index)} literal radius — use a --radius-* token`);
+    }
+  }
   for (const m of scan.matchAll(/font-size:\s*(\d+(?:\.\d+)?)px/g)) {
     const v = parseFloat(m[1]);
     if (v >= 10 && v <= 18) errors.push(`${rel(f)}:${lineOf(scan, m.index)} font-size ${m[1]}px — use a --text-* token`);

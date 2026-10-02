@@ -4,7 +4,7 @@ import Button from '../Button/Button';
 import { apiCheckin } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../Toast/ToastProvider';
-import { invalidateQuery } from '../../services/queryCache';
+import { invalidateEventLists, invalidateScores } from '../../services/queryKeys';
 import { extractApiError } from '../../services/errors';
 import { getPosition, GEO_ERROR_MESSAGES } from '../../utils/geolocation';
 import './CheckinBanner.css';
@@ -82,8 +82,8 @@ export default function CheckinBanner({ events = [] }) {
       setStatus(slug, 'done');
       // Refresh the check-in list (this event drops off once its points are
       // claimed) + the leaderboard the new points feed into.
-      invalidateQuery('checkin-events');
-      invalidateQuery((k) => k.startsWith('leaderboard:'));
+      invalidateEventLists();
+      invalidateScores();
     } catch (err) {
       toast.error(extractApiError(err, 'Check-in se nepodařil.'), { title: 'Check-in selhal' });
       setStatus(slug, 'error');

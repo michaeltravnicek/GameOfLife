@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "django",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-c", "cd djangotutorial && ../.venv/bin/python manage.py runserver 8000"],
+      "port": 8000
+    },
+    {
+      "name": "vite",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "frontend", "run", "dev"],
+      "port": 5173
+    }
+  ]
+}

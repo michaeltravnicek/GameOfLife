@@ -3,6 +3,7 @@ import {
   fetchHero, fetchCheckinEvents, fetchEvents, fetchLeaderboard,
 } from '../../services/api';
 import { useCachedQuery } from '../../services/queryCache';
+import { queryKeys } from '../../services/queryKeys';
 import { CACHE_TTL, PAGE_SIZE_EVENTS } from '../../constants/config';
 import EventCard from '../../components/EventCard/EventCard';
 import Hero from '../../components/Hero/Hero';
@@ -25,15 +26,15 @@ export default function HomePage() {
   // The old monolithic /home/ endpoint is gone — the page now composes several
   // independent, individually-cached endpoints. They fetch in parallel (each
   // useCachedQuery fires its own request), so there's no waterfall.
-  const { data: hero } = useCachedQuery('hero', fetchHero, { ttl: CACHE_TTL.HOME });
-  const { data: checkin } = useCachedQuery('checkin-events', fetchCheckinEvents, { ttl: CACHE_TTL.EVENT_DETAIL });
+  const { data: hero } = useCachedQuery(queryKeys.hero, fetchHero, { ttl: CACHE_TTL.HOME });
+  const { data: checkin } = useCachedQuery(queryKeys.checkinEvents, fetchCheckinEvents, { ttl: CACHE_TTL.EVENT_DETAIL });
   const { data: upcomingData, error: upcomingError, loading: upcomingLoading, refetch: refetchUpcoming } = useCachedQuery(
-    'events:upcoming|Vše|',
+    queryKeys.homeUpcoming,
     () => fetchEvents({ limit: PAGE_SIZE_EVENTS, offset: 0, period: 'upcoming' }),
     { ttl: CACHE_TTL.EVENTS },
   );
   const { data: lbData, error: lbError, loading: lbLoading, refetch: refetchLb } = useCachedQuery(
-    'leaderboard:home',
+    queryKeys.homeLeaderboard,
     () => fetchLeaderboard('active', { limit: HOME_TOP_PLAYERS }),
     { ttl: CACHE_TTL.LEADERBOARD },
   );

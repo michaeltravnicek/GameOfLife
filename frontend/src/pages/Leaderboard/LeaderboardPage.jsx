@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { fetchLeaderboard, fetchSeasons } from '../../services/api';
 import { useCachedQuery } from '../../services/queryCache';
+import { queryKeys } from '../../services/queryKeys';
 import { CACHE_TTL } from '../../constants/config';
 import PillTabs from '../../components/PillTabs/PillTabs';
 import SearchInput from '../../components/SearchInput/SearchInput';
@@ -27,7 +28,7 @@ export default function LeaderboardPage() {
   const [restCounts, setRestCounts] = useState({});
   const restVisible = restCounts[seasonId] ?? REST_PAGE_SIZE;
 
-  const { data: seasonsData } = useCachedQuery('seasons', fetchSeasons, { ttl: CACHE_TTL.LEADERBOARD });
+  const { data: seasonsData } = useCachedQuery(queryKeys.seasons, fetchSeasons, { ttl: CACHE_TTL.LEADERBOARD });
   // Memoised, not `?? []`: a fresh [] each render gives every dependent
   // useMemo a new identity, so they all recompute on every render.
   const seasons = useMemo(() => seasonsData?.seasons || [], [seasonsData]);
@@ -44,7 +45,7 @@ export default function LeaderboardPage() {
     : seasonId;
 
   const { data, loading: queryLoading, error, refetch } = useCachedQuery(
-    `leaderboard:${seasonId}`,
+    queryKeys.leaderboard(seasonId),
     () => fetchLeaderboard(seasonId),
     { ttl: CACHE_TTL.LEADERBOARD },
   );

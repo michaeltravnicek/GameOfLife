@@ -19,7 +19,8 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.throttling import UserRateThrottle
 
-from accounts.permissions import IsAdmin, IsAdminOrPhotographer, is_admin, is_close_or_above, is_staff_role
+from accounts.models import leaderboard_user_for
+from accounts.permissions import IsAdmin, IsAdminOrPhotographer, is_admin, is_close_or_above
 from leaderboard.checkin import validate_and_record_checkin
 from leaderboard.google_form import fetch_schema, submit as submit_form
 from leaderboard.models import (
@@ -40,8 +41,8 @@ from leaderboard.services import (
     attendees_for_event,
     cached_leaderboard_entries,
     categories_cached,
-    cities_cached,
     create_user_photo,
+    event_cities,
     gallery_page,
     home_stats,
     liked_photo_ids,
@@ -53,6 +54,7 @@ from leaderboard.services import (
     resolve_season,
     resolve_season_filter,
     rsvps_for_event,
+    season_detail,
     season_payload,
     seasons_cached,
     set_attendance,
@@ -167,25 +169,9 @@ def events_list(request):
         include_hidden=_is_admin,
         include_close_preview=_is_close_preview,
     )
-    if offset == 0:
-        from django.db.models import Count as _Count, Q as _Q
-        city_qs = Event.objects.exclude(place="")
-        if not _is_admin:
-            if _is_close_preview:
-                city_qs = city_qs.filter(_Q(visible_to_users=True) | _Q(visible_to_close=True))
-            else:
-                city_qs = city_qs.filter(visible_to_users=True)
-        if season is not None:
-            city_qs = city_qs.filter(
-                date__date__gte=season.start_date,
-                date__date__lte=season.end_date,
-            )
-        cities_data = [
-            {"name": c["place"], "count": c["count"]}
-            for c in city_qs.values("place").annotate(count=_Count("id")).order_by("place")
-        ]
-    else:
-        cities_data = []
+    cities_data = event_cities(
+        season, include_hidden=_is_admin, include_close_preview=_is_close_preview,
+    ) if offset == 0 else []
 
     return Response({
         "events": EventListSerializer(page, many=True, context={"request": request}).data,
@@ -205,7 +191,7 @@ def event_detail(request, slug):
     # The serializer renders the badge (logo) and category; join them here
     # rather than pay two extra queries on the busiest single-object page.
     event = visible_event_or_404(
-        request, slug, Event.objects.select_related("badge", "category"))
+        request.user, slug, Event.objects.select_related("badge", "category"))
     serializer = EventDetailSerializer(event, context={"request": request})
     return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -228,7 +214,7 @@ def event_rsvp(request, slug):
     # Lock the event row so the capacity check + create below are serialized:
     # without it two concurrent requests can both pass the count check and
     # oversell the event (TOCTOU).
-    event = visible_event_or_404(request, slug, Event.objects.select_for_update())
+    event = visible_event_or_404(request.user, slug, Event.objects.select_for_update())
 
     if request.method == "DELETE":
         # Leaving is always allowed, including after the event. Someone who
@@ -273,15 +259,14 @@ def event_rsvp(request, slug):
 @transaction.atomic
 def event_feedback(request, slug):
     """Create or update the current user's 1–10 rating + comment for an event."""
-    event = visible_event_or_404(request, slug)
+    event = visible_event_or_404(request.user, slug)
     serializer = FeedbackSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
 
     # Feedback is keyed on the leaderboard user (form submissions have no auth
     # account). An account with no linked leaderboard user has no attendance
     # either, so it could not have reached this endpoint legitimately.
-    profile = getattr(request.user, "profile", None)
-    lb_user = profile.leaderboard_user if profile else None
+    lb_user = leaderboard_user_for(request.user)
     if lb_user is None:
         return Response({"error": "Účet není propojen s hráčem v žebříčku."},
                         status=status.HTTP_400_BAD_REQUEST)
@@ -371,7 +356,6 @@ def player_season_detail(request, user_id, season_id):
     works for Google-Sheets players who have no account.
     """
     from accounts.models import Profile
-    from accounts.services import season_detail  # local import — avoid app-load cycle
     from leaderboard.privacy import visibility_for
     lb_user = get_object_or_404(LeaderboardUser, id=user_id)
     season = get_object_or_404(Season, pk=season_id)
@@ -472,7 +456,7 @@ def checkin_events_view(request):
 def event_checkin(request, slug):
     """Submit geo-verified attendance. Body: {latitude, longitude}."""
     event = visible_event_or_404(
-        request, slug,
+        request.user, slug,
         Event.objects.only(
             "id", "slug", "name", "date", "end_date", "points",
             "latitude", "longitude", "checkin_radius",
@@ -649,7 +633,7 @@ def event_images_upload(request, slug):
 
     Multipart body: `images` (one or many) or a single `image`.
     """
-    event = get_object_or_404(Event, slug=slug)
+    event = visible_event_or_404(request.user, slug)
     files = request.FILES.getlist("images")
     if not files and "image" in request.FILES:
         files = [request.FILES["image"]]
@@ -753,7 +737,7 @@ def event_delete(request, slug):
     """Delete an event (admin only).
 
     Cascades to awarded points, RSVPs, feedback and photos, so both cache
-    families have to go: the event-dependent keys (hero, cities, stats — evicted
+    families have to go: the event-dependent keys (hero, stats, categories — evicted
     by Event.delete()) and the boards, whose totals just changed.
     """
     event = get_object_or_404(Event, slug=slug)
@@ -846,7 +830,7 @@ def event_signup_form(request, slug):
     """
     # Same visibility gate as RSVP/feedback/check-in: a draft's survey link is
     # not for members yet, and a 200 here would confirm the hidden slug exists.
-    event = visible_event_or_404(request, slug)
+    event = visible_event_or_404(request.user, slug)
     if not event.survey_url:
         raise Http404("Tato akce nemá dotazník.")
 
@@ -876,7 +860,7 @@ def event_signup_form_submit(request, slug):
     so a stale page would otherwise write junk into the response sheet and
     report success.
     """
-    event = visible_event_or_404(request, slug)
+    event = visible_event_or_404(request.user, slug)
     if not event.survey_url:
         raise Http404("Tato akce nemá dotazník.")
 

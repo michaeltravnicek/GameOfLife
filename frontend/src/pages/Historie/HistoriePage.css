@@ -37,7 +37,8 @@
 /* A step down from the shared sticker size: at the two-column desktop width a
    card is ~470px, and the full-size sticker plus both chips did not fit. */
 .historie-page .first-stamp{flex:0 0 auto}
-.historie-page .pts-badge{flex:0 0 auto;font-family:var(--font-display);font-size:var(--text-lead);letter-spacing:.04em;padding:.28em .8em .4em;background:var(--color-pink);color:var(--color-white);border-radius:var(--radius-pill);box-shadow:0 4px 12px var(--alpha-pink-45);transform:rotate(4deg)}
+/* <Badge tone="live"> set in the display face, tilted like a sticker. */
+.historie-page .pts-badge{flex:0 0 auto;font-family:var(--font-display);font-style:normal;font-size:var(--text-lead);line-height:inherit;letter-spacing:.04em;text-transform:none;padding:.28em .8em .4em;transform:rotate(4deg)}
 .historie-page .ev-stamp{position:absolute;bottom:-14px;right:-10px;width:96px;height:96px;object-fit:contain;pointer-events:none;transform:rotate(-8deg);filter:drop-shadow(0 4px 10px var(--alpha-black-40));z-index:3}
 
 .historie-page .card-body{padding:22px 24px 22px}

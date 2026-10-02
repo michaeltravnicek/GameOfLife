@@ -1,10 +1,8 @@
 import './Badge.css';
 
 /**
- * Small mono-italic uppercase pill — status, category, date, count.
- *
- * Replaces six page-local versions (.ev-pill ×2, .ev-cat, .ft-badge,
- * .ev-hidden-badge, .date-stamp) that were the same pill drawn six times.
+ * Small mono-italic uppercase pill — status, category, date, count. Pages
+ * restyle its type and size through `className`, never its colours.
  *
  * tone : 'cream' (default, frosted on a photo) | 'pink' | 'gold' | 'muted'
  *      | 'live' (solid pink, for "právě teď") | 'paper' (cream on a photo)

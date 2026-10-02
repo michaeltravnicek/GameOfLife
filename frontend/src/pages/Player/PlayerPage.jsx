@@ -8,6 +8,7 @@ import { useSeasonView } from '../Profile/useSeasonView';
 import { ProfileCredits, EventsSections, PointsSections } from '../Profile/profileSections';
 import { fetchPlayer, fetchPlayerSeason } from '../../services/api';
 import { useCachedQuery } from '../../services/queryCache';
+import { queryKeys } from '../../services/queryKeys';
 import { CACHE_TTL } from '../../constants/config';
 import { shareLink } from '../../utils/shareUrl';
 import { initials } from '../../utils/name';
@@ -28,7 +29,7 @@ export default function PlayerPage() {
   const [view, setView] = useState('events');
 
   const { data: player, loading: playerLoading, error: playerError } = useCachedQuery(
-    `player:${userId}`,
+    queryKeys.player(userId),
     () => fetchPlayer(userId),
     { enabled: !!userId, ttl: CACHE_TTL.PROFILE },
   );
@@ -38,7 +39,7 @@ export default function PlayerPage() {
 
   // Lazy per-season detail (event list + points + rank) for the chosen season.
   const { data: seasonDetail } = useCachedQuery(
-    `player:${userId}:season:${seasonKey}`,
+    queryKeys.player(userId, seasonKey),
     () => fetchPlayerSeason(userId, seasonKey),
     { enabled: !!userId && seasonKey != null, ttl: CACHE_TTL.PROFILE },
   );

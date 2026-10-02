@@ -27,12 +27,9 @@ class CustomUserCreationForm(UserCreationForm):
         label="E-mail",
         widget=forms.EmailInput(attrs=_input_attrs("tvuj@email.cz", "email")),
     )
-    # No phone field, and no phone anywhere else either — the number was dropped
-    # from LeaderboardUser in migration 0026. It used to be the exact key that
-    # matched an account to its player row, which meant collecting a number from
-    # everyone for no other purpose. The e-mail is that key now: it creates the
-    # account's own player, and adopts an archive player carrying the same
-    # address. Anything less exact than that is an admin merge
+    # No phone field, and no phone anywhere else either: data minimisation. The
+    # e-mail is the identity key — it creates the account's own player, and
+    # adopts an archive player carrying the same address. Anything less exact than that is an admin merge
     # (accounts.matching + leaderboard.merging).
 
     # Enforced here, not only in React: a client-side checkbox is a UX nicety,

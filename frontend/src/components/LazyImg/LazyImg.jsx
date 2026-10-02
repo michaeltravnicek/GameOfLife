@@ -23,7 +23,7 @@ export default function LazyImg({ src, alt = '', className = '', margin = '400px
       ioRef.current = null;
     }
     if (!el || near) return;
-    // No IO support → just load; worst case equals the old behaviour.
+    // No IntersectionObserver → load right away.
     if (typeof IntersectionObserver === 'undefined') {
       setNear(true);
       return;

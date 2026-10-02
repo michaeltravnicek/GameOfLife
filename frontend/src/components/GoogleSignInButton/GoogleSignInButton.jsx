@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import './GoogleSignInButton.css';
 
 // Inline SVG rather than a hosted asset: Google's mark must keep its exact four
 // brand colours, and an <img> from gstatic would need a CSP img-src entry plus a
@@ -33,8 +34,8 @@ function GoogleMark() {
 export default function GoogleSignInButton({ label = 'Pokračovat přes Google', showConsent = true }) {
   return (
     <>
-      <div className="auth-or"><span>nebo</span></div>
-      <a href="/accounts/google/login/?process=login" className="auth-google">
+      <div className="auth-or gol-flank"><span>nebo</span></div>
+      <a href="/accounts/google/login/?process=login" className="auth-google gol-glass">
         <GoogleMark />
         <span>{label}</span>
       </a>

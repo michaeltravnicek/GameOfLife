@@ -3,8 +3,6 @@
 Points are synced from Google Sheets for every attendee, so most leaderboard
 entries belong to people with no account and no agreement to be published.
 """
-from datetime import date
-
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.cache import cache

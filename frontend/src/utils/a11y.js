@@ -11,6 +11,9 @@ export function pressable(onActivate) {
     tabIndex: 0,
     onClick: onActivate,
     onKeyDown: (e) => {
+      // Only keys pressed on the element itself: a real button nested inside
+      // (a like heart on a photo tile) must keep its own Enter/Space.
+      if (e.target !== e.currentTarget) return;
       if (e.key !== 'Enter' && e.key !== ' ') return;
       e.preventDefault();
       onActivate(e);

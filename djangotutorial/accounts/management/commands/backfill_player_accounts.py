@@ -10,7 +10,6 @@ address is adopted rather than duplicated. `--dry-run` prints what would happen
 and writes nothing -- worth doing first, because adoption is the step that hands
 somebody an existing history.
 """
-from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand
 from django.db import transaction
 

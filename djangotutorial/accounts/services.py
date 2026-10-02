@@ -16,26 +16,21 @@ from leaderboard.models import (
     Category,
     ProfileAnswer,
     ProfileQuestion,
-    Season,
     User as LeaderboardUser,
     UserToEvent,
 )
 from leaderboard.privacy import public_handle, visibility_for
-from leaderboard.services import all_time_rank, season_rank
+from leaderboard.services import all_time_rank, season_summaries
 from leaderboard.services.badges import badges_for
+from leaderboard.utils import event_logo_url, media_url
 
 from .models import Profile
 
 logger = logging.getLogger(__name__)
 
-
-def _badge_logo_url(event, request=None):
-    """Absolute URL of an event's logo, which lives on its badge. None if unset."""
-    badge = event.badge
-    if not badge or not badge.image:
-        return None
-    url = badge.image.url
-    return request.build_absolute_uri(url) if request else url
+# The player row mirrors the account's full name, and first + last name may
+# each be 150 characters while the player's name column holds fewer.
+PLAYER_NAME_MAX = LeaderboardUser._meta.get_field("name").max_length
 
 
 # ── Auth ───────────────────────────────────────────────────────────────
@@ -85,7 +80,7 @@ def ensure_leaderboard_user(user):
         return profile.leaderboard_user
 
     email = (user.email or "").strip().lower()
-    name = user.get_full_name().strip() or user.username
+    name = (user.get_full_name().strip() or user.username)[:PLAYER_NAME_MAX]
 
     adopted = None
     if email:
@@ -256,11 +251,7 @@ def serialize_user(user, request=None):
     if user is None or not user.is_authenticated:
         return None
     profile = getattr(user, "profile", None)
-    photo_url = None
-    if profile and profile.photo:
-        photo_url = profile.photo.url
-        if request is not None:
-            photo_url = request.build_absolute_uri(photo_url)
+    photo_url = media_url(profile.photo, request) if profile else None
     # Same single-name rule as profile_payload: linked leaderboard row wins.
     lb_name = ""
     if profile is not None and profile.leaderboard_user_id:
@@ -388,7 +379,7 @@ def profile_payload(profile_user, request):
                 # instalments, so hide_pts drops them here too.
                 **({} if gates.hide_pts else {"points": u.points}),
                 # The event's logo is its badge's artwork now.
-                "logo": _badge_logo_url(u.event, request),
+                "logo": event_logo_url(u.event, request),
             }
             for u in past_qs
         ]
@@ -523,6 +514,10 @@ def update_profile(user, data, files):
         user.username = new_handle
         handle_changed = True
     _reject_overlong(user, ("first_name", "last_name", "email", "username"))
+    if len(user.get_full_name().strip()) > PLAYER_NAME_MAX:
+        raise ValueError(
+            f"Jméno a příjmení jsou dohromady příliš dlouhé (max {PLAYER_NAME_MAX} znaků)."
+        )
     user.save()
 
     # The cached leaderboard row carries `profile_username`, so a rename that
@@ -622,83 +617,3 @@ def _save_profile_answers(user, data):
             )
         else:
             ProfileAnswer.objects.filter(auth_user=user, question_id=qid).delete()
-
-
-def _season_base(season):
-    return {
-        "id": season.id,
-        "label": season.name,
-        "start": season.start_date,
-        "end": season.end_date,
-        "is_active": season.is_active,
-    }
-
-
-def season_summaries(lb_user, hide_pts=False):
-    """Lightweight per-season points + rank for a user (no event lists).
-
-    Feeds the profile's season selector; the heavy per-event data is fetched
-    lazily per season via `season_detail`.
-
-    Under `hide_pts` the season keeps its label and dates but loses its points
-    and rank — a per-season total is still the total this flag withholds, only
-    sliced by year.
-    """
-    result = []
-    for season in Season.objects.all():
-        if hide_pts:
-            result.append(_season_base(season))
-            continue
-        season_pts = (
-            UserToEvent.objects
-            .filter(user=lb_user,
-                    event__date__date__gte=season.start_date,
-                    event__date__date__lte=season.end_date)
-            .aggregate(s=Sum("points"))["s"] or 0
-        )
-        result.append({
-            **_season_base(season),
-            "season_pts": season_pts,
-            "rank": season_rank(season, season_pts),
-        })
-    return result
-
-
-def season_detail(lb_user, season, hide_pts=False):
-    """Full breakdown for one season: points, rank, and the event list.
-
-    `hide_pts` strips every number the events could be added up into — the
-    season total, the rank, and the per-event points — while leaving the list of
-    events itself, which is what the separate `hide_events` flag governs.
-    """
-    if lb_user is None:
-        return {**_season_base(season), "season_pts": 0, "rank": None, "events": []}
-
-    utes = (
-        UserToEvent.objects
-        .filter(user=lb_user,
-                event__date__date__gte=season.start_date,
-                event__date__date__lte=season.end_date)
-        .select_related("event", "event__category")
-        .order_by("event__date")
-    )
-    season_pts = sum(u.points for u in utes)
-    payload = {
-        **_season_base(season),
-        "events": [
-            {
-                "slug":     u.event.slug,
-                "name":     u.event.name,
-                "place":    u.event.place,
-                "date":     u.event.date,
-                **({} if hide_pts else {"pts": u.points}),
-                "category": {"id": u.event.category.id, "name": u.event.category.name}
-                            if u.event.category else None,
-            }
-            for u in utes
-        ],
-    }
-    if not hide_pts:
-        payload["season_pts"] = season_pts
-        payload["rank"] = season_rank(season, season_pts)
-    return payload

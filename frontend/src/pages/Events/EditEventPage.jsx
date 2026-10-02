@@ -4,7 +4,7 @@ import Modal from '../../components/Modal/Modal';
 import Button from '../../components/Button/Button';
 import { useToast } from '../../components/Toast/ToastProvider';
 import { fetchEventDetail, updateEvent, deleteEvent, fetchCategories, fetchBadges } from '../../services/api';
-import { invalidateQuery } from '../../services/queryCache';
+import { invalidateEventLists, invalidateGallery, invalidateScores } from '../../services/queryKeys';
 import { extractApiError, reportError } from '../../services/errors';
 import { useEventForm, eventToForm, buildEventFormData } from './eventForm';
 import EventFormSections from './EventFormSections';
@@ -66,10 +66,10 @@ export default function EditEventPage() {
     try {
       const formData = buildEventFormData(form, { poster, allCategories, categories });
       await updateEvent(slug, formData);
-      // The detail page we land on, and every list/carousel that shows this
-      // event, would otherwise serve the pre-edit copy from the cache.
-      invalidateQuery((k) => k === `event:${slug}` || k.startsWith('events:')
-        || k === 'hero' || k === 'checkin-events');
+      // The detail page we land on, every list showing this event, and the
+      // boards (points or date may have moved) would serve pre-edit copies.
+      invalidateEventLists(slug);
+      invalidateScores();
       navigate(`/events/${slug}`);
     } catch (err) {
       setSaveError(extractApiError(err, 'Chyba při aktualizaci akce.'));
@@ -83,9 +83,9 @@ export default function EditEventPage() {
     try {
       await deleteEvent(slug);
       // Deleting cascades to points/RSVPs — drop everything derived from them.
-      invalidateQuery((k) => k.startsWith('events:') || k.startsWith('leaderboard:')
-        || k.startsWith('gallery') || k === 'hero' || k === 'checkin-events'
-        || k.startsWith('profile:') || k.startsWith('player:'));
+      invalidateEventLists(slug);
+      invalidateScores();
+      invalidateGallery();
       toast.success(`Akce „${form.name}“ byla smazána.`, { title: 'Smazáno' });
       navigate('/events');
     } catch (err) {

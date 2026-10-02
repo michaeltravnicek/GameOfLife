@@ -6,7 +6,6 @@ from django.conf import settings
 from django.core.cache import cache
 from django.db import connection
 from django.http import Http404, HttpResponse, JsonResponse
-from django.middleware.csrf import get_token
 from django.views.decorators.cache import cache_control, never_cache
 from django.views.decorators.csrf import ensure_csrf_cookie
 

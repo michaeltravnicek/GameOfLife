@@ -10,13 +10,6 @@
 .obodech-page .section{margin-bottom:64px}
 .obodech-page .section:last-child{margin-bottom:0}
 
-/* "Kolik za co" — real past events in the shared poster list; the poster
-   variant of StatList sits inside the .gol-card, so the list itself stays
-   flat (no second border). */
-.obodech-page .examples{margin-top:4px}
-.obodech-page .examples .stat-list{background:transparent;border-radius:0;padding:0}
-.obodech-page .examples .stat-list-inner{padding:10px 8px 14px}
-
 .obodech-page .rewards{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
 /* Placement only — the sticker itself is <Stamp> (components/Stamp). */
 .obodech-page .soon-stamp{position:absolute;top:14px;right:14px;box-shadow:0 4px 10px var(--alpha-black-35)}

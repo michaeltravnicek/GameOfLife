@@ -125,7 +125,7 @@
 .profile-page .dot.past{fill:var(--color-pink);stroke:var(--color-white);stroke-width:1.5}
 .profile-page .dot.future{fill:var(--color-panel);stroke:var(--color-pink);stroke-width:2}
 .profile-page .dot:hover{r:8;filter:drop-shadow(0 0 6px var(--alpha-pink-70))}
-.profile-page .dot-tip{position:absolute;background:var(--color-panel);border:1px dashed var(--alpha-cream-40);border-radius:6px;padding:7px 10px;font-family:var(--font-mono);font-style:italic;font-size:var(--text-label);color:var(--color-white);letter-spacing:.06em;pointer-events:none;transform:translate(-50%,-100%);opacity:0;transition:var(--dur-base);z-index:5;white-space:nowrap;line-height:1.5}
+.profile-page .dot-tip{position:absolute;background:var(--color-panel);border:1px dashed var(--alpha-cream-40);border-radius:var(--radius-sm);padding:7px 10px;font-family:var(--font-mono);font-style:italic;font-size:var(--text-label);color:var(--color-white);letter-spacing:.06em;pointer-events:none;transform:translate(-50%,-100%);opacity:0;transition:var(--dur-base);z-index:5;white-space:nowrap;line-height:1.5}
 .profile-page .dot-tip.show{opacity:1}
 .profile-page .dot-tip b{font-family:var(--font-display);font-style:normal;color:var(--color-gold);font-size:var(--text-body-sm);letter-spacing:.04em;margin-left:4px}
 
@@ -167,10 +167,3 @@
   .profile-page .back-actions .btn{flex:1 1 0;min-width:0;white-space:normal;text-align:center;line-height:1.15;padding:9px 8px;font-size:var(--text-label);letter-spacing:.02em}
 }
 
-/* Mobile: lighten the sticky bar's blur (smaller blur, no saturate) — the
-   per-frame cost matters while it's pinned over scrolling content. The info
-   cards no longer blur at all (ticket skin), so only the bar needs this. */
-@media (max-width:768px){
-  .profile-page .action-bar{
-    -webkit-backdrop-filter:var(--frost-blur-lite);backdrop-filter:var(--frost-blur-lite)}
-}

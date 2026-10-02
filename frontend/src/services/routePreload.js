@@ -10,6 +10,7 @@
  */
 
 import { prefetchQuery } from './queryCache';
+import { queryKeys } from './queryKeys';
 import { PAGE_SIZE_EVENTS, PAGE_SIZE_GALLERY } from '../constants/config';
 import {
   fetchEvents,
@@ -38,29 +39,27 @@ const importers = {
 // The home page is composed from several endpoints now (the old /home/ is gone),
 // so warming it means warming each piece the page reads on mount.
 const warmHome = () => {
-  prefetchQuery('hero', fetchHero);
+  prefetchQuery(queryKeys.hero, fetchHero);
   prefetchQuery(
-    'events:upcoming|Vše|',
+    queryKeys.homeUpcoming,
     () => fetchEvents({ limit: PAGE_SIZE_EVENTS, offset: 0, period: 'upcoming' }),
   );
-  prefetchQuery('leaderboard:home', () => fetchLeaderboard('active', { limit: 10 }));
+  prefetchQuery(queryKeys.homeLeaderboard, () => fetchLeaderboard('active', { limit: 10 }));
 };
 
 const dataWarmers = {
   '/': warmHome,
-  // Must mirror EventsPage's first cacheKey exactly (`events:${city}|${season}|${q}`)
-  // or the warm-up writes a key the page never reads. Defaults: city=Vše,
-  // season=all, empty query.
+  // EventsPage's first key: its default filters (city=Vše, season=all, no query).
   '/events': () => prefetchQuery(
-    'events:Vše|all|',
+    queryKeys.events('Vše', 'all', ''),
     () => fetchEvents({ limit: PAGE_SIZE_EVENTS, offset: 0 }),
   ),
   '/galerie': () => prefetchQuery(
-    'gallery:first',
+    queryKeys.galleryFirst,
     () => fetchGallery({ limit: PAGE_SIZE_GALLERY, offset: 0 }),
   ),
   '/leaderboard': () => prefetchQuery(
-    'leaderboard:active',
+    queryKeys.leaderboard('active'),
     () => fetchLeaderboard('active'),
   ),
 };
@@ -86,7 +85,7 @@ export function preloadEventDetail(slug) {
     });
   }
   if (slug) {
-    prefetchQuery(`event:${slug}`, () => fetchEventDetail(slug), { ttl: 60 * 1000 });
+    prefetchQuery(queryKeys.event(slug), () => fetchEventDetail(slug), { ttl: 60 * 1000 });
   }
 }
 
@@ -100,7 +99,7 @@ export function preloadProfile(username) {
     });
   }
   if (username) {
-    prefetchQuery(`profile:${username}`, () => fetchProfile(username), { ttl: 60 * 1000 });
+    prefetchQuery(queryKeys.profile(username), () => fetchProfile(username), { ttl: 60 * 1000 });
   }
 }
 

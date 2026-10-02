@@ -236,8 +236,7 @@
 
   /* ── Type ── GOL_Web_Manual_2026 defines exactly three families:
        Helvetica World (+ Italic) · IBM Plex Mono (+ Italic) · Ringold
-     Anything outside that set was removed (Barlow, IBM Plex Serif, Bebas Neue,
-     Open Sans, Helvetica Compressed, Helvetica Rounded).
+     Nothing outside that set is loaded.
 
      Ringold ships in five cuts per the manual — Sans, Clarendon, Gym, Slab,
      Soft. Only Gym and Sans have font files here, so the others fall back to
@@ -272,12 +271,18 @@
   --space-8:   2rem;
 
   /* ── Radii ── */
-  --radius-card:         14px;    /* poster card, floating cards, toasts */
-  --radius-ticket:       16px;    /* ticket frame, outer */
+  --radius-xs:           4px;     /* photo frames, checkboxes, inline code */
+  --radius-sm:           8px;     /* notices, small panels, tooltips */
+  --radius-input:        10px;    /* inputs, menu items */
   --radius-ticket-inner: 11px;    /* ticket panel, inner */
   --radius-md:           12px;    /* modal, image previews */
-  --radius-input:        10px;
+  --radius-card:         14px;    /* poster card, floating cards, toasts */
+  --radius-ticket:       16px;    /* ticket frame, outer; the chunky buttons */
+  --radius-lg:           20px;    /* nav dropdown, bottom sheet */
   --radius-pill:         9999px;
+  /* Distance between an input's dashed frame and its dark panel (the edit
+     forms' .gol-input and the auth pages' FormInput). */
+  --frame-gap:           2px;
 
   /* ── Focus ── the one keyboard focus ring (global.css applies it). */
   --focus-ring: 2px solid var(--color-pink);

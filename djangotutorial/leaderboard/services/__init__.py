@@ -12,9 +12,11 @@ from .attendance import (
     set_attendance,
 )
 from .catalog import (
-    categories_cached, cities_cached, profile_questions_cached, season_dict, seasons_cached,
+    categories_cached, profile_questions_cached, season_dict, seasons_cached,
 )
-from .events import EVENTS_LIST_FIELDS, add_event_images, list_events, visible_event_or_404
+from .events import (
+    EVENTS_LIST_FIELDS, add_event_images, event_cities, list_events, visible_event_or_404,
+)
 from .feedback import admin_feedback_list
 from .gallery import create_user_photo, gallery_page, liked_photo_ids
 from .home import active_checkin_events, home_stats, pick_hero_events
@@ -30,20 +32,22 @@ from .leaderboard import (
     resolve_season,
     resolve_season_filter,
     season_payload,
-    season_rank,
     top_players,
 )
+from .seasons import season_detail, season_rank, season_summaries
 
 __all__ = [
     "attendee_payload", "attendees_for_event", "remove_attendance",
     "rsvps_for_event", "set_attendance",
-    "categories_cached", "cities_cached", "profile_questions_cached",
+    "categories_cached", "profile_questions_cached",
     "season_dict", "seasons_cached",
-    "EVENTS_LIST_FIELDS", "add_event_images", "list_events", "visible_event_or_404",
+    "EVENTS_LIST_FIELDS", "add_event_images", "event_cities", "list_events",
+    "visible_event_or_404",
     "admin_feedback_list",
     "create_user_photo", "gallery_page", "liked_photo_ids",
     "active_checkin_events", "home_stats", "pick_hero_events",
     "all_time_rank", "attach_profile_usernames", "cached_leaderboard_entries", "create_leaderboard",
     "entries_payload", "leaderboard_for_season", "leaderboard_total", "player_payload",
-    "resolve_season", "resolve_season_filter", "season_payload", "season_rank", "top_players",
+    "resolve_season", "resolve_season_filter", "season_payload", "top_players",
+    "season_detail", "season_rank", "season_summaries",
 ]

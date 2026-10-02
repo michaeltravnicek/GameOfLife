@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { fetchEvents, fetchSeasons } from '../../services/api';
 import { usePaginatedQuery } from '../../services/usePaginatedQuery';
 import { useCachedQuery } from '../../services/queryCache';
+import { queryKeys } from '../../services/queryKeys';
 import { useAuth } from '../../context/AuthContext';
 import { CACHE_TTL, PAGE_SIZE_EVENTS, PAGE_SIZE_EVENTS_MOBILE, SEARCH_DEBOUNCE_MS } from '../../constants/config';
 import { isMobileViewport } from '../../utils/img';
@@ -16,11 +17,15 @@ import Badge from '../../components/Badge/Badge';
 import Button from '../../components/Button/Button';
 import { useReveal } from '../../hooks/useReveal';
 import './EventsPage.css';
+import { plural } from '../../utils/plural';
 
 // Server response → local fields. Used by the pagination hook.
 const extractEvents = (r) => r.events || [];
 const extractHasMore = (r) => !!r.has_more;
 const extractCount = (r) => r.count ?? 0;
+
+const eventWord = (n) => plural(n, 'akce', 'akce', 'akcí');
+const fmtCount = (n) => `${n} ${eventWord(n)}`;
 
 export default function EventsPage() {
   const { isAdmin } = useAuth();
@@ -29,9 +34,8 @@ export default function EventsPage() {
   const [query, setQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
 
-  // Season is now the primary filter (replaces the old upcoming/past/all tabs).
-  // Tab keys are strings; 'all' = every season.
-  const { data: seasonsData } = useCachedQuery('seasons', fetchSeasons, { ttl: CACHE_TTL.LEADERBOARD });
+  // Season is the primary filter. Tab keys are strings; 'all' = every season.
+  const { data: seasonsData } = useCachedQuery(queryKeys.seasons, fetchSeasons, { ttl: CACHE_TTL.LEADERBOARD });
   const seasonTabs = useMemo(
     () => [{ key: 'all', label: 'Vše' }, ...(seasonsData?.seasons || []).map((s) => ({ key: String(s.id), label: s.name }))],
     [seasonsData],
@@ -62,7 +66,7 @@ export default function EventsPage() {
   // Cache key encodes the filter combo so going back to the same filters
   // hits cache instantly.
   const cacheKey = useMemo(
-    () => `events:${city}|${season}|${debouncedQuery.trim()}`,
+    () => queryKeys.events(city, season, debouncedQuery.trim()),
     [city, season, debouncedQuery],
   );
 
@@ -113,7 +117,6 @@ export default function EventsPage() {
   }, []);
 
   // Czech plural for "akce": 1 → akce, 2-4 → akce, 0/5+ → akcí.
-  const fmtCount = (n) => `${n} ${n >= 1 && n <= 4 ? 'akce' : 'akcí'}`;
 
   // Visual split (server already filtered, this is purely for display).
   const { upcoming, past } = useMemo(() => ({
@@ -161,13 +164,13 @@ export default function EventsPage() {
         >
           <span className="ft-ico" aria-hidden="true">⚙</span>
           <span>Filtry</span>
-          {activeFilterCount > 0 && <span className="ft-badge">{activeFilterCount}</span>}
+          {activeFilterCount > 0 && <Badge tone="live" className="ft-badge">{activeFilterCount}</Badge>}
           <span className="ft-chev" aria-hidden="true">{filtersOpen ? '▴' : '▾'}</span>
         </button>
         <div className="gol-glass filter-count-pill" aria-live="polite">
           {loading && events.length === 0
             ? '…'
-            : <><span className="fc-num">{totalCount}</span><span className="fc-lab">{totalCount >= 1 && totalCount <= 4 ? 'akce' : 'akcí'}</span></>}
+            : <><span className="fc-num">{totalCount}</span><span className="fc-lab">{eventWord(totalCount)}</span></>}
         </div>
       </section>
 

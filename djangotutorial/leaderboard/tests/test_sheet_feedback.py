@@ -370,8 +370,8 @@ class SyncQueryCountTests(TestCase):
         real_state = tasks.SheetState
 
         class RacingState(real_state):
-            def __init__(self, event):
-                super().__init__(event)
+            def __init__(self, event, overwrite_points=True):
+                super().__init__(event, overwrite_points)
                 # After the preload, someone else writes row 3's attendance.
                 racer = resolve_player(self.records_ref[4], self.cols_ref)
                 UserToEvent.objects.create(user=racer, event=event, points=1)

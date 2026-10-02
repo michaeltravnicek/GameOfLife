@@ -82,16 +82,10 @@ def validate_and_record_checkin(event, auth_user, latitude, longitude) -> Checki
 
     # Late import — `accounts.models` depends on this app's models, so a
     # module-level import would create a circular load order.
-    from accounts.models import Profile
+    from accounts.models import leaderboard_user_for
     from .models import UserToEvent
 
-    profile = (
-        Profile.objects
-        .filter(user=auth_user)
-        .select_related("leaderboard_user")
-        .first()
-    )
-    lb_user = profile.leaderboard_user if profile else None
+    lb_user = leaderboard_user_for(auth_user)
     if lb_user is None:
         return CheckinResult(
             ok=False,

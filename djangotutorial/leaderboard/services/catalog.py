@@ -1,18 +1,15 @@
-"""Cached lookup lists: categories, cities, seasons."""
+"""Cached lookup lists: categories, seasons, profile questions."""
 from django.core.cache import cache
-from django.db.models import Count
 
 from leaderboard.cache_config import (
     CACHE_KEY_CATEGORIES,
-    CACHE_KEY_EVENTS_CITIES,
     CACHE_KEY_PROFILE_QUESTIONS,
     CACHE_KEY_SEASONS,
     CACHE_TTL_CATEGORIES,
-    CACHE_TTL_EVENTS_CITIES,
     CACHE_TTL_PROFILE_QUESTIONS,
     CACHE_TTL_SEASONS,
 )
-from leaderboard.models import Category, Event, ProfileQuestion, Season
+from leaderboard.models import Category, ProfileQuestion, Season
 
 
 def season_dict(season):
@@ -47,22 +44,6 @@ def profile_questions_cached():
         return cached
     result = list(ProfileQuestion.objects.values("id", "text"))
     cache.set(CACHE_KEY_PROFILE_QUESTIONS, result, CACHE_TTL_PROFILE_QUESTIONS)
-    return result
-
-
-def cities_cached():
-    """Distinct event places + counts as `[{name, count}]` (cached 30 min)."""
-    cached = cache.get(CACHE_KEY_EVENTS_CITIES)
-    if cached is not None:
-        return cached
-    cities_qs = (
-        Event.objects.exclude(place="")
-        .values("place")
-        .annotate(count=Count("id"))
-        .order_by("place")
-    )
-    result = [{"name": c["place"], "count": c["count"]} for c in cities_qs]
-    cache.set(CACHE_KEY_EVENTS_CITIES, result, CACHE_TTL_EVENTS_CITIES)
     return result
 
 

@@ -9,12 +9,9 @@
    What stays in the page files: whatever genuinely differs — the photo stage
    (different images), `.ev-sec-sub` / `.ep-sec-sub` (different cream level),
    and each page's own widgets (image pair + map for events, avatar + socials
-   for the profile).
+   for the profile).                   */
 
-   --frame-gap = distance between an input's dashed frame (outline) and its
-   dark panel. Set on the page root so inputs inherit it.                     */
-
-.gol-form-page{position:relative;padding-bottom:96px;--frame-gap:2px}
+.gol-form-page{position:relative;padding-bottom:96px}
 
 /* ── Entrance ── on-mount staggered fade-up. Header, then each form card
    cascades in, then the commit zone. */
@@ -113,7 +110,7 @@
    Separate from <FormInput> (components/FormInput) on purpose: that component
    renders its own <label>, error slot and password toggle, while these fields
    sit in the forms' own label markup. */
-.gol-input,.gol-textarea{width:100%;background:var(--alpha-black-30);border:none;border-radius:9px;padding:13px 16px;font-family:var(--font-body);font-size:var(--text-body);color:var(--color-white);outline:2px dashed var(--alpha-white-85);outline-offset:var(--frame-gap);transition:outline-color var(--dur-base),background var(--dur-base);letter-spacing:.01em}
+.gol-input,.gol-textarea{width:100%;background:var(--alpha-black-30);border:none;border-radius:var(--radius-input);padding:13px 16px;font-family:var(--font-body);font-size:var(--text-body);color:var(--color-white);outline:2px dashed var(--alpha-white-85);outline-offset:var(--frame-gap);transition:outline-color var(--dur-base),background var(--dur-base);letter-spacing:.01em}
 .gol-input:hover,.gol-textarea:hover{outline-color:var(--color-white)}
 .gol-input:focus,.gol-textarea:focus{outline-color:var(--color-pink);background:var(--alpha-black-40)}
 .gol-input::placeholder,.gol-textarea::placeholder{color:var(--alpha-cream-60);font-style:italic}
@@ -139,9 +136,4 @@
   .gol-main{padding:22px 8px 18px}
   .gol-form-page .gol-card{padding:18px 11px}
   .gol-commit-zone{padding:8px 8px 52px}
-}
-/* Mobile: lighten the save bar's blur — the cards are opaque posters now, so
-   only this chrome still blurs. */
-@media (max-width:768px){
-  .gol-savebar{-webkit-backdrop-filter:var(--frost-blur-lite);backdrop-filter:var(--frost-blur-lite)}
 }

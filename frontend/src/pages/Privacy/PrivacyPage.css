@@ -29,7 +29,7 @@
 
 /* ── UNFINISHED-CONTENT WARNING — deliberately loud so it cannot ship unnoticed ── */
 .privacy-page .privacy-todo{background:var(--alpha-pink-15);border:2px dashed var(--color-pink);border-radius:var(--radius-input);padding:16px 18px;margin-bottom:28px;font-size:var(--text-body-sm);line-height:1.6;color:var(--color-cream-light)}
-.privacy-page .privacy-todo code{font-family:var(--font-mono);background:var(--alpha-black-35);padding:1px 6px;border-radius:4px;color:var(--color-gold)}
+.privacy-page .privacy-todo code{font-family:var(--font-mono);background:var(--alpha-black-35);padding:1px 6px;border-radius:var(--radius-xs);color:var(--color-gold)}
 
 /* ── TABLES — must scroll inside themselves, never widen the page ── */
 .privacy-page .privacy-table{display:block;overflow-x:auto;width:100%;border-collapse:collapse;margin:0 0 16px;font-size:var(--text-body-sm)}

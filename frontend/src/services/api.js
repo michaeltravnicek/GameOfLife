@@ -11,9 +11,8 @@ function readCsrfCookie() {
 // dev server proxies it). Override with VITE_API_URL when running the SPA against
 // a separately-hosted backend.
 //
-// Session cookies are the only credential. The `Authorization: Token` path that
-// used to live here served the cancelled Capacitor app; the backend no longer
-// accepts token auth at all (see DEFAULT_AUTHENTICATION_CLASSES in settings.py).
+// Session cookies are the only credential; the backend accepts no token auth
+// (see DEFAULT_AUTHENTICATION_CLASSES in settings.py).
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || '/api/v1',
   withCredentials: true,
@@ -156,7 +155,7 @@ export const fetchPlayer = (userId) =>
 export const fetchPlayerSeason = (userId, seasonId) =>
   api.get(`/players/${userId}/seasons/${seasonId}/`).then((r) => r.data);
 
-// --- Home (split endpoints; the old /home/ no longer exists) ---
+// --- Home (one endpoint per section) ---
 export const fetchHero = () => api.get('/hero/').then((r) => r.data);
 export const fetchStats = () => api.get('/stats/').then((r) => r.data);
 export const fetchCheckinEvents = () => api.get('/checkin-events/').then((r) => r.data);

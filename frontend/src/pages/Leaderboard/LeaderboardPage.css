@@ -43,7 +43,7 @@
 .leaderboard-page .pod .pts-u{font-family:var(--font-mono);font-style:italic;font-size:var(--text-micro);color:var(--alpha-cream-70);letter-spacing:.16em;margin-left:4px}
 /* Poster pedestal: grain slab with the standard poster border + 3D ledge
    (box-shadow, not a border, so pressing never changes the box height). */
-.leaderboard-page .pod .base{width:100%;position:relative;background:var(--color-dark-brown) var(--tex-blue) 0 0/var(--tex-size) var(--tex-size) repeat;border:2px solid var(--color-black);border-radius:8px;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 0 0 var(--color-black),0 14px 28px var(--alpha-black-50);transition:box-shadow var(--dur-fast)}
+.leaderboard-page .pod .base{width:100%;position:relative;background:var(--color-dark-brown) var(--tex-blue) 0 0/var(--tex-size) var(--tex-size) repeat;border:2px solid var(--color-black);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;box-shadow:0 6px 0 0 var(--color-black),0 14px 28px var(--alpha-black-50);transition:box-shadow var(--dur-fast)}
 .leaderboard-page .pod.clickable:hover .base{box-shadow:0 0 0 0 var(--color-black),0 6px 14px var(--alpha-black-40)}
 .leaderboard-page .pod .base .rk{font-family:var(--font-display);letter-spacing:.04em;line-height:1}
 .leaderboard-page .pod.p1 .base{height:120px}

@@ -8,7 +8,8 @@
 .events-page .filter-toggle:hover{border-color:var(--alpha-cream-60);color:var(--color-white)}
 .events-page .filter-toggle.open{background:var(--alpha-pink-20);border-color:var(--alpha-pink-55);color:var(--color-white)}
 .events-page .filter-toggle .ft-ico{font-size:var(--text-body-sm);line-height:1}
-.events-page .filter-toggle .ft-badge{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 6px;font-family:var(--font-mono);font-style:italic;font-size:var(--text-label);letter-spacing:.04em;color:var(--color-white);background:var(--color-pink);border-radius:var(--radius-pill);box-shadow:0 2px 8px var(--alpha-pink-45)}
+/* <Badge tone="live"> shrunk to a count bubble. */
+.events-page .filter-toggle .ft-badge{justify-content:center;min-width:20px;height:20px;padding:0 6px;letter-spacing:.04em}
 .events-page .filter-toggle .ft-chev{font-size:var(--text-label);opacity:.75}
 .events-page .filter-count-pill{display:inline-flex;align-items:baseline;gap:6px;padding:8px 16px;font-family:var(--font-mono);font-style:italic;border-radius:var(--radius-pill)}
 .events-page .filter-count-pill .fc-num{font-family:var(--font-display);font-style:normal;font-size:var(--text-lead);letter-spacing:.04em;color:var(--color-pink);line-height:1}

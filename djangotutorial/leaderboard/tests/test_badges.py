@@ -1,6 +1,4 @@
 """Badge awarding (signals) and exposure on the player/profile APIs."""
-from datetime import date
-
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
@@ -12,7 +10,7 @@ from rest_framework.test import APIClient
 
 from accounts.models import Profile
 from leaderboard.models import (
-    Badge, Event, Season, User as LeaderboardUser, UserBadge, UserToEvent,
+    Badge, Event, User as LeaderboardUser, UserBadge, UserToEvent,
 )
 
 

@@ -108,7 +108,7 @@ describe('gallery photo likes', () => {
     await userEvent.click(screen.getAllByRole('button', { name: 'Líbí se mi' })[0]);
 
     expect(setPhotoLike).not.toHaveBeenCalled();
-    expect(navigate).toHaveBeenCalledWith('/prihlasit?from=%2Fgalerie');
+    expect(navigate).toHaveBeenCalledWith('/prihlasit', { state: { from: '/galerie' } });
   });
 
   it('paints hearts from the separate likes call, not from the gallery', async () => {

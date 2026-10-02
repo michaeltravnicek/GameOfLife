@@ -1,13 +1,11 @@
 """Fold one leaderboard player into another, reversibly.
 
-Registration now creates a player for every account
+Registration creates a player for every account
 (`accounts.services.ensure_leaderboard_user`), so an account is never *missing*
 a player -- it just may have a second one sitting in the Google-Forms archive
-under the same human. Attaching that history is therefore a merge of two player
-rows, not the link it used to be.
+under the same human. Attaching that history is a merge of two player rows.
 
-A merge moves rows and is destructive in a way a link never was, so it is a soft
-merge: the source row survives, marked `merged_into`, and drops out of
+A merge moves rows, which is destructive, so it is a soft merge: the source row survives, marked `merged_into`, and drops out of
 `User.objects` (see ActivePlayerManager). `unmerge_players` puts it back. That
 matters because the thing that decides a merge is still a name similarity -- a
 human judgement that will occasionally be wrong.

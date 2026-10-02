@@ -2,6 +2,8 @@ import { useMemo, useState } from 'react';
 import { Link, Navigate, useSearchParams } from 'react-router-dom';
 import { fetchAdminFeedbacks, fetchSeasons } from '../../services/api';
 import { useCachedQuery } from '../../services/queryCache';
+import { queryKeys } from '../../services/queryKeys';
+import { CACHE_TTL } from '../../constants/config';
 import { useAuth } from '../../context/AuthContext';
 import PillTabs from '../../components/PillTabs/PillTabs';
 import StatList from '../../components/StatList/StatList';
@@ -59,11 +61,11 @@ export default function FeedbacksPage() {
   const eventSlug = params.get('event');
   const [season, setSeason] = useState('all'); // 'all' or a season id (string)
 
-  const { data, loading, error, refetch } = useCachedQuery('admin:feedbacks', fetchAdminFeedbacks, {
+  const { data, loading, error, refetch } = useCachedQuery(queryKeys.adminFeedbacks, fetchAdminFeedbacks, {
     enabled: isAdmin,
     ttl: 60 * 1000,
   });
-  const { data: seasonsData } = useCachedQuery('seasons', fetchSeasons, { ttl: 5 * 60 * 1000 });
+  const { data: seasonsData } = useCachedQuery(queryKeys.seasons, fetchSeasons, { ttl: CACHE_TTL.LEADERBOARD });
   // Memoised, not `?? []`: a fresh [] each render gives every dependent
   // useMemo a new identity, so they all recompute on every render.
   const seasons = useMemo(() => seasonsData?.seasons || [], [seasonsData]);

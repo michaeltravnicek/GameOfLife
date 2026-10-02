@@ -7,11 +7,13 @@ query behind `liked_photo_ids`, which the client overlays. See the note on
 """
 from datetime import datetime, timezone as _tz
 
-from django.db.models import Count, F
+from django.db.models import Count, F, Q
+from django.http import Http404
 
 from leaderboard.image_utils import validate_upload, variant_url
-from leaderboard.models import Event, ImageToEvent, PhotoLike, UserPhoto
+from leaderboard.models import ImageToEvent, PhotoLike, UserPhoto
 from leaderboard.privacy import public_handle
+from leaderboard.services.events import visible_event_or_404
 
 # Sort key for photos with no event date — they sink to the bottom.
 _SORT_FALLBACK = datetime.min.replace(tzinfo=_tz.utc)
@@ -22,14 +24,15 @@ def create_user_photo(user, image, *, event_slug="", caption=""):
 
     `validate_upload` guards size/type; `UserPhoto.save()` downscales the stored
     file (1600×1600, q80). Raises ValueError for a bad image and LookupError for
-    an unknown event slug.
+    an event slug that is unknown or hidden from `user`.
     """
     validate_upload(image)
     event = None
     if event_slug:
-        event = Event.objects.filter(slug=event_slug).first()
-        if event is None:
-            raise LookupError("Akce nenalezena.")
+        try:
+            event = visible_event_or_404(user, event_slug)
+        except Http404:
+            raise LookupError("Akce nenalezena.") from None
     return UserPhoto.objects.create(
         auth_user=user,
         event=event,
@@ -52,7 +55,8 @@ def gallery_page(offset, limit, request, season=None):
         ImageToEvent.objects
         .select_related("event")
         .exclude(image="")
-        .filter(image__isnull=False)
+        # One page for every viewer, cached at the edge: published events only.
+        .filter(image__isnull=False, event__visible_to_users=True)
         .only("image", "event__name", "event__slug", "event__date")
         .order_by("-event__date")
     )
@@ -61,6 +65,7 @@ def gallery_page(offset, limit, request, season=None):
         .select_related("auth_user", "event")
         .exclude(image="")
         .filter(image__isnull=False)
+        .filter(Q(event__isnull=True) | Q(event__visible_to_users=True))
         .only("image", "event__name", "event__slug", "event__date",
               "auth_user__first_name", "auth_user__last_name", "auth_user__username")
         # Counted in the same query rather than per photo: a 60-photo page would
@@ -70,14 +75,8 @@ def gallery_page(offset, limit, request, season=None):
     )
 
     if season is not None:
-        official = official.filter(
-            event__date__date__gte=season.start_date,
-            event__date__date__lte=season.end_date,
-        )
-        user_photos = user_photos.filter(
-            event__date__date__gte=season.start_date,
-            event__date__date__lte=season.end_date,
-        )
+        official = official.filter(season.date_window())
+        user_photos = user_photos.filter(season.date_window())
 
     total = official.count() + user_photos.count()
 

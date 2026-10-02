@@ -8,7 +8,7 @@
    ghost  → round outline. For secondary / back / cancel. */
 /* The chunky bottom "ledge" is a box-shadow (not a border) so the press effect
    below never changes the box height — nothing around the button reflows. */
-.btn-nav{background:var(--color-pink);color:var(--color-white);border:2px solid var(--color-ledge);border-radius:16px;box-shadow:0 4px 0 0 var(--color-ledge),0 8px 22px var(--alpha-pink-40)}
+.btn-nav{background:var(--color-pink);color:var(--color-white);border:2px solid var(--color-ledge);border-radius:var(--radius-ticket);box-shadow:0 4px 0 0 var(--color-ledge),0 8px 22px var(--alpha-pink-40)}
 /* Press: face sinks down by the ledge height while the ledge collapses to 0, so
    the base stays put and the button reads as physically pressed. */
 .btn-nav:hover:not(:disabled){background:var(--color-pink-hover);transform:translateY(4px);box-shadow:0 0 0 0 var(--color-ledge),0 4px 16px var(--alpha-pink-35)}
@@ -19,9 +19,10 @@
 .btn-action.joined:hover:not(:disabled){background:var(--color-success-fill-hover)}
 .btn-ghost{background:transparent;color:var(--color-cream-light);border:1.5px solid var(--alpha-cream-40)}
 .btn-ghost:hover:not(:disabled){border-color:var(--color-pink);color:var(--color-pink)}
-/* frost → same chunky 3D shape as nav, but a frosted translucent-black surface.
+/* frost → same chunky 3D shape as nav on the shared glass (shared-ui.css);
+   the ledge border and drop shadow below replace the glass edge and shadow.
    Pairs next to the pink nav button as a darker, secondary CTA. */
-.btn-frost{background:var(--glass-tint);color:var(--color-cream-light);border:2px solid var(--color-ledge);border-radius:16px;-webkit-backdrop-filter:var(--frost-blur);backdrop-filter:var(--frost-blur);box-shadow:0 4px 0 0 var(--color-ledge),0 8px 22px var(--alpha-black-45)}
+.btn-frost{color:var(--color-cream-light);border:2px solid var(--color-ledge);border-radius:var(--radius-ticket);box-shadow:0 4px 0 0 var(--color-ledge),0 8px 22px var(--alpha-black-45)}
 .btn-frost:hover:not(:disabled){background:var(--alpha-dark-70);color:var(--color-pink);transform:translateY(4px);box-shadow:0 0 0 0 var(--color-ledge),0 4px 16px var(--alpha-black-40)}
 .btn-frost:active:not(:disabled){transform:translateY(4px);box-shadow:0 0 0 0 var(--color-ledge),0 3px 12px var(--alpha-black-35)}
 /* admin → gold dashed chip, mono type. Marks an action only admins see, so it

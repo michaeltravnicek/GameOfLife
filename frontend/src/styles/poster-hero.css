@@ -1,8 +1,6 @@
 /* ══ Poster hero ════════════════════════════════════════════════════════════
    The full-bleed photo header shared by the event detail, profile and player
-   pages — the three used to carry byte-identical copies of these rules that
-   drifted on hero height (100vh vs 88vh) and grain. Import it from the page
-   JSX next to the page's own stylesheet.
+   pages. Import it from the page JSX next to the page's own stylesheet.
 
    The page sets --poster-width (content width of the back strip) and gives
    .poster-img its picture: an <img> (event detail) or a background-image

@@ -11,7 +11,8 @@ import {
   submitFeedback,
   uploadEventImages,
 } from '../../services/api';
-import { useCachedQuery, invalidateQuery } from '../../services/queryCache';
+import { useCachedQuery } from '../../services/queryCache';
+import { invalidateEventLists, invalidateScores, queryKeys } from '../../services/queryKeys';
 import { reportError } from '../../services/errors';
 import { CACHE_TTL } from '../../constants/config';
 import { useAuth } from '../../context/AuthContext';
@@ -46,7 +47,7 @@ const EventLocationMap = lazy(() => import('../../components/EventLocationMap/Ev
 
 // Usernames are sometimes e-mail addresses, and "@michael@seznam.cz" reads as
 // a typo. Only handle-style usernames get the @ prefix.
-const handle = (username) => (username?.includes('@') ? username : `@${username}`);
+const atUsername = (username) => (username?.includes('@') ? username : `@${username}`);
 
 /**
  * One attendee's points cell. Owns its own draft so typing in one row never
@@ -128,7 +129,7 @@ export default function EventDetailPage() {
   const [pool, setPool] = useState(null);          // all leaderboard players, loaded once
 
   const { data: event, error: queryError, refetch: refetchEvent } = useCachedQuery(
-    `event:${slug}`,
+    queryKeys.event(slug),
     () => fetchEventDetail(slug),
     { enabled: !!slug, ttl: CACHE_TTL.EVENT_DETAIL },
   );
@@ -267,7 +268,7 @@ export default function EventDetailPage() {
       await setRsvp(slug, !wasJoined);
       // RSVP changed: refresh this event's cache + drop any events list pages
       // (rsvp_count on cards there may now be stale).
-      invalidateQuery((k) => k.startsWith('events:'));
+      invalidateEventLists();
       await refetchEvent();
       // Just joined and the event has a follow-up form and/or a WhatsApp group?
       // Prompt for whichever exists.
@@ -288,7 +289,7 @@ export default function EventDetailPage() {
     setBusy(true);
     try {
       await setRsvp(slug, false);
-      invalidateQuery((k) => k.startsWith('events:'));
+      invalidateEventLists();
       await refetchEvent();
     } catch (err) {
       reportError('Zrušení účasti se nepodařilo.', err);
@@ -337,11 +338,11 @@ export default function EventDetailPage() {
 
   // Every attendance write moves the leaderboard and this event's own
   // attendee_count. refetchEvent() updates the rsvp bar in place; deliberately
-  // NOT invalidateQuery(`event:${slug}`) — that blanks the cached value and
+  // NOT invalidating `event:${slug}` — that blanks the cached value and
   // would unmount this whole page mid-edit.
   const afterAttendanceChange = async () => {
-    invalidateQuery((k) => k.startsWith('leaderboard:'));
-    invalidateQuery((k) => k.startsWith('events:'));
+    invalidateScores();
+    invalidateEventLists();
     await Promise.all([loadAttendance(), refetchEvent()]);
   };
 
@@ -463,7 +464,7 @@ export default function EventDetailPage() {
           {!event.is_past ? (
             <>
               <div className="rsvp-info">
-                <span className="pts-tag">+{event.points} pts</span>
+                <Badge tone="live" className="pts-tag">+{event.points} pts</Badge>
                 {event.capacity != null && (
                   <span className="cap-tag">{event.rsvp_count} / {event.capacity} přihlášených</span>
                 )}
@@ -712,7 +713,7 @@ export default function EventDetailPage() {
                               >{a.name}</Link>
                             </div>
                             <div className="loc">
-                              {a.profile_username ? handle(a.profile_username) : 'bez propojeného účtu'}
+                              {a.profile_username ? atUsername(a.profile_username) : 'bez propojeného účtu'}
                             </div>
                           </>
                         ),
@@ -776,7 +777,7 @@ export default function EventDetailPage() {
                               {r.name || r.username}
                             </Link>
                           </div>
-                          <div className="loc">{handle(r.username)}</div>
+                          <div className="loc">{atUsername(r.username)}</div>
                         </>
                       ),
                       dt: (r) => fmtDateShort(r.created_at),

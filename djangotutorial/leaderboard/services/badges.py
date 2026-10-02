@@ -3,20 +3,17 @@
 Badges hang off the leaderboard User (not the account), so a player synced from
 Sheets already has a collection, and it follows them when an account links up.
 """
+from leaderboard.utils import media_url
 
 
 def badge_dict(user_badge, request=None):
     """One earned badge as the API shape. `request` makes the image URL absolute."""
     badge = user_badge.badge
-    image = None
-    if badge.image:
-        image = (request.build_absolute_uri(badge.image.url)
-                 if request else badge.image.url)
     return {
         "id": badge.id,
         "name": badge.name,
         "slug": badge.slug,
-        "image": image,
+        "image": media_url(badge.image, request),
         "description": badge.description,
         "awarded_at": user_badge.awarded_at.isoformat(),
     }

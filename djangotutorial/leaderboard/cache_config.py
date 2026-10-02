@@ -29,10 +29,6 @@ CACHE_KEY_HOME_STATS = "api_home_stats"
 CACHE_TTL_HOME_STATS = 30 * 60  # 30 min — counts barely move
 
 # ── Events ─────────────────────────────────────────────────────────────
-# Cities filter for /api/events/. Changes only when an Event is added/edited.
-CACHE_KEY_EVENTS_CITIES = "api_events_cities"
-CACHE_TTL_EVENTS_CITIES = 30 * 60
-
 # Categories list for /api/categories/. Changes only when a Category is added/renamed.
 CACHE_KEY_CATEGORIES = "api_categories"
 CACHE_TTL_CATEGORIES = 60 * 60  # 1 hour
@@ -55,7 +51,6 @@ CACHE_TTL = CACHE_TTL_LEADERBOARD
 EVENT_DEPENDENT_CACHE_KEYS = (
     CACHE_KEY_HERO_IMAGES,
     CACHE_KEY_HOME_STATS,
-    CACHE_KEY_EVENTS_CITIES,
     CACHE_KEY_CATEGORIES,
 )
 
@@ -104,18 +99,17 @@ def _evict_now(keys=(), pattern=None):
         logger.warning("Cache eviction failed (continuing).", exc_info=True)
 
 
-def invalidate_event_caches():
+def invalidate_event_caches(season_boards=True):
     """Drop caches that depend on the Event table (Event.save()/delete()).
 
-    The season boards go too: they score attendance by the *event's* date, so
-    moving an event across a season boundary changes who is on which board
-    without a single UserToEvent row being written. Deleting an event is the
-    other case -- the cascade removes attendance without going through
-    UserToEvent.delete(), so nothing else would evict the totals. Routed through
-    the points eviction so a bulk sync (which suspends it) still batches.
+    `season_boards` also evicts the points-dependent caches: the boards score
+    attendance by the *event's* date, so moving or deleting an event changes
+    them without a UserToEvent write. Routed through the points eviction so a
+    bulk sync (which suspends it) still batches.
     """
     _evict(EVENT_DEPENDENT_CACHE_KEYS)
-    invalidate_points_dependent_caches()
+    if season_boards:
+        invalidate_points_dependent_caches()
 
 
 def invalidate_category_cache():

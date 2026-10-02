@@ -36,7 +36,7 @@
 .editprofile-page .ep-social-row{display:grid;grid-template-columns:44px 1fr;gap:14px;align-items:center}
 .editprofile-page .ep-social-row .ep-ico{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--alpha-pink-15);border:1.5px dashed var(--alpha-pink-45);color:var(--color-pink);font-family:var(--font-mono);font-style:italic;font-weight:700;font-size:var(--text-label-lg);letter-spacing:.02em;flex-shrink:0}
 .editprofile-page .ep-social-row.filled .ep-ico{background:var(--color-pink);color:var(--color-white);border-color:transparent;border-style:solid}
-.editprofile-page .ep-combo{display:flex;align-items:stretch;background:var(--alpha-black-30);border:none;border-radius:9px;overflow:hidden;outline:2px dashed var(--alpha-white-85);outline-offset:var(--frame-gap);transition:outline-color var(--dur-base),background var(--dur-base);min-width:0}
+.editprofile-page .ep-combo{display:flex;align-items:stretch;background:var(--alpha-black-30);border:none;border-radius:var(--radius-input);overflow:hidden;outline:2px dashed var(--alpha-white-85);outline-offset:var(--frame-gap);transition:outline-color var(--dur-base),background var(--dur-base);min-width:0}
 .editprofile-page .ep-combo:hover{outline-color:var(--color-white)}
 .editprofile-page .ep-combo:focus-within{outline-color:var(--color-pink);background:var(--alpha-black-40)}
 .editprofile-page .ep-combo .ep-pre{display:flex;align-items:center;padding:0 4px 0 14px;font-family:var(--font-mono);font-style:italic;font-size:var(--text-label-lg);color:var(--alpha-cream-55);letter-spacing:.04em;white-space:nowrap;flex-shrink:0;user-select:none}

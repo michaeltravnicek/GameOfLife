@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand, CommandError
-from leaderboard.models import Event, EventRSVP, UserToEvent, User
+from leaderboard.models import Event, EventRSVP, UserToEvent
 
 
 class Command(BaseCommand):

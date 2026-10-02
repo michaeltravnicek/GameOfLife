@@ -560,14 +560,10 @@ REST_FRAMEWORK = {
     # session cookie reaches the API on its own and is HttpOnly — script running in
     # the page cannot read it.
     #
-    # TokenAuthentication used to sit here for the Capacitor app (a WebView can't
-    # rely on cookies). That app is cancelled, and a DRF token is a worse credential
-    # in every way that matters here: it is returned in a response body, never
-    # expires, and does NOT rotate on password change — so anyone who briefly holds
-    # a session could mint one that outlives both the session and the password reset.
-    #
-    # If a native client is ever revived it needs a token path again, but a
-    # short-lived refreshable one, not this permanent default.
+    # No TokenAuthentication: a DRF token is returned in a response body, never
+    # expires and does NOT rotate on password change, so anyone who briefly holds
+    # a session could mint one that outlives both the session and a reset. A
+    # future native client needs a short-lived, refreshable token instead.
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.SessionAuthentication',
     ],
@@ -849,7 +845,7 @@ STORAGES = {
 # Re-stat the filesystem on every request instead of indexing it once at boot.
 # That is a development convenience -- in production the files cannot change
 # under a running process (a deploy starts a new one), so it only buys a syscall
-# per static request. It was previously on unconditionally.
+# per static request.
 WHITENOISE_AUTOREFRESH = DEBUG
 
 # Default primary key field type

@@ -2,7 +2,7 @@ import './SectionHeader.css';
 
 /**
  * Section heading with optional dashed rule and eyebrow label — the one
- * section heading on the site (pages used to keep their own .sec-heading).
+ * section heading on the site; pages do not style their own.
  *
  * eyebrow : node    — small label above heading (e.g. "— 01 · Popis —")
  * meta    : node    — quiet note on the eyebrow's right edge ("+120 pts na cestě")

@@ -10,24 +10,19 @@ import { useSeasonView } from './useSeasonView';
 import { ProfileCredits, EventsSections, PointsSections } from './profileSections';
 import { fetchProfile, fetchProfileSeason } from '../../services/api';
 import { useCachedQuery } from '../../services/queryCache';
+import { queryKeys } from '../../services/queryKeys';
 import { useAuth } from '../../context/AuthContext';
 import { CACHE_TTL } from '../../constants/config';
 import { shareLink } from '../../utils/shareUrl';
 import { initials } from '../../utils/name';
 import '../../styles/poster-hero.css';
 import './ProfilePage.css';
+import { plural } from '../../utils/plural';
+import { SOCIALS, socialHref, socialLabel } from './socials';
 
 const TODAY = new Date();
 
-// Users often save handles with the "@" — strip it so we don't render "@@".
-const handle = (h) => (h || '').replace(/^@+/, '');
-// The handle is free text from the profile form. Encoding pins it to one path
-// segment on the social site: "x?next=…" or "../accounts/login" would otherwise
-// turn a profile link into whatever page that site resolves it to.
-const seg = (h) => encodeURIComponent(h);
-
-// Czech count agreement: 1 odznak, 2–4 odznaky, 5+ odznaků.
-const badgeWord = (n) => (n === 1 ? 'odznak' : n >= 2 && n <= 4 ? 'odznaky' : 'odznaků');
+const badgeWord = (n) => plural(n, 'odznak', 'odznaky', 'odznaků');
 
 export default function ProfilePage() {
   const { username } = useParams();
@@ -38,7 +33,7 @@ export default function ProfilePage() {
 
   // Core profile (stats, rank, upcoming RSVPs, season summaries — no events).
   const { data: profile, loading: profileLoading, error: profileError } = useCachedQuery(
-    `profile:${username}`,
+    queryKeys.profile(username),
     () => fetchProfile(username),
     { enabled: !!username, ttl: CACHE_TTL.PROFILE },
   );
@@ -51,7 +46,7 @@ export default function ProfilePage() {
   // core payload only carries lightweight summaries, so we fetch this on demand
   // whenever the selected season changes.
   const { data: seasonDetail } = useCachedQuery(
-    `profile:${username}:season:${seasonKey}`,
+    queryKeys.profile(username, seasonKey),
     () => fetchProfileSeason(username, seasonKey),
     { enabled: !!username && seasonKey != null, ttl: CACHE_TTL.PROFILE },
   );
@@ -99,6 +94,7 @@ export default function ProfilePage() {
   if (!profile || !st) return <div className="profile-page"><PageState kind="empty" fill text="Profil nenalezen." /></div>;
 
   const avatarInitials = initials(profile.full_name, 'GO');
+  const linkedSocials = SOCIALS.filter((sc) => profile[sc.key]);
 
   const handleShare = () => shareLink(`${profile.full_name} — Game of Life`);
   // Actually log out (the label promises it), then land on the homepage.
@@ -183,50 +179,20 @@ export default function ProfilePage() {
                     </div>
                   )}
 
-                  {(profile.instagram || profile.strava || profile.spotify || profile.tiktok) && (
+                  {linkedSocials.length > 0 && (
                     <div className="socials">
                       <div className="socials-label">— Najdeš na —</div>
                       <div className="socials-grid">
-                        {profile.instagram && (
-                          <a className="social" href={`https://instagram.com/${seg(handle(profile.instagram))}`} target="_blank" rel="noopener noreferrer">
+                        {linkedSocials.map((sc) => (
+                          <a key={sc.key} className="social" href={socialHref(sc, profile[sc.key])} target="_blank" rel="noopener noreferrer">
                             <TicketFrame />
                             <span className="social-in">
-                              <span className="ico">IG</span>
-                              <span className="lbl"><span className="p">Instagram</span><span className="h">@{handle(profile.instagram)}</span></span>
+                              <span className="ico">{sc.ico}</span>
+                              <span className="lbl"><span className="p">{sc.label}</span><span className="h">{socialLabel(sc, profile[sc.key])}</span></span>
                               <span className="arr">↗</span>
                             </span>
                           </a>
-                        )}
-                        {profile.strava && (
-                          <a className="social" href={`https://strava.com/athletes/${seg(profile.strava)}`} target="_blank" rel="noopener noreferrer">
-                            <TicketFrame />
-                            <span className="social-in">
-                              <span className="ico">ST</span>
-                              <span className="lbl"><span className="p">Strava</span><span className="h">{profile.strava}</span></span>
-                              <span className="arr">↗</span>
-                            </span>
-                          </a>
-                        )}
-                        {profile.spotify && (
-                          <a className="social" href={`https://spotify.com/user/${seg(profile.spotify)}`} target="_blank" rel="noopener noreferrer">
-                            <TicketFrame />
-                            <span className="social-in">
-                              <span className="ico">SP</span>
-                              <span className="lbl"><span className="p">Spotify</span><span className="h">{profile.spotify}</span></span>
-                              <span className="arr">↗</span>
-                            </span>
-                          </a>
-                        )}
-                        {profile.tiktok && (
-                          <a className="social" href={`https://tiktok.com/@${seg(handle(profile.tiktok))}`} target="_blank" rel="noopener noreferrer">
-                            <TicketFrame />
-                            <span className="social-in">
-                              <span className="ico">TT</span>
-                              <span className="lbl"><span className="p">TikTok</span><span className="h">@{handle(profile.tiktok)}</span></span>
-                              <span className="arr">↗</span>
-                            </span>
-                          </a>
-                        )}
+                        ))}
                       </div>
                     </div>
                   )}

@@ -94,13 +94,12 @@ function PhotoCard({ row }) {
   return (
     <div className={`gol-card gol-card--flush gol-card--lift card${row.muted ? ' muted' : ''}`}>
       <div className="card-media" style={{ backgroundImage: `url('${row.img}')` }}>
-        {/* Date · "first" sticker · points sit in one row rather than being
-            pinned to three corners: a sticker centred on the card overlapped
-            the date pill as soon as either text grew. */}
+        {/* Date · "first" sticker · points share one row so a longer date or
+            point label cannot run into the sticker. */}
         <div className="card-stamps">
           <Badge tone="paper" className="date-stamp">{row.date}</Badge>
           {row.first && <Stamp className="first-stamp">{row.first}</Stamp>}
-          <span className="pts-badge">{row.pts}</span>
+          <Badge tone="live" className="pts-badge">{row.pts}</Badge>
         </div>
         {row.evStamp && <img className="ev-stamp" src={row.evStamp} alt="" />}
       </div>

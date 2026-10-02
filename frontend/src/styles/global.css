@@ -25,15 +25,15 @@ h1,h2,h3,h4{font-weight:400}
 :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
   outline: var(--focus-ring);
   outline-offset: 2px;
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
 }
 /* The dashed-frame inputs already draw a pink outline on focus and set their
    own offset; a second ring on top of it just looks like a mistake. */
-:where(.gol-input, .gol-textarea):focus-visible { outline-offset: var(--frame-gap, 4px); border-radius: 9px }
+:where(.gol-input, .gol-textarea):focus-visible { outline-offset: var(--frame-gap, 4px); border-radius: var(--radius-input) }
 
 /* Skip link — the nav has ~8 items before the content starts, so keyboard and
    screen-reader users get a way past it. Off-screen until focused. */
-.gol-skip-link{position:absolute;left:50%;transform:translateX(-50%) translateY(-200%);z-index:var(--z-skip);padding:12px 22px;background:var(--color-pink);color:var(--color-white);font-family:var(--font-mono);font-size:var(--text-label-lg);letter-spacing:.1em;text-transform:uppercase;border-radius:0 0 10px 10px;transition:transform var(--dur-base)}
+.gol-skip-link{position:absolute;left:50%;transform:translateX(-50%) translateY(-200%);z-index:var(--z-skip);padding:12px 22px;background:var(--color-pink);color:var(--color-white);font-family:var(--font-mono);font-size:var(--text-label-lg);letter-spacing:.1em;text-transform:uppercase;border-radius:0 0 var(--radius-input) var(--radius-input);transition:transform var(--dur-base)}
 .gol-skip-link:focus{transform:translateX(-50%) translateY(0)}
 
 /* ── Label type utilities ──────────────────────────────────────────────────

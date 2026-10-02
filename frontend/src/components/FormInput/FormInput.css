@@ -1,17 +1,20 @@
 .form-field{margin-bottom:22px;position:relative}
 .form-field-label{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
 .form-field-label-text{display:block;font-family:var(--font-mono);font-size:var(--text-label-lg);letter-spacing:.1em;text-transform:uppercase;color:var(--alpha-cream-80);font-weight:500}
-.form-field-input-wrap{position:relative;display:block}
-.form-field-input{width:100%;background:var(--alpha-white-05);border:1.5px solid var(--alpha-cream-20);border-radius:var(--radius-input);padding:15px 18px;font-family:var(--font-body);font-size:var(--text-body-lg);font-weight:500;color:var(--color-cream-light);transition:border-color var(--dur-base),background var(--dur-base),box-shadow var(--dur-base);box-sizing:border-box}
+/* A mini ticket: the wrap is the white dashed frame, the input the dark panel
+   floating --frame-gap inside it. */
+.form-field-input-wrap{position:relative;display:block;border:2px dashed var(--alpha-white-85);border-radius:var(--radius-card);padding:var(--frame-gap);transition:border-color var(--dur-base)}
+.form-field-input-wrap:focus-within{border-color:var(--color-pink)}
+.form-field-input{width:100%;background:var(--alpha-black-30);border:1.5px solid transparent;border-radius:var(--radius-input);padding:13px 16px;font-family:var(--font-body);font-size:var(--text-body-lg);font-weight:500;color:var(--color-cream-light);transition:border-color var(--dur-base),background var(--dur-base);box-sizing:border-box}
 .form-field-input::placeholder{color:var(--alpha-cream-55);font-weight:400}
-.form-field-input:focus{border-color:var(--alpha-pink-70);background:var(--alpha-pink-10);box-shadow:0 0 0 3px var(--alpha-pink-15)}
-.form-field-input:focus-visible{outline:none} /* focus-ok: the pink border + soft ring on :focus above is the indicator; the auth pages turn the dashed frame pink instead */
+.form-field-input:focus{background:var(--alpha-black-40)}
+.form-field-input:focus-visible{outline:none} /* focus-ok: the dashed frame turning pink (:focus-within above) is the indicator */
 .form-field-input.has-error{border-color:var(--alpha-pink-95)}
 .form-field-error{margin-top:7px;font-size:var(--text-meta);letter-spacing:.04em;color:var(--color-pink);line-height:1.4}
 
 /* Reserve room for the toggle so typed text doesn't slide under the eye. */
 .form-field-input-wrap.has-toggle .form-field-input{padding-right:48px}
-.form-field-pw-toggle{position:absolute;top:50%;right:6px;transform:translateY(-50%);display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;background:transparent;border:0;border-radius:8px;color:var(--alpha-cream-55);cursor:pointer;transition:color var(--dur-base),background var(--dur-base)}
+.form-field-pw-toggle{position:absolute;top:50%;right:10px;transform:translateY(-50%);display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;background:transparent;border:0;border-radius:var(--radius-sm);color:var(--alpha-cream-55);cursor:pointer;transition:color var(--dur-base),background var(--dur-base)}
 .form-field-pw-toggle:hover{color:var(--color-cream-light);background:var(--alpha-cream-10)}
 /* Keyboard focus: the global ring (global.css); the colour lift is the only local bit. */
 .form-field-pw-toggle:focus-visible{color:var(--color-cream-light)}

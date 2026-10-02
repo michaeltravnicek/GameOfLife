@@ -5,9 +5,8 @@
 
 /* --toast-pad / --toast-icon drive every inset in here: the icon, the close
    button and the single-line body height all derive from them, so the mobile
-   override below only has to restate those two values. Padding is symmetric —
-   the old 18/20/18/18 plus the close button's own 4px made the right gutter
-   read 6px wider than the left. */
+   override below only has to restate those two values. Padding is symmetric;
+   the close button's own 4px already widens the right gutter. */
 .toast{--toast-pad:18px;--toast-icon:32px;pointer-events:auto;display:flex;align-items:flex-start;gap:14px;padding:var(--toast-pad);border-radius:var(--radius-card);color:var(--color-cream-light);font-family:var(--font-body);font-size:var(--text-body);line-height:1.5;animation:toast-in .28s cubic-bezier(.22,.68,0,1.2) both}
 
 .toast-icon{flex-shrink:0;width:var(--toast-icon);height:var(--toast-icon);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-weight:700;font-size:var(--text-body-lg);line-height:1}
@@ -45,7 +44,7 @@
 @media(max-width:640px){
   /* Full-bleed: the stack spans the whole screen width, anchored to the bottom. */
   .toast-stack{top:auto;bottom:0;right:0;left:0;max-width:none;gap:0;padding-bottom:env(safe-area-inset-bottom,0)}
-  .toast{--toast-pad:20px;--toast-icon:34px;border-radius:18px 18px 0 0;border-width:1px 0 0;font-size:var(--text-body-lg);box-shadow:0 -8px 32px var(--alpha-black-50)}
+  .toast{--toast-pad:20px;--toast-icon:34px;border-radius:var(--radius-lg) var(--radius-lg) 0 0;border-width:1px 0 0;font-size:var(--text-body-lg);box-shadow:0 -8px 32px var(--alpha-black-50)}
   .toast + .toast{border-top-width:1px}
   .toast-icon{font-size:var(--text-lead)}
   .toast-title{font-size:var(--text-lead)}

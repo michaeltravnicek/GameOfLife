@@ -1,24 +1,10 @@
-import { useMemo } from 'react';
-import { fetchEvents } from '../../services/api';
-import { useCachedQuery } from '../../services/queryCache';
-import { CACHE_TTL } from '../../constants/config';
 import PageHero from '../../components/PageHero/PageHero';
 import PageStage from '../../components/PageStage/PageStage';
-import PageState from '../../components/PageState/PageState';
 import SectionHeader from '../../components/SectionHeader/SectionHeader';
 import Stamp from '../../components/Stamp/Stamp';
-import StatList from '../../components/StatList/StatList';
-import { eventList, EVENT_LIST_CLASS } from '../../components/StatList/eventColumns';
 import Reveal from '../../components/Reveal/Reveal';
 import Button from '../../components/Button/Button';
 import './OBodechPage.css';
-
-// How many past events the "Kolik za co" ladder shows — enough to span the
-// +10 … +250 range without turning into a second events page.
-const EXAMPLE_COUNT = 6;
-// The events endpoint is date-ordered; a page this size covers a full season.
-const EXAMPLE_POOL = 120;
-const EXAMPLE_COLUMNS = eventList({ include: ['cat', 'info', 'dt', 'pts'] });
 
 const rewards = [
   { title: 'Úrovně podle leaderboardu', text: 'Bronz · Stříbro · Zlato · Legenda. Každá úroveň otevírá vlastní okruh akcí, čepic a vnitřních vtipů, kterým venku nikdo nerozumí.' },
@@ -27,27 +13,6 @@ const rewards = [
 ];
 
 export default function OBodechPage() {
-  // Real events, real points — the best explanation of the scale is the scale
-  // itself. Past events only (their points are final), spread from the top of
-  // the range to the bottom so the ladder reads as a range, not a top list.
-  const { data, loading, error, refetch } = useCachedQuery(
-    `events:past|examples|${EXAMPLE_POOL}`,
-    () => fetchEvents({ period: 'past', limit: EXAMPLE_POOL }),
-    { ttl: CACHE_TTL.EVENTS },
-  );
-  const examples = useMemo(() => {
-    const scored = (data?.events || [])
-      .filter((e) => typeof e.points === 'number' && e.points > 0)
-      .sort((a, b) => b.points - a.points);
-    if (scored.length <= EXAMPLE_COUNT) return scored;
-    // Evenly spaced picks across the sorted list: highest, lowest, and steps
-    // between, so +250 and +10 both make the cut.
-    const step = (scored.length - 1) / (EXAMPLE_COUNT - 1);
-    const picks = new Set();
-    for (let i = 0; i < EXAMPLE_COUNT; i++) picks.add(Math.round(i * step));
-    return [...picks].map((i) => scored[i]);
-  }, [data]);
-
   return (
     <div className="obodech-page has-stage">
       {/* Dimmed: a reading page, the darker backdrop keeps the long text calm. */}
@@ -80,7 +45,6 @@ export default function OBodechPage() {
         <Reveal as="section" className="section">
           <SectionHeader rule={false} onPhoto eyebrow="— Příklady —" heading={<>Kolik za <span className="pink">co</span></>} />
           <p className="gol-quote gol-quote--on-photo gol-quote--lead">Žádný kalkulátor, žádný vzorec. Vojta přiřkne akci hodnotu předem podle toho, jak je dlouhá, náročná a kolik k ní bude potřeba odvahy. Nové typy akcí mají často vyšší ohodnocení.</p>
-
         </Reveal>
 
         <Reveal as="section" className="section">

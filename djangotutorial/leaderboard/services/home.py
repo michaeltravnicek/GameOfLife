@@ -75,16 +75,9 @@ def active_checkin_events(user):
     link) see every active event — the frontend prompts them to log in when
     they tap the check-in button.
     """
-    lb_user = None
-    if user and user.is_authenticated:
-        from accounts.models import Profile  # local import — avoid app-load loop
-        profile = (
-            Profile.objects
-            .filter(user=user)
-            .select_related("leaderboard_user")
-            .first()
-        )
-        lb_user = profile.leaderboard_user if profile else None
+    from accounts.models import leaderboard_user_for  # local import — avoid app-load loop
+
+    lb_user = leaderboard_user_for(user)
 
     now = timezone.now()
     candidates = (

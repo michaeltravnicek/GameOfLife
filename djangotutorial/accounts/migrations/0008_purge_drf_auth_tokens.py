@@ -15,9 +15,8 @@ from django.db import migrations
 
 
 def purge_tokens(apps, schema_editor):
-    # `rest_framework.authtoken` has since left INSTALLED_APPS. On a database
-    # that predates that, the table is still there and gets emptied; on a
-    # fresh one there is nothing to purge.
+    # With `rest_framework.authtoken` out of INSTALLED_APPS the model cannot be
+    # loaded, so this is a no-op; the migration stays for the graph.
     try:
         Token = apps.get_model("authtoken", "Token")
     except LookupError:

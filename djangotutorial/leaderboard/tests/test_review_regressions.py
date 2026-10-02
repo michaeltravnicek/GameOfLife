@@ -10,7 +10,6 @@ from unittest import mock
 
 from django.contrib.admin.sites import AdminSite
 from django.contrib.auth import get_user_model
-from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import call_command
 from django.db import connection
 from django.test import RequestFactory, TestCase, override_settings
@@ -245,6 +244,20 @@ class SheetSyncPointsTests(TestCase):
             set(LeaderboardUser.objects.values_list("name", flat=True)),
             {"Web Checkin", "A A", "B B"},
         )
+
+    def test_daily_run_keeps_an_admin_points_correction(self):
+        records = [["Jméno", "Body"], ["A A", "10"]]
+        handle_attendance("pts", "1", records)
+        row = UserToEvent.objects.get(event=self.event)
+        row.points = 35
+        row.save()
+
+        handle_attendance("pts", "1", records + [["B B", "20"]], overwrite_points=False)
+        self.assertEqual(UserToEvent.objects.get(pk=row.pk).points, 35)
+        self.assertEqual(UserToEvent.objects.filter(event=self.event).count(), 2)
+
+        handle_attendance("pts", "1", records, overwrite_points=True)
+        self.assertEqual(UserToEvent.objects.get(pk=row.pk).points, 10)
 
 
 class AspectPredicateTests(TestCase):

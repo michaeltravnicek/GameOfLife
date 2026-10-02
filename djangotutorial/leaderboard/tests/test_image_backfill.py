@@ -22,7 +22,7 @@ from leaderboard import image_utils
 from leaderboard.image_utils import (
     CAP_ARTWORK, CAP_EVENT_IMAGE, WEBP_QUALITY, WEBP_QUALITY_FLOOR,
     _encode_under_cap, make_webp_variant, needs_processing, process_upload,
-    variant_name, webp_name,
+    variant_name,
 )
 from leaderboard.models import Badge, Event, ImageToEvent, UserPhoto
 

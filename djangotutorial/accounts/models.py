@@ -143,3 +143,14 @@ class Profile(models.Model):
             user.save(update_fields=["is_staff", "is_superuser"])
             return True
         return False
+
+
+def leaderboard_user_for(user):
+    """The player an account is linked to; None for a guest, an account with
+    no profile, or one not linked to a player."""
+    if user is None or not user.is_authenticated:
+        return None
+    # Read from the database, not `user.profile`: that relation is cached on the
+    # user object and would miss a link made or removed since it was loaded.
+    profile = Profile.objects.filter(user=user).select_related("leaderboard_user").first()
+    return profile.leaderboard_user if profile else None

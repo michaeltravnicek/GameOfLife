@@ -201,8 +201,8 @@ def variant_url(field_file, request=None, suffix="mobile", check_exists=True):
         return None
     if check_exists and not field_file.storage.exists(variant_name(field_file.name, suffix)):
         return None
-    url = variant_name(field_file.url, suffix)
-    return request.build_absolute_uri(url) if request else url
+    from leaderboard.utils import absolute_url
+    return absolute_url(variant_name(field_file.url, suffix), request)
 
 
 def make_webp_variant(field_file, max_width=900, quality=60, suffix="mobile"):
@@ -604,9 +604,8 @@ def process_image_field(instance, field_name):
         models.Model.save(instance, update_fields=[field_name])
     if variant_kwargs is None:
         return
-    # save() runs on every edit, not just on uploads -- an admin fixing a typo
-    # in the description used to re-download the poster, decode it and upload
-    # a fresh variant (two GETs, a PUT and a DELETE against R2 per save). When
+    # save() runs on every edit, not just on uploads; regenerating the variant
+    # on a typo fix would cost a GET, a PUT and a DELETE against R2. When
     # nothing was rewritten and the sibling exists, there is nothing to do.
     if not rewritten and field.storage.exists(variant_name(field.name)):
         return
@@ -784,9 +783,8 @@ def process_upload(field_file, max_width, max_height, max_bytes, aspect=None):
     under the cap is left untouched, so repeated saves cannot slowly degrade it
     by re-encoding it again and again.
 
-    Animations survive as animated WebP. That closes a real hole -- GIF used to
-    bypass processing entirely and could sit on disk at the full 15 MB the
-    validator allows.
+    Animations survive as animated WebP, so a GIF is capped like everything
+    else rather than sitting on disk at the full 15 MB the validator allows.
 
     SVG is passed over: PIL cannot read it and there is nothing to downscale.
 

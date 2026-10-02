@@ -249,7 +249,7 @@ class PrivacyFlagTests(TestCase):
 
     def test_a_hidden_player_does_not_push_others_down_the_ranking(self):
         """Their rank must agree with the board they are missing from."""
-        from leaderboard.services.leaderboard import season_rank
+        from leaderboard.services.seasons import season_rank
 
         rival = LeaderboardUser.objects.create(name="Rival Rivalový")
         UserToEvent.objects.create(user=rival, event=self.event, points=5)

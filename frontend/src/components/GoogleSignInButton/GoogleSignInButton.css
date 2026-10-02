@@ -1,0 +1,29 @@
+/* Google sign-in — separator, button, consent note.
+   The button is chrome, not content, so it takes the glass skin (`gol-glass`
+   in the JSX) rather than the pink CTA: the primary action on the card is the
+   password form's submit, and two competing pink buttons would read as a
+   choice between equals. Google's mark keeps its own colours (brand
+   requirement), which is also why it is the only saturated thing here.
+   Keyboard focus uses the global ring (global.css). */
+.auth-or{display:flex;align-items:center;gap:14px;margin:22px 0 18px;
+  font-family:var(--font-mono);font-size:var(--text-label);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--alpha-cream-60)}
+
+.auth-google{display:flex;align-items:center;justify-content:center;gap:11px;
+  width:100%;padding:13px 18px;border-radius:var(--radius-input);
+  font-family:var(--font-body);font-size:var(--text-body);font-weight:600;
+  color:var(--color-cream-light);text-decoration:none;
+  transition:border-color var(--dur-base),transform var(--dur-fast)}
+.auth-google:hover{border-color:var(--color-pink)}
+.auth-google:active{transform:translateY(1px)}
+.auth-google-mark{width:19px;height:19px;flex:0 0 auto}
+
+.auth-google-note{margin:12px 0 0;text-align:center;
+  font-family:var(--font-mono);font-size:var(--text-meta);line-height:1.6;
+  color:var(--alpha-cream-55)}
+.auth-google-note a{color:var(--color-pink);text-decoration:underline;text-underline-offset:3px}
+.auth-google-note a:hover{color:var(--color-gold)}
+
+@media(max-width:640px){
+  .auth-google{padding:12px 14px;font-size:var(--text-body-sm)}
+}

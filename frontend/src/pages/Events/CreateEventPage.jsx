@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { createEvent, fetchCategories, fetchBadges } from '../../services/api';
-import { invalidateQuery } from '../../services/queryCache';
+import { invalidateEventLists } from '../../services/queryKeys';
 import { extractApiError, reportError } from '../../services/errors';
 import { useEventForm, buildEventFormData } from './eventForm';
 import EventFormSections from './EventFormSections';
@@ -47,7 +47,7 @@ export default function CreateEventPage() {
       const formData = buildEventFormData(form, { poster, allCategories, categories });
       const event = await createEvent(formData);
       // Cached lists would keep omitting the new event until their TTL.
-      invalidateQuery((k) => k.startsWith('events:') || k === 'hero' || k === 'checkin-events');
+      invalidateEventLists();
       navigate(`/events/${event.slug}`);
     } catch (err) {
       setSaveError(extractApiError(err, 'Chyba při vytváření akce.'));

@@ -38,10 +38,8 @@ from leaderboard.image_utils import (
 def targets():
     """(queryset, field, (w, h, cap, aspect), variant_kwargs) for every field.
 
-    Derived from image_utils.UPLOAD_LIMITS rather than listed again here. The
-    limits used to be duplicated in both places, which meant a change to a
-    model's save() silently left the backfill converting to the old dimensions --
-    and nothing failed, the files just came out wrong.
+    Derived from image_utils.UPLOAD_LIMITS rather than listed again here, so
+    the backfill cannot convert to different dimensions than a model's save().
     """
     for key, (max_width, max_height, cap, variant_kwargs) in UPLOAD_LIMITS.items():
         app_label, model_name, field_name = key.split(".")
@@ -152,8 +150,5 @@ class Command(BaseCommand):
             # The conversions above wrote the new keys with queryset.update(),
             # which skips the models' save() eviction; the hero carousel and
             # the boards' avatar URLs would otherwise point at deleted files.
-            from leaderboard.cache_config import (
-                invalidate_event_caches, invalidate_points_dependent_caches,
-            )
+            from leaderboard.cache_config import invalidate_event_caches
             invalidate_event_caches()
-            invalidate_points_dependent_caches()

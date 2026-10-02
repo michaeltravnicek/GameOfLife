@@ -6,6 +6,7 @@ import {
 } from '../../services/api';
 import { usePaginatedQuery } from '../../services/usePaginatedQuery';
 import { refetchQuery, setQueryData, useCachedQuery } from '../../services/queryCache';
+import { queryKeys } from '../../services/queryKeys';
 import { useAuth } from '../../context/AuthContext';
 import { reportError } from '../../services/errors';
 import { CACHE_TTL, PAGE_SIZE_GALLERY } from '../../constants/config';
@@ -22,6 +23,7 @@ import { fmtDateShort, monthLabel } from '../../utils/date';
 import { pressable } from '../../utils/a11y';
 import '../../styles/edit-form.css';
 import './GalleryPage.css';
+import { plural } from '../../utils/plural';
 
 // Lightbox loaded only when user opens a fullscreen photo.
 const Lightbox = lazy(() => import('../../components/Lightbox/Lightbox'));
@@ -64,7 +66,7 @@ export default function GalleryPage() {
   const {
     items: photos, hasMore, totalCount, loading, loadingMore, loadMore, error, retry,
   } = usePaginatedQuery({
-    cacheKey: 'gallery:first',
+    cacheKey: queryKeys.galleryFirst,
     fetcher: (offset, limit) => fetchGallery({ limit, offset }),
     pageSize: PAGE_SIZE,
     ttl: CACHE_TTL.GALLERY,
@@ -77,7 +79,7 @@ export default function GalleryPage() {
   // Past events only — newest first — for the upload modal's event picker.
   // Fetched only once the modal is opened.
   const { data: pastEventsData } = useCachedQuery(
-    'gallery-upload-past-events',
+    queryKeys.galleryUploadEvents,
     () => fetchEvents({ period: 'past', limit: 200 }),
     { ttl: CACHE_TTL.EVENTS, enabled: uploadOpen },
   );
@@ -116,7 +118,7 @@ export default function GalleryPage() {
         caption: uploadCaption.trim(),
       });
       // In place, so the grid keeps showing while the new photo lands.
-      await refetchQuery('gallery:first', () => fetchGallery({ limit: PAGE_SIZE, offset: 0 }));
+      await refetchQuery(queryKeys.galleryFirst, () => fetchGallery({ limit: PAGE_SIZE, offset: 0 }));
       setUploadOpen(false);
       resetUploadModal();
     } catch (err) {
@@ -130,7 +132,7 @@ export default function GalleryPage() {
   // edge-cached and must stay identical for everyone — see fetchLikedPhotos.
   // Anonymous visitors never ask (enabled: false); clearCache() on logout drops
   // this entry, so the hearts empty the moment someone signs out.
-  const { data: likedData } = useCachedQuery('photos:liked', fetchLikedPhotos, {
+  const { data: likedData } = useCachedQuery(queryKeys.likedPhotos, fetchLikedPhotos, {
     enabled: !!user,
     ttl: CACHE_TTL.GALLERY,
   });
@@ -151,7 +153,7 @@ export default function GalleryPage() {
     // Official event photos have no id — PhotoLike hangs off UserPhoto only.
     if (photo.id == null) return;
     if (!user) {
-      navigate(`/prihlasit?from=${encodeURIComponent('/galerie')}`);
+      navigate('/prihlasit', { state: { from: '/galerie' } });
       return;
     }
     // `photo` is already through withLikes at both call sites, so its
@@ -171,7 +173,7 @@ export default function GalleryPage() {
       // Fold it into the cached like list too. `likeOverrides` is component
       // state and dies on unmount, so without this a like would un-paint itself
       // as soon as you left the gallery and came back inside the TTL.
-      setQueryData('photos:liked', (prev) => (prev ? {
+      setQueryData(queryKeys.likedPhotos, (prev) => (prev ? {
         ...prev,
         liked: data.liked
           ? [...new Set([...(prev.liked || []), photo.id])]
@@ -188,9 +190,8 @@ export default function GalleryPage() {
     }
   }, [likeOverrides, navigate, setLikeOverride, user]);
 
-  // Seasons drive the calendar grouping (replaces the old per-month buckets).
-  // Newest season first so the most recent photos lead.
-  const { data: seasonsData } = useCachedQuery('seasons', fetchSeasons, { ttl: CACHE_TTL.LEADERBOARD });
+  // Seasons drive the calendar grouping, newest first so recent photos lead.
+  const { data: seasonsData } = useCachedQuery(queryKeys.seasons, fetchSeasons, { ttl: CACHE_TTL.LEADERBOARD });
   const seasons = useMemo(
     () => [...(seasonsData?.seasons || [])].sort((a, b) => (a.start < b.start ? 1 : -1)),
     [seasonsData],
@@ -307,7 +308,7 @@ export default function GalleryPage() {
             <div key={key} className="season-section">
               <div className="season-heading">{monthLabel(key)}</div>
               <div className="season-count">
-                {monthPhotos.length} {monthPhotos.length === 1 ? 'fotografie' : 'fotografií'}
+                {monthPhotos.length} {plural(monthPhotos.length, 'fotografie', 'fotografie', 'fotografií')}
               </div>
               <Reveal stagger className="photo-grid">
                 {monthPhotos.map((raw, i) => {

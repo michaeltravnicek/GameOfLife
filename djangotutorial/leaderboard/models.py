@@ -7,6 +7,18 @@ from django.db import models, transaction
 from django.utils.text import slugify
 
 
+def _unique_slug(instance, fallback):
+    """A slug for `instance.name` that no other row of its model uses yet:
+    `name`, then `name-2`, `name-3`… `fallback` covers a name with no
+    sluggable characters."""
+    base = slugify(instance.name) or fallback
+    taken = type(instance).objects.exclude(pk=instance.pk)
+    slug, n = base, 2
+    while taken.filter(slug=slug).exists():
+        slug, n = f"{base}-{n}", n + 1
+    return slug
+
+
 class Season(models.Model):
     name = models.CharField(max_length=100, unique=True)
     start_date = models.DateField()
@@ -31,6 +43,17 @@ class Season(models.Model):
 
     def __str__(self):
         return self.name
+
+    def date_window(self, event_path="event"):
+        """Q matching rows whose event takes place inside this season.
+
+        `event_path` leads from the queried model to the Event: "" for events
+        themselves, "event" for attendance and photos, "usertoevent__event"
+        for players. Compared by calendar date, so the season's last day
+        counts in full.
+        """
+        field = f"{event_path}__date__date" if event_path else "date__date"
+        return models.Q(**{f"{field}__gte": self.start_date, f"{field}__lte": self.end_date})
 
     @classmethod
     def deactivate_others(cls, pk):
@@ -120,13 +143,7 @@ class Badge(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.slug:
-            base = slugify(self.name) or "odznak"
-            slug = base
-            n = 2
-            while Badge.objects.exclude(pk=self.pk).filter(slug=slug).exists():
-                slug = f"{base}-{n}"
-                n += 1
-            self.slug = slug
+            self.slug = _unique_slug(self, "odznak")
         super().save(*args, **kwargs)
         if self.image:
             # Rendered inside a small box (scaled by image_scale), so 512 is
@@ -137,6 +154,10 @@ class Badge(models.Model):
 
     def __str__(self):
         return self.name
+
+
+# Sentinel for an Event loaded without its date (``only()``/``defer()``).
+_UNKNOWN_DATE = object()
 
 
 class Event(models.Model):
@@ -162,8 +183,7 @@ class Event(models.Model):
     points = models.IntegerField()
     image = models.ImageField(upload_to="event_images/", blank=True, null=True)
     # The event's logo AND the emblem its attendees collect — one artwork, one
-    # row, however many editions reuse it. Replaced the old per-event `logo`
-    # ImageField, which stored the same file once per event.
+    # row, however many editions reuse it.
     # SET_NULL: deleting a badge must not cascade-delete events; they just lose
     # their logo.
     badge = models.ForeignKey(
@@ -247,28 +267,33 @@ class Event(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.slug:
-            base = slugify(self.name) or "akce"
-            slug = base
-            n = 2
-            while Event.objects.exclude(pk=self.pk).filter(slug=slug).exists():
-                slug = f"{base}-{n}"
-                n += 1
-            self.slug = slug
+            self.slug = _unique_slug(self, "akce")
+        # The season boards score attendance by the event's date, so only a
+        # moved date re-sorts them; a new event has no attendance yet.
+        date_moved = (not self._state.adding
+                      and getattr(self, "_stored_date", _UNKNOWN_DATE) != self.date)
         super().save(*args, **kwargs)
+        self._stored_date = self.date
         if self.image:
             from .image_utils import process_image_field
             process_image_field(self, "image")
         # Best-effort: a cache outage must not break saving an event.
         from .cache_config import invalidate_event_caches
-        invalidate_event_caches()
+        invalidate_event_caches(season_boards=date_moved)
+
+    @classmethod
+    def from_db(cls, db, field_names, values):
+        instance = super().from_db(db, field_names, values)
+        # A deferred date is unknown, which save() treats as moved.
+        instance._stored_date = instance.__dict__.get("date", _UNKNOWN_DATE)
+        return instance
 
     def __str__(self):
         return f"{self.name} - {self.date} - {self.place} - {self.sheet_id}"
 
     def delete(self, *args, **kwargs):
-        """Same eviction as save(). Without it a deleted event lingered in the
-        hero carousel (1 h TTL) and the city filter (30 min) — the one moment a
-        stale cache is most obvious, because someone just removed the thing."""
+        """Evicts like save(), boards included: the cascade removes attendance
+        without going through UserToEvent.delete()."""
         super().delete(*args, **kwargs)
         from .cache_config import invalidate_event_caches
         invalidate_event_caches()
@@ -287,8 +312,6 @@ class Event(models.Model):
 
 
 class ImageToEvent(models.Model):
-    # Named `event` (not `event_id`): the old name produced a DB column
-    # `event_id_id` and read backwards in queries.
     event = models.ForeignKey(Event, on_delete=models.CASCADE,
                               related_name="official_images")
     image = models.ImageField(upload_to="event_images/", blank=True, null=True)

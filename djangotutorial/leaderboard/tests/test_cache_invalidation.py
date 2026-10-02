@@ -146,8 +146,7 @@ class SuspendInvalidationTests(TestCase):
 
 class EventChangeEvictsBoardTests(TestCase):
     """The boards score attendance by the *event's* date, so an Event write can
-    move points between seasons without a single UserToEvent row changing.
-    Event.save()/delete() used to evict only the hero/stats/cities keys."""
+    move points between seasons without a single UserToEvent row changing."""
 
     def setUp(self):
         cache.clear()
@@ -174,6 +173,19 @@ class EventChangeEvictsBoardTests(TestCase):
 
         self.assertNotIn(self.lb.id, self.board(self.s2025.id))
         self.assertIn(self.lb.id, self.board(self.s2026.id))
+
+    def test_an_edit_that_keeps_the_date_leaves_the_boards_cached(self):
+        # Evicting them means a SCAN over the whole keyspace, twice.
+        key = season_leaderboard_key("all")
+        cache.set(key, "SENTINEL", 60)
+        event = Event.objects.get(pk=self.event.pk)
+        event.name = "Silvestr 2025"
+        event.save()
+        self.assertEqual(cache.get(key), "SENTINEL")
+
+        event.date = timezone.make_aware(timezone.datetime(2026, 1, 1, 1, 0))
+        event.save()
+        self.assertIsNone(cache.get(key))
 
     def test_deleting_an_event_on_the_model_drops_its_points(self):
         """The Django admin deletes through the model, not the API view, and

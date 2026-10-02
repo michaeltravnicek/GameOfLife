@@ -1,12 +1,13 @@
 """Leaderboard rankings, season scoping, and cached season entries."""
 from django.core.cache import cache
-from django.db.models import Count, Q, Sum
+from django.db.models import Count, Sum
 from django.db.models.functions import Coalesce
 
 from leaderboard.cache_config import CACHE_TTL, season_leaderboard_key
 from leaderboard.models import Season, User, UserToEvent
 
 from .catalog import season_dict
+from .seasons import season_summaries
 
 
 def create_leaderboard(leaderboard):
@@ -53,17 +54,9 @@ def leaderboard_total():
     )
 
 
-def _season_window(season):
-    """Q filter matching UserToEvent rows whose event falls inside the season."""
-    return Q(
-        usertoevent__event__date__date__gte=season.start_date,
-        usertoevent__event__date__date__lte=season.end_date,
-    )
-
-
 def leaderboard_for_season(season):
     """Ranked users scored only on events within `[season.start, season.end]`."""
-    window = _season_window(season)
+    window = season.date_window("usertoevent__event")
     ranked = (
         ranked_players()
         .annotate(
@@ -74,32 +67,6 @@ def leaderboard_for_season(season):
         .order_by("-total_points")
     )
     return create_leaderboard(ranked)
-
-
-def season_rank(season, season_pts):
-    """1-based rank for a points total within a season, or None if no points.
-
-    Counts only players the board shows: a hidden player still sitting in this
-    count would push everyone below them down a place, so the rank on a profile
-    and the position on the leaderboard would disagree.
-    """
-    from leaderboard.privacy import points_hidden_player_ids
-
-    if season_pts <= 0:
-        return None
-    higher = (
-        UserToEvent.objects
-        .filter(
-            event__date__date__gte=season.start_date,
-            event__date__date__lte=season.end_date,
-        )
-        .exclude(user_id__in=points_hidden_player_ids())
-        .values("user")
-        .annotate(pts=Sum("points"))
-        .filter(pts__gt=season_pts)
-        .count()
-    )
-    return higher + 1
 
 
 def top_players(limit=5):
@@ -261,7 +228,6 @@ def player_payload(lb_user, request=None):
 
     # Local imports — avoid app-load cycle (accounts depends on leaderboard).
     from accounts.models import Profile
-    from accounts.services import season_summaries
     profile = (
         Profile.objects.filter(leaderboard_user=lb_user).select_related("user").first()
     )

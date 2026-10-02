@@ -311,3 +311,44 @@ class PhotoUploadApiTests(TestCase):
         bad = SimpleUploadedFile("x.txt", b"nope", content_type="text/plain")
         resp = self.client.post(self.url, {"image": bad}, format="multipart")
         self.assertEqual(resp.status_code, 400)
+
+
+@override_settings(MEDIA_ROOT=tempfile.mkdtemp())
+class HiddenEventGalleryTests(TestCase):
+    """The gallery is one edge-cached page for every viewer, so a draft's
+    photos (and with them its name, slug and date) must not be in it, and a
+    photographer must not attach photos to a draft they cannot see."""
+
+    def setUp(self):
+        self.client = APIClient()
+        self.user = get_user_model().objects.create_user(username="snap", password="x")
+        Profile.objects.create(user=self.user, role=Profile.ROLE_PHOTOGRAPHER)
+        self.draft = Event.objects.create(
+            name="Tajná akce", place="Brno", points=10, visible_to_users=False,
+            date=timezone.now() - timedelta(days=1),
+        )
+        self.public = Event.objects.create(
+            name="Veřejná akce", place="Brno", points=10,
+            date=timezone.now() - timedelta(days=2),
+        )
+
+    def test_draft_photos_stay_out_of_the_gallery(self):
+        for event in (self.draft, self.public):
+            ImageToEvent.objects.create(event=event, image=make_image_upload(f"{event.pk}.png"))
+            UserPhoto.objects.create(
+                auth_user=self.user, event=event, image=make_image_upload(f"u{event.pk}.png"))
+        UserPhoto.objects.create(auth_user=self.user, image=make_image_upload("loose.png"))
+
+        body = self.client.get(reverse("api-gallery")).json()
+        self.assertEqual(body["count"], 3)
+        self.assertNotIn("Tajná akce", str(body))
+
+    def test_photographer_cannot_upload_to_a_draft(self):
+        self.client.force_authenticate(user=self.user)
+        resp = self.client.post(
+            reverse("api-photo-upload"),
+            {"image": make_image_upload(), "event": self.draft.slug},
+            format="multipart",
+        )
+        self.assertEqual(resp.status_code, 404)
+        self.assertFalse(UserPhoto.objects.filter(event=self.draft).exists())

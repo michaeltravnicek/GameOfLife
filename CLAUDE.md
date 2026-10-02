@@ -40,7 +40,8 @@ djangotutorial/               Django project — run manage.py from here
 frontend/                     the React SPA
   src/pages/                  one directory per route
   src/components/             shared UI
-  src/services/               api.js (axios + CSRF), queryCache.js, errors.js
+  src/services/               api.js (axios + CSRF), queryCache.js, queryKeys.js (every cache
+                              key + the invalidation groups), errors.js
   src/context/AuthContext.jsx session user + role flags
   src/styles/                 design tokens and global CSS
   image-src/ → public/img/    `npm run images` writes WebP variants (public/img is gitignored)
@@ -178,8 +179,8 @@ the "GOL Design System" artifact.
 - Season rollover is not automated beyond `ensure_season` on deploy.
 - `Sezóna 2025/26` is hard-coded in the four auth pages; they also duplicate their card shell
   (an `AuthShell` component is the pending extraction).
-- `SERVICE_ACCOUNT_FILE` in `tasks.py` is a cwd-relative path, and the sync is not wrapped in
-  a transaction.
+- `SERVICE_ACCOUNT_FILE` in `tasks.py` is a cwd-relative path. (Each sheet imports in its own
+  transaction; the daily run adds new rows and feedback only, `--force-all` re-imports points.)
 - `loadtest/results/` holds the before-R2 run only; the after-R2 run was never recorded.
 
 Before making any claim, label your confidence: [Certain] for information backed by strong evidence, [Likely] for conclusions based on solid reasoning, and [Guessing] when filling in missing information. If most of your response is based on guesses, say so upfront.

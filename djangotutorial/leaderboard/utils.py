@@ -7,13 +7,29 @@ from datetime import datetime
 from django.utils import timezone
 
 
+def absolute_url(url, request=None):
+    """`url` made absolute against the request's host; as-is without a request
+    (management commands and tests build payloads with none)."""
+    return request.build_absolute_uri(url) if request else url
+
+
+def media_url(field_file, request=None):
+    """Public URL of a stored file, or None when the field is empty."""
+    if not field_file:
+        return None
+    return absolute_url(field_file.url, request)
+
+
+def event_logo_url(event, request=None):
+    """An event's logo, which is the artwork on its badge. None when unset."""
+    return media_url(event.badge.image if event.badge_id else None, request)
+
+
 def parse_iso_datetime(raw):
     """Parse an ISO-8601 datetime string into a timezone-aware ``datetime``.
 
     Returns ``None`` for empty input. Raises ``ValueError`` for an unparseable
-    string. Naive datetimes are made aware in the current timezone. Replaces the
-    repeated ``datetime.fromisoformat(... .replace('Z', '+00:00'))`` + is_naive
-    blocks in the event create/update views.
+    string. Naive datetimes are made aware in the current timezone.
     """
     if not raw:
         return None

@@ -10,7 +10,6 @@ badges instead of 7 and the duplication it exists to remove would survive the
 whole exercise. That is what these cover.
 """
 import importlib
-import os
 import tempfile
 
 from django.core.files.base import ContentFile

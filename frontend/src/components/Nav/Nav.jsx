@@ -114,7 +114,7 @@ export default function Nav() {
             <path d="M3.5 7h17M3.5 12h17M3.5 17h17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
           </svg>
         </button>
-        {navItem('/', 'Home', 'home')}
+        {navItem('/', 'Domů', 'home')}
         {navItem('/events', 'Eventy', 'events')}
         {navItem('/galerie', 'Galerie', 'gallery')}
       </div>
@@ -155,7 +155,7 @@ export default function Nav() {
       {/* Full-width mobile dropdown — same popup style as the avatar menu. */}
       <div className={`nav-drop${menuOpen ? ' open' : ''}`} role="menu">
         {user && <div className="u-label nav-drop-name">{displayName}</div>}
-        {dropItem('/', 'Home', 'home')}
+        {dropItem('/', 'Domů', 'home')}
         {dropItem('/events', 'Eventy', 'events')}
         {dropItem('/galerie', 'Galerie', 'gallery')}
         {dropItem('/leaderboard', 'Leaderboard', 'leaderboard')}

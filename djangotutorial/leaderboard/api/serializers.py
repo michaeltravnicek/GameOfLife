@@ -5,8 +5,11 @@ from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from leaderboard.image_utils import ALLOWED_IMAGE_CONTENT_TYPES, MAX_UPLOAD_BYTES, variant_url
-from leaderboard.models import Badge, Category, Event, EventFeedback, EventRSVP, ImageToEvent, UserPhoto
+from leaderboard.models import (
+    Badge, Category, Event, EventFeedback, EventRSVP, ImageToEvent, UserPhoto, UserToEvent,
+)
 from leaderboard.privacy import public_handle
+from leaderboard.utils import event_logo_url, media_url
 
 # Badge artwork may be SVG (vector) as well as raster — unlike the poster
 # `image`, which is downscaled by Pillow on save and so must stay a raster
@@ -57,15 +60,6 @@ def validate_logo_file(uploaded):
             "SVG nesmí obsahovat skripty ani aktivní obsah.")
 
 
-def _badge_image_url(obj, request):
-    """Absolute URL of the event's badge artwork — the event's logo."""
-    badge = obj.badge
-    if not badge or not badge.image:
-        return None
-    url = badge.image.url
-    return request.build_absolute_uri(url) if request else url
-
-
 class BadgeSerializer(serializers.ModelSerializer):
     """A badge as the event form's logo picker and the profile collection see it."""
     image = serializers.SerializerMethodField()
@@ -75,19 +69,14 @@ class BadgeSerializer(serializers.ModelSerializer):
         fields = ["id", "name", "slug", "image", "image_scale", "description"]
 
     def get_image(self, obj) -> str | None:
-        if not obj.image:
-            return None
-        request = self.context.get("request")
-        url = obj.image.url
-        return request.build_absolute_uri(url) if request else url
+        return media_url(obj.image, self.context.get("request"))
 
 
 class BadgeWriteSerializer(serializers.ModelSerializer):
-    """Input side of badge creation — the one place event artwork is uploaded now.
+    """Input side of badge creation — the one place event artwork is uploaded.
 
-    `image` is a FileField rather than the auto ImageField for the same reason
-    the old event logo was: Pillow-verification rejects SVG, and a good half of
-    the logos are vector.
+    `image` is a FileField rather than the auto ImageField because
+    Pillow-verification rejects SVG, and a good half of the logos are vector.
     """
     name = serializers.CharField(max_length=255)
     image = serializers.FileField(required=False, allow_null=True,
@@ -154,14 +143,10 @@ class EventListSerializer(serializers.ModelSerializer):
         ]
 
     def get_image(self, obj) -> str | None:
-        if not obj.image:
-            return None
-        request = self.context.get("request")
-        url = obj.image.url
-        return request.build_absolute_uri(url) if request else url
+        return media_url(obj.image, self.context.get("request"))
 
     def get_logo(self, obj) -> str | None:
-        return _badge_image_url(obj, self.context.get("request"))
+        return event_logo_url(obj, self.context.get("request"))
 
     def get_logo_scale(self, obj) -> float:
         return obj.badge.image_scale if obj.badge else 1.0
@@ -201,21 +186,14 @@ class EventDetailSerializer(serializers.ModelSerializer):
             "official_images", "user_photos",
         ]
 
-    def _abs(self, image_field):
-        if not image_field:
-            return None
-        request = self.context.get("request")
-        url = image_field.url
-        return request.build_absolute_uri(url) if request else url
-
     def get_image(self, obj) -> str | None:
-        return self._abs(obj.image)
+        return media_url(obj.image, self.context.get("request"))
 
     def get_image_mobile(self, obj) -> str | None:
         return variant_url(obj.image, self.context.get("request"))
 
     def get_logo(self, obj) -> str | None:
-        return _badge_image_url(obj, self.context.get("request"))
+        return event_logo_url(obj, self.context.get("request"))
 
     def get_logo_scale(self, obj) -> float:
         return obj.badge.image_scale if obj.badge else 1.0
@@ -250,38 +228,24 @@ class EventDetailSerializer(serializers.ModelSerializer):
         return EventRSVP.objects.filter(auth_user=request.user, event=obj).exists()
 
     def get_has_attended(self, obj) -> bool:
-        request = self.context.get("request")
-        if not request or not request.user.is_authenticated:
-            return False
-        from accounts.models import Profile
-        from leaderboard.models import UserToEvent
-        try:
-            lb_user = request.user.profile.leaderboard_user
-        except (AttributeError, Profile.DoesNotExist):
-            return False
-        if lb_user is None:
-            return False
-        return UserToEvent.objects.filter(user=lb_user, event=obj).exists()
+        lb_user = self._viewer_player()
+        return lb_user is not None and UserToEvent.objects.filter(user=lb_user, event=obj).exists()
 
     def get_feedback_given(self, obj) -> bool:
-        request = self.context.get("request")
-        if not request or not request.user.is_authenticated:
-            return False
-        from accounts.models import Profile  # local import — avoid app-load cycle
+        lb_user = self._viewer_player()
+        return lb_user is not None and EventFeedback.objects.filter(user=lb_user, event=obj).exists()
 
-        try:
-            lb_user = request.user.profile.leaderboard_user
-        except (AttributeError, Profile.DoesNotExist):
-            return False
-        if lb_user is None:
-            return False
-        return EventFeedback.objects.filter(user=lb_user, event=obj).exists()
+    def _viewer_player(self):
+        from accounts.models import leaderboard_user_for  # local import — avoid app-load cycle
+
+        request = self.context.get("request")
+        return leaderboard_user_for(request.user) if request else None
 
     @extend_schema_field(serializers.ListField(child=serializers.URLField()))
     def get_official_images(self, obj):
         request = self.context.get("request")
         return [
-            request.build_absolute_uri(img.image.url) if request else img.image.url
+            media_url(img.image, request)
             for img in ImageToEvent.objects.filter(event=obj)
             if img.image
         ]
@@ -291,7 +255,7 @@ class EventDetailSerializer(serializers.ModelSerializer):
         request = self.context.get("request")
         return [
             {
-                "url": request.build_absolute_uri(p.image.url) if request else p.image.url,
+                "url": media_url(p.image, request),
                 # Never fall back to the raw username — it's the e-mail for social
                 # logins. Real name, then a safe handle, then a neutral label.
                 "uploaded_by": (

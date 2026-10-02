@@ -2,7 +2,6 @@ import logging
 
 from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
 from django.contrib.auth.forms import PasswordResetForm
-from django.contrib.auth.models import User as AuthUser
 from django.db import transaction
 from django.http import Http404
 from django.shortcuts import get_object_or_404
@@ -42,6 +41,7 @@ from leaderboard.models import Season
 
 from accounts.forms import CustomUserCreationForm
 from leaderboard.privacy import visibility_for
+from leaderboard.services import season_detail
 
 from accounts.services import (
     anonymize_account,
@@ -50,7 +50,6 @@ from accounts.services import (
     visible_profile_user_or_404,
     reset_password,
     resolve_login_username,
-    season_detail,
     serialize_user,
     set_profile_photo,
     update_profile,
@@ -156,8 +155,7 @@ def login_api(request):
     remember = bool(request.data.get("remember", False))
     request.session.set_expiry(60 * 60 * 24 * 30 if remember else 0)
 
-    # Session cookie only — see DEFAULT_AUTHENTICATION_CLASSES in settings.py for why
-    # the `client: "mobile"` token branch that used to live here was removed.
+    # Session cookie only — see DEFAULT_AUTHENTICATION_CLASSES in settings.py.
     return Response({"user": serialize_user(user, request)}, status=status.HTTP_200_OK)
 
 

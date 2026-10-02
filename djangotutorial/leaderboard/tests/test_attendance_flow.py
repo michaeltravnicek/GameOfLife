@@ -20,7 +20,7 @@ from django.utils import timezone
 from rest_framework.test import APIClient
 
 from accounts.models import Profile
-from leaderboard.models import Event, EventRSVP, Season, User as LeaderboardUser, UserToEvent
+from leaderboard.models import Event, Season, User as LeaderboardUser
 
 DUMMY_CACHE = {"default": {"BACKEND": "django.core.cache.backends.dummy.DummyCache"}}
 

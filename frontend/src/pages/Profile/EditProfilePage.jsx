@@ -11,12 +11,13 @@ import {
   apiDeleteAccount, apiPasswordChange,
 } from '../../services/api';
 import { useBeforeUnload } from '../../hooks/useBeforeUnload';
-import { invalidateQuery } from '../../services/queryCache';
+import { invalidateScores } from '../../services/queryKeys';
 import { reportError, extractApiError } from '../../services/errors';
 import { initials } from '../../utils/name';
 import PageStage from '../../components/PageStage/PageStage';
 import PageState from '../../components/PageState/PageState';
 import '../../styles/edit-form.css';
+import { SOCIALS } from './socials';
 import './EditProfilePage.css';
 
 const BIO_MAX = 220;
@@ -24,12 +25,10 @@ const BIO_MAX = 220;
 // anyway; this is so the counter tells the truth before you hit save.
 const ANSWER_MAX = 500;
 
-const SOCIALS = [
-  { key: 'instagram', label: 'Instagram', ico: 'IG', pre: 'instagram.com/', placeholder: 'uživatel' },
-  { key: 'strava', label: 'Strava', ico: 'ST', pre: 'strava.com/athletes/', placeholder: 'uživatel' },
-  { key: 'spotify', label: 'Spotify', ico: 'SP', pre: 'spotify.com/user/', placeholder: 'uživatel' },
-  { key: 'tiktok', label: 'TikTok', ico: 'TT', pre: 'tiktok.com/@', placeholder: 'uživatel' },
-];
+// { instagram: '', … } — or each social's value from `source`.
+const socialValues = (source = {}) => Object.fromEntries(
+  SOCIALS.map((s) => [s.key, source[s.key] || '']),
+);
 
 export default function EditProfilePage() {
   const toast = useToast();
@@ -60,7 +59,7 @@ export default function EditProfilePage() {
   // to empty, so a site with no questions authored yet renders no section.
   const [questions, setQuestions] = useState([]);
   const [answers, setAnswers] = useState({});
-  const [socials, setSocials] = useState({ instagram: '', strava: '', spotify: '', tiktok: '' });
+  const [socials, setSocials] = useState(socialValues);
   const [privacy, setPrivacy] = useState({
     hide_pts: false, hide_events: false, members_only: false,
   });
@@ -94,12 +93,7 @@ export default function EditProfilePage() {
             bio: profile.bio || '',
           });
           setCategories((profile.favourite_categories || []).map((c) => c.name));
-          setSocials({
-            instagram: profile.instagram || '',
-            strava: profile.strava || '',
-            spotify: profile.spotify || '',
-            tiktok: profile.tiktok || '',
-          });
+          setSocials(socialValues(profile));
           setPrivacy({
             hide_pts: profile.privacy?.hide_pts || false,
             hide_events: profile.privacy?.hide_events || false,
@@ -161,10 +155,7 @@ export default function EditProfilePage() {
       formData.append('hide_pts', privacy.hide_pts ? '1' : '0');
       formData.append('hide_events', privacy.hide_events ? '1' : '0');
       formData.append('members_only', privacy.members_only ? '1' : '0');
-      formData.append('instagram', socials.instagram);
-      formData.append('strava', socials.strava);
-      formData.append('spotify', socials.spotify);
-      formData.append('tiktok', socials.tiktok);
+      SOCIALS.forEach((s) => formData.append(s.key, socials[s.key]));
       // Send every question, including the ones left blank: an emptied answer
       // has to reach the server to delete its row, and a missing key would read
       // as "unchanged" instead.
@@ -173,8 +164,7 @@ export default function EditProfilePage() {
       await updateProfile(formData);
       // The public profile, the board rows carrying this name/avatar, and the
       // nav's own copy of the user all render from caches that just went stale.
-      invalidateQuery((k) => k.startsWith('profile:') || k.startsWith('player:')
-        || k.startsWith('leaderboard:'));
+      invalidateScores();
       await refreshAuth();
       setDirty(false);
       setSaved(true);
@@ -422,7 +412,7 @@ export default function EditProfilePage() {
                   <span className="ep-ico">{s.ico}</span>
                   <div className="ep-combo">
                     <span className="ep-pre">{s.pre}</span>
-                    <input className="gol-input" aria-label={s.label} value={socials[s.key]} onChange={setSocial(s.key)} placeholder={s.placeholder} />
+                    <input className="gol-input" aria-label={s.label} value={socials[s.key]} onChange={setSocial(s.key)} placeholder="uživatel" />
                   </div>
                 </div>
               ))}

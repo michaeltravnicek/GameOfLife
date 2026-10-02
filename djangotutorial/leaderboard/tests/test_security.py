@@ -28,7 +28,7 @@ from django.utils import timezone
 from rest_framework.test import APIClient
 
 from accounts.models import Profile
-from leaderboard.models import Event, PhotoLike, User as LeaderboardUser, UserPhoto, UserToEvent
+from leaderboard.models import Event, PhotoLike, UserPhoto
 
 from mysite.test_utils import SPA_SHELL, SpaShellMixin
 

@@ -3,9 +3,8 @@ import './PageStage.css';
 /**
  * The fixed full-viewport photo behind a "poster" page, plus the grain overlay.
  *
- * Eleven pages used to carry their own copy of these rules, each drifting a
- * little (tint, grain colour, saturation, mobile un-fix). One component, three
- * tints, two grains — every photo page reads as the same material.
+ * The only place these rules live, so every photo page reads as the same
+ * material: three tints, two grains.
  *
  * image    : string — basename under /img, e.g. 'gal1'. Renders
  *            gal1-mobile.webp on phones and gal1-desktop.webp from 769px up

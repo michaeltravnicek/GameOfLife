@@ -204,7 +204,7 @@ class SeasonEventSerializer(serializers.Serializer):
 
 
 class SeasonDetailSerializer(serializers.Serializer):
-    """One season's breakdown for a player (accounts.services.season_detail)."""
+    """One season's breakdown for a player (leaderboard.services.season_detail)."""
     id = serializers.IntegerField()
     label = serializers.CharField()
     start = serializers.DateField()

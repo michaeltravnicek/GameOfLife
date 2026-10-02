@@ -8,7 +8,7 @@
 .lb-stage{position:absolute;inset:0;z-index:0}
 /* Both photo layers centre themselves with inset:0 + margin:auto, which leaves
    `transform` entirely free for the slide/zoom keyframes. */
-.lb-overlay .lb-img{position:absolute;inset:0;margin:auto;max-width:90vw;max-height:78vh;width:auto;height:auto;border:5px solid var(--color-cream-light);border-radius:3px;box-shadow:0 24px 80px var(--alpha-black-70);object-fit:contain}
+.lb-overlay .lb-img{position:absolute;inset:0;margin:auto;max-width:90vw;max-height:78vh;width:auto;height:auto;border:5px solid var(--color-cream-light);border-radius:var(--radius-xs);box-shadow:0 24px 80px var(--alpha-black-70);object-fit:contain}
 /* Incoming sits above outgoing so it covers the frame as it arrives. */
 .lb-img.is-open,.lb-img.enter-next,.lb-img.enter-prev{z-index:2}
 .lb-img.leave-next,.lb-img.leave-prev{z-index:1}
