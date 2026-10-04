@@ -149,7 +149,7 @@ export default function RegisterPage() {
                   />
                   <span>
                     Souhlasím se zpracováním osobních údajů a beru na vědomí{' '}
-                    <Link to="/ochrana-osobnich-udaju" target="_blank" rel="noopener noreferrer">
+                    <Link to="/gdpr" target="_blank" rel="noopener noreferrer">
                       zásady ochrany osobních údajů
                     </Link>.
                   </span>

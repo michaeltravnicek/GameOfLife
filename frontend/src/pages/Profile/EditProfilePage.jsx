@@ -257,7 +257,7 @@ export default function EditProfilePage() {
       <PageStage image="gal3" position="center 30%" tint="alive" />
 
       <section className="gol-head">
-        <div className="gol-crumb">— <Link to={`/profil/${form.username}`}>Profil</Link> · Upravit —</div>
+        <div className="gol-crumb"><Link to={`/profil/${form.username}`}>Profil</Link> · Upravit</div>
         <div className="gol-eyebrow">Tvůj kus stránky</div>
         <h1>Upravit profil</h1>
       </section>
@@ -268,7 +268,7 @@ export default function EditProfilePage() {
           <div className="gol-rule" />
           <div className="gol-card">
             <div className="gol-card-head">
-              <div className="gol-sec-eyebrow">— 01 · Základy —</div>
+              <div className="gol-sec-eyebrow">01 · Základy</div>
               <h2 className="gol-sec-heading">Kdo <span className="pink">jsi.</span></h2>
               <p className="ep-sec-sub">Tyhle údaje uvidí každý, kdo otevře tvůj profil. E-mail jsou jen pro organizátory.</p>
             </div>
@@ -302,7 +302,7 @@ export default function EditProfilePage() {
           <div className="gol-rule" />
           <div className="gol-card ep-avatar-card">
             <div className="gol-card-head">
-              <div className="gol-sec-eyebrow">— 02 · Avatar &amp; identita —</div>
+              <div className="gol-sec-eyebrow">02 · Avatar &amp; identita</div>
               <h2 className="gol-sec-heading">Jak <span className="pink">vypadáš.</span></h2>
               <p className="ep-sec-sub">Tvoje fotka se objeví u tvého jména v leaderboardu, v galerii akcí a vedle každé tvojí RSVP.</p>
             </div>
@@ -313,7 +313,7 @@ export default function EditProfilePage() {
               {!avatar && avatarInitials}
             </div>
             <div className="ep-avatar-meta">
-              <div className="ep-l">— Profilová fotka —</div>
+              <div className="ep-l">Profilová fotka</div>
               <div className="ep-h">{fullName || 'Tvoje jméno'}</div>
               <div className="ep-s">JPG nebo PNG, alespoň 400×400 px. Co tam dáš — z toho ti budou ostatní vařit kávu.</div>
               <div className="ep-avatar-actions">
@@ -331,7 +331,7 @@ export default function EditProfilePage() {
           <div className="gol-rule" />
           <div className="gol-card">
             <div className="gol-card-head">
-              <div className="gol-sec-eyebrow">— 03 · O mně —</div>
+              <div className="gol-sec-eyebrow">03 · O mně</div>
               <h2 className="gol-sec-heading">Co o sobě <span className="pink">povíš.</span></h2>
               <p className="ep-sec-sub">Krátký vzkaz, který se objeví v záhlaví tvého profilu. Drž to v jednom dechu — nejvíc 220 znaků.</p>
             </div>
@@ -357,7 +357,7 @@ export default function EditProfilePage() {
             <div className="gol-rule" />
             <div className="gol-card">
               <div className="gol-card-head">
-                <div className="gol-sec-eyebrow">— 04 · Otázky —</div>
+                <div className="gol-sec-eyebrow">04 · Otázky</div>
                 <h2 className="gol-sec-heading">Pár otázek <span className="pink">na tebe.</span></h2>
                 <p className="ep-sec-sub">Nepovinné. Co vyplníš, se objeví na tvém profilu v sekci „O mně“ — co necháš prázdné, se nikde neukáže.</p>
               </div>
@@ -388,7 +388,7 @@ export default function EditProfilePage() {
             <div className="gol-rule" />
             <div className="gol-card">
               <div className="gol-card-head">
-                <div className="gol-sec-eyebrow">— 05 · Oblíbené kategorie —</div>
+                <div className="gol-sec-eyebrow">05 · Oblíbené kategorie</div>
                 <h2 className="gol-sec-heading">V čem <span className="pink">jedeš.</span></h2>
                 <p className="ep-sec-sub">Vyber až 3 kategorie, ve kterých se nejvíc realizuješ. Pomůže nám doporučit ti akce na míru.</p>
               </div>
@@ -402,7 +402,7 @@ export default function EditProfilePage() {
           <div className="gol-rule" />
           <div className="gol-card">
             <div className="gol-card-head">
-              <div className="gol-sec-eyebrow">— 06 · Sociální sítě —</div>
+              <div className="gol-sec-eyebrow">06 · Sociální sítě</div>
               <h2 className="gol-sec-heading">Kde tě <span className="pink">najdou.</span></h2>
               <p className="ep-sec-sub">Tyhle odkazy se objeví v sekci „O mně“ na tvém profilu. Nech prázdné, co nechceš sdílet.</p>
             </div>
@@ -425,7 +425,7 @@ export default function EditProfilePage() {
           <div className="gol-rule" />
           <div className="gol-card">
             <div className="gol-card-head">
-              <div className="gol-sec-eyebrow">— 07 · Soukromí —</div>
+              <div className="gol-sec-eyebrow">07 · Soukromí</div>
               <h2 className="gol-sec-heading">Kdo tě <span className="pink">uvidí.</span></h2>
               <p className="ep-sec-sub">Profil je veřejný, ale tyhle detaily můžeš zamknout.</p>
             </div>
@@ -451,7 +451,7 @@ export default function EditProfilePage() {
           <div className="gol-rule" />
           <div className="gol-card">
             <div className="gol-card-head">
-              <div className="gol-sec-eyebrow">— 08 · Heslo —</div>
+              <div className="gol-sec-eyebrow">08 · Heslo</div>
               <h2 className="gol-sec-heading">Změnit <span className="pink">heslo.</span></h2>
               <p className="ep-sec-sub">Staré heslo potřebujeme, i když jsi přihlášený/á — kdyby ti někdo sedl k odemčenému počítači.</p>
             </div>
@@ -483,7 +483,7 @@ export default function EditProfilePage() {
           <div className="gol-rule" />
           <div className="gol-card gol-danger-card">
             <div className="gol-card-head">
-              <div className="gol-sec-eyebrow danger">— 09 · Konec hry —</div>
+              <div className="gol-sec-eyebrow danger">09 · Konec hry</div>
               <h2 className="gol-sec-heading">Něco <span className="pink">extrémního.</span></h2>
               <p className="ep-sec-sub">Tyhle akce jsou nevratné. Mysli si dvakrát.</p>
             </div>
@@ -503,7 +503,7 @@ export default function EditProfilePage() {
           <Button as="link" to={`/profil/${form.username}`} variant="frost">Zrušit</Button>
           <Button variant="action" size="lg" onClick={handleSave} busy={saving}>{btnSaved ? '✓ Uloženo' : 'Uložit profil'}</Button>
         </div>
-        <div className="gol-commit-note">{saveError ? `— Chyba: ${saveError} —` : (dirty ? '— Neuložené změny —' : '— Vše uloženo —')}</div>
+        <div className={`gol-commit-note${saveError || dirty ? ' is-pending' : ''}`}>{saveError ? `Chyba: ${saveError}` : (dirty ? 'Neuložené změny' : 'Vše uloženo')}</div>
       </section>
 
       <div className={`gol-savebar${barVisible ? ' visible' : ''}`}>
@@ -521,7 +521,7 @@ export default function EditProfilePage() {
           board without a name. Saying "body budou ztraceny" would be a nicer
           sentence and a false one. */}
       <Modal open={deleteOpen} onClose={deleting ? undefined : () => setDeleteOpen(false)} labelledBy="ep-delete-title" width={480}>
-        <div className="gol-modal-eyebrow">— Konec hry —</div>
+        <div className="gol-modal-eyebrow">Konec hry</div>
         <h3 id="ep-delete-title" className="gol-modal-title">Smazat účet <span className="pink">natrvalo?</span></h3>
         <p className="gol-modal-text">
           Nevratné. Smažeme tvoje jméno, přezdívku, e-mail, fotku, bio i odkazy

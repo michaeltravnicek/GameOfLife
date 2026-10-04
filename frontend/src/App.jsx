@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useRef } from 'react';
-import { Routes, Route, useLocation } from 'react-router-dom';
+import { Navigate, Routes, Route, useLocation } from 'react-router-dom';
 import Nav from './components/Nav/Nav';
 import Footer from './components/Footer/Footer';
 import PageState from './components/PageState/PageState';
@@ -81,7 +81,9 @@ export default function App() {
           <Route path="/historie" element={<Layout><HistoriePage /></Layout>} />
           <Route path="/prihlasit" element={<Layout><LoginPage /></Layout>} />
           <Route path="/registrace" element={<Layout><RegisterPage /></Layout>} />
-          <Route path="/ochrana-osobnich-udaju" element={<Layout><PrivacyPage /></Layout>} />
+          <Route path="/gdpr" element={<Layout><PrivacyPage /></Layout>} />
+          {/* The policy's first address; already handed out in links. */}
+          <Route path="/ochrana-osobnich-udaju" element={<Navigate to="/gdpr" replace />} />
           <Route path="/zapomenute-heslo" element={<Layout><ForgotPasswordPage /></Layout>} />
           <Route path="/obnova-hesla/:uid/:token" element={<Layout><ResetPasswordPage /></Layout>} />
           <Route path="/hrac/:userId" element={<Layout><PlayerPage /></Layout>} />

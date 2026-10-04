@@ -33,7 +33,7 @@ export default function Footer() {
           {/* Sits with the logo block, not in the menu column: the menu is gone
               on phones and the policy has to be findable by someone who never
               signed up. */}
-          <Link className="ft-link ft-policy" to="/ochrana-osobnich-udaju">Ochrana osobních údajů</Link>
+          <Link className="ft-link ft-policy" to="/gdpr">Ochrana osobních údajů</Link>
         </div>
       </div>
     </footer>

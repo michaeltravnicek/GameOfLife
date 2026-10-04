@@ -36,7 +36,7 @@ export default function EventFormSections({
         <div className="gol-rule" />
         <div className="gol-card">
           <div className="gol-card-head">
-            <div className="gol-sec-eyebrow">— 01 · Základy —</div>
+            <div className="gol-sec-eyebrow">01 · Základy</div>
             <h2 className="gol-sec-heading">Jak se <span className="pink">jmenuje.</span></h2>
             <p className="ev-sec-sub">Základní informace o akci — název, popis a kde se to bude dít.</p>
           </div>
@@ -62,7 +62,7 @@ export default function EventFormSections({
         <div className="gol-rule" />
         <div className="gol-card">
           <div className="gol-card-head">
-            <div className="gol-sec-eyebrow">— 02 · Čas a body —</div>
+            <div className="gol-sec-eyebrow">02 · Čas a body</div>
             <h2 className="gol-sec-heading">Kdy a za <span className="pink">kolik.</span></h2>
             <p className="ev-sec-sub">Nastav datum, čas (lze nechat prázdné) a počet bodů za účast.</p>
           </div>
@@ -100,7 +100,7 @@ export default function EventFormSections({
         <div className="gol-rule" />
         <div className="gol-card">
           <div className="gol-card-head">
-            <div className="gol-sec-eyebrow">— 03 · Poloha na mapě —</div>
+            <div className="gol-sec-eyebrow">03 · Poloha na mapě</div>
             <h2 className="gol-sec-heading">Kde se to <span className="pink">děje.</span></h2>
             <p className="ev-sec-sub">Klikni na mapu pro výběr místa. Tažením kolíku ho doladíš.</p>
           </div>
@@ -134,7 +134,7 @@ export default function EventFormSections({
         <div className="gol-rule" />
         <div className="gol-card">
           <div className="gol-card-head">
-            <div className="gol-sec-eyebrow">— 04 · Vizuál —</div>
+            <div className="gol-sec-eyebrow">04 · Vizuál</div>
             <h2 className="gol-sec-heading">Jak <span className="pink">vypadá.</span></h2>
             <p className="ev-sec-sub">Nahraj plakát a vyber odznak — jeho obrázek je zároveň logo akce.</p>
           </div>
@@ -197,7 +197,7 @@ export default function EventFormSections({
         <div className="gol-rule" />
         <div className="gol-card">
           <div className="gol-card-head">
-            <div className="gol-sec-eyebrow">— 05 · Kategorie —</div>
+            <div className="gol-sec-eyebrow">05 · Kategorie</div>
             <h2 className="gol-sec-heading">V jaké <span className="pink">kategorii.</span></h2>
             <p className="ev-sec-sub">Vyber kategorii, do které akce patří.</p>
           </div>
@@ -211,7 +211,7 @@ export default function EventFormSections({
         <div className="gol-rule" />
         <div className="gol-card">
           <div className="gol-card-head">
-            <div className="gol-sec-eyebrow">— 06 · Obsah —</div>
+            <div className="gol-sec-eyebrow">06 · Obsah</div>
             <h2 className="gol-sec-heading">Jaká <span className="pink">pravidla.</span></h2>
             <p className="ev-sec-sub">Postup, řád, instrukce… a odkaz na dotazník (Google Forms).</p>
           </div>
@@ -238,7 +238,7 @@ export default function EventFormSections({
         <div className="gol-rule" />
         <div className="gol-card">
           <div className="gol-card-head">
-            <div className="gol-sec-eyebrow">— 07 · Viditelnost —</div>
+            <div className="gol-sec-eyebrow">07 · Viditelnost</div>
             <h2 className="gol-sec-heading">Kdo <span className="pink">uvidí.</span></h2>
             <p className="ev-sec-sub">Postav si, zda je akce viditelná pro běžné uživatele.</p>
           </div>

@@ -74,7 +74,12 @@
 .gol-commit-label{font-family:var(--font-mono);font-style:italic;font-size:var(--text-label-lg);letter-spacing:.22em;text-transform:uppercase;color:var(--alpha-cream-65);margin-bottom:14px}
 .gol-commit-zone h2{font-family:var(--font-display);font-size:var(--text-section);line-height:1;color:var(--color-heading);text-transform:uppercase;letter-spacing:.03em;margin-bottom:22px}
 .gol-commit-row{display:inline-flex;gap:12px;flex-wrap:wrap;justify-content:center;align-items:center}
-.gol-commit-note{font-family:var(--font-mono);font-style:italic;font-size:var(--text-label);letter-spacing:.18em;text-transform:uppercase;color:var(--alpha-cream-55);margin-top:18px}
+.gol-commit-note{font-family:var(--font-mono);font-style:italic;font-size:var(--text-label);letter-spacing:.18em;text-transform:uppercase;color:var(--alpha-cream-55);margin-top:18px;display:flex;align-items:center;justify-content:center;gap:9px}
+/* Save state as a dot: filled pink while there is something unsaved (or the
+   save failed), an empty ring once everything is stored. */
+.gol-commit-note::before{content:'';flex:none;width:8px;height:8px;box-sizing:border-box;border:1.5px solid currentColor;border-radius:var(--radius-pill)}
+.gol-commit-note.is-pending{color:var(--alpha-cream-85)}
+.gol-commit-note.is-pending::before{background:var(--color-pink);border-color:var(--color-pink)}
 
 /* ── Save bar — slides up when there are unsaved changes. The shared glass
    (shared-ui.css): chrome over scrolling content; a top edge only. ── */

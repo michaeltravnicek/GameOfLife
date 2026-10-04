@@ -157,7 +157,7 @@
    the right edge. */
 .event-detail-page .rsvp-recap.with-tabs + .admin-view-tabs{position:absolute;right:24px;top:50%;transform:translateY(-50%)}
 
-/* Attendance / RSVP management (— Účast — tab). The list is the dark panel of
+/* Attendance / RSVP management (Účast tab). The list is the dark panel of
    a ticket card; TicketFrame draws the white dashed frame around it — same
    pattern as the profile page's event lists.
    Panel fill is left to StatList's default (var(--color-panel) + brown2 grain) so it is

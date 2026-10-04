@@ -105,7 +105,7 @@ export default function EditEventPage() {
       <PageStage image="gal2" position="center 30%" tint="dim" />
 
       <section className="gol-head">
-        <div className="gol-crumb">— <Link to={`/events/${slug}`}>{form.name}</Link> · Upravit —</div>
+        <div className="gol-crumb"><Link to={`/events/${slug}`}>{form.name}</Link> · Upravit</div>
         <div className="gol-eyebrow">Úprava akce</div>
         <h1>Upravit akci</h1>
       </section>
@@ -130,7 +130,7 @@ export default function EditEventPage() {
           <div className="gol-rule" />
           <div className="gol-card gol-danger-card">
             <div className="gol-card-head">
-              <div className="gol-sec-eyebrow">— 08 · Konec akce —</div>
+              <div className="gol-sec-eyebrow">08 · Konec akce</div>
               <h2 className="gol-sec-heading">Smazat <span className="pink">akci.</span></h2>
               <p className="ev-sec-sub">Nevratné. S akcí zmizí i všechny udělené body, RSVP a fotky.</p>
             </div>
@@ -143,7 +143,7 @@ export default function EditEventPage() {
       </main>
 
       <Modal open={deleteOpen} onClose={deleting ? undefined : () => setDeleteOpen(false)} labelledBy="ev-delete-title" width={480}>
-        <div className="gol-modal-eyebrow">— Konec akce —</div>
+        <div className="gol-modal-eyebrow">Konec akce</div>
         <h3 id="ev-delete-title" className="gol-modal-title">Smazat akci <span className="pink">natrvalo?</span></h3>
         <p className="gol-modal-text">„{form.name}“ zmizí i se všemi udělenými body, RSVP a fotkami. Tohle vzít zpět nejde.</p>
         <div className="gol-modal-buttons">
@@ -159,7 +159,7 @@ export default function EditEventPage() {
           <Link className="gol-btn ghost" to={`/events/${slug}`}>Zrušit</Link>
           <button type="button" className="gol-btn primary lg" onClick={handleSave} disabled={saving}>{saving ? 'Ukládám…' : 'Uložit akci'}</button>
         </div>
-        <div className="gol-commit-note">{saveError ? `— Chyba: ${saveError} —` : (dirty ? '— Neuložené změny —' : '— Vše uloženo —')}</div>
+        <div className={`gol-commit-note${saveError || dirty ? ' is-pending' : ''}`}>{saveError ? `Chyba: ${saveError}` : (dirty ? 'Neuložené změny' : 'Vše uloženo')}</div>
       </section>
 
       {/* Slides up as soon as anything changes — mirrors EditProfile's save bar. */}

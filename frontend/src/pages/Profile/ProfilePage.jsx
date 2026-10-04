@@ -146,7 +146,7 @@ export default function ProfilePage() {
             {view === 'about' && (
               <>
                 <div className="section">
-                  <SectionHeader eyebrow="— 01 · O mně —" meta="profil & minulost" heading={<>Joy<span className="pink">Maxxer</span></>} />
+                  <SectionHeader eyebrow="01 · O mně" meta="profil & minulost" heading={<>Joy<span className="pink">Maxxer</span></>} />
                   <p className="gol-quote">{profile.bio || 'Bez popisu profilu.'}</p>
                   {(profile.city || profile.favourite_categories?.length > 0) && (
                     <div className="about-meta">
@@ -167,7 +167,7 @@ export default function ProfilePage() {
                       render at all for someone who skipped them. */}
                   {profile.answers?.length > 0 && (
                     <div className="qa">
-                      <div className="qa-label">— Pár otázek —</div>
+                      <div className="qa-label">Pár otázek</div>
                       <dl className="qa-list">
                         {profile.answers.map((a) => (
                           <div className="qa-item" key={a.question_id}>
@@ -181,7 +181,7 @@ export default function ProfilePage() {
 
                   {linkedSocials.length > 0 && (
                     <div className="socials">
-                      <div className="socials-label">— Najdeš na —</div>
+                      <div className="socials-label">Najdeš na</div>
                       <div className="socials-grid">
                         {linkedSocials.map((sc) => (
                           <a key={sc.key} className="social" href={socialHref(sc, profile[sc.key])} target="_blank" rel="noopener noreferrer">
@@ -200,7 +200,7 @@ export default function ProfilePage() {
 
                 {profile.badges?.length > 0 && (
                   <div className="section">
-                    <SectionHeader eyebrow="— Sbírka —" meta={`${profile.badges.length} ${badgeWord(profile.badges.length)}`} heading={<>Od<span className="pink">znaky</span></>} />
+                    <SectionHeader eyebrow="Sbírka" meta={`${profile.badges.length} ${badgeWord(profile.badges.length)}`} heading={<>Od<span className="pink">znaky</span></>} />
                     <div className="badge-grid">
                       {profile.badges.map((b) => (
                         <div className="badge-item" key={b.id} title={b.description || b.name}>

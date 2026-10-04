@@ -91,7 +91,7 @@ status when the URL names content that does not exist.
 SPA: `/` · `/events` · `/events/:slug` · `/events/vytvorit` · `/events/:slug/upravit` ·
 `/galerie` · `/leaderboard` · `/historie` · `/o-bodech` · `/profil`, `/profil/:username` ·
 `/upravit-profil` · `/hrac/:userId` · `/prihlasit` · `/registrace` · `/zapomenute-heslo` ·
-`/obnova-hesla/:uid/:token` · `/ochrana-osobnich-udaju` · `/sprava/zpetna-vazba` (admin)
+`/obnova-hesla/:uid/:token` · `/gdpr` · `/sprava/zpetna-vazba` (admin)
 
 Django (`mysite/urls.py`): `/api/v1/` (leaderboard, `auth/`, `profiles/`) · `/accounts/`
 (allauth) · `settings.ADMIN_URL` · `/media/`, `/static/`, `/sitemap.xml`, `/robots.txt`,
@@ -170,7 +170,9 @@ so does an ancestor with a filled (`both`/`forwards`) opacity or transform anima
 shared primitives — `PageStage` (fixed photo + grain, three tints), `PageHero`, `.gol-card`
 (poster card, in `styles/shared-ui.css`), `SectionHeader`, `PageState` (loading / empty /
 error), `Badge`, `LoadMore`, `Stamp`, `.gol-quote` — and `styles/poster-hero.css` for the
-three poster-hero pages (event detail, profile, player). Two button systems on purpose:
+three poster-hero pages (event detail, profile, player). Labels wrapped in em dashes (`— A teď je řada na tobě —`) are a sign-off: one per page, on
+the closing line (`.gol-cta-foot-label`, `.gol-commit-label`); every other eyebrow, stat label,
+crumb and modal label is plain text. Two button systems on purpose:
 `<Button>` for public CTAs, `.gol-btn` for form controls. A visual reference of the whole set is
 the "GOL Design System" artifact.
 

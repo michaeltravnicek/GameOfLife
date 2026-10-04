@@ -46,14 +46,14 @@
 .profile-page .about-meta{font-family:var(--font-mono);font-style:italic;font-size:var(--text-meta);letter-spacing:.16em;text-transform:uppercase;color:var(--alpha-cream-55);margin-top:18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
 .profile-page .about-meta .dot{width:4px;height:4px;border-radius:50%;background:var(--color-pink);display:inline-block}
 
-/* Fact / social / chart cards reuse the homepage evcard-dark "ticket" skin:
-   white dashed SVG frame (TicketFrame) + dark panel floating 7px inside it.
-   Home's translucent var(--alpha-black-20) panel would be invisible on the profile
-   body (var(--color-dark-brown)), so the panels are opaque: the darker brown2 grain on a base
-   a step below the body color — same treatment as the event-detail body. */
+/* Fact / social / badge / chart cards reuse the homepage evcard-dark "ticket"
+   skin: white dashed SVG frame (TicketFrame) + dark panel floating a few px
+   inside it. The panel is translucent black like the event cards and auth
+   inputs, a step deeper: on the dark-brown body a lighter wash does not read. */
+.profile-page :is(.fact-in,.social-in,.badge-in,.chart-in){background:var(--alpha-black-40)}
 .profile-page .factgrid{margin-top:34px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
 .profile-page .fact{position:relative;display:flex;padding:7px;border-radius:var(--radius-ticket)}
-.profile-page .fact-in{flex:1;min-width:0;background:var(--color-panel) var(--tex-brown-2) 0 0/var(--tex-size) var(--tex-size) repeat;border-radius:var(--radius-ticket-inner);padding:18px 18px 16px}
+.profile-page .fact-in{flex:1;min-width:0;border-radius:var(--radius-ticket-inner);padding:18px 18px 16px}
 .profile-page .fact .l{font-family:var(--font-mono);font-style:italic;font-size:var(--text-micro);letter-spacing:.22em;text-transform:uppercase;color:var(--color-pink);margin-bottom:8px}
 .profile-page .fact .v{font-family:var(--font-display);font-size:34px;letter-spacing:.03em;color:var(--color-white);line-height:.95;margin-bottom:4px}
 .profile-page .fact .s{font-family:var(--font-body);font-style:italic;font-size:var(--text-label-lg);color:var(--alpha-cream-70);line-height:1.4}
@@ -72,7 +72,7 @@
 .profile-page .socials-label::after{content:'';flex:1;height:1px;background:repeating-linear-gradient(90deg,var(--alpha-cream-30) 0 6px,transparent 6px 12px)}
 .profile-page .socials-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
 .profile-page .social{position:relative;display:flex;padding:6px;border-radius:var(--radius-ticket);transition:transform var(--dur-base) ease;text-decoration:none}
-.profile-page .social-in{flex:1;min-width:0;display:flex;align-items:center;gap:12px;padding:11px 12px;background:var(--color-panel) var(--tex-brown-2) 0 0/var(--tex-size) var(--tex-size) repeat;border-radius:var(--radius-ticket-inner)}
+.profile-page .social-in{flex:1;min-width:0;display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:var(--radius-ticket-inner)}
 .profile-page .social:hover{transform:translateY(-2px)}
 .profile-page .social:hover .dashed-border rect{stroke:var(--color-pink)}
 .profile-page .social .ico{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:var(--alpha-pink-15);border:1.5px dashed var(--alpha-pink-50);color:var(--color-pink);font-family:var(--font-mono);font-style:italic;font-weight:700;font-size:var(--text-body-sm);letter-spacing:.02em}
@@ -89,7 +89,7 @@
 .profile-page .badge-item{position:relative;display:flex;padding:6px;border-radius:var(--radius-ticket);transition:transform var(--dur-base) ease}
 .profile-page .badge-item:hover{transform:translateY(-2px)}
 .profile-page .badge-item:hover .dashed-border rect{stroke:var(--color-pink)}
-.profile-page .badge-in{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:10px;padding:16px 12px;background:var(--color-panel) var(--tex-brown-2) 0 0/var(--tex-size) var(--tex-size) repeat;border-radius:var(--radius-ticket-inner)}
+.profile-page .badge-in{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:10px;padding:16px 12px;border-radius:var(--radius-ticket-inner)}
 .profile-page .badge-img{width:64px;height:64px;object-fit:contain;filter:drop-shadow(0 4px 10px var(--alpha-black-45))}
 .profile-page .badge-fallback{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--alpha-pink-15);border:1.5px dashed var(--alpha-pink-50);color:var(--color-pink);font-family:var(--font-display);font-size:24px;letter-spacing:.04em}
 .profile-page .badge-item:hover .badge-fallback{background:var(--color-pink);color:var(--color-white);border-color:transparent;border-style:solid}
@@ -102,7 +102,7 @@
 .profile-page .chart-card{position:relative;padding:7px;border-radius:var(--radius-ticket)}
 /* position:relative so the .dot-tip (absolutely positioned against the chart
    svg's parent) anchors to the panel, not the outer frame box. */
-.profile-page .chart-in{position:relative;background:var(--color-panel) var(--tex-brown-2) 0 0/var(--tex-size) var(--tex-size) repeat;border-radius:var(--radius-ticket-inner);padding:20px 22px 14px}
+.profile-page .chart-in{position:relative;border-radius:var(--radius-ticket-inner);padding:20px 22px 14px}
 .profile-page .chart-meta{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;margin-bottom:16px;flex-wrap:wrap}
 .profile-page .chart-meta .l{font-family:var(--font-mono);font-style:italic;font-size:var(--text-label);letter-spacing:.2em;text-transform:uppercase;color:var(--alpha-cream-55)}
 .profile-page .chart-meta .total{font-family:var(--font-display);font-size:44px;line-height:.9;letter-spacing:.03em;color:var(--color-white);display:flex;align-items:baseline;gap:6px}

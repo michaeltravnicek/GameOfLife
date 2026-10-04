@@ -439,19 +439,19 @@ export default function EventDetailPage() {
         </div>
         <div className="gol-credits">
           <div className="gol-credit">
-            <div className="gol-credit-label">— Datum —</div>
+            <div className="gol-credit-label">Datum</div>
             <div className="gol-credit-value">{fmtDateShort(event.date)}</div>
             <div className="gol-credit-sub">{dayName(event.date)}</div>
           </div>
           <div className="gol-credit">
-            <div className="gol-credit-label">— Čas —</div>
+            <div className="gol-credit-label">Čas</div>
             <div className={`gol-credit-value${event.time_tbd ? ' long' : ''}`}>
               {event.time_tbd ? 'Upřesníme' : fmtTime(event.date)}
             </div>
             <div className="gol-credit-sub">{event.name}</div>
           </div>
           <div className="gol-credit">
-            <div className="gol-credit-label">— Místo —</div>
+            <div className="gol-credit-label">Místo</div>
             <div className={`gol-credit-value${(event.place || '').length > 12 ? ' xlong' : (event.place || '').length > 8 ? ' long' : ''}`}>{event.place}</div>
             <div className="gol-credit-sub">&nbsp;</div>
           </div>
@@ -515,7 +515,7 @@ export default function EventDetailPage() {
                   space-between puts them side by side, like the profile
                   page's action bar. */}
               <div className={`rsvp-recap${isAdmin ? ' with-tabs' : ''}`}>
-                <span className="gol-sec-eyebrow recap-eyebrow">— Proběhlo —</span>
+                <span className="gol-sec-eyebrow recap-eyebrow">Proběhlo</span>
                 {/* Deliberately no turnout figure: a public "8 dorazilo" is a
                     verdict on the event that nobody asked for. Admins still see
                     the real attendance in the Účast tab. */}
@@ -544,14 +544,14 @@ export default function EventDetailPage() {
           <>
           {event.description && (
             <Reveal as="section" className="section">
-              <SectionHeader eyebrow="— Popis —" heading={event.name} />
+              <SectionHeader eyebrow="Popis" heading={event.name} />
               <p className="desc-text">{event.description}</p>
             </Reveal>
           )}
 
           {event.latitude != null && event.longitude != null && (
             <Reveal as="section" className="section">
-              <SectionHeader eyebrow="— Místo —" heading="Kde nás najdeš" />
+              <SectionHeader eyebrow="Místo" heading="Kde nás najdeš" />
               <Suspense fallback={<div className="event-location-map" aria-busy="true" />}>
                 <EventLocationMap
                   latitude={event.latitude}
@@ -564,7 +564,7 @@ export default function EventDetailPage() {
 
           {rules.length > 0 && (
             <Reveal as="section" className="section">
-              <SectionHeader eyebrow="— Pravidla —" heading="Hrajme férově" />
+              <SectionHeader eyebrow="Pravidla" heading="Hrajme férově" />
               <ol className="rules">
                 {rules.map((r, i) => (
                   <li key={i}><span>{r}</span></li>
@@ -575,7 +575,7 @@ export default function EventDetailPage() {
 
           {(displayImages.length > 0 || canUpload) && (
             <Reveal as="section" className="section">
-              <SectionHeader eyebrow="— Galerie —" heading="Z této akce" />
+              <SectionHeader eyebrow="Galerie" heading="Z této akce" />
               {displayImages.length > 0 && (
                 <div className="collage" data-count={imgCount}>
                   {displayImages.map((src, i) => (
@@ -598,7 +598,7 @@ export default function EventDetailPage() {
 
           {event.is_past && (
             <Reveal as="section" className="section fb-section">
-              <SectionHeader eyebrow="— Zpětná vazba —" heading="Jak se ti akce líbila?" />
+              <SectionHeader eyebrow="Zpětná vazba" heading="Jak se ti akce líbila?" />
               {isAdmin && (
                 <div className="admin-btns">
                   <Button as="link" to={`/sprava/zpetna-vazba?event=${slug}`} variant="admin" className="fb-admin-link">
@@ -635,7 +635,7 @@ export default function EventDetailPage() {
             <>
               <section className="section">
                 <SectionHeader
-                  eyebrow={`— Účast — ${attendees.length} hráčů `}
+                  eyebrow={`Účast · ${attendees.length} hráčů`}
                   heading="Kdo dorazil."
                 />
 
@@ -757,7 +757,7 @@ export default function EventDetailPage() {
           {isAdmin && adminView === 'ucast' && !event.is_past && (
             <section className="section">
               <SectionHeader
-                eyebrow={`— Přihlášení — ${rsvps.length}`}
+                eyebrow={`Přihlášení · ${rsvps.length}`}
                 heading="Kdo se hlásil."
               />
               {attLoading && !attLoaded ? (
@@ -831,7 +831,7 @@ export default function EventDetailPage() {
           "Zrušit účast" takes it back. No onClose: dismissing by backdrop would
           leave the member joined without ever seeing the form. */}
       <Modal open={surveyOpen && (!!event.survey_url || !!event.whatsapp_url)} labelledBy="survey-modal-title">
-        <div className="gol-modal-eyebrow">— Ještě jedna věc —</div>
+        <div className="gol-modal-eyebrow">Ještě jedna věc</div>
         <h3 id="survey-modal-title" className="gol-modal-title">
           {event.survey_url
             ? <>Potřebovali bychom od vás <span className="pink">pár informací navíc.</span></>
@@ -879,7 +879,7 @@ export default function EventDetailPage() {
       {/* Feedback pop-up — opened from the "Ohodnotit akci" / "Upravit
           hodnocení" buttons, never on its own. */}
       <Modal open={fbOpen} onClose={closeFeedback} labelledBy="fb-modal-title">
-        <div className="gol-modal-eyebrow">— Zpětná vazba —</div>
+        <div className="gol-modal-eyebrow">Zpětná vazba</div>
         <h3 id="fb-modal-title" className="gol-modal-title">
           Jak se ti akce <span className="pink">líbila?</span>
         </h3>

@@ -51,7 +51,7 @@ export default function Hero({
   slides = [],
   ctaTo = '/events',
   ctaLabel = 'Zobrazit akce',
-  eyebrow = '— Sezóna 2026 —',
+  eyebrow = 'Sezóna 2026',
   fallbackTitle = 'Game of Life',
   autoCycleMs = HERO_AUTO_CYCLE_MS,
   parallax = false,

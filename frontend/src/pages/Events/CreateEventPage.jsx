@@ -65,7 +65,7 @@ export default function CreateEventPage() {
       <PageStage image="gal2" position="center 30%" tint="dim" />
 
       <section className="gol-head">
-        <div className="gol-crumb">— <Link to="/events">Akce</Link> · Vytvořit —</div>
+        <div className="gol-crumb"><Link to="/events">Akce</Link> · Vytvořit</div>
         <div className="gol-eyebrow">Nová akce</div>
         <h1>Vytvořit akci</h1>
       </section>
@@ -93,7 +93,7 @@ export default function CreateEventPage() {
           <Link className="gol-btn ghost" to="/events">Zrušit</Link>
           <button type="button" className="gol-btn primary lg" onClick={handleSave} disabled={saving}>{saving ? 'Vytvářím…' : 'Vytvořit akci'}</button>
         </div>
-        <div className="gol-commit-note">{saveError ? `— Chyba: ${saveError} —` : (dirty ? '— Neuložené změny —' : '— Připraveno —')}</div>
+        <div className={`gol-commit-note${saveError || dirty ? ' is-pending' : ''}`}>{saveError ? `Chyba: ${saveError}` : (dirty ? 'Neuložené změny' : 'Připraveno')}</div>
       </section>
     </div>
   );

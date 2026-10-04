@@ -106,6 +106,9 @@
 /* 768px */
 @media(max-width:768px){
   .home-page .events-section{padding:44px 16px 56px}
+  /* One line at every phone width: the title with both sparkles is ~11.3em
+     wide, so it scales with the viewport instead of wrapping. */
+  .home-page .sec-title{font-size:min(6.8vw,48px);white-space:nowrap}
   .home-page .lb-section{padding:48px 16px 60px}
   .home-page .about-section{padding:52px 16px}
   .home-page .about-inner{max-width:100%}
@@ -131,7 +134,8 @@
 @media(max-width:480px){
   .home-page .events-section{padding:36px 12px 48px}
   .home-page .events-grid{max-width:100%;row-gap:44px}
-  .home-page .sec-title,.home-page .lb-title,.home-page .gal-title{font-size:clamp(22px,7vw,36px);gap:12px}
+  .home-page .sec-title{gap:12px}
+  .home-page .lb-title,.home-page .gal-title{font-size:clamp(22px,7vw,36px);gap:12px}
   .home-page .lb-section{padding:40px 12px 52px}
   .home-page .lb-inner{max-width:100%}
   .home-page .about-section{padding:40px 12px}
@@ -144,7 +148,7 @@
 
 /* 375px — small phones */
 @media(max-width:375px){
-  .home-page .sec-title,.home-page .lb-title,.home-page .gal-title{font-size:24px}
+  .home-page .lb-title,.home-page .gal-title{font-size:24px}
   .home-page .lb-head{grid-template-columns:34px 1fr 34px;padding:6px 12px;gap:6px;font-size:var(--text-micro)}
   .home-page .stats-row{gap:8px}
 }

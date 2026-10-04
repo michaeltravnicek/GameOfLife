@@ -374,7 +374,7 @@ export default function GalleryPage() {
       )}
 
       <Modal open={uploadOpen} onClose={uploading ? undefined : handleUploadCancel} labelledBy="gal-upload-title">
-        <div className="gol-modal-eyebrow">— Nová fotka —</div>
+        <div className="gol-modal-eyebrow">Nová fotka</div>
         <h3 id="gal-upload-title" className="gol-modal-title gal-upload-title">
           Sdílej <span className="pink">moment.</span>
         </h3>

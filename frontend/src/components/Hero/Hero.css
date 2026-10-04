@@ -8,6 +8,8 @@
 .gol-hero__overlay{position:absolute;inset:0;background:linear-gradient(180deg,var(--alpha-navy-35) 0%,var(--alpha-navy-50) 55%,var(--alpha-dark-70) 100%);z-index:1}
 .gol-hero__inner{position:relative;z-index:2;max-width:740px;padding:0 24px}
 .gol-hero__eyebrow{font-size:var(--text-meta);letter-spacing:.22em;color:var(--alpha-white-90);text-shadow:0 2px 14px var(--alpha-black-70);margin-bottom:18px;display:block}
+.gol-hero__eyebrow::before{content:'✦ '}
+.gol-hero__eyebrow::after{content:' ✦'}
 .gol-hero__title{font-family:var(--font-display);font-size:clamp(52px,8.5vw,108px);line-height:.93;letter-spacing:.02em;color:var(--color-heading);text-transform:uppercase;text-shadow:0 4px 32px var(--alpha-black-60),0 2px 10px var(--alpha-black-50);margin-bottom:14px;font-weight:400}
 .gol-hero__date{font-family:var(--font-mono);font-style:italic;font-weight:300;font-size:var(--text-body-sm);line-height:1.6;color:var(--alpha-white-90);text-shadow:0 2px 14px var(--alpha-black-70);max-width:380px;margin:0 auto 28px;text-align:center}
 

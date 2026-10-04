@@ -23,7 +23,7 @@ export function ProfileCredits({ st, hidden = [] }) {
   return (
     <div className="gol-credits">
       <div className="gol-credit">
-        <div className="gol-credit-label">— Body —</div>
+        <div className="gol-credit-label">Body</div>
         <div className="gol-credit-value">{pointsHidden ? '·' : st.totalPts}</div>
         <div className="gol-credit-sub">
           {pointsHidden
@@ -32,7 +32,7 @@ export function ProfileCredits({ st, hidden = [] }) {
         </div>
       </div>
       <div className="gol-credit">
-        <div className="gol-credit-label">— Akcí —</div>
+        <div className="gol-credit-label">Akcí</div>
         <div className="gol-credit-value">{eventsHidden ? '·' : st.evs.length}</div>
         <div className="gol-credit-sub">
           {eventsHidden
@@ -41,7 +41,7 @@ export function ProfileCredits({ st, hidden = [] }) {
         </div>
       </div>
       <div className="gol-credit">
-        <div className="gol-credit-label">— Pozice —</div>
+        <div className="gol-credit-label">Pozice</div>
         <div className="gol-credit-value">{pointsHidden ? '·' : (st.rank ? `#${st.rank}` : '—')}</div>
         <div className="gol-credit-sub">
           {pointsHidden ? 'skryto' : (st.rank ? 'v sezóně' : 'zatím bez bodů')}
@@ -57,7 +57,7 @@ export function EventsSections({ st, upcoming, past, startNum }) {
     <>
       {upcoming.length > 0 && (
         <div className="section">
-          <SectionHeader eyebrow={`— ${pad(startNum)} · Nadcházející —`} meta={`+${st.futurePts} pts na cestě`} heading={<>Co ho <span className="pink">čeká.</span></>} />
+          <SectionHeader eyebrow={`${pad(startNum)} · Nadcházející`} meta={`+${st.futurePts} pts na cestě`} heading={<>Co ho <span className="pink">čeká.</span></>} />
           <TicketList
             className={EVENT_LIST_CLASS}
             columns={EVENT_COLUMNS}
@@ -70,7 +70,7 @@ export function EventsSections({ st, upcoming, past, startNum }) {
       )}
 
       <div className="section">
-        <SectionHeader eyebrow={`— ${pad(startNum + 1)} · Absolvované —`} meta={`+${st.pastPts} pts zatím`} heading={<>Co má <span className="pink">za sebou.</span></>} />
+        <SectionHeader eyebrow={`${pad(startNum + 1)} · Absolvované`} meta={`+${st.pastPts} pts zatím`} heading={<>Co má <span className="pink">za sebou.</span></>} />
         <TicketList
           className={EVENT_LIST_CLASS}
           columns={EVENT_COLUMNS}
@@ -90,7 +90,7 @@ export function PointsSections({ st, cats, today, startNum }) {
   return (
     <>
       <div className="section">
-        <SectionHeader eyebrow={`— ${pad(startNum)} · Body v čase —`} meta="křivka sezóny" heading={<>Křivka <span className="pink">sezóny.</span></>} />
+        <SectionHeader eyebrow={`${pad(startNum)} · Body v čase`} meta="křivka sezóny" heading={<>Křivka <span className="pink">sezóny.</span></>} />
 
         <div className="chart-card">
           <TicketFrame />
@@ -113,7 +113,7 @@ export function PointsSections({ st, cats, today, startNum }) {
 
       {cats.sorted.length > 0 && (
         <div className="section">
-          <SectionHeader eyebrow={`— ${pad(startNum + 1)} · Kategorie —`} meta={`${cats.sorted.length} kategorií`} heading={<>V čem <span className="pink">jede.</span></>} />
+          <SectionHeader eyebrow={`${pad(startNum + 1)} · Kategorie`} meta={`${cats.sorted.length} kategorií`} heading={<>V čem <span className="pink">jede.</span></>} />
           <div className="cat-list">
             {cats.sorted.map(([cat, b]) => (
               <div className="cat-row" key={cat}>

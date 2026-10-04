@@ -42,7 +42,7 @@ export default function GoogleSignInButton({ label = 'Pokračovat přes Google',
       {showConsent && (
         <p className="auth-google-note">
           Pokračováním souhlasíš se{' '}
-          <Link to="/ochrana-osobnich-udaju">zásadami zpracování osobních údajů</Link>.
+          <Link to="/gdpr">zásadami zpracování osobních údajů</Link>.
         </p>
       )}
     </>

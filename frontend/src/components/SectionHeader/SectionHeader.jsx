@@ -4,7 +4,7 @@ import './SectionHeader.css';
  * Section heading with optional dashed rule and eyebrow label — the one
  * section heading on the site; pages do not style their own.
  *
- * eyebrow : node    — small label above heading (e.g. "— 01 · Popis —")
+ * eyebrow : node    — small label above heading (e.g. "01 · Popis")
  * meta    : node    — quiet note on the eyebrow's right edge ("+120 pts na cestě")
  * heading : node    — main heading; use <span className="pink"> for an accent word
  * rule    : bool    — show dashed rule above eyebrow (default: true)
