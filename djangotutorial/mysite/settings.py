@@ -622,6 +622,13 @@ REST_FRAMEWORK = {
 # commit 7d1ba78. Without the frontend half, nothing calls these endpoints.
 GOOGLE_FORM_NATIVE = os.getenv("GOOGLE_FORM_NATIVE", "") == "1"
 
+# The Google Sheets import (`manage.py sync_sheets`) is off: points are recorded
+# on the site (events, check-in, admin), and re-importing the sheets stores a
+# second player for anyone the archive holds under a differently spelled name.
+# The command refuses to run unless this is "1", so a scheduler left pointing
+# at it does nothing.
+SHEETS_SYNC_ENABLED = os.getenv("SHEETS_SYNC_ENABLED", "") == "1"
+
 # The browsable API renders every endpoint as an HTML page listing its fields
 # and serializer forms. Handy locally, free API documentation for strangers in
 # production — so ship JSON only there.

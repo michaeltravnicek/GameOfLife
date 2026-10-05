@@ -13,6 +13,12 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
+        from django.conf import settings
+
+        if not settings.SHEETS_SYNC_ENABLED:
+            self.stdout.write("Sheets sync is disabled (SHEETS_SYNC_ENABLED is not 1); nothing to do.")
+            return
+
         from leaderboard.models import LastUpdate
         from datetime import datetime, timezone as dt_timezone
         from django.utils import timezone

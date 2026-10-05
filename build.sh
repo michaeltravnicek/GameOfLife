@@ -31,7 +31,9 @@ python manage.py migrate
 
 python manage.py ensure_season
 
-python manage.py sync_sheets --force-all
+# Folds same-person duplicate players into one (reversible merges, idempotent).
+# A failure is logged, not fatal: duplicates are cosmetic, a failed deploy is not.
+python manage.py dedupe_players --apply || echo "build.sh: dedupe_players failed, continuing"
 
 # ---------------------------------------------------------------------------
 # TEMPORARY — remove after one successful deploy.
@@ -61,10 +63,3 @@ python manage.py migrate_media_to_s3 --verify || echo "build.sh: SOME MEDIA IS S
 python manage.py generate_image_variants
 
 python superuser.py
-
-# Register daily 4 AM Google Sheets sync cron job
-# PROJECT_DIR="$(pwd)"
-# PYTHON_BIN="$(which python3)"
-# CRON_CMD="0 4 * * * cd $PROJECT_DIR && $PYTHON_BIN manage.py sync_sheets >> /tmp/sync_sheets.log 2>&1"
-# ( crontab -l 2>/dev/null | grep -v "sync_sheets"; echo "$CRON_CMD" ) | crontab -
-# echo "Cron job registered: daily sync at 4 AM"

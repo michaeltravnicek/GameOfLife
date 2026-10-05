@@ -6,7 +6,7 @@ Guidance for Claude Code when working in this repository.
 
 **GameOfLive** — the leaderboard site for gameofyolo.com: events with point awards, RSVP,
 feedback and geo check-in; all-time and per-season rankings with badges; user profiles with
-enforced privacy flags; a photo gallery with likes; a daily Google Sheets sync of form responses.
+enforced privacy flags; a photo gallery with likes. The Google Sheets import of form responses is switched off.
 
 **Architecture in one line:** a Django 5.2 + DRF API with a React 19 + Vite SPA, deployed as
 one Render service — Django serves the built SPA via WhiteNoise. PostgreSQL on Render, Redis
@@ -31,8 +31,8 @@ djangotutorial/               Django project — run manage.py from here
     merging.py                soft, reversible merge of archive players into accounts
     image_utils.py            upload validation, WebP pipeline, host-wide decode slot
     cache_config.py           every cache key and TTL, and the invalidators
-    tasks.py                  Google Sheets sync
-    management/commands/      sync_sheets, ensure_season, generate_image_variants, …
+    tasks.py                  Google Sheets import (off unless SHEETS_SYNC_ENABLED=1)
+    management/commands/      dedupe_players, ensure_season, generate_image_variants, …
     tests/
   accounts/                   auth + Profile (links auth.User to a leaderboard User)
     api/, services.py, adapters.py (Google login), matching.py (merge suggestions)
@@ -45,7 +45,7 @@ frontend/                     the React SPA
   src/context/AuthContext.jsx session user + role flags
   src/styles/                 design tokens and global CSS
   image-src/ → public/img/    `npm run images` writes WebP variants (public/img is gitignored)
-build.sh                      Render build: npm build → stage SPA → collectstatic → migrate → sync
+build.sh                      Render build: npm build → stage SPA → collectstatic → migrate → dedupe
 loadtest/                     Locust tooling and the R2 baseline
 script/                       one-off import scripts — contain PII and a service-account
                               key; gitignored, do not commit or move
@@ -111,8 +111,9 @@ cd djangotutorial && ../.venv/bin/python manage.py migrate
 cd frontend && npm run dev                           # Vite on :5173; proxies /api, /media, /admin
 ```
 
-Sheets sync: `manage.py sync_sheets` (skips if already synced today; `--force-all` to redo).
-The daily run is a Render cron; the boot-time sync in `start.sh` is disabled for memory.
+The Sheets import (`manage.py sync_sheets`) is off: it does nothing unless `SHEETS_SYNC_ENABLED=1`,
+because re-importing stores a second player for anyone the archive spells differently.
+`manage.py dedupe_players` (dry run; `--apply` merges, reversibly) folds such duplicates.
 
 The admin is at `settings.ADMIN_URL` (env `ADMIN_URL`; production refuses the default `admin/`).
 
@@ -140,7 +141,7 @@ cd frontend && npm run test:run && npm run lint
 ## Deployment
 
 Render runs `build.sh` (deps → SPA build staged into `staticfiles/react/` → collectstatic →
-migrate → `ensure_season` → sheet sync → image-variant backfill) and starts the service with
+migrate → `ensure_season` → `dedupe_players --apply` → image-variant backfill) and starts the service with
 `bash start.sh` from `djangotutorial/` (gunicorn under `gunicorn.conf.py`, which documents the
 memory budget — re-measure with `script/memory_budget.py` before changing worker counts).
 
@@ -182,8 +183,6 @@ the "GOL Design System" artifact.
 - Season rollover is not automated beyond `ensure_season` on deploy.
 - `Sezóna 2025/26` is hard-coded in the four auth pages; they also duplicate their card shell
   (an `AuthShell` component is the pending extraction).
-- `SERVICE_ACCOUNT_FILE` in `tasks.py` is a cwd-relative path. (Each sheet imports in its own
-  transaction; the daily run adds new rows and feedback only, `--force-all` re-imports points.)
 - `loadtest/results/` holds the before-R2 run only; the after-R2 run was never recorded.
 
 Before making any claim, label your confidence: [Certain] for information backed by strong evidence, [Likely] for conclusions based on solid reasoning, and [Guessing] when filling in missing information. If most of your response is based on guesses, say so upfront.
