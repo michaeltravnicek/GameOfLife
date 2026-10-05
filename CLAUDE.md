@@ -68,7 +68,8 @@ script/                       one-off import scripts — contain PII and a servi
   with `suspend_points_cache_invalidation()`.
 - **Images:** every user upload goes through `validate_upload()`; models call
   `process_image_field()`, driven by `UPLOAD_LIMITS` / `ENFORCED_ASPECT` in `image_utils.py`
-  (stored as WebP, per-field size caps, a mobile variant). Static images: `npm run images`.
+  (stored as WebP, per-field size caps, a mobile variant; an original of
+  700 KB or less that already fits is kept as it came, metadata stripped, so it loses no quality). Static images: `npm run images`.
 - **Event creation lives in React** (`CreateEventPage` / `EditEventPage`). Django admin is for
   manual fix-ups only.
 - **Account deletion anonymises** (`accounts.services.anonymize_account`): the account and its

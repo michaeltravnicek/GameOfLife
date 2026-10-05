@@ -198,7 +198,9 @@ class BusySlotSurfacesAsServiceUnavailableTests(TestCase):
             before = UserPhoto.objects.count()
             resp = self.client.post(
                 reverse("api-photo-upload"),
-                {"image": make_image_upload("busy.png")},
+                # Over UserPhoto's 1600 px, so it has to be decoded and resized;
+                # a small upload that fits is kept without a decode at all.
+                {"image": make_image_upload("busy.png", size=(2000, 1500))},
                 format="multipart",
             )
             self.assertEqual(resp.status_code, 503, resp.content[:200])

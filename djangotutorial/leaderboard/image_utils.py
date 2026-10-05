@@ -1,8 +1,12 @@
 """Validating, converting and downscaling uploaded images.
 
-Every upload is stored as WebP, downscaled to the limits its model asks for and
+Uploads are stored as WebP, downscaled to the limits its model asks for and
 squeezed under a byte cap. Phone photos arrive at 5-20 MB and leave at a few
 hundred kB with no visible loss at the sizes the site displays them.
+
+The exception is an upload that is already small (KEEP_ORIGINAL_BYTES) and needs
+no crop, resize or rotation: it keeps its own bytes and format, with only the
+metadata removed, so it loses no quality to a second lossy encode.
 
 Two entry points matter:
 
@@ -264,6 +268,14 @@ MAX_SHRINK_ROUNDS = 12
 # this size is so degenerate that storing it slightly oversized beats storing a
 # thumbnail nobody can read.
 MIN_DIMENSION = 200
+
+# An upload at or under this size that already fits its field (dimensions, ratio,
+# orientation) is stored as it came -- JPEG stays JPEG -- because re-encoding
+# would only cost quality for a file that is already small. One that does need a
+# crop or a resize is re-encoded from SMALL_SOURCE_QUALITY instead of
+# WEBP_QUALITY, so the unavoidable second encode loses as little as possible.
+KEEP_ORIGINAL_BYTES = 700 * 1024
+SMALL_SOURCE_QUALITY = 95
 
 # Animation budget. Unlike a still, every frame has to be in memory at once, so
 # the cost is frames x width x height and the 15 MB upload limit does not bound
@@ -758,19 +770,146 @@ def needs_processing(field_file, max_width, max_height, max_bytes, aspect=None):
     probe = _inspect(data)
     if probe is None:
         return False
-    return not _is_final(name, data, probe, max_width, max_height, max_bytes, aspect)
+    return _kept_bytes(name, data, probe, max_width, max_height, max_bytes, aspect) != data
 
 
-def _is_final(name, data, probe, max_width, max_height, max_bytes, aspect):
-    """True when the stored file needs no work: WebP, in bounds, under the cap
-    and on the enforced ratio. The one predicate both ``needs_processing`` and
-    ``process_upload`` use, so the backfill and the save path cannot disagree
-    on what "done" means."""
+# Extensions a kept original may carry: storage serves the content type by
+# extension, so a PNG named .jpg is re-encoded rather than kept under a lie.
+_EXTENSIONS_FOR_FORMAT = {
+    "JPEG": {".jpg", ".jpeg"}, "PNG": {".png"}, "WEBP": {".webp"}, "GIF": {".gif"},
+}
+
+
+def _kept_bytes(name, data, probe, max_width, max_height, max_bytes, aspect):
+    """The bytes to store without re-encoding, or None when it must be re-encoded.
+
+    Equal to ``data`` when the stored file is already final. The one predicate
+    both ``needs_processing`` and ``process_upload`` use, so the backfill and the
+    save path cannot disagree on what "done" means.
+
+    Kept: a WebP in bounds and under the cap (what this pipeline produces), or any
+    other format at or under KEEP_ORIGINAL_BYTES that fits as it is. Either way
+    it must sit on the enforced ratio and need no EXIF rotation, because
+    stripping the metadata also strips the orientation tag.
+    """
     fmt, width, height, animated = probe
-    already_webp = fmt == "WEBP" and os.path.splitext(name)[1].lower() == ".webp"
-    fits = width <= max_width and height <= max_height and len(data) <= max_bytes
-    on_ratio = animated or _aspect_ok(width, height, aspect)
-    return already_webp and fits and on_ratio
+    if os.path.splitext(name)[1].lower() not in _EXTENSIONS_FOR_FORMAT.get(fmt, ()):
+        return None
+    if width > max_width or height > max_height or len(data) > max_bytes:
+        return None
+    if not (animated or _aspect_ok(width, height, aspect)):
+        return None
+    if fmt != "WEBP" and len(data) > KEEP_ORIGINAL_BYTES:
+        return None
+    if _needs_rotation(data):
+        return None
+    return _strip_metadata(data, fmt)
+
+
+def _needs_rotation(data):
+    """True when an EXIF orientation tag asks the viewer to rotate or flip."""
+    try:
+        with Image.open(io.BytesIO(data)) as img:
+            return img.getexif().get(0x0112, 1) != 1
+    except (OSError, IOError, ValueError):
+        return True
+
+
+# ── Metadata, removed without touching the pixels ─────────────────────────────
+#
+# A re-encode drops EXIF as a side effect; a kept original has to have it taken
+# out explicitly, or a phone photo publishes the GPS position it was taken at.
+# Each stripper rewrites the container only -- the compressed image data is
+# copied byte for byte -- and returns None for a file it cannot parse, which
+# sends that file down the re-encode path instead.
+
+def _strip_metadata(data, fmt):
+    if fmt == "JPEG":
+        return _strip_jpeg(data)
+    if fmt == "PNG":
+        return _strip_png(data)
+    if fmt == "WEBP":
+        return _strip_webp(data)
+    if fmt == "GIF":
+        return data  # no EXIF/GPS in GIF; comment blocks are harmless
+    return None
+
+
+# APP1 holds EXIF (GPS, camera, thumbnail) and XMP, APP13 holds IPTC, COM free
+# text. APP0 (JFIF), APP2 (ICC colour profile) and APP14 (Adobe colour
+# transform) change how the pixels decode, so they stay.
+_JPEG_DROP_MARKERS = {0xE1, 0xED, 0xFE}
+
+
+def _strip_jpeg(data):
+    if data[:2] != b"\xff\xd8":
+        return None
+    out = bytearray(data[:2])
+    i = 2
+    while i + 4 <= len(data):
+        if data[i] != 0xFF:
+            return None
+        marker = data[i + 1]
+        if marker == 0xFF:          # fill byte before a marker
+            i += 1
+            continue
+        if marker == 0xDA:          # start of scan: the rest is image data
+            out += data[i:]
+            return bytes(out)
+        end = i + 2 + int.from_bytes(data[i + 2:i + 4], "big")
+        if end > len(data):
+            return None
+        if marker not in _JPEG_DROP_MARKERS:
+            out += data[i:end]
+        i = end
+    return None
+
+
+_PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
+_PNG_DROP_CHUNKS = {b"eXIf", b"tEXt", b"zTXt", b"iTXt", b"tIME"}
+
+
+def _strip_png(data):
+    if not data.startswith(_PNG_SIGNATURE):
+        return None
+    out = bytearray(_PNG_SIGNATURE)
+    i = len(_PNG_SIGNATURE)
+    while i + 12 <= len(data):
+        kind = data[i + 4:i + 8]
+        end = i + 12 + int.from_bytes(data[i:i + 4], "big")
+        if end > len(data):
+            return None
+        if kind not in _PNG_DROP_CHUNKS:
+            out += data[i:end]
+        i = end
+        if kind == b"IEND":
+            return bytes(out)
+    return None
+
+
+_WEBP_DROP_CHUNKS = {b"EXIF", b"XMP "}
+_VP8X_METADATA_FLAGS = 0x08 | 0x04  # "has EXIF", "has XMP"
+
+
+def _strip_webp(data):
+    if data[:4] != b"RIFF" or data[8:12] != b"WEBP":
+        return None
+    chunks = []
+    i = 12
+    while i + 8 <= len(data):
+        size = int.from_bytes(data[i + 4:i + 8], "little")
+        if i + 8 + size > len(data):
+            return None
+        end = min(i + 8 + size + (size & 1), len(data))  # chunks pad to even
+        chunks.append(data[i:end])
+        i = end
+    kept = [c for c in chunks if c[:4] not in _WEBP_DROP_CHUNKS]
+    if len(kept) == len(chunks):
+        return data
+    kept = [c[:8] + bytes([c[8] & ~_VP8X_METADATA_FLAGS & 0xFF]) + c[9:]
+            if c[:4] == b"VP8X" else c for c in kept]
+    body = b"WEBP" + b"".join(kept)
+    return b"RIFF" + len(body).to_bytes(4, "little") + body
 
 
 def process_upload(field_file, max_width, max_height, max_bytes, aspect=None):
@@ -781,7 +920,8 @@ def process_upload(field_file, max_width, max_height, max_bytes, aspect=None):
 
     Safe to call on every save: an image that is already WebP, within bounds and
     under the cap is left untouched, so repeated saves cannot slowly degrade it
-    by re-encoding it again and again.
+    by re-encoding it again and again. So is a small original that fits as it
+    is (KEEP_ORIGINAL_BYTES): it keeps its format and only loses its metadata.
 
     Animations survive as animated WebP, so a GIF is capped like everything
     else rather than sitting on disk at the full 15 MB the validator allows.
@@ -812,9 +952,15 @@ def _convert(field_file, max_width, max_height, max_bytes, aspect=None):
     probe = _inspect(data)
     if probe is None:
         return False, None  # unreadable or not an image — leave it alone
-    if _is_final(name, data, probe, max_width, max_height, max_bytes, aspect):
+    kept = _kept_bytes(name, data, probe, max_width, max_height, max_bytes, aspect)
+    if kept == data:
         return False, None
+    if kept is not None:
+        # Only metadata changed: same key, same pixels, no re-encode.
+        _overwrite(field_file, name, kept)
+        return True, None
     fmt, width, height, animated = probe
+    quality = SMALL_SOURCE_QUALITY if len(data) <= KEEP_ORIGINAL_BYTES else WEBP_QUALITY
 
     try:
         # Held across decode AND encode: both hold the full bitmap, so releasing
@@ -832,7 +978,7 @@ def _convert(field_file, max_width, max_height, max_bytes, aspect=None):
                 frames = _prepare_still(img, max_width, max_height, aspect)
             # Encoding stays inside the `with`: the still path deliberately does
             # not copy the decoded image, so `img` must still be open here.
-            payload = _encode_under_cap(frames, max_bytes, **extra)
+            payload = _encode_under_cap(frames, max_bytes, quality=quality, **extra)
     except (OSError, IOError, ValueError):
         return False, None
     if payload is None:

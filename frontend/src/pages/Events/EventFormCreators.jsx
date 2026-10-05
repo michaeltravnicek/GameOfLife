@@ -90,12 +90,14 @@ export function NewBadgeForm({ onCreated }) {
           onChange={art.onSelect}
         />
       </div>
-      {art.preview && (
-        <div className="ev-inline-preview">
-          <img src={art.preview} alt="Náhled nového odznaku"
+      {/* The same square as the logo picker beside it, so the scale is judged
+          against the size the badge is actually shown at. */}
+      <div className={`ev-img-preview sm${art.preview ? ' has-img' : ''}`}>
+        {art.preview && (
+          <img className="ev-logo-preview-img" src={art.preview} alt="Náhled nového odznaku"
                style={{ transform: `scale(${Number(scale) || 1})` }} />
-        </div>
-      )}
+        )}
+      </div>
       <div className="gol-field">
         <label htmlFor="nb-scale">Zvětšení <span className="gol-hint">1 = beze změny</span></label>
         <input className="gol-input" id="nb-scale" type="number" step="0.1" min="0.1" max="5"

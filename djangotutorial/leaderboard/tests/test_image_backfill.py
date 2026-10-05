@@ -1,5 +1,8 @@
 """Uploads are stored as WebP: conversion, the size cap, and the backfill command.
 
+Small originals that already fit are the exception (KEEP_ORIGINAL_BYTES, see
+KeepSmallOriginalTests): they keep their bytes and lose only their metadata.
+
 Until 2026-08 every upload kept its incoming format, which meant a PNG screenshot
 stayed a multi-megabyte PNG forever -- lossless, so there was no quality knob to
 turn. Everything is now re-encoded as WebP under a per-model byte cap, which also
@@ -20,7 +23,8 @@ from PIL import Image
 
 from leaderboard import image_utils
 from leaderboard.image_utils import (
-    CAP_ARTWORK, CAP_EVENT_IMAGE, WEBP_QUALITY, WEBP_QUALITY_FLOOR,
+    CAP_ARTWORK, CAP_EVENT_IMAGE, KEEP_ORIGINAL_BYTES, SMALL_SOURCE_QUALITY,
+    WEBP_QUALITY, WEBP_QUALITY_FLOOR,
     _encode_under_cap, make_webp_variant, needs_processing, process_upload,
     variant_name,
 )
@@ -59,6 +63,18 @@ def _write_jpeg(path, width, height, noisy=False):
     return path
 
 
+def _write_jpeg_with_exif(path, width, height, orientation=1):
+    """A small JPEG carrying a camera model, a GPS position and an orientation."""
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    exif = Image.Exif()
+    exif[0x0110] = "Phone"
+    exif[0x0112] = orientation
+    exif[0x8825] = {1: "N", 2: (49.0, 11.0, 30.0), 3: "E", 4: (16.0, 36.0, 20.0)}
+    Image.new("RGB", (width, height), (40, 90, 160)).save(
+        path, "JPEG", quality=90, exif=exif.tobytes())
+    return path
+
+
 class _TmpDirTestCase(TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
@@ -78,9 +94,18 @@ class NeedsProcessingTests(_TmpDirTestCase):
         path = _write_jpeg(self._path("big.jpg"), 3000, 2000)
         self.assertTrue(needs_processing(_FieldFile(path), 1200, 1200, CAP_EVENT_IMAGE))
 
-    def test_small_jpeg_still_qualifies_because_it_is_not_webp(self):
-        """Format conversion alone is reason enough — this is what changed."""
+    def test_small_jpeg_that_fits_is_left_alone(self):
+        """Under KEEP_ORIGINAL_BYTES and in bounds: converting would only cost quality."""
         path = _write_jpeg(self._path("small.jpg"), 600, 400)
+        self.assertFalse(needs_processing(_FieldFile(path), 1200, 1200, CAP_EVENT_IMAGE))
+
+    def test_small_jpeg_with_gps_qualifies(self):
+        path = _write_jpeg_with_exif(self._path("gps.jpg"), 600, 400)
+        self.assertTrue(needs_processing(_FieldFile(path), 1200, 1200, CAP_EVENT_IMAGE))
+
+    def test_jpeg_over_the_keep_threshold_qualifies(self):
+        path = _write_jpeg(self._path("heavy.jpg"), 1200, 900, noisy=True)
+        self.assertGreater(os.path.getsize(path), KEEP_ORIGINAL_BYTES)
         self.assertTrue(needs_processing(_FieldFile(path), 1200, 1200, CAP_EVENT_IMAGE))
 
     def test_webp_within_limits_is_left_alone(self):
@@ -209,8 +234,8 @@ class ConversionTests(_TmpDirTestCase):
     def test_colliding_names_do_not_overwrite_each_other(self):
         """'logo.png' and 'logo.jpg' both want 'logo.webp' — one must give way."""
         png = self._path("logo.png")
-        Image.new("RGB", (400, 400), (255, 0, 0)).save(png, "PNG")
-        jpg = _write_jpeg(self._path("logo.jpg"), 400, 400)
+        Image.new("RGB", (1000, 1000), (255, 0, 0)).save(png, "PNG")
+        jpg = _write_jpeg(self._path("logo.jpg"), 1000, 1000)
 
         first = self._convert(png)
         second = self._convert(jpg)
@@ -218,6 +243,88 @@ class ConversionTests(_TmpDirTestCase):
         self.assertNotEqual(second, first)
         self.assertTrue(os.path.exists(self._sibling(png, first)))
         self.assertTrue(os.path.exists(self._sibling(jpg, second)))
+
+
+class KeepSmallOriginalTests(_TmpDirTestCase):
+    """At or under KEEP_ORIGINAL_BYTES, an upload that fits is not re-encoded.
+
+    A second lossy encode only costs quality on a file that is already small, so
+    the bytes are kept -- minus the metadata, which re-encoding used to drop as
+    a side effect and which includes the GPS position of a phone photo.
+    """
+
+    def test_fitting_jpeg_keeps_its_bytes_and_key(self):
+        path = _write_jpeg(self._path("small.jpg"), 800, 600)
+        before = open(path, "rb").read()
+        self.assertIsNone(process_upload(_FieldFile(path), 1200, 1200, CAP_EVENT_IMAGE))
+        self.assertEqual(open(path, "rb").read(), before)
+
+    def test_gps_is_stripped_without_touching_the_pixels(self):
+        path = _write_jpeg_with_exif(self._path("gps.jpg"), 800, 600)
+        with Image.open(path) as img:
+            pixels = img.tobytes()
+
+        self.assertIsNone(process_upload(_FieldFile(path), 1200, 1200, CAP_EVENT_IMAGE))
+        with Image.open(path) as img:
+            self.assertEqual(img.format, "JPEG")
+            self.assertEqual(dict(img.getexif()), {})
+            self.assertEqual(img.tobytes(), pixels)
+        # Settled: the next save has nothing left to do.
+        self.assertFalse(needs_processing(_FieldFile(path), 1200, 1200, CAP_EVENT_IMAGE))
+
+    def test_png_text_chunks_are_stripped(self):
+        path = self._path("note.png")
+        from PIL.PngImagePlugin import PngInfo
+        info = PngInfo()
+        info.add_text("Comment", "Brno, Lužánky")
+        Image.new("RGB", (300, 300), (1, 2, 3)).save(path, "PNG", pnginfo=info)
+
+        process_upload(_FieldFile(path), 512, 512, CAP_ARTWORK)
+        with Image.open(path) as img:
+            self.assertNotIn("Comment", img.info)
+
+    def test_webp_exif_is_stripped(self):
+        path = self._path("tagged.webp")
+        exif = Image.Exif()
+        exif[0x0110] = "Phone"
+        Image.new("RGB", (300, 300), (9, 9, 9)).save(path, "WEBP", exif=exif.tobytes())
+
+        self.assertIsNone(process_upload(_FieldFile(path), 512, 512, CAP_ARTWORK))
+        with Image.open(path) as img:
+            img.load()
+            self.assertEqual(dict(img.getexif()), {})
+            self.assertEqual(img.size, (300, 300))
+
+    def test_rotated_photo_is_re_encoded_upright(self):
+        """Stripping EXIF would drop the orientation tag and show it sideways."""
+        path = _write_jpeg_with_exif(self._path("side.jpg"), 800, 600, orientation=6)
+        new_name = process_upload(_FieldFile(path), 1200, 1200, CAP_EVENT_IMAGE)
+        self.assertEqual(new_name, "side.webp")
+        with Image.open(self._sibling(path, new_name)) as img:
+            self.assertEqual(img.size, (600, 800))
+
+    def test_wrong_extension_is_re_encoded(self):
+        """Storage serves the type by extension; a PNG kept as .jpg would lie."""
+        path = self._path("fake.jpg")
+        Image.new("RGB", (300, 300), (5, 6, 7)).save(path, "PNG")
+        self.assertEqual(process_upload(_FieldFile(path), 512, 512, CAP_ARTWORK), "fake.webp")
+
+    def test_small_source_that_must_be_cropped_starts_high(self):
+        """The crop forces an encode; it starts at SMALL_SOURCE_QUALITY, not q80."""
+        path = _write_jpeg(self._path("wide.jpg"), 1600, 900)
+        with mock.patch.object(image_utils, "_encode_under_cap",
+                               wraps=image_utils._encode_under_cap) as encode:
+            new_name = process_upload(_FieldFile(path), 2400, 2400, CAP_EVENT_IMAGE, aspect=(4, 3))
+        self.assertEqual(new_name, "wide.webp")
+        self.assertEqual(encode.call_args.kwargs["quality"], SMALL_SOURCE_QUALITY)
+
+    def test_large_source_starts_at_the_normal_quality(self):
+        path = _write_jpeg(self._path("big.jpg"), 2400, 1800, noisy=True)
+        self.assertGreater(os.path.getsize(path), KEEP_ORIGINAL_BYTES)
+        with mock.patch.object(image_utils, "_encode_under_cap",
+                               wraps=image_utils._encode_under_cap) as encode:
+            process_upload(_FieldFile(path), 2400, 2400, CAP_EVENT_IMAGE)
+        self.assertEqual(encode.call_args.kwargs["quality"], WEBP_QUALITY)
 
 
 class AnimationBudgetTests(_TmpDirTestCase):
@@ -228,6 +335,14 @@ class AnimationBudgetTests(_TmpDirTestCase):
     hundreds of frames. Both guards shrink the animation rather than rejecting
     it, so the upload still works. See imagelab/07_memory.py.
     """
+
+    def setUp(self):
+        super().setUp()
+        # These GIFs are small enough to be kept as they are; force the
+        # conversion path, which is the one that holds every frame in memory.
+        patcher = mock.patch.object(image_utils, "KEEP_ORIGINAL_BYTES", 0)
+        patcher.start()
+        self.addCleanup(patcher.stop)
 
     def _gif(self, frames=8, side=200):
         path = self._path("anim.gif")
@@ -281,7 +396,7 @@ class SizeCapTests(_TmpDirTestCase):
 
     def test_ordinary_photo_never_reaches_the_floor(self):
         """If routine uploads hit the ladder, the caps are set wrong."""
-        path = _write_jpeg(self._path("normal.jpg"), 1600, 1200)
+        path = _write_jpeg(self._path("normal.jpg"), 2000, 1500)
         new_name = process_upload(_FieldFile(path), 1600, 1600, CAP_EVENT_IMAGE)
         self.assertLess(os.path.getsize(self._sibling(path, new_name)), CAP_EVENT_IMAGE)
 
@@ -325,7 +440,7 @@ class ModelSaveTests(TestCase):
     def test_event_save_rewrites_the_stored_key(self):
         event = self._event()
         self._attach(Event, event.pk, "image", "event_images/e.jpg",
-                     lambda p: _write_jpeg(p, 2000, 1500))
+                     lambda p: _write_jpeg(p, 3200, 2400))
         event = Event.objects.get(pk=event.pk)
         event.save()
 
@@ -337,7 +452,7 @@ class ModelSaveTests(TestCase):
         """Generated before the rename, the variant would be orphaned."""
         event = self._event()
         self._attach(Event, event.pk, "image", "event_images/e.jpg",
-                     lambda p: _write_jpeg(p, 2000, 1500))
+                     lambda p: _write_jpeg(p, 3200, 2400))
         event = Event.objects.get(pk=event.pk)
         event.save()
 
@@ -370,7 +485,7 @@ class ModelSaveTests(TestCase):
     def test_saving_twice_does_not_re_encode(self):
         event = self._event()
         self._attach(Event, event.pk, "image", "event_images/e.jpg",
-                     lambda p: _write_jpeg(p, 2000, 1500))
+                     lambda p: _write_jpeg(p, 3200, 2400))
         event = Event.objects.get(pk=event.pk)
         event.save()
         event.refresh_from_db()
@@ -387,7 +502,7 @@ class ModelSaveTests(TestCase):
         and a PUT for a typo fix in the description."""
         event = self._event()
         self._attach(Event, event.pk, "image", "event_images/e.jpg",
-                     lambda p: _write_jpeg(p, 2000, 1500))
+                     lambda p: _write_jpeg(p, 3200, 2400))
         event = Event.objects.get(pk=event.pk)
         event.save()
         event.refresh_from_db()
@@ -424,7 +539,7 @@ class ModelSaveTests(TestCase):
         event = self._event()
         rel = ImageToEvent.objects.create(event=event, image="event_images/i.jpg")
         self._attach(ImageToEvent, rel.pk, "image", "event_images/i.jpg",
-                     lambda p: _write_jpeg(p, 1800, 1800))
+                     lambda p: _write_jpeg(p, 1600, 1200))
         rel = ImageToEvent.objects.get(pk=rel.pk)
         rel.save()
 
