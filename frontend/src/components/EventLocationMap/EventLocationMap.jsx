@@ -74,9 +74,13 @@ export default function EventLocationMap({
         className="elm-canvas"
         attributionControl
       >
+        {/* OSM tile policy: the single tile host, a "contributors" credit, and a
+            Referer — the site-wide same-origin policy would strip it, so the
+            tile requests opt back in to sending the origin. */}
         <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+          url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          referrerPolicy="strict-origin-when-cross-origin"
           maxZoom={19}
         />
         {position && (

@@ -54,10 +54,7 @@
 .leaderboard-page .pod.p3 .base .rk{font-size:42px;color:var(--alpha-bronze-95)}
 
 .leaderboard-page .list-label{font-family:var(--font-mono);font-style:italic;font-size:var(--text-label-lg);letter-spacing:.26em;text-transform:uppercase;color:var(--alpha-cream-90);margin:0 6px 18px;display:flex;align-items:center;gap:14px}
-/* The list is the shared poster card (.gol-card--flush). Its inner dashed
-   frame — a print-artifact detail from the original mockup — sits just inside
-   the border. */
-.leaderboard-page .list::before{content:'';position:absolute;inset:6px;border:1.5px dashed var(--alpha-cream-20);border-radius:calc(var(--radius-card) - 6px);pointer-events:none;z-index:0}
+/* The list is the shared poster card (.gol-card--flush); its border is the only frame. */
 .leaderboard-page .list-inner{position:relative;z-index:1;padding:10px 8px 14px}
 
 /* ── Animations ── (heroFade keyframe is defined in PageHero.css) */

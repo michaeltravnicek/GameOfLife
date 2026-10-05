@@ -174,7 +174,7 @@ class Event(models.Model):
     # "Čas upřesníme": the start date is set but the exact start time isn't
     # finalized yet. `date` still stores a datetime (so is_past / check-in /
     # ordering keep working off the day), the UI just shows "Upřesníme" in
-    # place of the clock time.
+    # place of the clock time -- or "—" once the event is past.
     time_tbd = models.BooleanField(
         default=False,
         help_text="Čas upřesníme: datum je dané, ale přesný začátek ještě ne. "

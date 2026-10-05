@@ -44,7 +44,11 @@
 .evcard-light:hover .evcard-badge{transform:rotate(0deg) scale(var(--logo-scale,1))}
 
 .evcard-light .evcard-content{position:relative;z-index:1;height:100%;padding:16px 24px 20px;display:flex;flex-direction:column;box-sizing:border-box}
-.evcard-light .evcard-title{color:var(--color-black);font-family:var(--font-display);font-size:clamp(26px,2.8vw,34px);font-weight:400;text-transform:uppercase;line-height:.95;letter-spacing:.013em;margin:5px 0 0;padding-right:80px;height:1.9em;display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word}
+/* Exactly two lines tall, always — useFitText shrinks a name that does not fit
+   rather than letting the box grow. No mid-word breaks (a too-long word is
+   shrunk instead); the badge clearance is a margin, and contain:inline-size
+   keeps a long word from widening the grid column — both for the hook's width check. */
+.evcard-light .evcard-title{color:var(--color-black);font-family:var(--font-display);font-size:clamp(26px,2.8vw,34px);font-weight:400;text-transform:uppercase;line-height:.95;letter-spacing:.013em;margin:5px 80px 0 0;height:1.9em;overflow:hidden;contain:inline-size}
 .evcard-light .evcard-meta{margin-top:auto;display:flex;flex-direction:column;gap:6px;font-family:var(--font-body);font-weight:500;font-size:var(--text-meta);color:var(--alpha-ink-80);line-height:1.6}
 .evcard-light .evcard-footer{margin-top:0;padding-top:11px;border-top:1px dashed var(--alpha-ink-25);display:flex;align-items:center;justify-content:space-between;gap:8px}
 .evcard-light .evcard-foot-tags{display:flex;align-items:center;gap:7px;flex-wrap:wrap;min-width:0}
@@ -70,7 +74,7 @@
    title uses ONE fluid size across that whole range — synced with the grid
    breakpoint so it doesn't jump at 480. Tune the title size here. */
 @media(max-width:640px){
-  .evcard-light .evcard-title{font-size:clamp(24px,5.6vw,32px);padding-right:clamp(74px,23vw,96px);line-height:1.06;height:auto}
+  .evcard-light .evcard-title{font-size:clamp(24px,5.6vw,32px);margin-right:clamp(74px,23vw,96px);line-height:1.06;height:auto;max-height:2.12em}
   /* Single-column range: the card runs the full width of a 10–16px gutter, so
      the tilted sticker's negative `right` (−14px to −25px) plus its ~9% tilt
      bleed hung 11–19px off the side of the screen at every width from 320 to

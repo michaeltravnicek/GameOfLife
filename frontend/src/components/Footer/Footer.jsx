@@ -9,7 +9,7 @@ export default function Footer() {
       <div className="ft-inner">
         <div className="ft-menu">
           <div className="ft-label">Menu</div>
-          <Link className="ft-link" to="/">Domů</Link>
+          <Link className="ft-link" to="/">Home</Link>
           <Link className="ft-link" to="/events">Kalendář</Link>
           <Link className="ft-link" to="/galerie">Galerie</Link>
           <Link className="ft-link" to="/leaderboard">Leaderboard</Link>

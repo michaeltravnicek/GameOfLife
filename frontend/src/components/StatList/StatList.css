@@ -1,6 +1,8 @@
 /* Two skins, one per background material (see the homepage for both):
-   — base (ticket): dark brown2 panel for TEXTURE pages; the consumer wraps the
-     list in a positioned .ticket-list container with a <TicketFrame> sibling.
+   — base (ticket): translucent black panel for TEXTURE pages, a visible step
+     darker than the body (same fill as the profile fact/social cards); the
+     consumer wraps the list in a positioned .ticket-list container with a
+     <TicketFrame> sibling.
    — .poster: the homepage .lb-card for PHOTO pages — opaque blue grain, solid
      black border with a fat bottom edge. No frame, no blur.
    Cell styling (the inner .stat-cell contents) is left to each page. */
@@ -8,7 +10,7 @@
    Lives here (not per page) so every consumer gets the identical card —
    <TicketList> renders it. */
 .ticket-list{position:relative;padding:7px;border-radius:var(--radius-ticket)}
-.stat-list{position:relative;padding:10px;background:var(--color-panel) var(--tex-brown-2) 0 0/var(--tex-size) var(--tex-size) repeat;border-radius:var(--radius-ticket-inner)}
+.stat-list{position:relative;padding:10px;background:var(--alpha-black-40);border-radius:var(--radius-ticket-inner)}
 .stat-list-inner{position:relative;z-index:1;padding:8px 6px}
 .stat-list.poster{padding:0;background:var(--color-dark-brown) var(--tex-blue) 0 0/var(--tex-size) var(--tex-size) repeat;border:2px solid var(--color-black);border-bottom:8px solid var(--color-black);border-radius:var(--radius-card);overflow:hidden;box-shadow:var(--shadow-poster)}
 .stat-list.poster .stat-list-inner{padding:10px 8px 14px}

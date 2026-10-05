@@ -215,7 +215,7 @@ if not DEBUG and ADMIN_URL == "admin/":
 # switch is at the bottom of this block. Every entry is here for a reason:
 #   fonts.googleapis.com  — the stylesheet linked from index.html
 #   fonts.gstatic.com     — the font files that stylesheet points at
-#   *.tile.openstreetmap.org — Leaflet map tiles on the event detail page
+#   tile.openstreetmap.org — Leaflet map tiles on the event detail page
 #   docs.google.com/forms.gle — the embedded event sign-up form (frame-src only)
 #   Sentry ingest         — error reports (host varies per DSN, hence the env var)
 #   the media host        — R2/S3 images once MEDIA_S3_CUSTOM_DOMAIN is set
@@ -244,7 +244,7 @@ _CSP_DIRECTIVES = {
     "font-src": ["'self'", "https://fonts.gstatic.com", "data:"],
     "img-src": [
         "'self'", "data:", "blob:",
-        "https://*.tile.openstreetmap.org",
+        "https://tile.openstreetmap.org",
         *([f"https://{_csp_media_host}"] if _csp_media_host else []),
     ],
     "connect-src": ["'self'", *_csp_extra_connect],

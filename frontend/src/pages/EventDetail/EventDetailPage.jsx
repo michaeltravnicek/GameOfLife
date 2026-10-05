@@ -445,8 +445,9 @@ export default function EventDetailPage() {
           </div>
           <div className="gol-credit">
             <div className="gol-credit-label">Čas</div>
-            <div className={`gol-credit-value${event.time_tbd ? ' long' : ''}`}>
-              {event.time_tbd ? 'Upřesníme' : fmtTime(event.date)}
+            {/* A past event's unknown time is never going to be settled: a dash, not a promise. */}
+            <div className={`gol-credit-value${event.time_tbd && !event.is_past ? ' long' : ''}`}>
+              {event.time_tbd ? (event.is_past ? '—' : 'Upřesníme') : fmtTime(event.date)}
             </div>
             <div className="gol-credit-sub">{event.name}</div>
           </div>

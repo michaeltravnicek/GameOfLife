@@ -6,6 +6,13 @@ import { preloadEventDetail } from '../../services/routePreload';
 import DashedBorder from '../DashedBorder/DashedBorder';
 import './EventCard.css';
 
+// Names arrive as typed into the sheet, sometimes "Achievement_III:_Kudo_Gifters"
+// with underscores for spaces. Let them wrap at the underscores like at spaces.
+function breakable(name) {
+  const parts = name.split('_');
+  return parts.flatMap((part, i) => (i < parts.length - 1 ? [`${part}_`, <wbr key={i} />] : [part]));
+}
+
 function DarkCard({ event }) {
   // A long name must not wrap to a fourth line and push the date/place/points
   // down, leaving the card lopsided beside its neighbours. Scale the block
@@ -21,7 +28,7 @@ function DarkCard({ event }) {
       <div className="evcard-dark-inner">
         <div className="evcard-title-wrap" ref={titleRef}>
           <div className="evcard-brand">Game of Life</div>
-          <div className="evcard-title">{event.name}</div>
+          <div className="evcard-title">{breakable(event.name)}</div>
         </div>
         <div className="evcard-meta">
           <div className="ev-date"><span className="ev-emoji">📅</span>{fmtDate(event.date)}</div>
@@ -48,6 +55,10 @@ function DarkCard({ event }) {
 /* Light theme = the poster skin (events page): opaque blue grain, solid black
    border, 3D ledge that presses down on hover, logo badge top right. */
 function LightCard({ event }) {
+  // The card never changes size: a name that does not fit its two lines at the
+  // stylesheet size is scaled down until it does; one that fits is untouched.
+  const titleRef = useFitText(event.name, { maxLines: 2, minFontSize: 14 });
+
   return (
     <>
       <img
@@ -61,7 +72,7 @@ function LightCard({ event }) {
       />
 
       <div className="evcard-content">
-        <h3 className="evcard-title">{event.name}</h3>
+        <h3 className="evcard-title" ref={titleRef}>{breakable(event.name)}</h3>
         <div className="evcard-meta">
           <div className="ev-date"><span className="ev-emoji">📅</span>{fmtDate(event.date)}</div>
           <div className="ev-place"><span className="ev-emoji">📍</span>{event.place}</div>

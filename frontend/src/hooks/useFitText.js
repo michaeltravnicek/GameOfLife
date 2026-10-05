@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef } from 'react';
 
 /**
- * Shrink an element's text until it fits within `maxLines`, then leave it alone.
+ * Shrink an element's text until it fits within `maxLines` and no single word
+ * is wider than the box, then leave it alone.
  *
  * Attach the returned ref to the text element. On mount, whenever `text`
  * changes, and whenever the element's box gets wider or narrower, the font size
@@ -10,6 +11,14 @@ import { useCallback, useEffect, useRef } from 'react';
  * below (better a clipped-looking third line than 9px of unreadable display
  * type). Text that already fits is never touched, so short names keep the full
  * CSS size.
+ *
+ * The box may clip (a fixed height or max-height): the clamp is lifted while
+ * measuring, so the content is what gets measured. The width check reads
+ * scrollWidth and catches one long word that would stick out of the box; for it to fire the
+ * element must not wrap words itself (no `overflow-wrap:break-word`), must keep
+ * side clearance as margin rather than padding, and needs
+ * `contain:inline-size` inside a grid or flex row — otherwise the word widens
+ * the whole card instead of overflowing it.
  *
  * Why measure instead of picking a size from `name.length`, which is the trick
  * used for the event-detail place field: character count does not predict
@@ -30,19 +39,25 @@ export function useFitText(text, { maxLines = 2, minFontSize = 14, extraHeight =
     if (!el) return;
 
     // Start from the stylesheet's size, not last run's result, or repeated fits
-    // would ratchet the text ever smaller.
+    // would ratchet the text ever smaller. Lift any height clamp so the rect
+    // below is the content's height, not the clamp's.
     el.style.fontSize = '';
+    el.style.height = 'auto';
+    el.style.maxHeight = 'none';
+    const done = () => { el.style.height = ''; el.style.maxHeight = ''; };
     const cs = getComputedStyle(el);
     const max = parseFloat(cs.fontSize);
-    if (!max) return;
+    if (!max) { done(); return; }
     const ratio = (parseFloat(cs.lineHeight) || max) / max;
     // `extraHeight` is whatever the box adds on top of the lines themselves —
     // a flex gap between stacked children, say — which no amount of shrinking
     // removes and which would otherwise be mistaken for an extra line.
     // +0.5 absorbs sub-pixel rounding in the measured height.
     const limit = (fs) => fs * ratio * maxLines + extraHeight + 0.5;
+    const fits = (fs) => el.getBoundingClientRect().height <= limit(fs)
+      && el.scrollWidth <= el.clientWidth + 1;
 
-    if (el.getBoundingClientRect().height <= limit(max)) return;
+    if (fits(max)) { done(); return; }
 
     // Binary search the largest half-pixel size that fits. "Fits" is monotonic
     // in font size — if a size fits, every smaller one does — so this is safe
@@ -52,10 +67,11 @@ export function useFitText(text, { maxLines = 2, minFontSize = 14, extraHeight =
     while (hi - lo > 0.5) {
       const mid = Math.round(((lo + hi) / 2) * 2) / 2;
       el.style.fontSize = `${mid}px`;
-      if (el.getBoundingClientRect().height <= limit(mid)) lo = mid;
+      if (fits(mid)) lo = mid;
       else hi = mid;
     }
     el.style.fontSize = `${lo}px`;
+    done();
   }, [maxLines, minFontSize, extraHeight]);
 
   useEffect(() => {

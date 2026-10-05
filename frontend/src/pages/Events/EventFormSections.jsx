@@ -89,7 +89,7 @@ export default function EventFormSections({
             </div>
           </div>
           <div className="gol-toggle-row">
-            <div className="gol-txt"><h4>Čas upřesníme</h4><p>Datum zůstane, ale místo přesného času se u akce zobrazí „Upřesníme“.</p></div>
+            <div className="gol-txt"><h4>Čas upřesníme</h4><p>Datum zůstane, ale místo přesného času se u akce zobrazí „Upřesníme“, po skončení akce „—“.</p></div>
             <Switch checked={form.time_tbd} onChange={(val) => { setForm((f) => ({ ...f, time_tbd: val })); markDirty(); }} ariaLabel="Čas upřesníme" />
           </div>
         </div>

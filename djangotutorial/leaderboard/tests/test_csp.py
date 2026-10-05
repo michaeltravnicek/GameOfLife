@@ -52,7 +52,7 @@ class ContentSecurityPolicyTests(TestCase):
 
     def test_map_tiles_are_allowed(self):
         # Leaflet on the event detail page; without this the map renders blank.
-        self.assertIn("https://*.tile.openstreetmap.org", self._policy())
+        self.assertIn("https://tile.openstreetmap.org", self._policy())
 
     def test_google_forms_may_be_embedded(self):
         # The sign-up page iframes the event's Google Form; forms.gle short
