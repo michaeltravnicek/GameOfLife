@@ -173,11 +173,11 @@ class ExistenceTests(TestCase):
     def test_unknown_slug_does_not_exist(self):
         self.assertFalse(self._meta("/events/neexistuje").exists)
 
-    def test_hidden_event_still_exists(self):
-        """A draft is a real page for staff — withhold the card, not the page."""
+    def test_hidden_event_does_not_exist_for_anonymous(self):
+        """The event API 404s a draft for them; a 200 here would confirm it."""
         event = _make_event(name="Tajná akce", visible_to_users=False)
         meta = self._meta(f"/events/{event.slug}")
-        self.assertTrue(meta.exists)
+        self.assertFalse(meta.exists)
         self.assertEqual(meta.title, og.DEFAULT_TITLE)
 
     def test_forms_and_static_pages_exist(self):
@@ -192,8 +192,9 @@ class ExistenceTests(TestCase):
     def test_unknown_profile_username_does_not_exist(self):
         self.assertFalse(self._meta("/profil/nikdo").exists)
 
-    def test_members_only_player_still_exists(self):
-        """Signed-in visitors can open it, so it must not become a 404."""
+    def test_members_only_player_page_exists_but_profile_does_not(self):
+        """/hrac/<id> serves the public board row to anonymous viewers, so it is
+        a real page; /profil/<username> 404s for them, like the profile API."""
         from django.contrib.auth import get_user_model
         from accounts.models import Profile
         from leaderboard.models import User as LeaderboardUser
@@ -204,7 +205,7 @@ class ExistenceTests(TestCase):
             user=account, leaderboard_user=lb, members_only=True
         )
         self.assertTrue(self._meta(f"/hrac/{lb.id}").exists)
-        self.assertTrue(self._meta("/profil/skryty").exists)
+        self.assertFalse(self._meta("/profil/skryty").exists)
 
     def test_account_without_leaderboard_link_still_exists(self):
         from django.contrib.auth import get_user_model

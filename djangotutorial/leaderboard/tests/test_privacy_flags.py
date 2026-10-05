@@ -97,6 +97,69 @@ class PrivacyFlagTests(TestCase):
         url = reverse("api-profile-season", args=[self.owner.username, self.season.id])
         self.assertEqual(self.client.get(url).status_code, 404)
 
+    # --- members_only on the /players/<id>/ surface ------------------------
+    # The same person by leaderboard id. The public board links every row
+    # here, so an anonymous viewer gets that row and nothing more.
+
+    def _board_row(self):
+        data = self.client.get(reverse("api-leaderboard"), {"season_id": "all"}).json()
+        return next(e for e in data["entries"] if e["id"] == self.lb_user.id)
+
+    def test_members_only_player_shows_anonymous_only_the_board_row(self):
+        self.set_flags(members_only=True)
+        data = self.client.get(self.player_url()).json()
+        row = self._board_row()
+        self.assertIsNone(data["profile_username"])
+        self.assertEqual(data["name"], row["name"])
+        self.assertEqual(data["name"], "Hana H.")
+        for key in ("total_points", "events_count", "rank"):
+            self.assertEqual(data[key], row[key], key)
+        self.assertEqual(data["badges"], [])
+        self.assertIn("events", data["hidden"])
+        for key in ("events", "seasons"):
+            self.assertNotIn(key, data)
+
+    def test_members_only_player_with_hidden_points_404s_for_anonymous(self):
+        # Off every board, so there is no public row to show -- and a 404 is
+        # what an id nobody holds answers too.
+        self.set_flags(members_only=True, hide_pts=True)
+        self.assertEqual(self.client.get(self.player_url()).status_code, 404)
+
+    def test_members_only_player_is_whole_for_signed_in_visitors(self):
+        self.set_flags(members_only=True)
+        self.client.force_authenticate(user=self.other)
+        data = self.client.get(self.player_url()).json()
+        self.assertEqual(data["profile_username"], self.owner.username)
+        self.assertIn("events", data)
+
+    def test_members_only_blocks_the_player_season_sub_resource(self):
+        self.set_flags(members_only=True)
+        url = reverse("api-player-season", args=[self.lb_user.id, self.season.id])
+        self.assertEqual(self.client.get(url).status_code, 404)
+        self.client.force_authenticate(user=self.other)
+        self.assertEqual(self.client.get(url).status_code, 200)
+
+    def test_members_only_player_leaves_no_handle_or_photo_on_the_board(self):
+        # update() rather than save(): the avatar pipeline would try to open a
+        # file that is not there, and only the stored name matters here.
+        Profile.objects.filter(pk=self.profile.pk).update(photo="profiles/hana.webp")
+        self.assertEqual(self._board_row()["photo"].rsplit("/", 1)[-1], "hana.webp")
+        Profile.objects.filter(pk=self.profile.pk).update(members_only=True)
+        cache.clear()
+        row = self._board_row()
+        self.assertIsNone(row["profile_username"])
+        self.assertIsNone(row["photo"])
+        self.assertEqual(row["name"], "Hana H.")
+
+    def test_members_only_board_row_is_the_same_for_signed_in_viewers(self):
+        # One cached board for everyone, so it carries the anonymous answer.
+        self.set_flags(members_only=True)
+        self.client.force_authenticate(user=self.other)
+        self.assertIsNone(self._board_row()["profile_username"])
+
+    def test_board_still_links_profiles_without_the_flag(self):
+        self.assertEqual(self._board_row()["profile_username"], self.owner.username)
+
     # --- hide_pts --------------------------------------------------------
 
     def test_hide_pts_omits_totals_rather_than_zeroing_them(self):

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import { createEvent, fetchCategories, fetchBadges } from '../../services/api';
 import { invalidateEventLists } from '../../services/queryKeys';
 import { extractApiError, reportError } from '../../services/errors';
@@ -10,7 +11,18 @@ import PageState from '../../components/PageState/PageState';
 import '../../styles/edit-form.css';
 import './EventPage.css';
 
+// Admin-only. The guard renders before the form mounts, so a visitor without
+// the role never fires the form's fetches or sees fields they cannot save.
 export default function CreateEventPage() {
+  const { user, loading, isAdmin } = useAuth();
+  if (loading) {
+    return <div className="gol-form-page event-page"><PageState kind="loading" fill text="Načítání…" /></div>;
+  }
+  if (!user || !isAdmin) return <Navigate to="/" replace />;
+  return <CreateEventForm />;
+}
+
+function CreateEventForm() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const {

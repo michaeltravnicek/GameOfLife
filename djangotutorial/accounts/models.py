@@ -100,18 +100,20 @@ class Profile(models.Model):
         return self.role == self.ROLE_CLOSE
 
     def save(self, *args, **kwargs):
-        # Read the stored values before writing. Both of these end up inside the
+        # Read the stored values before writing. All three end up inside the
         # *cached* leaderboard payload — hide_pts decides whether this player is
-        # on the board at all, and the avatar is rendered into their row. Without
+        # on the board at all, the avatar is rendered into their row, and
+        # members_only strips the handle and photo from it. Without
         # this the change appears to do nothing until the TTL expires, which
         # reads as "the setting is broken".
         previous = None
         if self.pk:
             previous = (
                 Profile.objects.filter(pk=self.pk)
-                .values_list("hide_pts", "photo").first()
+                .values_list("hide_pts", "photo", "members_only").first()
             )
-        previous_hide_pts, previous_photo = previous if previous else (None, None)
+        previous_hide_pts, previous_photo, previous_members_only = (
+            previous if previous else (None, None, None))
 
         super().save(*args, **kwargs)
 
@@ -119,7 +121,8 @@ class Profile(models.Model):
         # database but as None on the instance, so a bare != would call every
         # single profile save a photo change and evict the board each time.
         photo_changed = (previous_photo or "") != (self.photo.name or "")
-        if previous_hide_pts != self.hide_pts or photo_changed:
+        if (previous_hide_pts != self.hide_pts or photo_changed
+                or previous_members_only != self.members_only):
             from leaderboard.cache_config import invalidate_points_dependent_caches
             invalidate_points_dependent_caches()
 

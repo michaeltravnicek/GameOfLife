@@ -70,11 +70,12 @@ class PageMeta:
     variants with `dataclasses.replace`.
 
     `exists` is the one field that is not a tag: it records whether the URL
-    names real content. `/events/<slug>` for a slug with no Event row is a
-    page that does not exist, and the caller uses this to answer 404 instead
-    of the 200-with-an-empty-shell that search engines file as a soft 404.
-    Note it is about the *content*, not about the current viewer -- a page
-    that is merely hidden from anonymous visitors still exists.
+    names content *this viewer* may open. `/events/<slug>` for a slug with no
+    Event row is a page that does not exist, and the caller uses this to answer
+    404 instead of the 200-with-an-empty-shell that search engines file as a
+    soft 404. Content hidden from the current viewer (a draft event, a
+    members-only profile for an anonymous visitor) counts as missing too: the
+    API answers 404 for it, and a 200 here would confirm what the 404 hides.
     """
 
     title: str
@@ -206,42 +207,43 @@ def _defaults(request, **overrides):
 # a correct 404 possible:
 #
 #   PageMeta  -- here is the card for this page
-#   None      -- no card, but the page is real (a form, or content deliberately
-#                withheld from anonymous crawlers). Falls back to the defaults
-#                with a 200.
-#   MISSING   -- there is no such page at all. Falls back to the defaults, but
-#                the caller answers 404.
+#   None      -- no card, but the page is real (a form, or a page whose name is
+#                withheld from previews). Falls back to the defaults with a 200.
+#   MISSING   -- there is no such page, or none this viewer may open. Falls
+#                back to the defaults, but the caller answers 404.
+#
+# Visibility is decided by the same helpers the API uses, so the shell's status
+# and the API's agree for every viewer.
 
 
 def _event_metadata(request, slug):
     """Card for /events/<slug>.
 
-    Looks the event up by slug ALONE and judges visibility afterwards, because
-    the two failure modes need different HTTP answers: a slug nobody ever used
-    is a 404, while an event that exists but is hidden from the public (a draft,
-    or a `visible_to_close` preview) is a real page that the right signed-in
-    user can open. Filtering `visible_to_users=True` in the query would collapse
-    both into "not found" and hand that user a 404 for a page they can see.
-
-    Either way the anonymous crawler learns nothing: a non-public event still
-    gets the generic site card, never its name or photo.
+    MISSING for a slug nobody used and equally for an event hidden from this
+    viewer (a draft, or a `visible_to_close` preview for anyone below close):
+    `visible_event_or_404` is the API's gate, so the shell 404s exactly when
+    the event API does, and an anonymous crawler gets neither the event's name
+    nor a status that tells a draft apart from a typo. A viewer the gate lets
+    through gets the real card.
     """
+    from django.http import Http404
+
+    from leaderboard.services import visible_event_or_404
     from leaderboard.models import Event
 
     if slug in _RESERVED_EVENT_SLUGS:
         return None
 
-    event = (
-        Event.objects
-        .filter(slug=slug)
-        .only("name", "description", "place", "date", "points", "image", "slug",
-              "visible_to_users")
-        .first()
-    )
-    if event is None:
+    try:
+        event = visible_event_or_404(
+            getattr(request, "user", None), slug,
+            Event.objects.only(
+                "name", "description", "place", "date", "points", "image", "slug",
+                "visible_to_users", "visible_to_close",
+            ),
+        )
+    except Http404:
         return MISSING
-    if not event.visible_to_users:
-        return None
 
     return PageMeta(
         title=f"{event.name} — {SITE_NAME}",
@@ -258,9 +260,8 @@ def _public_player_name(lb_user, profile):
     always anonymous):
 
     * ``members_only`` — a self-service "signed-in visitors only" flag. The
-      profile page itself 404s for anonymous requests (visible_profile_user_or_404);
-      the preview card has to withhold the name for the same reason, or the flag
-      is bypassable by pasting the URL into a chat instead of a browser.
+      preview card withholds the name from everyone: a card is meant to be
+      pasted into chats and read by people who are not signed in.
     * consent — full name only where a matching GDPR consent is on file,
       otherwise the shortened "Jan N." form, exactly as the site renders it.
     """
@@ -284,11 +285,13 @@ def _player_card(request, name):
 def _player_metadata(request, user_id):
     """Card for /hrac/<id>.
 
-    MISSING when no such leaderboard user exists. A members_only player resolves
-    to None instead: the row is there and the page works for signed-in visitors,
-    so it must not become a 404 for them -- the name is simply withheld.
+    MISSING when no such leaderboard user exists, or when /players/<id> 404s for
+    this viewer (`player_page_withheld`). Any other members_only player resolves
+    to None: the public board links its row here and the API serves that row,
+    so the page is real -- the name is simply withheld from the card.
     """
     from leaderboard.models import User as LeaderboardUser
+    from leaderboard.privacy import player_page_withheld, visibility_for
     from accounts.models import Profile
 
     lb_user = LeaderboardUser.objects.filter(pk=user_id).only("id", "name").first()
@@ -298,6 +301,8 @@ def _player_metadata(request, user_id):
     profile = (
         Profile.objects.filter(leaderboard_user=lb_user).select_related("user").first()
     )
+    if player_page_withheld(visibility_for(profile, getattr(request, "user", None))):
+        return MISSING
     name = _public_player_name(lb_user, profile)
     return _player_card(request, name) if name else None
 
@@ -308,9 +313,12 @@ def _profile_metadata(request, username):
     The username in the URL identifies an account; the previewable name still
     comes from the linked leaderboard user through the consent gate. An account
     with no leaderboard link is a real profile page with nothing to preview
-    (None), while a username belonging to nobody is MISSING.
+    (None), while a username belonging to nobody is MISSING -- and so is a
+    members-only profile for a viewer `visibility_for` does not let in, the same
+    gate that makes the profile API 404 for them.
     """
     from accounts.models import Profile
+    from leaderboard.privacy import visibility_for
 
     # An '@' in the username means a social-login account whose handle is the
     # e-mail address itself. public_handle never publishes those, so no page
@@ -328,6 +336,8 @@ def _profile_metadata(request, username):
         .first()
     )
     if profile is None:
+        return MISSING
+    if visibility_for(profile, getattr(request, "user", None)).members_only:
         return MISSING
     if profile.leaderboard_user is None:
         return None

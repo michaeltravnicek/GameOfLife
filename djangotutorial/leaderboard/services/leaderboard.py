@@ -2,9 +2,11 @@
 from django.core.cache import cache
 from django.db.models import Count, Sum
 from django.db.models.functions import Coalesce
+from django.http import Http404
 
 from leaderboard.cache_config import CACHE_TTL, season_leaderboard_key
 from leaderboard.models import Season, User, UserToEvent
+from leaderboard.privacy import short_name
 
 from .catalog import season_dict
 from .seasons import season_summaries
@@ -87,6 +89,25 @@ def top_players(limit=5):
     return result
 
 
+def _board_profile_info(prof):
+    """`(profile_username, photo, name_consented)` for one linked profile's row.
+
+    The board is public, edge-cached and identical for every viewer, so a
+    members-only profile gets what an anonymous visitor may see: the row of a
+    player with no account at all -- no handle, no avatar, the shortened name.
+    """
+    from leaderboard.privacy import profile_has_consent, public_handle
+
+    if prof.members_only:
+        return None, None, False
+    return (
+        # public_handle withholds e-mail-shaped usernames — see privacy.py.
+        public_handle(prof.user.username),
+        prof.photo.url if prof.photo else None,
+        profile_has_consent(prof),
+    )
+
+
 def attach_profile_usernames(players):
     """Annotate each leaderboard User with `profile_username` + `photo` (if they
     have a registered account with an avatar). The photo lets the leaderboard
@@ -95,17 +116,11 @@ def attach_profile_usernames(players):
         return players
     ids = [p.pk for p in players]
     from accounts.models import Profile
-    from leaderboard.privacy import profile_has_consent, public_handle
     # Consent is resolved in this same query rather than per player — the
     # leaderboard renders hundreds of rows and a lookup inside _entry would be
     # one query each.
     info_by_lb_user = {
-        prof.leaderboard_user_id: (
-            # public_handle withholds e-mail-shaped usernames — see privacy.py.
-            public_handle(prof.user.username),
-            prof.photo.url if prof.photo else None,
-            profile_has_consent(prof),
-        )
+        prof.leaderboard_user_id: _board_profile_info(prof)
         for prof in Profile.objects.filter(leaderboard_user_id__in=ids).select_related("user")
     }
     for player in players:
@@ -208,6 +223,26 @@ def all_time_rank(total_points):
     ) + 1
 
 
+def _members_only_payload(lb_user, total_points, events_count, rank):
+    """/players/<id> for an anonymous viewer of a members-only player.
+
+    Exactly the public board's row for them (see `_board_profile_info`) and
+    nothing more: the board links every row here, so a 404 would be a dead
+    link, while anything beyond the row would undo the flag. `hidden` lists the
+    event history so the page renders "withheld" rather than "no events".
+    """
+    return {
+        "id": lb_user.id,
+        "name": short_name(lb_user.name),
+        "profile_username": None,
+        "badges": [],
+        "hidden": ["events"],
+        "total_points": total_points,
+        "events_count": events_count,
+        "rank": rank,
+    }
+
+
 def player_payload(lb_user, request=None):
     """Public profile for a leaderboard user by id — works whether or not they
     have a registered account (leaderboard users come from the Google Sheets sync).
@@ -233,7 +268,8 @@ def player_payload(lb_user, request=None):
     )
 
     from leaderboard.privacy import (
-        display_name, profile_has_consent, public_handle, visibility_for,
+        display_name, player_page_withheld, profile_has_consent, public_handle,
+        visibility_for,
     )
     from leaderboard.services.badges import badges_for
 
@@ -242,6 +278,10 @@ def player_payload(lb_user, request=None):
     # would leave the flag trivially bypassable by switching endpoint.
     # Computed before the event query so a hidden history costs nothing to serve.
     gates = visibility_for(profile, getattr(request, "user", None))
+    if player_page_withheld(gates):
+        raise Http404("Player not found.")
+    if gates.members_only:
+        return _members_only_payload(lb_user, total_points, events_count, rank)
 
     events = []
     if not gates.hide_events:

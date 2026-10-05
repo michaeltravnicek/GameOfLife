@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import Switch from '../../components/Switch/Switch';
 import ChipSelect from '../../components/ChipSelect/ChipSelect';
@@ -30,7 +30,22 @@ const socialValues = (source = {}) => Object.fromEntries(
   SOCIALS.map((s) => [s.key, source[s.key] || '']),
 );
 
+// Signed-in only. The guard renders before the form mounts, so a guest never
+// fires the profile fetches; LoginPage sends them back here via `from`.
 export default function EditProfilePage() {
+  const { user, loading } = useAuth();
+  const location = useLocation();
+  if (loading) {
+    return <div className="gol-form-page editprofile-page"><PageState kind="loading" fill text="Načítání profilu…" /></div>;
+  }
+  if (!user) {
+    const from = location.pathname + location.search;
+    return <Navigate to={`/prihlasit?from=${encodeURIComponent(from)}`} replace />;
+  }
+  return <EditProfileForm />;
+}
+
+function EditProfileForm() {
   const toast = useToast();
   const navigate = useNavigate();
   const { refresh: refreshAuth } = useAuth();

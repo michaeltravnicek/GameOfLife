@@ -485,7 +485,14 @@ def set_profile_photo(user, photo):
 
 
 def update_profile(user, data, files):
-    """Apply account + profile updates. Raises ValueError if the username is taken."""
+    """Apply account + profile updates.
+
+    Raises ValueError if the username is taken or the photo is not an acceptable
+    image -- the same gate as set_profile_photo, run before anything is written.
+    """
+    photo = files.get("photo")
+    if photo is not None:
+        validate_upload(photo)
     profile, _ = Profile.objects.get_or_create(user=user)
     handle_changed = False
 
@@ -542,8 +549,8 @@ def update_profile(user, data, files):
     for flag in ("hide_pts", "hide_events", "members_only"):
         if flag in data:
             setattr(profile, flag, str(data[flag]).lower() in ("1", "true"))
-    if "photo" in files:
-        profile.photo = files["photo"]
+    if photo is not None:
+        profile.photo = photo
     elif data.get("remove_photo"):
         profile.photo = None
     _reject_overlong(profile, ("city", "instagram", "strava", "spotify", "tiktok"))

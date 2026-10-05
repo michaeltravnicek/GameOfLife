@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
-import { apiLogin, apiLogout, apiRegister, fetchMe } from '../services/api';
+import { apiLogin, apiLogout, apiRegister, fetchMe, onSessionLoss } from '../services/api';
 import { clearCache } from '../services/queryCache';
 import { toast } from '../components/Toast/ToastProvider';
 
@@ -27,6 +27,14 @@ export function AuthProvider({ children }) {
     refresh();
   }, [refresh]);
   /* eslint-enable react-hooks/set-state-in-effect */
+
+  // The server said the session is gone (expired, or signed out elsewhere).
+  // Drop the user and every response computed for them, so the nav and the
+  // signed-in-only queries stop acting as if the cookie were still valid.
+  useEffect(() => onSessionLoss(() => {
+    setUser(null);
+    clearCache();
+  }), []);
 
   const login = useCallback(async (identifier, password, remember = false) => {
     const data = await apiLogin(identifier, password, remember);

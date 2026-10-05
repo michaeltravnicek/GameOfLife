@@ -5,6 +5,7 @@ command applies the same treatment to images that predate those changes.
 
     python3 manage.py generate_image_variants                 # variants only
     python3 manage.py generate_image_variants --force         # regenerate variants
+    python3 manage.py generate_image_variants --force --field leaderboard.Event.image
     python3 manage.py generate_image_variants --resize --dry-run   # preview
     python3 manage.py generate_image_variants --resize        # ALSO convert originals
 
@@ -35,13 +36,16 @@ from leaderboard.image_utils import (
 )
 
 
-def targets():
-    """(queryset, field, (w, h, cap, aspect), variant_kwargs) for every field.
+def targets(only=None):
+    """(queryset, field, (w, h, cap, aspect), variant_kwargs) for every field,
+    or for the UPLOAD_LIMITS keys in ``only``.
 
     Derived from image_utils.UPLOAD_LIMITS rather than listed again here, so
     the backfill cannot convert to different dimensions than a model's save().
     """
     for key, (max_width, max_height, cap, variant_kwargs) in UPLOAD_LIMITS.items():
+        if only and key not in only:
+            continue
         app_label, model_name, field_name = key.split(".")
         model = apps.get_model(app_label, model_name)
         queryset = (model.objects
@@ -74,6 +78,11 @@ class Command(BaseCommand):
                  "stored file and updating the row (IRREVERSIBLE).",
         )
         parser.add_argument(
+            "--field", action="append", choices=sorted(UPLOAD_LIMITS), metavar="KEY",
+            help="Limit the run to this UPLOAD_LIMITS key, e.g. "
+                 "leaderboard.Event.image. Repeatable.",
+        )
+        parser.add_argument(
             "--dry-run", action="store_true",
             help="Report what would change without writing anything.",
         )
@@ -89,7 +98,7 @@ class Command(BaseCommand):
         made = skipped = missing = resized = 0
         saved_bytes = 0
 
-        for qs, field_name, limits, variant_kwargs in targets():
+        for qs, field_name, limits, variant_kwargs in targets(options["field"]):
             for obj in qs.iterator():
                 field = getattr(obj, field_name)
                 # Storage-abstracted so backfill runs against local disk or S3/R2.

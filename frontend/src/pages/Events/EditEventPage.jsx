@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import Modal from '../../components/Modal/Modal';
 import Button from '../../components/Button/Button';
 import { useToast } from '../../components/Toast/ToastProvider';
@@ -13,11 +14,25 @@ import PageState from '../../components/PageState/PageState';
 import '../../styles/edit-form.css';
 import './EventPage.css';
 
+// Admin-only. The guard renders before the form mounts, so a visitor without
+// the role never fires the form's fetches or sees fields they cannot save.
 export default function EditEventPage() {
+  const { user, loading, isAdmin } = useAuth();
+  if (loading) {
+    return <div className="gol-form-page event-page"><PageState kind="loading" fill text="Načítání akce…" /></div>;
+  }
+  if (!user || !isAdmin) return <Navigate to="/" replace />;
+  return <EditEventForm />;
+}
+
+function EditEventForm() {
   const { slug } = useParams();
   const navigate = useNavigate();
   const toast = useToast();
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  // Bumped by the error state's retry button to re-run the load effect.
+  const [loadAttempt, setLoadAttempt] = useState(0);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const {
@@ -53,12 +68,21 @@ export default function EditEventPage() {
       .catch((err) => {
         if (cancelled) return;
         reportError('Nepodařilo se načíst akci.', err);
+        // Without the event there is nothing to edit: an empty form here
+        // would save blanks over the real values.
+        setLoadError(true);
         setLoading(false);
       });
     return () => { cancelled = true; };
-    // Only re-run for a different event; the setters/pickers are stable.
+    // Only re-run for a different event or a retry; the setters/pickers are stable.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slug]);
+  }, [slug, loadAttempt]);
+
+  const retryLoad = () => {
+    setLoadError(false);
+    setLoading(true);
+    setLoadAttempt((n) => n + 1);
+  };
 
   const handleSave = async () => {
     setSaving(true);
@@ -98,6 +122,14 @@ export default function EditEventPage() {
 
   if (loading) {
     return <div className="gol-form-page event-page"><PageState kind="loading" fill text="Načítání akce…" /></div>;
+  }
+
+  if (loadError) {
+    return (
+      <div className="gol-form-page event-page">
+        <PageState kind="error" fill text="Akci se nepodařilo načíst. Zkus to znovu." onRetry={retryLoad} />
+      </div>
+    );
   }
 
   return (

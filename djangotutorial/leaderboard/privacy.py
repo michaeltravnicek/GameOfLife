@@ -127,6 +127,9 @@ def visibility_for(profile, viewer):
 
     `members_only` means "signed-in visitors only", so any authenticated viewer
     clears it; the other two flags apply to everyone but the owner and admins.
+    The anonymous board cannot ask this per viewer (it is cached once for
+    everyone), so it applies the anonymous answer to every members-only row --
+    see `attach_profile_usernames`.
     """
     if profile is None:
         return ALL_VISIBLE
@@ -144,3 +147,15 @@ def visibility_for(profile, viewer):
         hide_pts=profile.hide_pts,
         hide_events=profile.hide_events,
     )
+
+
+def player_page_withheld(gates):
+    """True when /players/<id> (and /hrac/<id>) has nothing it may show.
+
+    A members-only player stays reachable by leaderboard id for anonymous
+    viewers, because the public board links every row there -- but only as the
+    row the board already publishes. Under `hide_pts` they are on no board, so
+    there is no such row, and the page must be indistinguishable from an id
+    that does not exist.
+    """
+    return gates.members_only and gates.hide_pts

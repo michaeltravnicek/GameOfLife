@@ -15,9 +15,10 @@
  * it is the half that stays correct across router upgrades — the router's job
  * is routing, not deciding whom we trust.
  *
- * The only legitimate producer of `?from=` is the 401 interceptor in
- * services/api.js, which builds it from `window.location.pathname + search`.
- * That always has exactly one leading slash, so nothing real is ever rejected.
+ * The legitimate producers of `?from=` are the session-loss interceptor in
+ * services/api.js and the EditProfilePage guard, both of which build it from
+ * the current location. That always has exactly one leading slash, so nothing
+ * real is ever rejected.
  */
 
 // One leading slash and no backslash anywhere. That rejects protocol-relative

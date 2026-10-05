@@ -211,18 +211,25 @@ def event_rsvp(request, slug):
     a retried request confirms the state instead of inverting it (mobile
     clients retry after timeouts). PUT respects capacity (409 when full).
     """
+    if request.method == "DELETE":
+        # Leaving is always allowed, including after the event and after an
+        # admin hides it. Someone who joined by mistake must be able to take it
+        # back, and removing an RSVP can only make the count more accurate, never
+        # less. So the lookup skips the visibility gate; the delete touches only
+        # the requester's own row.
+        event = get_object_or_404(Event, slug=slug)
+        removed, _ = EventRSVP.objects.filter(auth_user=request.user, event=event).delete()
+        if not removed:
+            # Nothing of theirs was there: answer as the gate would, so probing a
+            # hidden slug with DELETE does not confirm that the draft exists.
+            visible_event_or_404(request.user, slug)
+        return Response({"rsvp": False, "rsvp_count": event.rsvps.count()},
+                        status=status.HTTP_200_OK)
+
     # Lock the event row so the capacity check + create below are serialized:
     # without it two concurrent requests can both pass the count check and
     # oversell the event (TOCTOU).
     event = visible_event_or_404(request.user, slug, Event.objects.select_for_update())
-
-    if request.method == "DELETE":
-        # Leaving is always allowed, including after the event. Someone who
-        # joined by mistake must be able to take it back, and removing an RSVP
-        # can only make the public count more accurate, never less.
-        EventRSVP.objects.filter(auth_user=request.user, event=event).delete()
-        return Response({"rsvp": False, "rsvp_count": event.rsvps.count()},
-                        status=status.HTTP_200_OK)
 
     # Joining a finished event is not a thing. The frontend has always hidden
     # the button on `is_past`, but the endpoint accepted it anyway — and the
@@ -340,6 +347,8 @@ def player_detail(request, user_id):
 
     Lists the events they attended. `profile_username` is set if the player has a
     linked account (so the frontend can redirect to the full /profiles/ page).
+    A members-only player shows anonymous viewers only their public board row
+    (or 404s when they are on no board) -- see `player_payload`.
     """
     lb_user = get_object_or_404(LeaderboardUser, id=user_id)
     return Response(player_payload(lb_user, request), status=status.HTTP_200_OK)
@@ -362,7 +371,9 @@ def player_season_detail(request, user_id, season_id):
     # Fourth and last way to reach one person's event history — see visibility_for.
     profile = Profile.objects.filter(leaderboard_user=lb_user).first()
     gates = visibility_for(profile, request.user)
-    if gates.hide_events:
+    # A season is an event history, which a members-only profile withholds from
+    # anonymous viewers along with everything else beyond its board row.
+    if gates.hide_events or gates.members_only:
         raise Http404("Event history is hidden.")
     return Response(season_detail(lb_user, season, hide_pts=gates.hide_pts),
                     status=status.HTTP_200_OK)

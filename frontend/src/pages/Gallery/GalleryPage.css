@@ -12,9 +12,15 @@
 .gallery-page .season-count{font-family:var(--font-mono);font-style:italic;font-size:var(--text-label-lg);color:var(--alpha-cream-60);letter-spacing:.1em;margin-bottom:20px}
 
 .gallery-page .photo-grid{columns:3;column-gap:14px}
-.gallery-page .photo-item{break-inside:avoid;margin-bottom:14px;position:relative;overflow:hidden;cursor:pointer;border:5px solid var(--color-cream-light);box-shadow:0 10px 28px var(--alpha-black-50);transition:border-color var(--dur-base),transform var(--dur-base),box-shadow var(--dur-base)}
-.gallery-page .photo-item:hover{border-color:var(--color-pink);transform:translateY(-3px);box-shadow:0 16px 36px var(--alpha-black-60)}
-.gallery-page .photo-item img{width:100%;display:block;transition:filter var(--dur-slow)}
+/* Tiles are inline-blocks so the columns can never fragment one, and the hover
+   lift is `top`, not a transform: a transformed tile inside a multicol column is
+   painted on its own layer, which WebKit clips to the column (the border and
+   shadow get cut, then snap back when the layer drops), and a transform on this
+   ancestor would also cancel the like pill's frost. */
+.gallery-page .photo-item{display:inline-block;width:100%;vertical-align:top;break-inside:avoid;margin-bottom:14px;position:relative;top:0;overflow:hidden;cursor:pointer;border:5px solid var(--color-cream-light);box-shadow:0 10px 28px var(--alpha-black-50);transition:border-color var(--dur-base),top var(--dur-base),box-shadow var(--dur-base)}
+.gallery-page .photo-item:hover{border-color:var(--color-pink);top:-3px;box-shadow:0 16px 36px var(--alpha-black-60)}
+/* Keeps LazyImg's fade-in, which a bare `transition:filter` would override. */
+.gallery-page .photo-item img{width:100%;display:block;transition:filter var(--dur-slow),opacity var(--dur-slow) ease}
 .gallery-page .photo-item:hover img{filter:brightness(1.08) saturate(1.1)}
 .gallery-page .photo-item-caption{position:absolute;bottom:0;left:0;right:0;padding:18px 14px 10px;background:linear-gradient(0deg,var(--alpha-dark-75) 0%,transparent 100%);opacity:0;transition:opacity var(--dur-base);pointer-events:none}
 .gallery-page .photo-item:hover .photo-item-caption{opacity:1}

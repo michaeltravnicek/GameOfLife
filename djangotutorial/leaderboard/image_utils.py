@@ -22,6 +22,7 @@ the same code serves the local filesystem and the R2 bucket.
 import errno
 import io
 import logging
+import mimetypes
 import os
 import tempfile
 import threading
@@ -209,7 +210,8 @@ def variant_url(field_file, request=None, suffix="mobile", check_exists=True):
     return absolute_url(variant_name(field_file.url, suffix), request)
 
 
-def make_webp_variant(field_file, max_width=900, quality=60, suffix="mobile"):
+def make_webp_variant(field_file, max_width=900, quality=60, suffix="mobile",
+                      max_height=None):
     """Write a small WebP sibling next to an uploaded image (for mobile srcset).
 
     Width, not quality, is what shows here. Measured on a real event photo
@@ -233,8 +235,9 @@ def make_webp_variant(field_file, max_width=900, quality=60, suffix="mobile"):
     try:
         with decode_slot(), Image.open(io.BytesIO(data)) as img:
             img = _normalise_mode(ImageOps.exif_transpose(img))
-            # Cap width; allow tall portraits to keep their aspect ratio.
-            img.thumbnail((max_width, max_width * 6), Image.LANCZOS)
+            # Cap width; tall portraits keep their aspect ratio unless the field
+            # also caps the height.
+            img.thumbnail((max_width, max_height or max_width * 6), Image.LANCZOS)
             out = io.BytesIO()
             img.save(out, "WEBP", quality=quality, method=WEBP_METHOD)
     except (OSError, IOError, DecodeBusy):
@@ -452,6 +455,11 @@ CAP_ARTWORK = 700 * 1024
 # Never handed to PIL at all — not an image in the raster sense.
 VECTOR_EXTENSIONS = {".svg"}
 
+# The only fields that may store a vector file. SVG is a document that can carry
+# script, so it is accepted where the upload path screens it for active content
+# (badge artwork, see leaderboard/api/serializers.py) and refused everywhere else.
+VECTOR_FIELDS = {"leaderboard.Badge.image"}
+
 
 def is_animated(img):
     """True for multi-frame images (animated GIF/WebP)."""
@@ -485,7 +493,15 @@ UPLOAD_LIMITS = {
     # the library, whose stored files are already 1200 px or smaller and cannot
     # grow -- thumbnail() only shrinks. It buys detail on newly uploaded
     # originals, which is where the headroom actually exists.
-    "leaderboard.Event.image":        (2400, 2400, CAP_EVENT_IMAGE, {}),
+    # The phone copy is sized by HEIGHT, not width: the home hero and the event
+    # poster cover a 100vh box, so a 4:3 image on an 844 px-tall phone is drawn
+    # ~1125 x 844 CSS px. The default 900 px variant (675 px tall) was upscaled
+    # even at 1x; 1200 px of height gives ~1.4 device px per CSS px. Width is
+    # capped too, but a portrait already reaches 1200 px tall at 900 wide.
+    # Measured on 4000 px photos: landscape 42-70 kB -> 171-312 kB at q75.
+    "leaderboard.Event.image":        (2400, 2400, CAP_EVENT_IMAGE,
+                                       {"max_width": 1600, "max_height": 1200,
+                                        "quality": 75}),
     "leaderboard.ImageToEvent.image": (1024, 1024, CAP_GALLERY_PHOTO, {}),
     # The gallery grid serves the variant; this original is only fetched when
     # someone opens the lightbox to actually look at the photo, which is the
@@ -614,6 +630,7 @@ def process_image_field(instance, field_name):
     if stored:
         field.name = stored
         models.Model.save(instance, update_fields=[field_name])
+    _refuse_unservable(instance, field_name, field)
     if variant_kwargs is None:
         return
     # save() runs on every edit, not just on uploads; regenerating the variant
@@ -622,6 +639,53 @@ def process_image_field(instance, field_name):
     if not rewritten and field.storage.exists(variant_name(field.name)):
         return
     make_webp_variant(field, **variant_kwargs)
+
+
+def _is_inert_key(instance, field_name, name):
+    """True when storage would serve this key as a raster image (or as SVG on a vector field).
+
+    Any `image/*` type other than SVG is inert in a browser, so legacy keys with
+    an unusual raster extension (.heic, .bmp, .tiff) pass untouched -- this runs
+    on every save, and refusing them would delete files an edit never touched.
+    """
+    ext = os.path.splitext(name)[1].lower()
+    if ext in VECTOR_EXTENSIONS:
+        return field_key(instance, field_name) in VECTOR_FIELDS
+    content_type, _ = mimetypes.guess_type(name)
+    return bool(content_type) and content_type.startswith("image/")
+
+
+def _refuse_unservable(instance, field_name, field):
+    """Delete the stored file and raise ValidationError unless its key is served as an image.
+
+    Storage serves a file with the content type its extension implies, so the
+    key decides how a browser treats the bytes. The pipeline renames everything
+    it converts to the detected format; a file it could not convert -- not an
+    image, or not decodable -- would otherwise sit under the client's own name,
+    and `evil.html` on the media origin is stored XSS. validate_upload stops such
+    files at the API; this is the guard for every other path into save().
+
+    The row is cleared before raising so a caller outside a transaction is not
+    left pointing at the deleted key; inside one, the rollback restores the
+    previous value, whose file was never touched.
+    """
+    from django.core.exceptions import ValidationError
+    from django.db import models
+
+    name = field.name
+    if _is_inert_key(instance, field_name, name):
+        return
+    storage = field.storage
+    for key in (name, variant_name(name)):
+        try:
+            if storage.exists(key):
+                storage.delete(key)
+        except (OSError, IOError):
+            logger.exception("Could not delete refused upload %s", key)
+    setattr(instance, field_name, None)
+    models.Model.save(instance, update_fields=[field_name])
+    raise ValidationError(
+        {field_name: "Nepodporovaný formát. Povolené: JPEG, PNG, WebP, GIF."})
 
 
 def _normalise_mode(img):

@@ -31,23 +31,47 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Endpoints where a 401 is normal (guest checking session / failed login) and
-// must NOT trigger a redirect.
-const AUTH_PROBE_PATHS = ['/auth/me/', '/auth/login/', '/auth/register/'];
+// Endpoints where a missing session is normal (guest checking session, failed
+// login, signing out of an already-expired session) and must NOT redirect.
+const AUTH_PROBE_PATHS = ['/auth/me/', '/auth/login/', '/auth/register/', '/auth/logout/'];
 
-// Session expiry: a 401 on a protected action means the cookie is gone. Send the
+/**
+ * True when the server rejected the request because there is no session.
+ * Session auth sends no WWW-Authenticate challenge, so DRF answers with 403 —
+ * the same status as a genuine permission denial. mysite/drf.py tags the
+ * not-signed-in case with `code: "not_authenticated"`; a 403 without it is a
+ * forbidden action and must not log anyone out.
+ */
+export function isSessionLoss(error) {
+  const res = error?.response;
+  if (!res) return false;
+  if (res.status === 401) return true;
+  return res.status === 403 && res.data?.code === 'not_authenticated';
+}
+
+// AuthContext subscribes so the nav drops the stale user right away, including
+// on the auth pages where no redirect happens.
+const sessionLossListeners = new Set();
+export function onSessionLoss(listener) {
+  sessionLossListeners.add(listener);
+  return () => sessionLossListeners.delete(listener);
+}
+
+// Session expiry: the cookie is gone. Clear the signed-in state and send the
 // user to login (preserving where they were) instead of leaving a dead page.
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    const status = error?.response?.status;
     // Exact path match: `includes` made `/auth/me/delete/` a "probe" too.
     const path = (error?.config?.url || '').split('?')[0];
     const isProbe = AUTH_PROBE_PATHS.includes(path);
-    const onAuthPage = /\/(prihlasit|registrace)/.test(window.location.pathname);
-    if (status === 401 && !isProbe && !onAuthPage) {
-      const from = window.location.pathname + window.location.search;
-      window.location.assign(`/prihlasit?from=${encodeURIComponent(from)}`);
+    if (isSessionLoss(error) && !isProbe) {
+      sessionLossListeners.forEach((listener) => listener());
+      const onAuthPage = /\/(prihlasit|registrace)/.test(window.location.pathname);
+      if (!onAuthPage) {
+        const from = window.location.pathname + window.location.search;
+        window.location.assign(`/prihlasit?from=${encodeURIComponent(from)}`);
+      }
     }
     return Promise.reject(error);
   },

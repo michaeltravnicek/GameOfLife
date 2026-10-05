@@ -44,7 +44,7 @@ def _shell_html(index_path):
     return html
 
 
-@cache_control(no_cache=True, must_revalidate=True)
+@cache_control(no_cache=True, must_revalidate=True, private=True)
 @ensure_csrf_cookie
 def react_index(request):
     """Serve the built React index.html for any non-API/non-admin route.
@@ -60,6 +60,12 @@ def react_index(request):
     the moment the cookie moved elsewhere. `no-cache` (revalidate, don't reuse
     blindly) rather than `no-store`: the browser may keep the copy, it just has
     to ask first, which a 304 answers cheaply.
+
+    `private` because the response varies by viewer: the status and the OG card
+    of a draft event or a members-only profile depend on who is signed in (see
+    `PageMeta.exists`). A shared cache keyed on the URL alone -- Cloudflare
+    ignores `Vary: Cookie` -- would hand an admin's 200 to the next anonymous
+    visitor, or a 404 to the admin.
 
     The shell's <title> is swapped for per-route Open Graph tags on the way out
     (see `mysite.og`) so link previews work -- crawlers never run React, so this
@@ -77,9 +83,10 @@ def react_index(request):
         exists = meta.exists
     except Exception:  # noqa: BLE001 -- metadata is decoration; never 500 the SPA
         logger.warning("OG tag injection failed (serving plain shell).", exc_info=True)
-    # A URL naming content that does not exist (an unknown event slug) gets the
-    # shell with a 404 status, so search engines drop it instead of filing a
-    # soft 404; the SPA renders its own not-found page either way.
+    # A URL naming content that does not exist for this viewer (an unknown or
+    # hidden event slug) gets the shell with a 404 status, so search engines
+    # drop it instead of filing a soft 404; the SPA renders its own not-found
+    # page either way.
     return HttpResponse(html, content_type="text/html", status=200 if exists else 404)
 
 

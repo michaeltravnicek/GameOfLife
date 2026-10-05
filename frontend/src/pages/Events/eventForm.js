@@ -38,23 +38,27 @@ export function eventToForm(event) {
     time_tbd: event.time_tbd ?? false,
     end_date: event.end_date ? event.end_date.slice(0, 16) : '',
     points: event.points || '',
-    capacity: event.capacity || '',
+    // `??`, not `||`: these are always sent back, and a 0 must not become a clear.
+    capacity: event.capacity ?? '',
     rules: event.rules || '',
     survey_url: event.survey_url || '',
     whatsapp_url: event.whatsapp_url || '',
     badge: event.badge?.id ?? event.badge_id ?? '',
     visible_to_users: event.visible_to_users ?? true,
     visible_to_close: event.visible_to_close ?? false,
-    latitude: event.latitude || '',
-    longitude: event.longitude || '',
+    latitude: event.latitude ?? '',
+    longitude: event.longitude ?? '',
     checkin_radius: event.checkin_radius || '500',
   };
 }
 
 /**
- * Build the multipart payload the create/update endpoints expect. `end_date` is
- * always sent (empty string clears it) — the write serializer's
- * BlankableDateTimeField accepts a blank value on both create and update.
+ * Build the multipart payload the create/update endpoints expect.
+ *
+ * Update is a partial PATCH: a field left out stays as it was. So every
+ * clearable field — end_date, capacity, the map pin, badge, category — is
+ * always sent, with '' meaning "clear". The write serializer maps a blank to
+ * null on both create and update (Blankable* fields; relations do it natively).
  */
 export function buildEventFormData(form, { poster, allCategories, categories }) {
   const fd = new FormData();
@@ -65,7 +69,7 @@ export function buildEventFormData(form, { poster, allCategories, categories }) 
   fd.append('time_tbd', form.time_tbd ? '1' : '0');
   fd.append('end_date', form.end_date || '');
   fd.append('points', form.points || 0);
-  if (form.capacity) fd.append('capacity', form.capacity);
+  fd.append('capacity', form.capacity ?? '');
   fd.append('rules', form.rules);
   fd.append('survey_url', form.survey_url);
   fd.append('whatsapp_url', form.whatsapp_url);
@@ -74,16 +78,15 @@ export function buildEventFormData(form, { poster, allCategories, categories }) 
   fd.append('badge', form.badge ?? '');
   fd.append('visible_to_users', form.visible_to_users ? '1' : '0');
   fd.append('visible_to_close', form.visible_to_close ? '1' : '0');
-  if (form.latitude) fd.append('latitude', form.latitude);
-  if (form.longitude) fd.append('longitude', form.longitude);
+  fd.append('latitude', form.latitude ?? '');
+  fd.append('longitude', form.longitude ?? '');
   fd.append('checkin_radius', form.checkin_radius);
   if (poster.file) fd.append('image', poster.file);
   // ChipSelect works in category names; map them back to ids for the API.
+  // An event has one category (a foreign key), so the first match wins.
   const nameToId = new Map(allCategories.map((c) => [c.name, c.id]));
-  categories.forEach((name) => {
-    const id = nameToId.get(name);
-    if (id != null) fd.append('category', id);
-  });
+  const categoryId = categories.map((name) => nameToId.get(name)).find((id) => id != null);
+  fd.append('category', categoryId ?? '');
   return fd;
 }
 

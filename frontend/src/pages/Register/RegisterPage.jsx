@@ -70,7 +70,7 @@ export default function RegisterPage() {
         );
       }
       // `from` may arrive as router state (in-app) or a ?from= query param
-      // (api.js 401 interceptor redirect) — honour either, but only after
+      // (api.js session-loss redirect) — honour either, but only after
       // safeRedirect: the query param comes from the URL, so it is exactly as
       // trustworthy as whoever sent the member the link.
       const from = location.state?.from || searchParams.get('from');

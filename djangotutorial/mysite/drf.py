@@ -1,5 +1,6 @@
 """DRF customizations shared across the API."""
 from rest_framework import status
+from rest_framework.exceptions import NotAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import exception_handler
 
@@ -13,6 +14,11 @@ def api_exception_handler(exc, context):
     rewrites that single key so the frontend has one error shape everywhere. Field-level
     form errors (e.g. registration's `{"errors": {...}}`) are produced explicitly by
     views and never reach this handler.
+
+    A missing session also carries `"code": "not_authenticated"`. Session auth sends
+    no WWW-Authenticate challenge, so DRF answers it with 403 -- the same status as a
+    genuine permission denial -- and the code is how the SPA tells the two apart
+    (an expired session redirects to login; a forbidden action does not).
     """
     if isinstance(exc, DecodeBusy):
         # Every image-decode slot on the instance was busy. This is a capacity
@@ -31,4 +37,6 @@ def api_exception_handler(exc, context):
     response = exception_handler(exc, context)
     if response is not None and isinstance(response.data, dict) and "detail" in response.data:
         response.data = {"error": response.data["detail"]}
+        if isinstance(exc, NotAuthenticated):
+            response.data["code"] = "not_authenticated"
     return response

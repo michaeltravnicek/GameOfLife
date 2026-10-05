@@ -27,7 +27,7 @@ export default function LoginPage() {
     try {
       const u = await login(identifier, pw, remember);
       // `from` arrives either as router state (in-app redirects) or as a
-      // ?from= query param (the api.js 401 interceptor redirects via
+      // ?from= query param (the api.js session-loss redirect goes via
       // window.location, which can't carry router state). The query param is
       // attacker-controlled, so it goes through safeRedirect — an off-site
       // target here would bounce a member who *just* typed their password.

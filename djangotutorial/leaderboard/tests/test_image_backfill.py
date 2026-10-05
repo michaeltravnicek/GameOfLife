@@ -648,6 +648,26 @@ class BackfillCommandTests(TestCase):
         self._run()
         self.assertTrue(os.path.exists(variant_name(path)))
 
+    def test_event_variant_is_tall_enough_for_a_phone_hero(self):
+        """The poster covers a 100vh box, so the phone copy needs height."""
+        _, path = self._legacy_event(width=3200, height=2400)
+        self._run()
+        with Image.open(variant_name(path)) as img:
+            self.assertEqual(img.size, (1600, 1200))
+
+    def test_portrait_event_variant_is_capped_by_height(self):
+        _, path = self._legacy_event(width=3000, height=4000)
+        self._run()
+        with Image.open(variant_name(path)) as img:
+            self.assertEqual(img.size, (900, 1200))
+
+    def test_field_limits_the_run(self):
+        _, path = self._legacy_event()
+        self._run(field=["leaderboard.ImageToEvent.image"])
+        self.assertFalse(os.path.exists(variant_name(path)))
+        self._run(field=["leaderboard.Event.image"])
+        self.assertTrue(os.path.exists(variant_name(path)))
+
     def test_resize_converts_and_repoints_the_row(self):
         event, path = self._legacy_event()
         before = os.path.getsize(path)
