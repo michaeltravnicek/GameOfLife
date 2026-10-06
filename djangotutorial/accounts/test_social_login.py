@@ -9,10 +9,15 @@ from types import SimpleNamespace
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import AnonymousUser
+from django.contrib.messages.storage.fallback import FallbackStorage
 from django.contrib.sessions.middleware import SessionMiddleware
 from django.test import RequestFactory, TestCase
 from django.urls import reverse
 
+from allauth.core import context
+from allauth.socialaccount.adapter import get_adapter as get_social_adapter
+from allauth.socialaccount.helpers import complete_social_login
 from allauth.socialaccount.models import SocialAccount, SocialLogin
 from allauth.socialaccount.providers.oauth2.client import OAuth2Error
 
@@ -23,16 +28,6 @@ from mysite.test_utils import SpaShellMixin
 
 class SocialLoginSettingsTests(TestCase):
     """These are settings, but they are load-bearing enough to assert."""
-
-    def test_email_authentication_is_off(self):
-        # If this is ever True, anyone who can create a Google account with a
-        # victim's e-mail address owns the victim's account. No password needed.
-        self.assertFalse(settings.SOCIALACCOUNT_EMAIL_AUTHENTICATION)
-
-    def test_auto_connect_is_off(self):
-        # Same attack, different door: auto-connect would attach the attacker's
-        # Google identity to the matching local account on first sign-in.
-        self.assertFalse(settings.SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT)
 
     def test_credentials_come_from_the_environment(self):
         # Not from a SocialApp row: a client secret in the database is readable
@@ -49,6 +44,68 @@ class SocialLoginSettingsTests(TestCase):
             backends.index("allauth.account.auth_backends.AuthenticationBackend"),
             "axes must stay ahead of allauth or password lockout stops applying.",
         )
+
+
+class GoogleEmailMatchingTests(TestCase):
+    """A Google sign-in on an address that already has a password account.
+
+    Runs allauth's real completion step from the point where Google has handed
+    over the profile, so the callback itself is the only part not exercised.
+    """
+
+    def setUp(self):
+        self.member = get_user_model().objects.create_user(
+            username="jana", email="jana@example.com", password="heslo-123-abc")
+        Profile.objects.create(user=self.member)
+
+    def _complete(self, email, verified=True):
+        request = RequestFactory().get("/accounts/google/login/callback/")
+        SessionMiddleware(lambda req: None).process_request(request)
+        request.session.save()
+        request.user = AnonymousUser()
+        request._messages = FallbackStorage(request)
+        with context.request_context(request):
+            provider = get_social_adapter().get_provider(request, "google")
+            # The userinfo shape Google returns; the provider turns it into
+            # the SocialLogin exactly as the callback does.
+            sociallogin = provider.sociallogin_from_response(request, {
+                "sub": "google-uid-1", "email": email,
+                "email_verified": verified, "name": "Jana Nová",
+            })
+            sociallogin.state = {"process": "login"}
+            response = complete_social_login(request, sociallogin)
+        return request, response
+
+    def test_logs_in_to_the_existing_account(self):
+        # Regression: with e-mail matching off, allauth could neither log in nor
+        # sign up on a taken address and stranded the member on its signup form.
+        request, response = self._complete("Jana@Example.com")
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response["Location"], "/")
+        self.assertEqual(request.user, self.member)
+        self.assertEqual(get_user_model().objects.count(), 1)
+
+    def test_links_the_google_identity(self):
+        # So the next sign-in finds the account by its Google uid, not by e-mail.
+        self._complete("jana@example.com")
+        self.assertTrue(SocialAccount.objects.filter(
+            user=self.member, provider="google", uid="google-uid-1").exists())
+
+    def test_unverified_password_is_made_unusable(self):
+        # allauth's guard against an account registered on someone else's
+        # address in advance: whoever chose that password is locked out. No
+        # address is verified on this site, so every member is in this case.
+        self._complete("jana@example.com")
+        self.member.refresh_from_db()
+        self.assertFalse(self.member.has_usable_password())
+
+    def test_address_google_did_not_verify_does_not_match(self):
+        # The match rests on Google's verified flag; without it this would be a
+        # takeover by anyone who types the victim's address into a Google account.
+        request, response = self._complete("jana@example.com", verified=False)
+        self.assertNotEqual(request.user, self.member)
+        self.assertFalse(SocialAccount.objects.filter(user=self.member).exists())
+        self.assertEqual(response["Location"], "/accounts/3rdparty/signup/")
 
 
 class SocialAccountAdapterTests(TestCase):
@@ -168,3 +225,10 @@ class SocialLoginRoutingTests(SpaShellMixin, TestCase):
 
     def test_login_route_exists(self):
         self.assertTrue(reverse("google_login").startswith("/accounts/"))
+
+    def test_social_signup_form_returns_to_login(self):
+        # allauth's own form is unstyled and creates accounts outside
+        # register_api; the visitor goes back to the login page instead.
+        resp = self.client.get("/accounts/3rdparty/signup/")
+        self.assertRedirects(resp, "/prihlasit?google=nedokonceno",
+                             fetch_redirect_response=False)

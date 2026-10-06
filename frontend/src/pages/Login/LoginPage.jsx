@@ -17,7 +17,13 @@ export default function LoginPage() {
   const [identifier, setIdentifier] = useState('');
   const [pw, setPw] = useState('');
   const [remember, setRemember] = useState(false);
-  const [error, setError] = useState('');
+  // Set by accounts.views.social_signup_unavailable when a Google sign-in
+  // could not be completed.
+  const [error, setError] = useState(() => (
+    searchParams.get('google') === 'nedokonceno'
+      ? 'Přihlášení přes Google se nepodařilo dokončit. Přihlas se e-mailem a heslem.'
+      : ''
+  ));
   const [busy, setBusy] = useState(false);
 
   const handleSubmit = async (e) => {

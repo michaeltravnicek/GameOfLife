@@ -37,9 +37,9 @@ class SocialAccountAdapter(DefaultSocialAccountAdapter):
         above; without this every first-time Google user is bounced to an
         unstyled `signup_closed.html`. The password door stays shut so that
         registration goes through register_api (consent, username rules) —
-        save_user() below applies the same to the Google path. This does not let
-        a Google login attach to an existing local account: both
-        SOCIALACCOUNT_EMAIL_AUTHENTICATION and _AUTO_CONNECT are off.
+        save_user() below applies the same to the Google path. A Google
+        address that already has an account never reaches signup: e-mail
+        authentication logs in to that account instead (see settings.py).
         """
         return True
 

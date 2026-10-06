@@ -19,6 +19,8 @@ from django.urls import include, path, re_path
 from django.views.decorators.cache import cache_control
 from django.views.static import serve as serve_media
 
+from accounts.views import social_signup_unavailable
+
 from . import views as react_views
 from .sitemaps import SITEMAPS
 
@@ -48,6 +50,8 @@ urlpatterns = [
     # Social login (Google). Full-page server routes, never React Router links —
     # a client-side <Link> here would 404 inside the SPA instead of redirecting
     # to Google. Reserved from the catch-all below via _reserved.
+    # Ahead of allauth's own route: its social signup form is a dead end here.
+    path("accounts/3rdparty/signup/", social_signup_unavailable),
     path("accounts/", include("allauth.urls")),
 
     path("api/v1/", include("leaderboard.api.urls")),

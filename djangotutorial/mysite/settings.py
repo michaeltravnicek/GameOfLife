@@ -365,8 +365,8 @@ MIDDLEWARE = [
 # auth model — the SPA cannot tell the difference between this and a password
 # login, which is exactly the point.
 #
-# ⚠ The two settings that matter most are the takeover guards below. Everything
-# else here is plumbing.
+# ⚠ The settings that matter most are the e-mail matching rules below.
+# Everything else here is plumbing.
 # ---------------------------------------------------------------------------
 SOCIALACCOUNT_PROVIDERS = {
     "google": {
@@ -389,21 +389,27 @@ SOCIALACCOUNT_ONLY = False
 SOCIALACCOUNT_ADAPTER = "accounts.adapters.SocialAccountAdapter"
 ACCOUNT_ADAPTER = "accounts.adapters.AccountAdapter"
 
-# 🔴 Account takeover via e-mail matching — the most important lines in this block.
+# 🔴 E-mail matching — the most important lines in this block.
 #
-# The attack: an existing user has a password account on michael@example.com.
-# An attacker creates a Google account with that same address and signs in. If
-# allauth links the social identity to the existing user because the e-mails
-# match, the attacker has taken over the account without ever knowing the
-# password. Google verifying the address does not help: the question is whether
-# *this* claimant controls the local account, and a matching e-mail does not
-# answer it.
+# A Google sign-in whose address already belongs to a password account logs in
+# to that account and links the Google identity to it. With matching off, allauth
+# can neither log in nor create a second account on a taken address, so it
+# strands the visitor on its own signup form, and every member who registered
+# with a password could never use the Google button.
 #
-# So: never authenticate by e-mail alone, and never auto-connect. Linking a
-# Google identity to an existing account may only happen while that account is
-# already logged in and explicitly asks for it.
-SOCIALACCOUNT_EMAIL_AUTHENTICATION = False
-SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = False
+# Why this is not a takeover:
+#   - allauth matches only addresses the provider marks verified. Google sets
+#     that flag only for an inbox the claimant has proved they control, which
+#     is the same proof a password reset link relies on.
+#   - The reverse attack: someone registers a password account on a victim's
+#     address and waits for the victim to arrive through Google. allauth
+#     counters it by making the password unusable when the local address is
+#     unverified (socialaccount/internal/flows/email_authentication.py). Nothing
+#     here verifies addresses (ACCOUNT_EMAIL_VERIFICATION below), so that is
+#     every account: after the first Google sign-in the member uses Google or
+#     resets the password by e-mail.
+SOCIALACCOUNT_EMAIL_AUTHENTICATION = True
+SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
 SOCIALACCOUNT_AUTO_SIGNUP = True
 
 # Google has already verified the address it hands us, so re-verifying by e-mail
