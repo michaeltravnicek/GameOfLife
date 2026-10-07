@@ -3,7 +3,6 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path("stats/", views.stats_view, name="api-stats"),
     path("hero/", views.hero_view, name="api-hero"),
     path("checkin-events/", views.checkin_events_view, name="api-checkin-events"),
     path("events/create/", views.event_create, name="api-event-create"),
@@ -16,9 +15,6 @@ urlpatterns = [
     path("events/<slug:slug>/attendees/", views.event_attendees, name="api-event-attendees"),
     path("events/<slug:slug>/attendees/<int:user_id>/", views.event_attendee_detail,
          name="api-event-attendee"),
-    path("events/<slug:slug>/signup-form/", views.event_signup_form, name="api-event-signup-form"),
-    path("events/<slug:slug>/signup-form/submit/", views.event_signup_form_submit,
-         name="api-event-signup-form-submit"),
     path("events/<slug:slug>/feedback/", views.event_feedback, name="api-event-feedback"),
     path("events/<slug:slug>/checkin/", views.event_checkin, name="api-event-checkin"),
     path("events/<slug:slug>/images/", views.event_images_upload, name="api-event-images"),
@@ -27,6 +23,7 @@ urlpatterns = [
     path("players/<int:user_id>/", views.player_detail, name="api-player"),
     path("players/<int:user_id>/seasons/<int:season_id>/", views.player_season_detail, name="api-player-season"),
     path("gallery/", views.gallery_view, name="api-gallery"),
+    path("gallery/months/", views.gallery_months_view, name="api-gallery-months"),
     path("profile-questions/", views.profile_questions_list, name="api-profile-questions"),
     path("categories/", views.categories_list, name="api-categories"),
     path("categories/create/", views.category_create, name="api-category-create"),

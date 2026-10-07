@@ -14,7 +14,7 @@ vi.mock('../../services/api', () => ({
 
 let auth;
 vi.mock('../../context/AuthContext', () => ({ useAuth: () => auth }));
-vi.mock('../../components/Toast/ToastProvider', () => ({ useToast: () => ({}) }));
+vi.mock('../../components/Toast/ToastProvider', () => ({ toast: {} }));
 
 import { fetchCategories, fetchMe } from '../../services/api';
 import EditProfilePage from './EditProfilePage';

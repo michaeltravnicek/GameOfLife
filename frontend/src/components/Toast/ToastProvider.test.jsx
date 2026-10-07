@@ -1,11 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { ToastProvider, ToastBridge, toast } from './ToastProvider';
+import { ToastProvider, toast } from './ToastProvider';
 
 const wrap = (ui) => render(
   <ToastProvider>
-    <ToastBridge />
     {ui}
   </ToastProvider>,
 );

@@ -65,12 +65,12 @@
   .auth-page .auth-badge{width:clamp(96px,26vw,118px);height:clamp(96px,26vw,118px);top:clamp(-40px,-9vw,-30px);right:clamp(-18px,-4.5vw,-14px)}
   .auth-page .auth-card-sub{font-size:var(--text-label-lg);margin-bottom:18px}
   .auth-page .auth-divider{margin-bottom:18px}
-  .auth-page .pts-btn-wrap,.auth-page .pts-btn{padding:14px 22px;font-size:var(--text-label-lg);letter-spacing:.05em}
+  .auth-page .pts-btn-wrap{padding:14px 22px;font-size:var(--text-label-lg);letter-spacing:.05em}
   .auth-page .forgot{font-size:var(--text-label)}
   .auth-page .auth-foot{font-size:var(--text-meta)}
 }
 @media(max-width:375px){
   .auth-page .auth-container{padding:0 10px 40px;padding-top:110px}
   .auth-page .auth-card-inner{padding:20px 14px 24px}
-  .auth-page .pts-btn-wrap,.auth-page .pts-btn{padding:13px 18px;font-size:var(--text-meta);letter-spacing:.04em}
+  .auth-page .pts-btn-wrap{padding:13px 18px;font-size:var(--text-meta);letter-spacing:.04em}
 }

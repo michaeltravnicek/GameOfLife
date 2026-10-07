@@ -1,11 +1,11 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Navigate, useParams } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import PillTabs from '../../components/PillTabs/PillTabs';
 import Button from '../../components/Button/Button';
-import Badge from '../../components/Badge/Badge';
 import PageState from '../../components/PageState/PageState';
-import { useSeasonView } from '../Profile/useSeasonView';
-import { ProfileCredits, EventsSections, PointsSections } from '../Profile/profileSections';
+import { TODAY, useProfileSeason } from '../Profile/useSeasonView';
+import { ProfilePoster, EventsSections, PointsSections } from '../Profile/profileSections';
 import { fetchPlayer, fetchPlayerSeason } from '../../services/api';
 import { useCachedQuery } from '../../services/queryCache';
 import { queryKeys } from '../../services/queryKeys';
@@ -16,7 +16,24 @@ import '../../styles/poster-hero.css';
 import '../Profile/ProfilePage.css';
 import './PlayerPage.css';
 
-const TODAY = new Date();
+// No leaderboard seasons — synthesize one from the all-time payload so the
+// poster/chart still render. All-time events carry `points`, not `pts`, and may
+// span years, so the span stretches from the first event to today.
+function allTimeSummary(player) {
+  const evs = (player.events || []).map((e) => ({ ...e, pts: e.pts ?? e.points }));
+  const dates = evs.map((e) => new Date(e.date).getTime());
+  const start = dates.length ? new Date(Math.min(...dates)) : new Date(TODAY.getFullYear(), 0, 1);
+  const end = new Date(Math.max(TODAY.getTime(), ...dates));
+  return {
+    id: null,
+    label: 'Celkem',
+    start: start.toISOString(),
+    end: end.toISOString(),
+    season_pts: player.total_points || 0,
+    rank: player.rank || null,
+    events: evs,
+  };
+}
 
 // Anonymous profile for a leaderboard player by id — Google-Sheets players who
 // have no account yet. Renders the same poster/credits/tabs skin as the full
@@ -25,7 +42,7 @@ const TODAY = new Date();
 // Registered players are redirected to their /profil/ page.
 export default function PlayerPage() {
   const { userId } = useParams();
-  const [pickedSeason, setPickedSeason] = useState(null); // explicit season pick (id)
+  const { user } = useAuth();
   const [view, setView] = useState('events');
 
   const { data: player, loading: playerLoading, error: playerError } = useCachedQuery(
@@ -34,48 +51,25 @@ export default function PlayerPage() {
     { enabled: !!userId, ttl: CACHE_TTL.PROFILE },
   );
 
-  // Selected season = explicit pick, else the newest season (same as profiles).
-  const seasonKey = pickedSeason ?? player?.seasons?.[0]?.id ?? null;
-
-  // Lazy per-season detail (event list + points + rank) for the chosen season.
-  const { data: seasonDetail } = useCachedQuery(
-    queryKeys.player(userId, seasonKey),
-    () => fetchPlayerSeason(userId, seasonKey),
-    { enabled: !!userId && seasonKey != null, ttl: CACHE_TTL.PROFILE },
-  );
-
-  const summary = useMemo(() => {
-    if (!player) return null;
-    const seasons = player.seasons || [];
-    if (seasons.length) return seasons.find((s) => s.id === seasonKey) || seasons[0];
-    // No leaderboard seasons — synthesize one from the all-time payload so the
-    // poster/chart still render. All-time events carry `points`, not `pts`, and
-    // may span years, so the span stretches from the first event to today.
-    const evs = (player.events || []).map((e) => ({ ...e, pts: e.pts ?? e.points }));
-    const dates = evs.map((e) => new Date(e.date).getTime());
-    const start = dates.length ? new Date(Math.min(...dates)) : new Date(TODAY.getFullYear(), 0, 1);
-    const end = new Date(Math.max(TODAY.getTime(), ...dates));
-    return {
-      id: null,
-      label: 'Celkem',
-      start: start.toISOString(),
-      end: end.toISOString(),
-      season_pts: player.total_points || 0,
-      rank: player.rank || null,
-      events: evs,
-    };
-  }, [player, seasonKey]);
-  // Prefer the detail (has events) for the current season; fall back to the
-  // summary so the poster renders immediately while detail loads.
-  const seasonData = (seasonDetail && seasonDetail.id === seasonKey) ? seasonDetail : summary;
-  // Shared derivation (stats + sorted event lists + category breakdown). Runs
-  // unconditionally and tolerates a null seasonData, so it stays above the
+  // Runs unconditionally and tolerates a null player, so it stays above the
   // early returns and keeps the hook count stable across renders.
-  const { st, upcoming, past, cats } = useSeasonView(seasonData, TODAY);
+  const { seasonKey, setPickedSeason, seasonTabs, st, upcoming, past, cats } = useProfileSeason(
+    player,
+    {
+      key: (seasonId) => queryKeys.player(userId, seasonId),
+      fetch: (seasonId) => fetchPlayerSeason(userId, seasonId),
+      enabled: !!userId,
+    },
+    allTimeSummary,
+  );
 
   // Players with a linked account get the full profile instead.
   if (player?.profile_username) {
     return <Navigate to={`/profil/${player.profile_username}`} replace />;
+  }
+  // A merged-away id: the API answers with the player it was merged into.
+  if (player && String(player.id) !== userId) {
+    return <Navigate to={`/hrac/${player.id}`} replace />;
   }
 
   if (playerLoading && !player) return <div className="profile-page player-anon"><PageState kind="loading" fill text="Načítám hráče…" /></div>;
@@ -93,7 +87,6 @@ export default function PlayerPage() {
 
   const handleShare = () => shareLink(`${player.name} — Game of Life`);
 
-  const seasonTabs = player.seasons?.map((s) => ({ key: s.id, label: s.label })) || [];
   // See ProfilePage: withheld sections are absent, not zero, so their tabs go.
   const hidden = player.hidden || [];
   const viewTabs = [
@@ -106,23 +99,13 @@ export default function PlayerPage() {
 
   return (
     <div className="profile-page player-anon">
-      <section className="poster">
-        <div className="poster-img" />
-        <div className="poster-grain" />
-        <div className="poster-vignette" />
-
-        <div className="poster-top">
-          <div className="badges">
-            {st.rank && <Badge tone="live">★ #{st.rank} Leaderboard</Badge>}
-            <Badge>Sezóna {st.label}</Badge>
-          </div>
-          <div className="poster-avatar">{avatarInitials}</div>
-          <h1 className="poster-name">{player.name}</h1>
-          <div className="poster-handle">hráč Game of Life · profil bez účtu</div>
-        </div>
-
-        <ProfileCredits st={st} hidden={hidden} />
-      </section>
+      <ProfilePoster
+        st={st}
+        hidden={hidden}
+        avatar={avatarInitials}
+        name={player.name}
+        handle="hráč Game of Life · profil bez účtu"
+      />
 
       <div className="action-bar">
         <div className="action-inner">
@@ -156,8 +139,16 @@ export default function PlayerPage() {
           {/* Navigation = 3D buttons (frost for "back"); round pills = in-place actions. */}
           <Button as="link" to="/leaderboard" variant="frost">← Zpět na leaderboard</Button>
           <div className="back-actions">
-            <span className="claim-note">Jsi to ty? Založ si účet a převezmi svůj profil.</span>
-            <Button as="link" to="/registrace">Založit účet</Button>
+            {/* Claiming is an admin merge (leaderboard/merging.py), so a member
+                who already has an account cannot do it from here. */}
+            {user ? (
+              <span className="claim-note">Jsi to ty? Napiš organizátorům a připojí tuhle historii k tvému účtu.</span>
+            ) : (
+              <>
+                <span className="claim-note">Jsi to ty? Založ si účet a převezmi svůj profil.</span>
+                <Button as="link" to="/registrace">Založit účet</Button>
+              </>
+            )}
             <Button variant="ghost" onClick={handleShare}>Sdílet profil</Button>
           </div>
         </div>

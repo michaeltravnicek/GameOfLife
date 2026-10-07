@@ -19,30 +19,23 @@ export function useReveal({ threshold = 0.15, rootMargin = '0px 0px -8% 0px' } =
   const timerRef = useRef(null);
   const revealedRef = useRef(false);
 
+  const teardown = useCallback(() => {
+    observerRef.current?.disconnect();
+    observerRef.current = null;
+    clearTimeout(timerRef.current);
+    timerRef.current = null;
+  }, []);
+
   const doReveal = useCallback(() => {
     if (revealedRef.current) return;
     revealedRef.current = true;
     setInView(true);
-    if (observerRef.current) {
-      observerRef.current.disconnect();
-      observerRef.current = null;
-    }
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-      timerRef.current = null;
-    }
-  }, []);
+    teardown();
+  }, [teardown]);
 
   const ref = useCallback((el) => {
     // Tear down observer + fallback timer when element unmounts or is replaced.
-    if (observerRef.current) {
-      observerRef.current.disconnect();
-      observerRef.current = null;
-    }
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-      timerRef.current = null;
-    }
+    teardown();
 
     // Nothing to observe, or already revealed (one-shot — stays visible).
     if (!el || revealedRef.current) return;
@@ -64,7 +57,7 @@ export function useReveal({ threshold = 0.15, rootMargin = '0px 0px -8% 0px' } =
     // If IO never fires (content at viewport edge, hidden parent, browser quirk),
     // force the reveal so items are never permanently stuck invisible.
     timerRef.current = setTimeout(doReveal, 1500);
-  }, [threshold, rootMargin, doReveal]);
+  }, [threshold, rootMargin, doReveal, teardown]);
 
   return [ref, inView];
 }

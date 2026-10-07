@@ -6,7 +6,7 @@
    profile editor, the form is the point here. */
 
 /* Slightly dimmer than the profile editor's sub-heading. */
-.event-page .ev-sec-sub{font-family:var(--font-body);font-style:italic;font-size:var(--text-body-sm);color:var(--alpha-cream-65);margin-bottom:0;line-height:1.5;max-width:62ch}
+.event-page .gol-sec-sub{font-family:var(--font-body);font-style:italic;font-size:var(--text-body-sm);color:var(--alpha-cream-65);margin-bottom:0;line-height:1.5;max-width:62ch}
 
 /* ── Image pair — event poster + badge previews ── */
 .event-page .ev-image-pair{display:grid;grid-template-columns:1fr 1fr;gap:28px}

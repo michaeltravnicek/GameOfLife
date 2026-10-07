@@ -1,10 +1,28 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import './Toast.css';
 
-const ToastContext = createContext(null);
-
 const DEFAULT_DURATION_MS = 4500;
+
+// The mounted provider's API, and the calls made before it mounted.
+let active = null;
+let pending = [];
+
+/**
+ * Fire a toast from anywhere — components, AuthContext, API interceptors:
+ * `toast.success(message, opts)`. Calls made before ToastProvider mounts are
+ * queued and shown once it does.
+ */
+// The proxy has to sit next to the provider it forwards into.
+// eslint-disable-next-line react-refresh/only-export-components
+export const toast = {
+  show: (...args) => (active ? active.show(...args) : pending.push(['show', args])),
+  success: (...args) => (active ? active.success(...args) : pending.push(['success', args])),
+  error: (...args) => (active ? active.error(...args) : pending.push(['error', args])),
+  info: (...args) => (active ? active.info(...args) : pending.push(['info', args])),
+  warning: (...args) => (active ? active.warning(...args) : pending.push(['warning', args])),
+  dismiss: (...args) => (active ? active.dismiss(...args) : pending.push(['dismiss', args])),
+};
 
 let nextId = 1;
 
@@ -58,13 +76,21 @@ export function ToastProvider({ children }) {
     warning: (message, opts = {}) => show(message, { ...opts, type: 'warning' }),
   }), [show, dismiss]);
 
+  // Route the module-level `toast` here, flushing anything fired before mount.
+  useEffect(() => {
+    active = api;
+    for (const [method, args] of pending) api[method]?.(...args);
+    pending = [];
+    return () => { active = null; };
+  }, [api]);
+
   useEffect(() => () => {
     for (const timer of timersRef.current.values()) clearTimeout(timer);
     timersRef.current.clear();
   }, []);
 
   return (
-    <ToastContext.Provider value={api}>
+    <>
       {children}
       {createPortal(
         <div className="toast-stack" role="region" aria-label="Notifikace">
@@ -108,49 +134,6 @@ export function ToastProvider({ children }) {
         </div>,
         document.body,
       )}
-    </ToastContext.Provider>
+    </>
   );
-}
-
-// The hook is this module's public API; it belongs beside the provider.
-// Splitting it out would only sharpen hot-reload granularity in dev.
-// eslint-disable-next-line react-refresh/only-export-components
-export function useToast() {
-  const ctx = useContext(ToastContext);
-  if (!ctx) throw new Error('useToast must be used within ToastProvider');
-  return ctx;
-}
-
-/**
- * Module-level proxy that lets non-React code (AuthContext, API interceptors)
- * fire toasts without going through the hook. Wired by ToastBridge below.
- */
-let pending = [];
-let active = null;
-
-// The imperative proxy has to sit next to the provider it forwards into.
-// eslint-disable-next-line react-refresh/only-export-components
-export const toast = {
-  show: (...args) => (active ? active.show(...args) : pending.push(['show', args])),
-  success: (...args) => (active ? active.success(...args) : pending.push(['success', args])),
-  error: (...args) => (active ? active.error(...args) : pending.push(['error', args])),
-  info: (...args) => (active ? active.info(...args) : pending.push(['info', args])),
-  warning: (...args) => (active ? active.warning(...args) : pending.push(['warning', args])),
-  dismiss: (...args) => (active ? active.dismiss(...args) : pending.push(['dismiss', args])),
-};
-
-/**
- * Drop this inside <ToastProvider> to make the module-level `toast` proxy work.
- * Bridges the React hook to a plain JS singleton.
- */
-export function ToastBridge() {
-  const api = useToast();
-  useEffect(() => {
-    active = api;
-    // Flush anything queued before the bridge mounted.
-    for (const [method, args] of pending) api[method]?.(...args);
-    pending = [];
-    return () => { active = null; };
-  }, [api]);
-  return null;
 }

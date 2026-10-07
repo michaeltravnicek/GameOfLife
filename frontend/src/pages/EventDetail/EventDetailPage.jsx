@@ -26,7 +26,7 @@ import { eventList, EVENT_LIST_CLASS } from '../../components/StatList/eventColu
 import SearchInput from '../../components/SearchInput/SearchInput';
 import { fmtDateShort, fmtTime, dayName } from '../../utils/date';
 import { isMobileViewport } from '../../utils/img';
-import { toFormUrls } from '../../utils/formUrl';
+import { toFormUrl } from '../../utils/formUrl';
 import { safeExternalHref } from '../../utils/safeHref';
 import { shareLink } from '../../utils/shareUrl';
 import { pressable } from '../../utils/a11y';
@@ -402,10 +402,22 @@ export default function EventDetailPage() {
   // Outbound links, scheme-checked. The form URL is repaired first (admins
   // paste the editor URL, which denies access to respondents and carries the
   // author's Google id); a non-Google survey link is used as-is if it is http(s).
-  const surveyHref = safeExternalHref(toFormUrls(event.survey_url)?.open || event.survey_url);
+  const surveyHref = safeExternalHref(toFormUrl(event.survey_url) || event.survey_url);
   const whatsappHref = safeExternalHref(event.whatsapp_url);
   const displayImages = images.slice(0, 4);
   const imgCount = Math.min(displayImages.length, 4);
+  // Admins switch the body between the description and the attendance editor.
+  const adminTabs = (attendanceLabel) => isAdmin && (
+    <PillTabs
+      className="admin-view-tabs"
+      tabs={[
+        { key: 'popis', label: 'Popis' },
+        { key: 'ucast', label: attendanceLabel, badge: attLoaded ? attendees.length : undefined },
+      ]}
+      active={adminView}
+      onChange={setAdminView}
+    />
+  );
 
   return (
     <div className="gol-page event-detail-page">
@@ -479,17 +491,7 @@ export default function EventDetailPage() {
               <div className="rsvp-actions">
                 {/* Same page, same URL — only the body section below swaps.
                     Lives right beside the RSVP button, not a separate bar. */}
-                {isAdmin && (
-                  <PillTabs
-                    className="admin-view-tabs"
-                    tabs={[
-                      { key: 'popis', label: 'Popis' },
-                      { key: 'ucast', label: 'Účast', badge: attLoaded ? attendees.length : undefined },
-                    ]}
-                    active={adminView}
-                    onChange={setAdminView}
-                  />
-                )}
+                {adminTabs('Účast')}
                 {/* Already signed up, but the form only shows in the modal at
                     the moment of joining — someone who dismissed it (or came
                     back later) needs a way to it that isn't "un-RSVP, then
@@ -522,17 +524,7 @@ export default function EventDetailPage() {
                     the real attendance in the Účast tab. */}
                 <span className="recap-text">+{event.points} pts</span>
               </div>
-              {isAdmin && (
-                <PillTabs
-                  className="admin-view-tabs"
-                  tabs={[
-                    { key: 'popis', label: 'Popis' },
-                    { key: 'ucast', label: 'Účast a body', badge: attLoaded ? attendees.length : undefined },
-                  ]}
-                  active={adminView}
-                  onChange={setAdminView}
-                />
-              )}
+              {adminTabs('Účast a body')}
             </>
           )}
         </div>
@@ -826,8 +818,7 @@ export default function EventDetailPage() {
         </Suspense>
       )}
 
-      {/* Sign-up hand-over. The form lives at Google — we link out to it rather
-          than rendering it ourselves (see settings.GOOGLE_FORM_NATIVE), so this
+      {/* Sign-up hand-over. The form lives at Google and we link out to it, so this
           modal is the whole flow: the RSVP is already saved, "Hotovo" keeps it,
           "Zrušit účast" takes it back. No onClose: dismissing by backdrop would
           leave the member joined without ever seeing the form. */}

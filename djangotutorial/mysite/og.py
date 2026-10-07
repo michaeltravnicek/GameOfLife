@@ -290,11 +290,12 @@ def _player_metadata(request, user_id):
     to None: the public board links its row here and the API serves that row,
     so the page is real -- the name is simply withheld from the card.
     """
-    from leaderboard.models import User as LeaderboardUser
+    from leaderboard.merging import resolve_player_id
     from leaderboard.privacy import player_page_withheld, visibility_for
     from accounts.models import Profile
 
-    lb_user = LeaderboardUser.objects.filter(pk=user_id).only("id", "name").first()
+    # Same resolution as the API: a merged-away id is the player it went into.
+    lb_user = resolve_player_id(user_id)
     if lb_user is None:
         return MISSING
 

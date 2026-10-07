@@ -3,7 +3,7 @@
 {% block content %}
 <div id="content-main">
 
-  <h2>Hráč z archivu: {{ player.name }}</h2>
+  <h2>Hráč z archivu: {{ player.name }} <small style="color:#666">#{{ player.pk }}</small></h2>
   <ul>
     <li>E-mail: <strong>{{ player.email|default:"—" }}</strong></li>
     <li>Body: <strong>{{ player.total_points|default:0 }}</strong>
@@ -57,9 +57,17 @@
     </table>
   {% else %}
     <p>Žádný dost podobný účet. Buď se ten člověk ještě nezaregistroval, nebo se
-       jméno účtu liší od jména ve formuláři — pak ho najdi ručně
-       v <a href="{% url 'admin:accounts_profile_changelist' %}">Profilech</a>.</p>
+       jméno účtu liší od jména ve formuláři — pak zadej jeho přezdívku níže.</p>
   {% endif %}
+
+  <h3 style="margin-top:2em">Jiný účet</h3>
+  <form method="post" style="margin:0">
+    {% csrf_token %}
+    <label>Přezdívka účtu (jako v adrese /profil/…):
+      <input type="text" name="username" required size="30" autocomplete="off">
+    </label>
+    <button type="submit" class="button">Sloučit</button>
+  </form>
 
   <p style="margin-top:2em">
     <a href="{% url 'admin:accounts_profile_link_list' %}">← Zpět na seznam</a>

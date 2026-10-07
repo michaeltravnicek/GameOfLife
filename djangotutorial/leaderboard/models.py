@@ -245,8 +245,8 @@ class Event(models.Model):
         # over it. One index serves all of those; nothing else is filtered on.
         indexes = [models.Index(fields=["date"], name="event_date_idx")]
         constraints = [
-            # DB-level twin of clean(): bulk paths (sheets sync, updates)
-            # bypass Python validation, so the pairing rule lives here too.
+            # DB-level twin of clean(): bulk paths (queryset updates) bypass
+            # Python validation, so the pairing rule lives here too.
             models.CheckConstraint(
                 condition=(models.Q(latitude__isnull=True, longitude__isnull=True)
                        | models.Q(latitude__isnull=False, longitude__isnull=False)),
@@ -395,7 +395,7 @@ class User(models.Model):
         # The cached leaderboard stores the *rendered* name (shortened to
         # "Jan N." unless consented), so a rename that skipped this would leave
         # the old name on the board until the TTL expired. Only on a real change:
-        # the Sheets sync saves players constantly without touching the name.
+        # most saves (merges, account linking) do not touch the name.
         renamed = False
         if self.pk:
             previous = type(self).all_objects.filter(pk=self.pk).values_list(
@@ -421,7 +421,7 @@ class UserToEvent(models.Model):
         return f"{self.user} → {self.event}"
 
     # Attendance is the leaderboard's only input, so every write evicts it here
-    # rather than in each caller (check-in, the sync, the award command, admin).
+    # rather than in each caller (check-in, the award command, merges, admin).
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
         from .cache_config import invalidate_points_dependent_caches
@@ -462,11 +462,6 @@ class UserBadge(models.Model):
         return f"{self.user} ← {self.badge}"
 
 
-class LastUpdate(models.Model):
-    last_update = models.DateTimeField(auto_now=True)
-    last_complete_update = models.DateTimeField(blank=True, null=True)
-
-
 class EventRSVP(models.Model):
     auth_user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -486,11 +481,10 @@ class EventRSVP(models.Model):
 class EventFeedback(models.Model):
     """A 1–10 rating + optional comment for an event.
 
-    Keyed on the leaderboard ``User``, not the auth user: most feedback arrives
-    from the Google Form sync, where a row identifies the person by phone number
-    only and no account exists. The web form resolves the auth user to their
-    linked leaderboard user before writing — it is already gated on attendance,
-    which requires that link anyway.
+    Keyed on the leaderboard ``User``, not the auth user: archived feedback
+    belongs to players who have no account. The web form resolves the auth user
+    to their linked leaderboard user before writing — it is already gated on
+    attendance, which requires that link anyway.
     """
 
     SOURCE_WEB = "web"

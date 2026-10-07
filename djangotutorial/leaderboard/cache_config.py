@@ -25,9 +25,6 @@ def season_leaderboard_key(season_id):
 CACHE_KEY_HERO_IMAGES = "home_hero_images"
 CACHE_TTL_HERO_IMAGES = 60 * 60  # 1 hour — hero photos rarely change
 
-CACHE_KEY_HOME_STATS = "api_home_stats"
-CACHE_TTL_HOME_STATS = 30 * 60  # 30 min — counts barely move
-
 # ── Events ─────────────────────────────────────────────────────────────
 # Categories list for /api/categories/. Changes only when a Category is added/renamed.
 CACHE_KEY_CATEGORIES = "api_categories"
@@ -50,14 +47,7 @@ CACHE_TTL = CACHE_TTL_LEADERBOARD
 # (Used by Event.save() — keep this list in sync with what each endpoint reads.)
 EVENT_DEPENDENT_CACHE_KEYS = (
     CACHE_KEY_HERO_IMAGES,
-    CACHE_KEY_HOME_STATS,
     CACHE_KEY_CATEGORIES,
-)
-
-# Keys that must be dropped whenever a UserToEvent (= scored attendance) changes.
-# The leaderboards (total + every season) and the home stats depend on points totals.
-USER_TO_EVENT_DEPENDENT_CACHE_KEYS = (
-    CACHE_KEY_HOME_STATS,
 )
 
 
@@ -105,7 +95,7 @@ def invalidate_event_caches(season_boards=True):
     `season_boards` also evicts the points-dependent caches: the boards score
     attendance by the *event's* date, so moving or deleting an event changes
     them without a UserToEvent write. Routed through the points eviction so a
-    bulk sync (which suspends it) still batches.
+    bulk write (which suspends it) still batches.
     """
     _evict(EVENT_DEPENDENT_CACHE_KEYS)
     if season_boards:
@@ -175,8 +165,7 @@ def invalidate_points_dependent_caches():
     """
     if _suspended.depth:
         return
-    _evict(tuple(USER_TO_EVENT_DEPENDENT_CACHE_KEYS) + tuple(_season_leaderboard_keys()),
-           pattern=f"{CACHE_KEY_LEADERBOARD_SEASON_PREFIX}:*")
+    _evict(_season_leaderboard_keys(), pattern=f"{CACHE_KEY_LEADERBOARD_SEASON_PREFIX}:*")
 
 
 class _Suspended(threading.local):
@@ -194,13 +183,13 @@ def suspend_points_cache_invalidation():
     """Batch a bulk write's invalidations into one at the end.
 
     `UserToEvent.save()` evicts the cache, which is what makes an attendance row
-    added by hand in the admin show up on the leaderboard. During the Sheets sync
-    that same call fires per row: the season family is evicted with
-    `delete_pattern`, and django-redis implements that as a SCAN over the whole
-    keyspace. A thousand-row sync would mean a thousand keyspace scans.
+    added by hand in the admin show up on the leaderboard. During a bulk write
+    (a player merge moves every attendance row) that same call fires per row:
+    the season family is evicted with `delete_pattern`, and django-redis
+    implements that as a SCAN over the whole keyspace.
 
-    So the sync wraps itself in this and evicts once when it's done. Anything
-    that suspends invalidation is responsible for calling
+    So bulk writers wrap themselves in this and evict once when they're done.
+    Anything that suspends invalidation is responsible for calling
     `invalidate_points_dependent_caches()` afterwards.
     """
     _suspended.depth += 1

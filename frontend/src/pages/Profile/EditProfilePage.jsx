@@ -5,7 +5,8 @@ import Switch from '../../components/Switch/Switch';
 import ChipSelect from '../../components/ChipSelect/ChipSelect';
 import Modal from '../../components/Modal/Modal';
 import Button from '../../components/Button/Button';
-import { useToast } from '../../components/Toast/ToastProvider';
+import FormSection from '../../components/FormSection/FormSection';
+import { toast } from '../../components/Toast/ToastProvider';
 import {
   fetchMe, fetchProfile, updateProfile, fetchCategories, fetchProfileQuestions,
   apiDeleteAccount, apiPasswordChange,
@@ -46,7 +47,6 @@ export default function EditProfilePage() {
 }
 
 function EditProfileForm() {
-  const toast = useToast();
   const navigate = useNavigate();
   const { refresh: refreshAuth } = useAuth();
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -278,236 +278,197 @@ function EditProfileForm() {
       </section>
 
       <main className="gol-main">
-        {/* 01 · Základy */}
-        <section className="gol-section">
-          <div className="gol-rule" />
-          <div className="gol-card">
-            <div className="gol-card-head">
-              <div className="gol-sec-eyebrow">01 · Základy</div>
-              <h2 className="gol-sec-heading">Kdo <span className="pink">jsi.</span></h2>
-              <p className="ep-sec-sub">Tyhle údaje uvidí každý, kdo otevře tvůj profil. E-mail jsou jen pro organizátory.</p>
+        <FormSection
+          eyebrow="01 · Základy"
+          heading={<>Kdo <span className="pink">jsi.</span></>}
+          sub="Tyhle údaje uvidí každý, kdo otevře tvůj profil. E-mail jsou jen pro organizátory."
+        >
+          <div className="gol-grid-2">
+            <div className="gol-field">
+              <label htmlFor="f-name">Jméno</label>
+              <input className="gol-input" id="f-name" value={form.first_name} onChange={setField('first_name')} />
             </div>
-            <div className="gol-grid-2">
-              <div className="gol-field">
-                <label htmlFor="f-name">Jméno</label>
-                <input className="gol-input" id="f-name" value={form.first_name} onChange={setField('first_name')} />
-              </div>
-              <div className="gol-field">
-                <label htmlFor="f-surname">Příjmení</label>
-                <input className="gol-input" id="f-surname" value={form.last_name} onChange={setField('last_name')} />
-              </div>
-              <div className="gol-field">
-                <label htmlFor="f-handle">Přezdívka <span className="gol-hint">jen písmena, číslice a _</span></label>
-                <div className="gol-input-prefix"><span className="ep-pre">@</span><input className="gol-input" id="f-handle" value={form.username} onChange={setField('username')} autoComplete="username" /></div>
-              </div>
-              <div className="gol-field">
-                <label htmlFor="f-city">Město</label>
-                <input className="gol-input" id="f-city" value={form.city} onChange={setField('city')} placeholder="Brno, CZ" />
-              </div>
-              <div className="gol-field">
-                <label htmlFor="f-email">E-mail <span className="gol-hint">jen pro organizátory</span></label>
-                <input className="gol-input" id="f-email" type="email" value={form.email} onChange={setField('email')} />
-              </div>
+            <div className="gol-field">
+              <label htmlFor="f-surname">Příjmení</label>
+              <input className="gol-input" id="f-surname" value={form.last_name} onChange={setField('last_name')} />
+            </div>
+            <div className="gol-field">
+              <label htmlFor="f-handle">Přezdívka <span className="gol-hint">jen písmena, číslice a _</span></label>
+              <div className="gol-input-prefix"><span className="ep-pre">@</span><input className="gol-input" id="f-handle" value={form.username} onChange={setField('username')} autoComplete="username" /></div>
+            </div>
+            <div className="gol-field">
+              <label htmlFor="f-city">Město</label>
+              <input className="gol-input" id="f-city" value={form.city} onChange={setField('city')} placeholder="Brno, CZ" />
+            </div>
+            <div className="gol-field">
+              <label htmlFor="f-email">E-mail <span className="gol-hint">jen pro organizátory</span></label>
+              <input className="gol-input" id="f-email" type="email" value={form.email} onChange={setField('email')} />
             </div>
           </div>
-        </section>
+        </FormSection>
 
-        {/* 02 · Avatar */}
-        <section className="gol-section">
-          <div className="gol-rule" />
-          <div className="gol-card ep-avatar-card">
-            <div className="gol-card-head">
-              <div className="gol-sec-eyebrow">02 · Avatar &amp; identita</div>
-              <h2 className="gol-sec-heading">Jak <span className="pink">vypadáš.</span></h2>
-              <p className="ep-sec-sub">Tvoje fotka se objeví u tvého jména v leaderboardu, v galerii akcí a vedle každé tvojí RSVP.</p>
-            </div>
-            <div
-              className={`ep-avatar-big${avatar ? ' has-img' : ''}`}
-              style={avatar ? { backgroundImage: `url(${avatar})` } : undefined}
-            >
-              {!avatar && avatarInitials}
-            </div>
-            <div className="ep-avatar-meta">
-              <div className="ep-l">Profilová fotka</div>
-              <div className="ep-h">{fullName || 'Tvoje jméno'}</div>
-              <div className="ep-s">JPG nebo PNG, alespoň 400×400 px. Co tam dáš — z toho ti budou ostatní vařit kávu.</div>
-              <div className="ep-avatar-actions">
-                <label className="gol-btn primary" htmlFor="avatar-input">Nahrát fotku
-                  <input type="file" id="avatar-input" accept="image/*" hidden onChange={handleAvatar} />
-                </label>
-                <button type="button" className="gol-btn ghost" onClick={removeAvatar}>Odebrat</button>
-              </div>
+        <FormSection
+          eyebrow="02 · Avatar & identita"
+          cardClass="ep-avatar-card"
+          heading={<>Jak <span className="pink">vypadáš.</span></>}
+          sub="Tvoje fotka se objeví u tvého jména v leaderboardu, v galerii akcí a vedle každé tvojí RSVP."
+        >
+          <div
+            className={`ep-avatar-big${avatar ? ' has-img' : ''}`}
+            style={avatar ? { backgroundImage: `url(${avatar})` } : undefined}
+          >
+            {!avatar && avatarInitials}
+          </div>
+          <div className="ep-avatar-meta">
+            <div className="ep-l">Profilová fotka</div>
+            <div className="ep-h">{fullName || 'Tvoje jméno'}</div>
+            <div className="ep-s">JPG nebo PNG, alespoň 400×400 px. Co tam dáš — z toho ti budou ostatní vařit kávu.</div>
+            <div className="ep-avatar-actions">
+              <label className="gol-btn primary" htmlFor="avatar-input">Nahrát fotku
+                <input type="file" id="avatar-input" accept="image/*" hidden onChange={handleAvatar} />
+              </label>
+              <button type="button" className="gol-btn ghost" onClick={removeAvatar}>Odebrat</button>
             </div>
           </div>
-        </section>
+        </FormSection>
 
-        {/* 03 · Bio */}
-        <section className="gol-section">
-          <div className="gol-rule" />
-          <div className="gol-card">
-            <div className="gol-card-head">
-              <div className="gol-sec-eyebrow">03 · O mně</div>
-              <h2 className="gol-sec-heading">Co o sobě <span className="pink">povíš.</span></h2>
-              <p className="ep-sec-sub">Krátký vzkaz, který se objeví v záhlaví tvého profilu. Drž to v jednom dechu — nejvíc 220 znaků.</p>
-            </div>
-            <div className="gol-field gol-full">
-              <label htmlFor="f-bio">Bio</label>
-              <textarea
-                className="gol-textarea"
-                id="f-bio"
-                maxLength={BIO_MAX}
-                placeholder="Karaoke v sobotu, deskovky ve středu…"
-                value={form.bio}
-                onChange={setField('bio')}
-              />
-              <div className="ep-counter">{form.bio.length} / {BIO_MAX} znaků</div>
-            </div>
+        <FormSection
+          eyebrow="03 · O mně"
+          heading={<>Co o sobě <span className="pink">povíš.</span></>}
+          sub="Krátký vzkaz, který se objeví v záhlaví tvého profilu. Drž to v jednom dechu — nejvíc 220 znaků."
+        >
+          <div className="gol-field gol-full">
+            <label htmlFor="f-bio">Bio</label>
+            <textarea
+              className="gol-textarea"
+              id="f-bio"
+              maxLength={BIO_MAX}
+              placeholder="Karaoke v sobotu, deskovky ve středu…"
+              value={form.bio}
+              onChange={setField('bio')}
+            />
+            <div className="ep-counter">{form.bio.length} / {BIO_MAX} znaků</div>
           </div>
-        </section>
+        </FormSection>
 
         {/* 04 · Otázky — same rule as categories: no questions authored in
             admin, no section. An empty heading would read as a broken feature. */}
         {questions.length > 0 && (
-          <section className="gol-section">
-            <div className="gol-rule" />
-            <div className="gol-card">
-              <div className="gol-card-head">
-                <div className="gol-sec-eyebrow">04 · Otázky</div>
-                <h2 className="gol-sec-heading">Pár otázek <span className="pink">na tebe.</span></h2>
-                <p className="ep-sec-sub">Nepovinné. Co vyplníš, se objeví na tvém profilu v sekci „O mně“ — co necháš prázdné, se nikde neukáže.</p>
+          <FormSection
+            eyebrow="04 · Otázky"
+            heading={<>Pár otázek <span className="pink">na tebe.</span></>}
+            sub="Nepovinné. Co vyplníš, se objeví na tvém profilu v sekci „O mně“ — co necháš prázdné, se nikde neukáže."
+          >
+            {questions.map((q) => (
+              <div key={q.id} className="gol-field gol-full">
+                <label htmlFor={`f-answer-${q.id}`}>{q.text}</label>
+                <textarea
+                  className="gol-textarea ep-answer"
+                  id={`f-answer-${q.id}`}
+                  maxLength={ANSWER_MAX}
+                  value={answers[q.id] || ''}
+                  onChange={(e) => {
+                    const { value } = e.target;
+                    setAnswers((a) => ({ ...a, [q.id]: value }));
+                    markDirty();
+                  }}
+                />
+                <div className="ep-counter">{(answers[q.id] || '').length} / {ANSWER_MAX} znaků</div>
               </div>
-              {questions.map((q) => (
-                <div key={q.id} className="gol-field gol-full">
-                  <label htmlFor={`f-answer-${q.id}`}>{q.text}</label>
-                  <textarea
-                    className="gol-textarea ep-answer"
-                    id={`f-answer-${q.id}`}
-                    maxLength={ANSWER_MAX}
-                    value={answers[q.id] || ''}
-                    onChange={(e) => {
-                      const { value } = e.target;
-                      setAnswers((a) => ({ ...a, [q.id]: value }));
-                      markDirty();
-                    }}
-                  />
-                  <div className="ep-counter">{(answers[q.id] || '').length} / {ANSWER_MAX} znaků</div>
-                </div>
-              ))}
-            </div>
-          </section>
+            ))}
+          </FormSection>
         )}
 
         {/* 05 · Kategorie — hidden entirely when no categories exist to pick */}
         {allCategories.length > 0 && (
-          <section className="gol-section">
-            <div className="gol-rule" />
-            <div className="gol-card">
-              <div className="gol-card-head">
-                <div className="gol-sec-eyebrow">05 · Oblíbené kategorie</div>
-                <h2 className="gol-sec-heading">V čem <span className="pink">jedeš.</span></h2>
-                <p className="ep-sec-sub">Vyber až 3 kategorie, ve kterých se nejvíc realizuješ. Pomůže nám doporučit ti akce na míru.</p>
-              </div>
-              <ChipSelect options={allCategories.map((c) => c.name)} selected={categories} onChange={handleCategories} max={3} />
-            </div>
-          </section>
+          <FormSection
+            eyebrow="05 · Oblíbené kategorie"
+            heading={<>V čem <span className="pink">jedeš.</span></>}
+            sub="Vyber až 3 kategorie, ve kterých se nejvíc realizuješ. Pomůže nám doporučit ti akce na míru."
+          >
+            <ChipSelect options={allCategories.map((c) => c.name)} selected={categories} onChange={handleCategories} max={3} />
+          </FormSection>
         )}
 
-        {/* 06 · Sociální sítě */}
-        <section className="gol-section">
-          <div className="gol-rule" />
-          <div className="gol-card">
-            <div className="gol-card-head">
-              <div className="gol-sec-eyebrow">06 · Sociální sítě</div>
-              <h2 className="gol-sec-heading">Kde tě <span className="pink">najdou.</span></h2>
-              <p className="ep-sec-sub">Tyhle odkazy se objeví v sekci „O mně“ na tvém profilu. Nech prázdné, co nechceš sdílet.</p>
-            </div>
-            <div className="ep-social-rows">
-              {SOCIALS.map((s) => (
-                <div key={s.key} className={`ep-social-row${socials[s.key].trim() ? ' filled' : ''}`}>
-                  <span className="ep-ico">{s.ico}</span>
-                  <div className="ep-combo">
-                    <span className="ep-pre">{s.pre}</span>
-                    <input className="gol-input" aria-label={s.label} value={socials[s.key]} onChange={setSocial(s.key)} placeholder="uživatel" />
-                  </div>
+        <FormSection
+          eyebrow="06 · Sociální sítě"
+          heading={<>Kde tě <span className="pink">najdou.</span></>}
+          sub="Tyhle odkazy se objeví v sekci „O mně“ na tvém profilu. Nech prázdné, co nechceš sdílet."
+        >
+          <div className="ep-social-rows">
+            {SOCIALS.map((s) => (
+              <div key={s.key} className={`ep-social-row${socials[s.key].trim() ? ' filled' : ''}`}>
+                <span className="ep-ico">{s.ico}</span>
+                <div className="ep-combo">
+                  <span className="ep-pre">{s.pre}</span>
+                  <input className="gol-input" aria-label={s.label} value={socials[s.key]} onChange={setSocial(s.key)} placeholder="uživatel" />
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
-        </section>
+        </FormSection>
 
-        {/* 07 · Soukromí */}
-        <section className="gol-section">
-          <div className="gol-rule" />
-          <div className="gol-card">
-            <div className="gol-card-head">
-              <div className="gol-sec-eyebrow">07 · Soukromí</div>
-              <h2 className="gol-sec-heading">Kdo tě <span className="pink">uvidí.</span></h2>
-              <p className="ep-sec-sub">Profil je veřejný, ale tyhle detaily můžeš zamknout.</p>
-            </div>
-            <div className="gol-toggle-row">
-              <div className="gol-txt"><h4>Skrýt body a pořadí</h4><p>Body zmizí z tvého profilu. V žebříčku zůstáváš.</p></div>
-              <Switch checked={privacy.hide_pts} onChange={togglePrivacy('hide_pts')} ariaLabel="Skrýt body a pořadí" />
-            </div>
-            <div className="gol-toggle-row">
-              <div className="gol-txt"><h4>Skrýt seznam absolvovaných akcí</h4><p>Tvůj profil ukáže jen highlighty.</p></div>
-              <Switch checked={privacy.hide_events} onChange={togglePrivacy('hide_events')} ariaLabel="Skrýt seznam akcí" />
-            </div>
-            <div className="gol-toggle-row">
-              <div className="gol-txt"><h4>Profil pouze pro členy</h4><p>Nepřihlášení návštěvníci tvůj profil vůbec neotevřou.</p></div>
-              <Switch checked={privacy.members_only} onChange={togglePrivacy('members_only')} ariaLabel="Profil pouze pro členy" />
-            </div>
+        <FormSection
+          eyebrow="07 · Soukromí"
+          heading={<>Kdo tě <span className="pink">uvidí.</span></>}
+          sub="Profil je veřejný, ale tyhle detaily můžeš zamknout."
+        >
+          <div className="gol-toggle-row">
+            <div className="gol-txt"><h4>Skrýt body a pořadí</h4><p>Body zmizí z tvého profilu. V žebříčku zůstáváš.</p></div>
+            <Switch checked={privacy.hide_pts} onChange={togglePrivacy('hide_pts')} ariaLabel="Skrýt body a pořadí" />
           </div>
-        </section>
+          <div className="gol-toggle-row">
+            <div className="gol-txt"><h4>Skrýt seznam absolvovaných akcí</h4><p>Tvůj profil ukáže jen highlighty.</p></div>
+            <Switch checked={privacy.hide_events} onChange={togglePrivacy('hide_events')} ariaLabel="Skrýt seznam akcí" />
+          </div>
+          <div className="gol-toggle-row">
+            <div className="gol-txt"><h4>Profil pouze pro členy</h4><p>Nepřihlášení návštěvníci tvůj profil vůbec neotevřou.</p></div>
+            <Switch checked={privacy.members_only} onChange={togglePrivacy('members_only')} ariaLabel="Profil pouze pro členy" />
+          </div>
+        </FormSection>
 
         {/* 08 · Heslo — its own save button on purpose: it is not part of the
             profile form's dirty state, and mixing it in would mean the big
             "Uložit profil" button silently changed your password too. */}
-        <section className="gol-section">
-          <div className="gol-rule" />
-          <div className="gol-card">
-            <div className="gol-card-head">
-              <div className="gol-sec-eyebrow">08 · Heslo</div>
-              <h2 className="gol-sec-heading">Změnit <span className="pink">heslo.</span></h2>
-              <p className="ep-sec-sub">Staré heslo potřebujeme, i když jsi přihlášený/á — kdyby ti někdo sedl k odemčenému počítači.</p>
-            </div>
-            <div className="gol-field gol-full">
-              <label htmlFor="f-old-pw">Staré heslo</label>
-              <input
-                className="gol-input" id="f-old-pw" type="password" autoComplete="current-password"
-                value={pw.old} onChange={(e) => setPw((p) => ({ ...p, old: e.target.value }))}
-              />
-            </div>
-            <div className="gol-field gol-full">
-              <label htmlFor="f-new-pw">Nové heslo</label>
-              <input
-                className="gol-input" id="f-new-pw" type="password" autoComplete="new-password"
-                value={pw.next} onChange={(e) => setPw((p) => ({ ...p, next: e.target.value }))}
-              />
-            </div>
-            {pwError && <div className="ep-pw-error" role="alert">{pwError}</div>}
-            <div className="ep-pw-actions">
-              <Button variant="action" onClick={handlePasswordChange} busy={pwBusy} disabled={!pw.old || !pw.next}>
-                {pwDone ? '✓ Heslo změněno' : 'Změnit heslo'}
-              </Button>
-            </div>
+        <FormSection
+          eyebrow="08 · Heslo"
+          heading={<>Změnit <span className="pink">heslo.</span></>}
+          sub="Staré heslo potřebujeme, i když jsi přihlášený/á — kdyby ti někdo sedl k odemčenému počítači."
+        >
+          <div className="gol-field gol-full">
+            <label htmlFor="f-old-pw">Staré heslo</label>
+            <input
+              className="gol-input" id="f-old-pw" type="password" autoComplete="current-password"
+              value={pw.old} onChange={(e) => setPw((p) => ({ ...p, old: e.target.value }))}
+            />
           </div>
-        </section>
+          <div className="gol-field gol-full">
+            <label htmlFor="f-new-pw">Nové heslo</label>
+            <input
+              className="gol-input" id="f-new-pw" type="password" autoComplete="new-password"
+              value={pw.next} onChange={(e) => setPw((p) => ({ ...p, next: e.target.value }))}
+            />
+          </div>
+          {pwError && <div className="ep-pw-error" role="alert">{pwError}</div>}
+          <div className="ep-pw-actions">
+            <Button variant="action" onClick={handlePasswordChange} busy={pwBusy} disabled={!pw.old || !pw.next}>
+              {pwDone ? '✓ Heslo změněno' : 'Změnit heslo'}
+            </Button>
+          </div>
+        </FormSection>
 
-        {/* 09 · Danger */}
-        <section className="gol-section">
-          <div className="gol-rule" />
-          <div className="gol-card gol-danger-card">
-            <div className="gol-card-head">
-              <div className="gol-sec-eyebrow danger">09 · Konec hry</div>
-              <h2 className="gol-sec-heading">Něco <span className="pink">extrémního.</span></h2>
-              <p className="ep-sec-sub">Tyhle akce jsou nevratné. Mysli si dvakrát.</p>
-            </div>
-            <div className="gol-toggle-row">
-              <div className="gol-txt"><h4>Smazat účet</h4><p>Trvalé. Osobní údaje a nahrané fotky zmizí; body a účast zůstanou v žebříčku anonymně.</p></div>
-              <button type="button" className="gol-btn danger" onClick={() => setDeleteOpen(true)}>Smazat účet</button>
-            </div>
+        <FormSection
+          eyebrow="09 · Konec hry"
+          eyebrowClass="danger"
+          cardClass="gol-danger-card"
+          heading={<>Něco <span className="pink">extrémního.</span></>}
+          sub="Tyhle akce jsou nevratné. Mysli si dvakrát."
+        >
+          <div className="gol-toggle-row">
+            <div className="gol-txt"><h4>Smazat účet</h4><p>Trvalé. Osobní údaje a nahrané fotky zmizí; body a účast zůstanou v žebříčku anonymně.</p></div>
+            <button type="button" className="gol-btn danger" onClick={() => setDeleteOpen(true)}>Smazat účet</button>
           </div>
-        </section>
+        </FormSection>
       </main>
 
       <section className="gol-commit-zone">

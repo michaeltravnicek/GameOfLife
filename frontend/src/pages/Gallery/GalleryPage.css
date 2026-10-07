@@ -19,6 +19,8 @@
    ancestor would also cancel the like pill's frost. */
 .gallery-page .photo-item{display:inline-block;width:100%;vertical-align:top;break-inside:avoid;margin-bottom:14px;position:relative;top:0;overflow:hidden;cursor:pointer;border:5px solid var(--color-cream-light);box-shadow:0 10px 28px var(--alpha-black-50);transition:border-color var(--dur-base),top var(--dur-base),box-shadow var(--dur-base)}
 .gallery-page .photo-item:hover{border-color:var(--color-pink);top:-3px;box-shadow:0 16px 36px var(--alpha-black-60)}
+/* Holds a month's first page in place until its photos arrive (GalleryMonth). */
+.gallery-page .photo-item.is-placeholder{aspect-ratio:4/3;background:var(--alpha-dark-45);pointer-events:none}
 /* Keeps LazyImg's fade-in, which a bare `transition:filter` would override. */
 .gallery-page .photo-item img{width:100%;display:block;transition:filter var(--dur-slow),opacity var(--dur-slow) ease}
 .gallery-page .photo-item:hover img{filter:brightness(1.08) saturate(1.1)}

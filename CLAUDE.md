@@ -6,7 +6,7 @@ Guidance for Claude Code when working in this repository.
 
 **GameOfLive** — the leaderboard site for gameofyolo.com: events with point awards, RSVP,
 feedback and geo check-in; all-time and per-season rankings with badges; user profiles with
-enforced privacy flags; a photo gallery with likes. The Google Sheets import of form responses is switched off.
+enforced privacy flags; a photo gallery with likes.
 
 **Architecture in one line:** a Django 5.2 + DRF API with a React 19 + Vite SPA, deployed as
 one Render service — Django serves the built SPA via WhiteNoise. PostgreSQL on Render, Redis
@@ -31,7 +31,6 @@ djangotutorial/               Django project — run manage.py from here
     merging.py                soft, reversible merge of archive players into accounts
     image_utils.py            upload validation, WebP pipeline, host-wide decode slot
     cache_config.py           every cache key and TTL, and the invalidators
-    tasks.py                  Google Sheets import (off unless SHEETS_SYNC_ENABLED=1)
     management/commands/      dedupe_players, ensure_season, generate_image_variants, …
     tests/
   accounts/                   auth + Profile (links auth.User to a leaderboard User)
@@ -64,7 +63,7 @@ script/                       one-off import scripts — contain PII and a servi
 - **Write endpoints are transactional** — every POST/PUT/PATCH/DELETE runs under
   `transaction.atomic`.
 - **Cache invalidation lives in model `save()`/`delete()`**; `cache_config.py` owns the keys.
-  Writes that bypass `save()` (queryset `update()`, the sync) evict explicitly; bulk runs batch
+  Writes that bypass `save()` (queryset `update()`) evict explicitly; bulk runs batch
   with `suspend_points_cache_invalidation()`.
 - **Images:** every user upload goes through `validate_upload()`; models call
   `process_image_field()`, driven by `UPLOAD_LIMITS` / `ENFORCED_ASPECT` in `image_utils.py`
@@ -75,9 +74,8 @@ script/                       one-off import scripts — contain PII and a servi
 - **Account deletion anonymises** (`accounts.services.anonymize_account`): the account and its
   files go, the player row stays with a blank name so nobody's rank moves. The privacy policy
   (`PrivacyPage.jsx` §6) promises exactly this — change both or neither.
-- **Google Forms are link-only.** The native renderer (`leaderboard/google_form.py`) is switched
-  off by `settings.GOOGLE_FORM_NATIVE`; `EventRSVP` is the record of intent, the answers live in
-  the spreadsheet.
+- **Google Forms are link-only.** An event's survey is a link out to Google; `EventRSVP` is the
+  record of intent, the answers live in the form's spreadsheet.
 - **UI copy is Czech.** API keys are snake_case as the server sends them.
 - **Comments state intent or a constraint, never history.** Git holds the history.
 - **Keep `npm run lint` at zero.** A scoped disable needs a reason; the react-hooks effect rules
@@ -111,9 +109,9 @@ cd djangotutorial && ../.venv/bin/python manage.py migrate
 cd frontend && npm run dev                           # Vite on :5173; proxies /api, /media, /admin
 ```
 
-The Sheets import (`manage.py sync_sheets`) is off: it does nothing unless `SHEETS_SYNC_ENABLED=1`,
-because re-importing stores a second player for anyone the archive spells differently.
-`manage.py dedupe_players` (dry run; `--apply` merges, reversibly) folds such duplicates.
+Points are recorded on the site. The archive imported from the old Google Sheets can hold the
+same person under differently spelled names; `manage.py dedupe_players` (dry run; `--apply`
+merges, reversibly) folds such duplicates.
 
 The admin is at `settings.ADMIN_URL` (env `ADMIN_URL`; production refuses the default `admin/`).
 
@@ -170,8 +168,8 @@ to stay translucent: a tint over a `--tex-*` grain is opaque and the blur shows 
 so does an ancestor with a filled (`both`/`forwards`) opacity or transform animation — use
 `backwards`. Every other page is built from the
 shared primitives — `PageStage` (fixed photo + grain, three tints), `PageHero`, `.gol-card`
-(poster card, in `styles/shared-ui.css`), `SectionHeader`, `PageState` (loading / empty /
-error), `Badge`, `LoadMore`, `Stamp`, `.gol-quote` — and `styles/poster-hero.css` for the
+(poster card, in `styles/shared-ui.css`), `SectionHeader`, `FormSection` (a numbered card of
+the two editor pages), `PageState` (loading / empty / error), `Badge`, `LoadMore`, `Stamp`, `.gol-quote` — and `styles/poster-hero.css` for the
 three poster-hero pages (event detail, profile, player). Labels wrapped in em dashes (`— A teď je řada na tobě —`) are a sign-off: one per page, on
 the closing line (`.gol-cta-foot-label`, `.gol-commit-label`); every other eyebrow, stat label,
 crumb and modal label is plain text. Two button systems on purpose:
@@ -181,8 +179,8 @@ the "GOL Design System" artifact.
 ## Open items
 
 - Season rollover is not automated beyond `ensure_season` on deploy.
-- `Sezóna 2025/26` is hard-coded in the four auth pages; they also duplicate their card shell
-  (an `AuthShell` component is the pending extraction).
+- `Sezóna 2025/26` is hard-coded in `AuthShell` (`pages/Login/AuthShell.jsx`), the card shell
+  of the four auth pages.
 - `loadtest/results/` holds the before-R2 run only; the after-R2 run was never recorded.
 
 Before making any claim, label your confidence: [Certain] for information backed by strong evidence, [Likely] for conclusions based on solid reasoning, and [Guessing] when filling in missing information. If most of your response is based on guesses, say so upfront.

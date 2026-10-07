@@ -6,7 +6,7 @@
    opaque posters, so the photo can stay alive. */
 
 /* Slightly brighter than the event editor's sub-heading. */
-.editprofile-page .ep-sec-sub{font-family:var(--font-body);font-style:italic;font-size:var(--text-body-sm);color:var(--alpha-cream-80);margin-bottom:0;line-height:1.5;max-width:62ch}
+.editprofile-page .gol-sec-sub{font-family:var(--font-body);font-style:italic;font-size:var(--text-body-sm);color:var(--alpha-cream-80);margin-bottom:0;line-height:1.5;max-width:62ch}
 
 .editprofile-page .gol-card > *{position:relative;z-index:1}
 .editprofile-page .gol-danger-card .gol-sec-heading{color:var(--color-pink)}

@@ -1,13 +1,12 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import PillTabs from '../../components/PillTabs/PillTabs';
 import Button from '../../components/Button/Button';
-import Badge from '../../components/Badge/Badge';
 import PageState from '../../components/PageState/PageState';
 import SectionHeader from '../../components/SectionHeader/SectionHeader';
 import { TicketFrame } from '../../components/DashedBorder/DashedBorder';
-import { useSeasonView } from './useSeasonView';
-import { ProfileCredits, EventsSections, PointsSections } from './profileSections';
+import { TODAY, useProfileSeason } from './useSeasonView';
+import { ProfilePoster, EventsSections, PointsSections } from './profileSections';
 import { fetchProfile, fetchProfileSeason } from '../../services/api';
 import { useCachedQuery } from '../../services/queryCache';
 import { queryKeys } from '../../services/queryKeys';
@@ -20,7 +19,21 @@ import './ProfilePage.css';
 import { plural } from '../../utils/plural';
 import { SOCIALS, socialHref, socialLabel } from './socials';
 
-const TODAY = new Date();
+// No leaderboard seasons for this user — synthesize one from the profile totals
+// so the page still renders (header / about / socials) instead of collapsing to
+// "Profil nenalezen".
+function seasonlessSummary(profile) {
+  const y = TODAY.getFullYear();
+  return {
+    id: null,
+    label: 'Celkem',
+    start: new Date(y, 0, 1).toISOString(),
+    end: new Date(y, 11, 31).toISOString(),
+    season_pts: profile.total_points || 0,
+    rank: profile.rank || null,
+    events: [],
+  };
+}
 
 const badgeWord = (n) => plural(n, 'odznak', 'odznaky', 'odznaků');
 
@@ -28,7 +41,6 @@ export default function ProfilePage() {
   const { username } = useParams();
   const navigate = useNavigate();
   const { user, loading: authLoading, logout } = useAuth();
-  const [pickedSeason, setPickedSeason] = useState(null); // user's explicit pick (season id)
   const [view, setView] = useState('about');
 
   // Core profile (stats, rank, upcoming RSVPs, season summaries — no events).
@@ -38,44 +50,18 @@ export default function ProfilePage() {
     { enabled: !!username, ttl: CACHE_TTL.PROFILE },
   );
 
-  // Selected season = the user's pick, else the newest season. Derived (no
-  // effect) so it's correct on the same render the profile arrives — no flash.
-  const seasonKey = pickedSeason ?? profile?.seasons?.[0]?.id ?? null;
-
-  // Lazy per-season detail (the event list + points that feed the chart). The
-  // core payload only carries lightweight summaries, so we fetch this on demand
-  // whenever the selected season changes.
-  const { data: seasonDetail } = useCachedQuery(
-    queryKeys.profile(username, seasonKey),
-    () => fetchProfileSeason(username, seasonKey),
-    { enabled: !!username && seasonKey != null, ttl: CACHE_TTL.PROFILE },
+  // The core payload carries only season summaries; the event list behind the
+  // chart is fetched per season. Runs unconditionally and tolerates a null
+  // profile, so it stays above the early returns.
+  const { seasonKey, setPickedSeason, seasonTabs, st, upcoming, past, cats } = useProfileSeason(
+    profile,
+    {
+      key: (seasonId) => queryKeys.profile(username, seasonId),
+      fetch: (seasonId) => fetchProfileSeason(username, seasonId),
+      enabled: !!username,
+    },
+    seasonlessSummary,
   );
-
-  const summary = useMemo(() => {
-    if (!profile) return null;
-    const seasons = profile.seasons || [];
-    if (seasons.length) return seasons.find((s) => s.id === seasonKey) || seasons[0];
-    // No leaderboard seasons for this user — synthesize one from the profile
-    // totals so the page still renders (header / about / socials) instead of
-    // collapsing to "Profil nenalezen".
-    const y = TODAY.getFullYear();
-    return {
-      id: null,
-      label: 'Celkem',
-      start: new Date(y, 0, 1).toISOString(),
-      end: new Date(y, 11, 31).toISOString(),
-      season_pts: profile.total_points || 0,
-      rank: profile.rank || null,
-      events: [],
-    };
-  }, [profile, seasonKey]);
-  // Prefer the detail (has events) for the current season; fall back to the
-  // summary so the poster renders immediately while detail loads.
-  const seasonData = (seasonDetail && seasonDetail.id === seasonKey) ? seasonDetail : summary;
-  // Shared derivation (stats + sorted event lists + category breakdown). Runs
-  // unconditionally and tolerates a null seasonData, so it stays above the
-  // early returns and keeps the hook count stable across renders.
-  const { st, upcoming, past, cats } = useSeasonView(seasonData, TODAY);
 
   const loading = profileLoading && !profile;
   const error = profileError
@@ -100,7 +86,6 @@ export default function ProfilePage() {
   // Actually log out (the label promises it), then land on the homepage.
   const handleLogout = async () => { await logout(); navigate('/'); };
 
-  const seasonTabs = profile.seasons?.map((s) => ({ key: s.id, label: s.label })) || [];
   // Sections the owner withheld are absent from the payload, so their tabs would
   // read "Akce 0" / "Body 0" — drop them rather than display a number that isn't
   // the truth.
@@ -113,25 +98,13 @@ export default function ProfilePage() {
 
   return (
     <div className="profile-page">
-      <section className="poster">
-        <div className="poster-img" />
-        <div className="poster-grain" />
-        <div className="poster-vignette" />
-
-        <div className="poster-top">
-          <div className="badges">
-            {st.rank && <Badge tone="live">★ #{st.rank} Leaderboard</Badge>}
-            <Badge>Sezóna {st.label}</Badge>
-          </div>
-          <div className="poster-avatar">
-            {profile.photo ? <img src={profile.photo} alt={profile.full_name} /> : avatarInitials}
-          </div>
-          <h1 className="poster-name">{profile.full_name}</h1>
-          <div className="poster-handle">{profile.username ? `@${profile.username} · ` : ''}hraje od {profile.since}</div>
-        </div>
-
-        <ProfileCredits st={st} hidden={hidden} />
-      </section>
+      <ProfilePoster
+        st={st}
+        hidden={hidden}
+        avatar={profile.photo ? <img src={profile.photo} alt={profile.full_name} /> : avatarInitials}
+        name={profile.full_name}
+        handle={`${profile.username ? `@${profile.username} · ` : ''}hraje od ${profile.since}`}
+      />
 
       <div className="action-bar">
         <div className="action-inner">

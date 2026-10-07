@@ -4,7 +4,7 @@ from io import StringIO
 
 from django.contrib.auth import get_user_model
 from django.core.management import call_command
-from django.test import TestCase, override_settings
+from django.test import TestCase
 from django.utils import timezone
 
 from accounts.models import Profile
@@ -84,11 +84,3 @@ class DedupePlayersTests(TestCase):
         self.assertEqual(self._alive(archive, synced), [True, True])
         _run("--apply")
         self.assertIn("Merged 0", _run("--apply"))
-
-
-class SyncSheetsDisabledTests(TestCase):
-    @override_settings(SHEETS_SYNC_ENABLED=False)
-    def test_sync_does_nothing_while_disabled(self):
-        out = StringIO()
-        call_command("sync_sheets", "--force-all", stdout=out)
-        self.assertIn("disabled", out.getvalue())

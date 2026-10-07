@@ -2,6 +2,7 @@ import TicketList from '../../components/StatList/TicketList';
 import { EVENT_COLUMNS, EVENT_LIST_CLASS } from '../../components/StatList/eventColumns';
 import { TicketFrame } from '../../components/DashedBorder/DashedBorder';
 import SectionHeader from '../../components/SectionHeader/SectionHeader';
+import Badge from '../../components/Badge/Badge';
 import PointsChart from './PointsChart';
 
 // Shared building blocks for the two profile-style pages (ProfilePage and the
@@ -11,6 +12,30 @@ import PointsChart from './PointsChart';
 // data these render is derived by the `useSeasonView` hook (useSeasonView.js).
 
 const pad = (n) => String(n).padStart(2, '0');
+
+// The poster hero shared by ProfilePage and PlayerPage: rank + season badges,
+// the avatar, the name and a handle line, with the credits strip under them.
+export function ProfilePoster({ st, hidden, avatar, name, handle }) {
+  return (
+    <section className="poster">
+      <div className="poster-img" />
+      <div className="poster-grain" />
+      <div className="poster-vignette" />
+
+      <div className="poster-top">
+        <div className="badges">
+          {st.rank && <Badge tone="live">★ #{st.rank} Leaderboard</Badge>}
+          <Badge>Sezóna {st.label}</Badge>
+        </div>
+        <div className="poster-avatar">{avatar}</div>
+        <h1 className="poster-name">{name}</h1>
+        <div className="poster-handle">{handle}</div>
+      </div>
+
+      <ProfileCredits st={st} hidden={hidden} />
+    </section>
+  );
+}
 
 /** The three poster credit blocks (Body / Akcí / Pozice). */
 // `hidden` comes straight from the API (e.g. ["points"]) and lists the sections

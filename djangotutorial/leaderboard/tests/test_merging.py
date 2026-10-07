@@ -312,3 +312,23 @@ class BadgeSignalDuringMergeTests(TestCase):
         merging.merge_players(archive, target)
 
         self.assertTrue(UserBadge.objects.filter(user=target, badge=badge).exists())
+
+
+class MergedPlayerLinkTests(TestCase):
+    """/hrac/<id> links shared before a merge must still reach the history."""
+
+    def setUp(self):
+        self.archive = make_player("Jan Novák")
+        self.target = make_player("Jan Novak")
+        attend(self.archive, make_event("A", points=10))
+        merging.merge_players(self.archive, self.target)
+
+    def test_merged_id_answers_with_the_target(self):
+        resp = self.client.get(f"/api/v1/players/{self.archive.pk}/")
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json()["id"], self.target.pk)
+        self.assertEqual(resp.json()["total_points"], 10)
+
+    def test_unknown_id_is_still_404(self):
+        resp = self.client.get("/api/v1/players/999999/")
+        self.assertEqual(resp.status_code, 404)

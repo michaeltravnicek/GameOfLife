@@ -8,8 +8,8 @@ function readCsrfCookie() {
 }
 
 // Default to the same-origin '/api/v1' (how production serves it, and how the Vite
-// dev server proxies it). Override with VITE_API_URL when running the SPA against
-// a separately-hosted backend.
+// dev server proxies it). VITE_API_URL may override it, but the backend sends no
+// CORS headers, so it must stay same-origin.
 //
 // Session cookies are the only credential; the backend accepts no token auth
 // (see DEFAULT_AUTHENTICATION_CLASSES in settings.py).
@@ -108,11 +108,6 @@ export const apiPasswordResetConfirm = (uid, token, newPassword) =>
     .then((r) => r.data);
 export const updateProfile = (formData) =>
   api.patch('/auth/profile/update/', formData, MULTIPART).then((r) => r.data);
-export const uploadAvatar = (file) => {
-  const fd = new FormData();
-  fd.append('photo', file);
-  return api.post('/auth/profile/photo/', fd, MULTIPART).then((r) => r.data);
-};
 
 // --- Public profiles ---
 export const fetchProfile = (username) =>
@@ -132,13 +127,6 @@ export const setRsvp = (slug, attending) =>
     ? api.put(`/events/${slug}/rsvp/`)
     : api.delete(`/events/${slug}/rsvp/`)
   ).then((r) => r.data);
-// The event's Google Form, as a question list we render with our own inputs.
-// `{embed_only:true}` comes back when the form can't be read — the page then
-// falls back to an iframe.
-export const fetchSignupForm = (slug) =>
-  api.get(`/events/${slug}/signup-form/`).then((r) => r.data);
-export const submitSignupForm = (slug, answers) =>
-  api.post(`/events/${slug}/signup-form/submit/`, answers).then((r) => r.data);
 export const submitFeedback = (slug, rating, comment) =>
   api.post(`/events/${slug}/feedback/`, { rating, comment }).then((r) => r.data);
 export const apiCheckin = (slug, latitude, longitude) =>
@@ -181,12 +169,14 @@ export const fetchPlayerSeason = (userId, seasonId) =>
 
 // --- Home (one endpoint per section) ---
 export const fetchHero = () => api.get('/hero/').then((r) => r.data);
-export const fetchStats = () => api.get('/stats/').then((r) => r.data);
 export const fetchCheckinEvents = () => api.get('/checkin-events/').then((r) => r.data);
 
 // --- Gallery / Categories ---
 export const fetchGallery = (params = {}) =>
   api.get('/gallery/', { params }).then((r) => r.data);
+// Every month that has photos, with a count each — the gallery's headings.
+export const fetchGalleryMonths = () =>
+  api.get('/gallery/months/').then((r) => r.data);
 // Which photos *I* have liked, as a list of ids. Separate from the gallery on
 // purpose: /gallery/ is the same bytes for everyone and is cached at the CDN,
 // so the per-user half has to travel on its own uncacheable request. Only call

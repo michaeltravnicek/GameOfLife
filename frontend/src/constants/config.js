@@ -11,7 +11,9 @@ export const PAGE_SIZE_EVENTS = 30;
 // Phones fetch + render a much smaller batch: the first page paints faster,
 // each "Načíst další" does less work, and we stop shipping cards nobody scrolls to.
 export const PAGE_SIZE_EVENTS_MOBILE = 8;
-export const PAGE_SIZE_GALLERY = 60;
+// Photos per gallery month: what a month shows first, and what each of its
+// "Načíst další" adds.
+export const PAGE_SIZE_GALLERY = 9;
 
 // ── Interaction timing ────────────────────────────────────────────────
 export const SEARCH_DEBOUNCE_MS = 300;

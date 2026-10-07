@@ -7,7 +7,7 @@
    prefixes. They are now one system on `.gol-*`.
 
    What stays in the page files: whatever genuinely differs — the photo stage
-   (different images), `.ev-sec-sub` / `.ep-sec-sub` (different cream level),
+   (different images), `.gol-sec-sub`'s cream level (FormSection's sub-line),
    and each page's own widgets (image pair + map for events, avatar + socials
    for the profile).                   */
 
@@ -46,7 +46,7 @@
 .gol-sec-heading .pink{color:var(--color-pink)}
 .gol-card-head{padding-bottom:18px;border-bottom:1px dashed var(--alpha-cream-20);margin-bottom:22px}
 
-/* The poster card itself (.gol-card, .gol-card--danger) is shared — see
+/* The poster card itself (.gol-card, .gol-danger-card) is shared — see
    styles/shared-ui.css. Only the form-page paddings below are local. */
 
 /* ── Fields ── */

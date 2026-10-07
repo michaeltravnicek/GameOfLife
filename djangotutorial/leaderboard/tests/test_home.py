@@ -73,29 +73,6 @@ class CheckinEventsApiTests(TestCase):
         self.assertIn(self.active.slug, slugs)
 
 
-class StatsApiTests(TestCase):
-    def setUp(self):
-        cache.clear()
-        self.client = APIClient()
-        self.url = reverse("api-stats")
-        lb_user = LeaderboardUser.objects.create(name="A")
-        ev = Event.objects.create(
-            sheet_id="s", sheet_list_id="x", name="E", place="Brno", points=10,
-            date=timezone.now() - timedelta(days=1),
-        )
-        UserToEvent.objects.create(user=lb_user, event=ev, points=10)
-
-    def test_shape_and_cache_header(self):
-        resp = self.client.get(self.url)
-        self.assertEqual(resp.status_code, 200)
-        data = resp.json()
-        for key in ("players", "events", "points"):
-            self.assertIn(key, data)
-        self.assertEqual(data["events"], 1)
-        self.assertEqual(data["points"], 10)
-        self.assertIn("max-age", resp["Cache-Control"])
-
-
 class HeroApiTests(TestCase):
     def setUp(self):
         cache.clear()

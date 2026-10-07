@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Badge, Category, Event, EventFeedback, EventRSVP, ImageToEvent, LastUpdate, ProfileAnswer, ProfileQuestion, Season, User, UserBadge, UserToEvent, UserPhoto
+from .models import Badge, Category, Event, EventFeedback, EventRSVP, ImageToEvent, ProfileAnswer, ProfileQuestion, Season, User, UserBadge, UserToEvent, UserPhoto
 
 
 @admin.register(Category)
@@ -77,11 +77,6 @@ class EventFeedbackAdmin(admin.ModelAdmin):
     list_display = ("user", "event", "rating", "source", "updated_at")
     list_filter = ("event", "rating", "source")
     search_fields = ("user__name", "user__email")
-
-
-@admin.register(LastUpdate)
-class LastUpdateAdmin(admin.ModelAdmin):
-    list_display = ("last_update",)
 
 
 @admin.register(UserPhoto)

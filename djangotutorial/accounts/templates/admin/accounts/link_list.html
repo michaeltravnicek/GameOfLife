@@ -8,6 +8,15 @@
     <strong>{{ account_count }}</strong>.
   </p>
 
+  <form method="get" style="margin:1em 0">
+    <input type="search" name="q" value="{{ query }}" placeholder="Jméno, e-mail nebo číslo hráče" size="40" autofocus>
+    <button type="submit" class="button">Hledat</button>
+    {% if query %}<a href="?" style="margin-left:.5em">zrušit</a>{% endif %}
+    <small style="margin-left:1em;color:#666">
+      {% if backlog_count > rows|length %}zobrazeno {{ rows|length }} z {{ backlog_count }}, podle bodů{% else %}{{ backlog_count }} hráčů{% endif %}
+    </small>
+  </form>
+
   {% if orphan_accounts %}
   <p style="padding:.7em 1em;background:#fdf2f2;border-left:4px solid #b32d2e">
     ⚠ Účtů bez hráče: <strong>{{ orphan_accounts }}</strong>. Ty vznikly před
@@ -32,7 +41,7 @@
       {% for row in rows %}
       <tr>
         <td>
-          <strong>{{ row.player.name }}</strong>
+          <strong>{{ row.player.name }}</strong> <small style="color:#666">#{{ row.player.pk }}</small>
           {% if row.player.email %}<br><small>{{ row.player.email }}</small>{% endif %}
         </td>
         <td>{{ row.player.total_points|default:0 }}</td>
@@ -61,6 +70,8 @@
       {% endfor %}
     </tbody>
   </table>
+  {% elif query %}
+  <p>Žádný hráč z archivu neodpovídá „{{ query }}“.</p>
   {% else %}
   <p>Archiv je vyřízený — každý hráč patří k účtu. 🎉</p>
   {% endif %}

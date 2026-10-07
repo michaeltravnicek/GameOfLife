@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   fmtDate, fmtDateShort, fmtEventDate, fmtTime,
-  dayName, monthKey, monthLabel,
+  dayName, monthLabel,
 } from './date';
 
 // The API shape: a wall-clock time tagged as UTC (Friday 2026-05-15 18:30).
@@ -30,10 +30,6 @@ describe('date utils (Czech formatting)', () => {
     expect(dayName(ISO)).toBe('Pátek');
   });
 
-  it('monthKey groups by year-month', () => {
-    expect(monthKey(ISO)).toBe('2026-05');
-  });
-
   it('monthLabel expands a key back to Czech', () => {
     expect(monthLabel('2026-05')).toBe('Květen 2026');
     expect(monthLabel('unknown')).toBe('Neurčeno');
@@ -45,6 +41,5 @@ describe('date utils (Czech formatting)', () => {
     expect(fmtEventDate(undefined)).toBe('—');
     expect(fmtTime('')).toBe('');
     expect(dayName('')).toBe('');
-    expect(monthKey(null)).toBe('unknown');
   });
 });

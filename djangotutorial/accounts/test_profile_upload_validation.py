@@ -1,4 +1,4 @@
-"""The avatar sent with the profile form gets the same gate as /profile/photo/.
+"""The avatar sent with the profile form goes through validate_upload.
 
 The media origin serves a file with the content type its extension implies, so
 an upload kept under the client's own name (`evil.html`) is stored XSS. Two

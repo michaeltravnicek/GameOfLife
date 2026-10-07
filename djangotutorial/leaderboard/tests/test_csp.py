@@ -54,18 +54,6 @@ class ContentSecurityPolicyTests(TestCase):
         # Leaflet on the event detail page; without this the map renders blank.
         self.assertIn("https://tile.openstreetmap.org", self._policy())
 
-    def test_google_forms_may_be_embedded(self):
-        # The sign-up page iframes the event's Google Form; forms.gle short
-        # links redirect to docs.google.com and CSP checks both hops.
-        frame_src = self._policy().split("frame-src")[1].split(";")[0]
-        self.assertIn("https://docs.google.com", frame_src)
-        self.assertIn("https://forms.gle", frame_src)
-
-    def test_frame_src_does_not_leak_into_script_src(self):
-        # Allowing Google to be framed must never allow Google to ship script.
-        policy = self._policy()
-        self.assertNotIn("docs.google.com", policy.split("script-src")[1].split(";")[0])
-
     @override_settings(X_FRAME_OPTIONS="DENY")
     def test_base_uri_and_object_src_are_locked_down(self):
         policy = self._policy()

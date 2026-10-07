@@ -1,47 +1,40 @@
 import { useEffect, useState } from 'react';
-import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import RequireAdmin from '../../components/RequireAdmin/RequireAdmin';
 import Modal from '../../components/Modal/Modal';
 import Button from '../../components/Button/Button';
-import { useToast } from '../../components/Toast/ToastProvider';
+import { toast } from '../../components/Toast/ToastProvider';
 import { fetchEventDetail, updateEvent, deleteEvent, fetchCategories, fetchBadges } from '../../services/api';
 import { invalidateEventLists, invalidateGallery, invalidateScores } from '../../services/queryKeys';
 import { extractApiError, reportError } from '../../services/errors';
 import { useEventForm, eventToForm, buildEventFormData } from './eventForm';
 import EventFormSections from './EventFormSections';
+import FormSection from '../../components/FormSection/FormSection';
 import PageStage from '../../components/PageStage/PageStage';
 import PageState from '../../components/PageState/PageState';
 import '../../styles/edit-form.css';
 import './EventPage.css';
 
-// Admin-only. The guard renders before the form mounts, so a visitor without
-// the role never fires the form's fetches or sees fields they cannot save.
+const LOADING = <div className="gol-form-page event-page"><PageState kind="loading" fill text="Načítání akce…" /></div>;
+
 export default function EditEventPage() {
-  const { user, loading, isAdmin } = useAuth();
-  if (loading) {
-    return <div className="gol-form-page event-page"><PageState kind="loading" fill text="Načítání akce…" /></div>;
-  }
-  if (!user || !isAdmin) return <Navigate to="/" replace />;
-  return <EditEventForm />;
+  return <RequireAdmin fallback={LOADING}><EditEventForm /></RequireAdmin>;
 }
 
 function EditEventForm() {
   const { slug } = useParams();
   const navigate = useNavigate();
-  const toast = useToast();
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
   // Bumped by the error state's retry button to re-run the load effect.
   const [loadAttempt, setLoadAttempt] = useState(0);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const eventForm = useEventForm();
   const {
-    form, setForm, categories, setCategories, allCategories, setAllCategories,
-    badges, setBadges,
-    dirty, saving, setSaving, saveError, setSaveError,
-    markDirty, setField, handleCategories,
-    handleBadgeCreated, handleCategoryCreated, poster,
-  } = useEventForm();
+    form, setForm, categories, setCategories, allCategories, setAllCategories, setBadges,
+    dirty, saving, setSaving, saveError, setSaveError, poster,
+  } = eventForm;
 
   useEffect(() => {
     let cancelled = false;
@@ -120,9 +113,7 @@ function EditEventForm() {
     }
   };
 
-  if (loading) {
-    return <div className="gol-form-page event-page"><PageState kind="loading" fill text="Načítání akce…" /></div>;
-  }
+  if (loading) return LOADING;
 
   if (loadError) {
     return (
@@ -143,35 +134,19 @@ function EditEventForm() {
       </section>
 
       <main className="gol-main">
-        <EventFormSections
-          form={form}
-          setForm={setForm}
-          setField={setField}
-          markDirty={markDirty}
-          poster={poster}
-          badges={badges}
-          allCategories={allCategories}
-          categories={categories}
-          onCategories={handleCategories}
-          onBadgeCreated={handleBadgeCreated}
-          onCategoryCreated={handleCategoryCreated}
-        />
+        <EventFormSections state={eventForm} />
 
-        {/* 08 · Konec akce */}
-        <section className="gol-section">
-          <div className="gol-rule" />
-          <div className="gol-card gol-danger-card">
-            <div className="gol-card-head">
-              <div className="gol-sec-eyebrow">08 · Konec akce</div>
-              <h2 className="gol-sec-heading">Smazat <span className="pink">akci.</span></h2>
-              <p className="ev-sec-sub">Nevratné. S akcí zmizí i všechny udělené body, RSVP a fotky.</p>
-            </div>
-            <div className="gol-toggle-row">
-              <div className="gol-txt"><h4>Smazat akci</h4><p>Hráčům se odečtou body získané na této akci.</p></div>
-              <button type="button" className="gol-btn danger" onClick={() => setDeleteOpen(true)}>Smazat akci</button>
-            </div>
+        <FormSection
+          eyebrow="08 · Konec akce"
+          cardClass="gol-danger-card"
+          heading={<>Smazat <span className="pink">akci.</span></>}
+          sub="Nevratné. S akcí zmizí i všechny udělené body, RSVP a fotky."
+        >
+          <div className="gol-toggle-row">
+            <div className="gol-txt"><h4>Smazat akci</h4><p>Hráčům se odečtou body získané na této akci.</p></div>
+            <button type="button" className="gol-btn danger" onClick={() => setDeleteOpen(true)}>Smazat akci</button>
           </div>
-        </section>
+        </FormSection>
       </main>
 
       <Modal open={deleteOpen} onClose={deleting ? undefined : () => setDeleteOpen(false)} labelledBy="ev-delete-title" width={480}>

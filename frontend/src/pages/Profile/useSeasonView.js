@@ -1,5 +1,9 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
+import { useCachedQuery } from '../../services/queryCache';
+import { CACHE_TTL } from '../../constants/config';
 import { seasonStats } from './seasonStats';
+
+export const TODAY = new Date();
 
 /**
  * Derive the per-season view model shared by the two profile-style pages
@@ -41,4 +45,36 @@ export function useSeasonView(seasonData, today) {
   }, [st]);
 
   return { st, upcoming, past, cats };
+}
+
+/**
+ * Season picking for a profile-style page. `payload` is the profile or player
+ * response; `detail` names the lazily fetched per-season breakdown
+ * (`{ key(seasonId), fetch(seasonId), enabled }`); `synthesize(payload)` builds
+ * the summary shown when the payload has no seasons at all.
+ *
+ * The selected season is the explicit pick, else the newest one — derived, not
+ * set in an effect, so it is right on the render the payload arrives. The
+ * summary stands in for the detail until it loads, so the poster renders at once.
+ */
+export function useProfileSeason(payload, detail, synthesize) {
+  const [pickedSeason, setPickedSeason] = useState(null);
+  const seasonKey = pickedSeason ?? payload?.seasons?.[0]?.id ?? null;
+
+  const { data: seasonDetail } = useCachedQuery(
+    detail.key(seasonKey),
+    () => detail.fetch(seasonKey),
+    { enabled: detail.enabled && seasonKey != null, ttl: CACHE_TTL.PROFILE },
+  );
+
+  const summary = useMemo(() => {
+    if (!payload) return null;
+    const seasons = payload.seasons || [];
+    if (seasons.length) return seasons.find((s) => s.id === seasonKey) || seasons[0];
+    return synthesize(payload);
+  }, [payload, seasonKey, synthesize]);
+  const seasonData = (seasonDetail && seasonDetail.id === seasonKey) ? seasonDetail : summary;
+
+  const seasonTabs = payload?.seasons?.map((s) => ({ key: s.id, label: s.label })) || [];
+  return { seasonKey, setPickedSeason, seasonTabs, ...useSeasonView(seasonData, TODAY) };
 }

@@ -31,7 +31,6 @@ MODE = os.getenv("MODE")
 # when MODE != PRODUCTION; production must supply DJANGO_SECRET_KEY or refuse
 # to boot (failing loudly beats silently running on a public default).
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "")
-LAST_UPDATE = None
 
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
@@ -248,13 +247,7 @@ _CSP_DIRECTIVES = {
         *([f"https://{_csp_media_host}"] if _csp_media_host else []),
     ],
     "connect-src": ["'self'", *_csp_extra_connect],
-    # Nothing frames a Google Form today — sign-up links out to it. Kept so the
-    # iframe fallback works the moment GOOGLE_FORM_NATIVE is turned back on,
-    # and because listing a frame source we never frame costs nothing.
-    # forms.gle is the short-link host: it 302s to docs.google.com, and CSP
-    # checks *every* hop, so both must be listed or a shortened survey_url
-    # renders an empty frame.
-    "frame-src": ["'self'", "https://docs.google.com", "https://forms.gle"],
+    "frame-src": ["'self'"],
     # Supersedes X_FRAME_OPTIONS above and blocks clickjacking: nobody may load
     # the site in an iframe to trick a logged-in user into clicking through it.
     "frame-ancestors": ["'none'"],
@@ -307,7 +300,6 @@ INSTALLED_APPS = [
     'django.contrib.sitemaps',  # /sitemap.xml (no sites framework needed; uses the request host)
     'rest_framework',
     'drf_spectacular',
-    'corsheaders',
     'axes',
     'allauth',
     'allauth.account',
@@ -343,7 +335,6 @@ MIDDLEWARE = [
     # Must sit AFTER CSPMiddleware: on the response leg (bottom-up) it relaxes
     # script-src for the admin path before CSP builds the header.
     'mysite.middleware.AdminCSPExemptMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -419,7 +410,6 @@ SOCIALACCOUNT_EMAIL_VERIFICATION = "none"
 ACCOUNT_EMAIL_VERIFICATION = "none"
 ACCOUNT_LOGIN_METHODS = {"username", "email"}
 
-LOGIN_REDIRECT_URL = "/"
 ACCOUNT_LOGOUT_REDIRECT_URL = "/"
 ACCOUNT_SIGNUP_REDIRECT_URL = "/"
 SOCIALACCOUNT_LOGIN_ON_GET = True  # no interstitial "continue?" page
@@ -484,40 +474,16 @@ ACCOUNT_FAILURE_LIMIT = 40
 ACCOUNT_TRUSTED_IP_DAYS = 30
 AXES_IPWARE_META_PRECEDENCE_ORDER = ["HTTP_X_FORWARDED_FOR", "REMOTE_ADDR"]
 
-# CORS is a DEVELOPMENT-ONLY concern here.
-#
-# In production React is served same-origin by react_index, so the browser makes
-# no cross-origin requests at all and nothing needs to be allowed. In dev the
-# Vite server on :5173 calls Django on :8000, which does cross origins — hence
-# these two entries, and only these two.
-#
-# Previously this list also carried `capacitor://localhost` and `https://localhost`
-# for the (now cancelled) native app, unconditionally, in production, alongside
-# CORS_ALLOW_CREDENTIALS. `https://localhost` in particular is an origin any
-# process on a visitor's machine can serve from, so it had no business being a
-# production default. If a native client is ever revived, add its origin through
-# an env var scoped to production rather than reinstating a default.
+# The Vite dev server on :5173 proxies /api to Django, forwarding its own
+# Origin, so CSRF has to trust it. Production is same-origin and needs nothing.
 if DEBUG:
-    CORS_ALLOWED_ORIGINS = [
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-    ]
-    CORS_ALLOW_CREDENTIALS = True
     CSRF_TRUSTED_ORIGINS += ["http://localhost:5173", "http://127.0.0.1:5173"]
-else:
-    CORS_ALLOWED_ORIGINS = []
-    CORS_ALLOW_CREDENTIALS = False
-
-# CORS on the API only: django-cors-headers stamps `Vary: origin` on every
-# response it touches, and a Vary other than Accept-Encoding can stop Cloudflare
-# caching the response — keep it off /media/ and the static files.
-CORS_URLS_REGEX = r"^/api/.*$"
 
 # Version of the privacy policy currently in force, stored alongside each
 # user's consent. Bump it (and the date in the React PrivacyPage) whenever the
 # document changes materially — that makes it visible which users agreed to the
 # old text and would need to re-confirm.
-PRIVACY_POLICY_VERSION = os.getenv("PRIVACY_POLICY_VERSION", "2026-07-22")
+PRIVACY_POLICY_VERSION = "2026-07-22"
 
 ROOT_URLCONF = 'mysite.urls'
 
@@ -595,10 +561,6 @@ REST_FRAMEWORK = {
         'login': '10/min',
         'register': '10/hour',
         'password_reset': '5/hour',
-        # Each call makes us POST to Google, so this one is rate-limited well
-        # below the generic 'user' rate — a hot loop here is an outbound flood
-        # from our IP, not just load on us.
-        'form_submit': '20/hour',
         # Checking the old password makes this a guessing surface for whoever
         # got hold of a signed-in browser. Per user, not per IP.
         'password_change': '10/hour',
@@ -612,28 +574,6 @@ REST_FRAMEWORK = {
     # throttle keys on the wrong address.
     'NUM_PROXIES': PROXY_COUNT,
 }
-
-# ── Google Forms: native rendering ────────────────────────────────────
-# OFF. Event sign-up hands out a plain link to Google (the survey modal on the
-# event page), which is where it started and where it is again.
-#
-# When on, leaderboard/google_form.py reads the form's questions off the public
-# respondent page and we draw them with our own inputs, posting answers back to
-# Google. That is nicer to look at and rests on two undocumented endpoints
-# Google can change without warning.
-#
-# Turning this back to "1" revives the BACKEND only. The sign-up page that
-# consumed it (frontend/src/pages/EventSignup/) was deleted, so a full revival
-# is: set this flag AND restore that directory plus its route in App.jsx from
-# commit 7d1ba78. Without the frontend half, nothing calls these endpoints.
-GOOGLE_FORM_NATIVE = os.getenv("GOOGLE_FORM_NATIVE", "") == "1"
-
-# The Google Sheets import (`manage.py sync_sheets`) is off: points are recorded
-# on the site (events, check-in, admin), and re-importing the sheets stores a
-# second player for anyone the archive holds under a differently spelled name.
-# The command refuses to run unless this is "1", so a scheduler left pointing
-# at it does nothing.
-SHEETS_SYNC_ENABLED = os.getenv("SHEETS_SYNC_ENABLED", "") == "1"
 
 # The browsable API renders every endpoint as an HTML page listing its fields
 # and serializer forms. Handy locally, free API documentation for strangers in
@@ -794,11 +734,8 @@ STATIC_URL = '/static/'
 # one step therefore means every photo on the site is broken for as long as the
 # upload takes.
 #
-# Splitting them removes that window entirely:
-#   1. set MEDIA_S3_* + MEDIA_S3_ENABLED=0  → credentials available, app still
-#      serving from disk, nothing user-visible changes
-#   2. run `manage.py migrate_media_to_s3` then `--verify`
-#   3. set MEDIA_S3_ENABLED=1               → files are already there
+# Splitting them removes that window: set MEDIA_S3_* with MEDIA_S3_ENABLED=0,
+# copy the files into the bucket, then set MEDIA_S3_ENABLED=1.
 _media_s3_options = None
 if os.getenv("MEDIA_S3_BUCKET"):
     _media_s3_options = {
@@ -813,9 +750,6 @@ if os.getenv("MEDIA_S3_BUCKET"):
         "file_overwrite": False,     # keep Django's collision suffixes for new uploads
     }
 
-# Exported for migrate_media_to_s3, which needs to reach the bucket during step 2
-# above — while the active media backend is still the local filesystem.
-MEDIA_S3_OPTIONS = _media_s3_options
 # Default on when credentials exist, so an already-migrated deployment keeps
 # working without adding a second variable. Set it to 0 only during the cutover.
 MEDIA_S3_ENABLED = bool(_media_s3_options) and os.getenv("MEDIA_S3_ENABLED", "1") != "0"

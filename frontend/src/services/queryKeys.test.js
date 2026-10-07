@@ -9,7 +9,7 @@ const ALL = [
   queryKeys.events('Vše', 'all', ''), queryKeys.event('a'), queryKeys.event('b'),
   queryKeys.homeLeaderboard, queryKeys.leaderboard('active'),
   queryKeys.profile('jan'), queryKeys.profile('jan', 3), queryKeys.player(7),
-  queryKeys.galleryFirst, queryKeys.seasons,
+  queryKeys.galleryMonths, queryKeys.galleryMonth('2026-07'), queryKeys.seasons,
 ];
 
 // A key is still cached when prefetching it again does not call the fetcher.
@@ -46,6 +46,6 @@ describe('queryKeys invalidation groups', () => {
 
   it('gallery', async () => {
     invalidateGallery();
-    expect(await dropped()).toEqual(['gallery:first']);
+    expect(await dropped()).toEqual(['gallery:months', 'gallery:month:2026-07']);
   });
 });

@@ -24,6 +24,9 @@ import { reportError } from './errors';
  *       extractHasMore: (response) => !!response.has_more,
  *       extractCount: (response) => response.count ?? 0,
  *     });
+ *
+ * `enabled: false` holds the first fetch back (e.g. until a section scrolls
+ * near), the same as useCachedQuery's option.
  */
 export function usePaginatedQuery({
   cacheKey,
@@ -34,6 +37,7 @@ export function usePaginatedQuery({
   extractItems,
   extractHasMore,
   extractCount,
+  enabled = true,
 }) {
   const [extraItems, setExtraItems] = useState([]);
   const [extraHasMore, setExtraHasMore] = useState(null);
@@ -53,7 +57,7 @@ export function usePaginatedQuery({
   } = useCachedQuery(
     cacheKey,
     () => fetcher(0, pageSize),
-    { ttl },
+    { ttl, enabled },
   );
 
   // Reset the local accumulator whenever the cache key (= filter combo) flips.

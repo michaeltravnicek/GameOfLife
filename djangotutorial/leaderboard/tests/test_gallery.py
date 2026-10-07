@@ -257,6 +257,76 @@ class GallerySeasonFilterTests(TestCase):
 
 
 @override_settings(MEDIA_ROOT=tempfile.mkdtemp())
+class GalleryMonthTests(TestCase):
+    """The page lays out month headings from /gallery/months/ and then pages
+    each month on its own, so the two must agree on what a month holds."""
+
+    def setUp(self):
+        cache.clear()
+        self.client = APIClient()
+        UserModel = get_user_model()
+        self.user = UserModel.objects.create_user(username="monthly", password="x")
+        self.oct_a = self._event("oa", datetime(2025, 10, 3, 18, 0))
+        self.oct_b = self._event("ob", datetime(2025, 10, 20, 18, 0))
+        self.nov = self._event("nv", datetime(2025, 11, 8, 18, 0))
+        for ev in (self.oct_a, self.oct_b, self.oct_b, self.nov):
+            self._photo(ev)
+        ImageToEvent.objects.create(
+            event=self.nov,
+            image=SimpleUploadedFile("off.png", b"dummy", content_type="image/png"),
+        )
+        self._photo(None)  # no event, so no date
+
+    def _event(self, sid, when):
+        return Event.objects.create(
+            sheet_id=sid, sheet_list_id="x", name=sid, place="Brno", points=10,
+            date=timezone.make_aware(when),
+        )
+
+    def _photo(self, event):
+        UserPhoto.objects.create(
+            auth_user=self.user, event=event,
+            image=SimpleUploadedFile("p.png", b"dummy", content_type="image/png"),
+        )
+
+    def test_months_newest_first_with_both_sources_counted(self):
+        resp = self.client.get(reverse("api-gallery-months"))
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json()["months"], [
+            {"month": "2025-11", "count": 2},
+            {"month": "2025-10", "count": 3},
+            {"month": "unknown", "count": 1},
+        ])
+
+    def test_month_filter_pages_within_the_month(self):
+        url = reverse("api-gallery")
+        first = self.client.get(url, {"month": "2025-10", "limit": 2}).json()
+        self.assertEqual(first["count"], 3)
+        self.assertTrue(first["has_more"])
+        rest = self.client.get(url, {"month": "2025-10", "limit": 2, "offset": 2}).json()
+        self.assertFalse(rest["has_more"])
+        names = [p["event_name"] for p in first["photos"] + rest["photos"]]
+        self.assertEqual(sorted(names), ["oa", "ob", "ob"])
+
+    def test_unknown_month_is_the_undated_photos(self):
+        data = self.client.get(reverse("api-gallery"), {"month": "unknown"}).json()
+        self.assertEqual(data["count"], 1)
+        self.assertEqual(data["photos"][0]["event_name"], "")
+
+    def test_months_respect_the_season_filter(self):
+        season = Season.objects.create(
+            name="podzim", start_date=date(2025, 11, 1), end_date=date(2026, 6, 30),
+        )
+        resp = self.client.get(reverse("api-gallery-months"), {"season_id": season.id})
+        self.assertEqual(resp.json()["months"], [{"month": "2025-11", "count": 2}])
+
+    def test_bad_month_is_a_400(self):
+        for bad in ("2025-13", "2025-1", "október"):
+            resp = self.client.get(reverse("api-gallery"), {"month": bad})
+            self.assertEqual(resp.status_code, 400, bad)
+
+
+@override_settings(MEDIA_ROOT=tempfile.mkdtemp())
 class PhotoUploadApiTests(TestCase):
     def setUp(self):
         self.client = APIClient()

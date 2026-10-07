@@ -1,8 +1,7 @@
 import { useEffect, useRef } from 'react';
 import DashedBorder from '../DashedBorder/DashedBorder';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 import './Modal.css';
-
-const FOCUSABLE = 'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])';
 
 /**
  * Dashed-bordered overlay modal.
@@ -21,34 +20,7 @@ export default function Modal({ open, onClose, children, labelledBy, width }) {
     return () => window.removeEventListener('keydown', onKey);
   }, [open, onClose]);
 
-  // Trap focus inside the modal: move focus in on open, keep Tab cycling within.
-  useEffect(() => {
-    if (!open) return undefined;
-    const card = cardRef.current;
-    const previouslyFocused = document.activeElement;
-    const focusables = () => Array.from(card?.querySelectorAll(FOCUSABLE) || []);
-    (focusables()[0] || card)?.focus();
-
-    const onKey = (e) => {
-      if (e.key !== 'Tab') return;
-      const items = focusables();
-      if (items.length === 0) { e.preventDefault(); return; }
-      const first = items[0];
-      const last = items[items.length - 1];
-      if (e.shiftKey && document.activeElement === first) {
-        e.preventDefault();
-        last.focus();
-      } else if (!e.shiftKey && document.activeElement === last) {
-        e.preventDefault();
-        first.focus();
-      }
-    };
-    card?.addEventListener('keydown', onKey);
-    return () => {
-      card?.removeEventListener('keydown', onKey);
-      if (previouslyFocused instanceof HTMLElement) previouslyFocused.focus();
-    };
-  }, [open]);
+  useFocusTrap(cardRef, open);
 
   useEffect(() => {
     if (!open) return undefined;

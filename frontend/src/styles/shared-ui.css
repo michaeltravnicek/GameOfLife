@@ -36,8 +36,7 @@
    touch target. Expand the *hit* area with a centred overlay instead of growing
    the box, so the layout is untouched. */
 .gol-pill::before{content:'';position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);height:44px;z-index:1}
-/* Every pill wants the grain overlay, so it gets it without needing `gol-tex`
-   on each one — see the shared rule further down. */
+/* Every pill gets the grain overlay — see the shared rule further down. */
 /* The selected state (.on) and the count badge (.gol-pill-count) are only used
    by the events city filter, so they stay in EventsPage.css. */
 
@@ -58,12 +57,6 @@
    page-specific rules. */
 .gol-page{min-height:100vh;color:var(--color-cream-light);overflow-x:hidden;background:var(--color-dark-brown)}
 
-/* ── Full-viewport grain overlay ──
-   Sits ABOVE the page background but below content (z-index:0), unlike the form
-   pages' .gol-grain which sits behind everything (z-index:-1). 100lvh so mobile
-   URL-bar collapse doesn't leave a seam at the bottom. */
-.gol-page-grain{position:fixed;inset:0;bottom:auto;height:100vh;height:100lvh;z-index:0;pointer-events:none;background:url('/img/Grain_texture_brown.webp') 0 0/var(--tex-size) var(--tex-size) repeat;opacity:var(--grain-opacity);mix-blend-mode:overlay}
-
 /* ── Dashed section rule ──
    The short dashed divider under a section eyebrow, on every page. */
 .gol-rule{height:1px;background:repeating-linear-gradient(90deg,var(--alpha-cream-45) 0 6px,transparent 6px 12px);margin-bottom:14px}
@@ -79,8 +72,8 @@
    the same containing job but also makes the element a backdrop root — and a
    backdrop root has nothing but itself to blur, so the frost on these controls
    renders as a flat tint. */
-.gol-tex,.gol-pill,.gol-glass{position:relative;z-index:0}
-.gol-tex::after,.gol-pill::after,.gol-glass::after{content:'';position:absolute;inset:0;border-radius:inherit;background:var(--tex-brown) 0 0/var(--tex-size) var(--tex-size) repeat;opacity:.3;pointer-events:none;z-index:-1}
+.gol-pill,.gol-glass{position:relative;z-index:0}
+.gol-pill::after,.gol-glass::after{content:'';position:absolute;inset:0;border-radius:inherit;background:var(--tex-brown) 0 0/var(--tex-size) var(--tex-size) repeat;opacity:.3;pointer-events:none;z-index:-1}
 
 
 /* ── Credits strip ──────────────────────────────────────────────────────────
@@ -118,8 +111,6 @@
 /* ── Admin action button (Events list + Event detail) ──
    Kept as an alias of <Button variant="admin"> (Button.css) until the last
    caller is migrated. */
-.events-page .admin-btn,.event-detail-page .admin-btn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:var(--radius-pill);border:1px solid var(--alpha-gold-40);color:var(--color-gold);background:var(--alpha-gold-15);text-decoration:none;font-family:var(--font-mono);font-size:var(--text-body-sm);letter-spacing:.03em;transition:background var(--dur-fast)}
-.events-page .admin-btn:hover,.event-detail-page .admin-btn:hover{background:var(--alpha-gold-40)}
 
 
 /* ══ Poster card ════════════════════════════════════════════════════════════
@@ -131,7 +122,7 @@
 .gol-card--flush{padding:0}                                   /* list containers */
 .gol-card--lift{transition:transform var(--dur-slow),border-color var(--dur-slow)}
 .gol-card--lift:hover{transform:translateY(-3px);border-color:var(--color-pink)}
-.gol-card--danger,.gol-danger-card{border-color:var(--alpha-pink-45)}
+.gol-danger-card{border-color:var(--alpha-pink-45)}
 
 /* ── Pull quote ── italic lead paragraph with a dashed pink edge and a big
    opening quote mark. Was .about-quote (profile) and .intro-quote (o bodech). */

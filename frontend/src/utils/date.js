@@ -48,12 +48,6 @@ export function dayName(iso) {
   return DAYS_CZ[new Date(iso).getUTCDay()];
 }
 
-export function monthKey(iso) {
-  if (!iso) return 'unknown';
-  const d = new Date(iso);
-  return `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}`;
-}
-
 export function monthLabel(key) {
   if (key === 'unknown') return 'Neurčeno';
   const [y, m] = key.split('-');

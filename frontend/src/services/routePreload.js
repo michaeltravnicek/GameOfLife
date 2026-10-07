@@ -11,14 +11,13 @@
 
 import { prefetchQuery } from './queryCache';
 import { queryKeys } from './queryKeys';
-import { PAGE_SIZE_EVENTS, PAGE_SIZE_GALLERY } from '../constants/config';
+import { PAGE_SIZE_EVENTS } from '../constants/config';
 import {
   fetchEvents,
-  fetchGallery,
+  fetchGalleryMonths,
   fetchLeaderboard,
   fetchHero,
   fetchEventDetail,
-  fetchProfile,
 } from './api';
 
 // Static paths only — dynamic params like `/events/:slug` are preloaded ad-hoc
@@ -54,10 +53,7 @@ const dataWarmers = {
     queryKeys.events('Vše', 'all', ''),
     () => fetchEvents({ limit: PAGE_SIZE_EVENTS, offset: 0 }),
   ),
-  '/galerie': () => prefetchQuery(
-    queryKeys.galleryFirst,
-    () => fetchGallery({ limit: PAGE_SIZE_GALLERY, offset: 0 }),
-  ),
+  '/galerie': () => prefetchQuery(queryKeys.galleryMonths, fetchGalleryMonths),
   '/leaderboard': () => prefetchQuery(
     queryKeys.leaderboard('active'),
     () => fetchLeaderboard('active'),
@@ -67,12 +63,10 @@ const dataWarmers = {
 const preloadedChunks = new Set();
 const preloadedData = new Set();
 
-// Dynamic-segment chunks — loaded once, then reused across slugs/usernames.
+// Dynamic-segment chunk — loaded once, then reused across slugs.
 const importEventDetail = () => import('../pages/EventDetail/EventDetailPage');
-const importProfile = () => import('../pages/Profile/ProfilePage');
 
 let eventDetailChunkPromise = null;
-let profileChunkPromise = null;
 
 /**
  * Preload the EventDetail chunk + this specific event's data.
@@ -86,20 +80,6 @@ export function preloadEventDetail(slug) {
   }
   if (slug) {
     prefetchQuery(queryKeys.event(slug), () => fetchEventDetail(slug), { ttl: 60 * 1000 });
-  }
-}
-
-/**
- * Preload the Profile chunk + a specific user's profile data.
- */
-export function preloadProfile(username) {
-  if (!profileChunkPromise) {
-    profileChunkPromise = importProfile().catch(() => {
-      profileChunkPromise = null;
-    });
-  }
-  if (username) {
-    prefetchQuery(queryKeys.profile(username), () => fetchProfile(username), { ttl: 60 * 1000 });
   }
 }
 

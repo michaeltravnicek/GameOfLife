@@ -212,6 +212,33 @@ class MergeAdminTests(TestCase):
         self.archive.refresh_from_db()
         self.assertIsNone(self.archive.merged_into)
 
+    def test_search_finds_a_player_outside_the_first_page(self):
+        # The list renders LINK_LIST_LIMIT rows; a member further down was
+        # unreachable before the search existed.
+        from accounts.admin import LINK_LIST_LIMIT
+        for i in range(LINK_LIST_LIMIT):
+            make_player(f"Hráč {i:03d}")
+        late = make_player("Michael T.")
+        url = reverse("admin:accounts_profile_link_list")
+        self.assertContains(self.client.get(url, {"q": "michael"}), "Michael T.")
+        self.assertContains(self.client.get(url, {"q": str(late.pk)}), "Michael T.")
+
+    def test_merge_by_typed_username(self):
+        # For the owner the name scoring misses ("Michal" vs "Michael T.").
+        self.client.post(
+            reverse("admin:accounts_profile_link_detail", args=[self.archive.pk]),
+            {"username": "HONZA"})
+        self.archive.refresh_from_db()
+        self.assertEqual(self.archive.merged_into, self.own_player)
+
+    def test_unknown_typed_username_merges_nothing(self):
+        response = self.client.post(
+            reverse("admin:accounts_profile_link_detail", args=[self.archive.pk]),
+            {"username": "nikdo"}, follow=True)
+        self.assertContains(response, "neexistuje")
+        self.archive.refresh_from_db()
+        self.assertIsNone(self.archive.merged_into)
+
     def test_unknown_account_id_is_404(self):
         response = self.client.post(
             reverse("admin:accounts_profile_link_detail", args=[self.archive.pk]),

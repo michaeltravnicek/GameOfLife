@@ -12,7 +12,7 @@ export const queryKeys = {
   checkinEvents: 'checkin-events',
   seasons: 'seasons',
   likedPhotos: 'photos:liked',
-  galleryFirst: 'gallery:first',
+  galleryMonths: 'gallery:months',
   galleryUploadEvents: 'gallery-upload-past-events',
   adminFeedbacks: 'admin:feedbacks',
   homeUpcoming: 'events:upcoming|Vše|',
@@ -21,6 +21,8 @@ export const queryKeys = {
   // The events page: one key per filter combination.
   events: (city, season, q) => `events:${city}|${season}|${q}`,
   leaderboard: (seasonId) => `leaderboard:${seasonId}`,
+  // One gallery month's first page; `month` is 'YYYY-MM' or 'unknown'.
+  galleryMonth: (month) => `gallery:month:${month}`,
   profile: (username, seasonKey) => (
     seasonKey ? `profile:${username}:season:${seasonKey}` : `profile:${username}`
   ),

@@ -1,7 +1,7 @@
 from django.contrib import admin, messages
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
-from django.db.models import Count, Max, Sum
+from django.db.models import Count, F, Max, Q, Sum
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import path, reverse
@@ -12,6 +12,10 @@ from leaderboard.models import User as LeaderboardUser
 
 from . import matching
 from .models import Profile
+
+
+# Rows rendered on the merge list; each one is scored against every account.
+LINK_LIST_LIMIT = 200
 
 
 def _player_stats(queryset):
@@ -76,13 +80,23 @@ class ProfileAdmin(admin.ModelAdmin):
         """Archive players waiting for an owner, each with its best suggestion."""
         self._check_perm(request)
         accounts = list(matching.mergeable_accounts()[:500])
+        backlog = matching.archive_players()
+        query = request.GET.get("q", "").strip()
+        if query:
+            backlog = backlog.filter(
+                Q(name__icontains=query) | Q(email__icontains=query)
+                | (Q(pk=int(query)) if query.isdigit() else Q()))
+        # Biggest histories first: those are the ones a member misses.
+        backlog = _player_stats(backlog).order_by(
+            F("total_points").desc(nulls_last=True), "name")
         rows = []
-        for player in _player_stats(matching.archive_players())[:200]:
+        for player in backlog[:LINK_LIST_LIMIT]:
             candidates = matching.suggest_accounts(player, accounts, limit=1)
             rows.append({"player": player,
                          "top": candidates[0] if candidates else None})
         return render(request, "admin/accounts/link_list.html", self._context(
             request, title="Přiřadit archivní hráče k účtům", rows=rows,
+            query=query, backlog_count=backlog.count(),
             account_count=len(accounts),
             merged=LeaderboardUser.all_objects.filter(
                 merged_into__isnull=False).select_related("merged_into")[:50],
@@ -106,11 +120,23 @@ class ProfileAdmin(admin.ModelAdmin):
 
     def _do_merge(self, request, player):
         account_id = request.POST.get("account_id")
-        account = (
-            matching.mergeable_accounts().filter(pk=account_id).first()
-            if account_id else None
-        )
+        # Typed by the admin when the name scoring misses the owner (a nickname
+        # unlike the form name, a misspelt first name).
+        username = request.POST.get("username", "").strip()
+        accounts = matching.mergeable_accounts()
+        if account_id:
+            account = accounts.filter(pk=account_id).first()
+        elif username:
+            account = accounts.filter(username__iexact=username).first()
+        else:
+            account = None
         if account is None:
+            if username:
+                self.message_user(
+                    request, f"Účet „{username}“ neexistuje nebo nemá hráče.",
+                    messages.ERROR)
+                return redirect(reverse("admin:accounts_profile_link_detail",
+                                        args=[player.pk]))
             raise Http404("Účet neexistuje nebo nemá hráče.")
 
         target = account.profile.leaderboard_user

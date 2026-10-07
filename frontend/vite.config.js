@@ -15,4 +15,18 @@ export default defineConfig({
     outDir: 'dist',
     emptyOutDir: true,
   },
+  // Vitest transforms test files outside the React plugin's reach; without the
+  // automatic runtime they would need `import React` for their JSX.
+  esbuild: {
+    jsx: 'automatic',
+    jsxImportSource: 'react',
+  },
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    setupFiles: ['./src/test/setup.js'],
+    css: false,
+    include: ['src/**/*.{test,spec}.{js,jsx}'],
+    reporters: ['default'],
+  },
 })

@@ -2,11 +2,10 @@ import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { apiPasswordResetConfirm } from '../../services/api';
 import { extractApiError } from '../../services/errors';
-import { useToast } from '../../components/Toast/ToastProvider';
+import { toast } from '../../components/Toast/ToastProvider';
 import FormInput from '../../components/FormInput/FormInput';
 import Button from '../../components/Button/Button';
-import PageStage from '../../components/PageStage/PageStage';
-import '../Login/AuthPage.css';
+import AuthShell from '../Login/AuthShell';
 
 const MIN_LEN = 8;
 
@@ -15,7 +14,6 @@ const MIN_LEN = 8;
 export default function ResetPasswordPage() {
   const { uid, token } = useParams();
   const navigate = useNavigate();
-  const toast = useToast();
   const [pw, setPw] = useState('');
   const [pw2, setPw2] = useState('');
   const [error, setError] = useState('');
@@ -47,48 +45,34 @@ export default function ResetPasswordPage() {
   };
 
   return (
-    <div className="auth-page has-stage">
-      <PageStage image="gal12" position="center 30%" tint="alive" />
-
-      <section className="auth-container">
-        <div className="gol-card auth-card">
-          <img className="auth-badge" src="/img/GOL_C50_transparent.webp" alt="" width="126" height="126" />
-          <div className="auth-card-inner">
-            <div className="auth-card-tag">Game of Life · Sezóna 2025/26</div>
-            <h2 className="auth-card-title">Nastavit nové heslo</h2>
-            <div className="auth-card-sub">Zadej nové heslo dvakrát pro kontrolu.</div>
-            <div className="auth-divider" />
-
-            <form onSubmit={handleSubmit} noValidate>
-              <FormInput
-                id="rp-pw"
-                label="Nové heslo"
-                type="password"
-                autoComplete="new-password"
-                value={pw}
-                onChange={(e) => setPw(e.target.value)}
-                required
-              />
-              <FormInput
-                id="rp-pw2"
-                label="Nové heslo znovu"
-                type="password"
-                autoComplete="new-password"
-                value={pw2}
-                onChange={(e) => setPw2(e.target.value)}
-                required
-              />
-              {error && <div className="auth-error">{error}</div>}
-              <Button type="submit" variant="action" size="lg" busy={busy} className="pts-btn-wrap">
-                {busy ? 'Ukládám…' : <>Nastavit heslo <span className="arr" aria-hidden="true" /></>}
-              </Button>
-              <p className="auth-foot">
-                <Link to="/prihlasit">← Zpět na přihlášení</Link>
-              </p>
-            </form>
-          </div>
-        </div>
-      </section>
-    </div>
+    <AuthShell title="Nastavit nové heslo" sub="Zadej nové heslo dvakrát pro kontrolu." badge>
+      <form onSubmit={handleSubmit} noValidate>
+        <FormInput
+          id="rp-pw"
+          label="Nové heslo"
+          type="password"
+          autoComplete="new-password"
+          value={pw}
+          onChange={(e) => setPw(e.target.value)}
+          required
+        />
+        <FormInput
+          id="rp-pw2"
+          label="Nové heslo znovu"
+          type="password"
+          autoComplete="new-password"
+          value={pw2}
+          onChange={(e) => setPw2(e.target.value)}
+          required
+        />
+        {error && <div className="auth-error">{error}</div>}
+        <Button type="submit" variant="action" size="lg" busy={busy} className="pts-btn-wrap">
+          {busy ? 'Ukládám…' : <>Nastavit heslo <span className="arr" aria-hidden="true" /></>}
+        </Button>
+        <p className="auth-foot">
+          <Link to="/prihlasit">← Zpět na přihlášení</Link>
+        </p>
+      </form>
+    </AuthShell>
   );
 }

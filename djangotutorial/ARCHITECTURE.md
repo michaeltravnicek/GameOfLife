@@ -47,7 +47,6 @@ Stay on Render's managed PostgreSQL. Supabase evaluated and rejected.
 ### Why not Supabase
 - **No meaningful gain at this scale**: Render PostgreSQL is equivalent to Supabase PostgreSQL for hundreds of users and <1 GB data.
 - **Migration cost**: Django's ORM, auth, and admin work perfectly. Migrating to Supabase auth and storage would require rewriting large parts of the app.
-- **Google Sheets sync stays in Django**: The cron-based sync is tightly coupled to Django management commands — this stays regardless.
 - **Supabase free tier limits are tighter**: 500 MB DB, 1 GB storage, 2 projects vs. Render's paid plan.
 
 ### When to revisit Supabase
@@ -64,7 +63,6 @@ Stay on Render's managed PostgreSQL. Supabase evaluated and rejected.
 - Static files (WhiteNoise)
 - Media files: uploads go to Cloudflare R2 (`storages` S3 backend, served from
   `img.gameofyolo.com`); the `/media/` route remains for a cutover with `MEDIA_S3_ENABLED=0`
-- Cron job (Google Sheets sync), configured in the Render dashboard
 
 ### RAM usage
 Measured, not estimated — see `gunicorn.conf.py`: an idle worker is ~60 MB, ~100 MB once boto3

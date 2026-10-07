@@ -9,7 +9,7 @@ from leaderboard.models import Season, User, UserToEvent
 from leaderboard.privacy import short_name
 
 from .catalog import season_dict
-from .seasons import season_summaries
+from .seasons import attended_event_row, season_summaries
 
 
 def create_leaderboard(leaderboard):
@@ -268,8 +268,8 @@ def player_payload(lb_user, request=None):
     )
 
     from leaderboard.privacy import (
-        display_name, player_page_withheld, profile_has_consent, public_handle,
-        visibility_for,
+        display_name, hidden_sections, player_page_withheld, profile_has_consent,
+        public_handle, visibility_for,
     )
     from leaderboard.services.badges import badges_for
 
@@ -286,18 +286,7 @@ def player_payload(lb_user, request=None):
     events = []
     if not gates.hide_events:
         events = [
-            {
-                "slug": u.event.slug,
-                "name": u.event.name,
-                "place": u.event.place,
-                "date": u.event.date,
-                # Omitted, not zeroed, under hide_pts: the per-event numbers add
-                # up to exactly the total the flag withholds, so publishing them
-                # would make the whole flag decorative.
-                **({} if gates.hide_pts else {"points": u.points}),
-                "category": {"id": u.event.category.id, "name": u.event.category.name}
-                            if u.event.category else None,
-            }
+            attended_event_row(u, hide_pts=gates.hide_pts, points_key="points")
             for u in (
                 UserToEvent.objects
                 .filter(user=lb_user)
@@ -312,12 +301,7 @@ def player_payload(lb_user, request=None):
         # public_handle withholds e-mail-shaped usernames — see privacy.py.
         "profile_username": public_handle(profile.user.username) if profile else None,
         "badges": badges_for(lb_user, request),
-        "hidden": [
-            name for name, hidden in (
-                ("points", gates.hide_pts),
-                ("events", gates.hide_events),
-            ) if hidden
-        ],
+        "hidden": hidden_sections(gates),
     }
     if not gates.hide_pts:
         payload["total_points"] = total_points

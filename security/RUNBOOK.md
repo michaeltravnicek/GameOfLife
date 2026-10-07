@@ -113,8 +113,8 @@ SVG s vloženým skriptem by na hlavní doméně běžel v originu appky). Jakmi
 nastavené `MEDIA_S3_*` proměnné, je `MEDIA_S3_ENABLED` ve výchozím stavu zapnuté;
 `0` má smysl jen při dalším cutoveru: URL se skládají za běhu podle aktivního
 backendu, takže se **nejdřív kopíruje s vypnutým přepínačem, ověří, a teprve
-pak přepíná** (`manage.py migrate_media_to_s3 --dry-run` → bez parametru →
-`--verify`; příkaz nic nemaže a jde opakovat).
+pak přepíná**. Kopírovací příkaz `migrate_media_to_s3` už v repu není; při
+dalším cutoveru ho lze obnovit z gitu.
 
 **Ověření:**
 
@@ -221,16 +221,12 @@ Security → **Rate limiting rules**:
 
 ## 9. Odstranění telefonních čísel ✅ hotovo (migrace 0026)
 
-Sloupec s telefony je pryč; identitou hráče v syncu je e-mail z formuláře, u
-starších listů jméno (`tasks.resolve_player`). Co zůstává na tobě:
+Sloupec s telefony je pryč. Co zůstává na tobě:
 
-1. **V Google Forms u každého nového formuláře zapni „Shromažďovat e-mailové
-   adresy" (Nastavení → Odpovědi).** Bez toho se hráči párují jen podle jména
-   a dva jmenovci splynou. Zároveň **smaž otázku na telefon** — jinak se čísla
-   dál hromadí v Sheetu, i když je aplikace neukládá.
-2. Staré Sheety nech být; sync z nich čte jméno a sloupec s telefonem ignoruje.
-3. Pokud jsi před migrací dělal export čísel (`export_player_numbers`), smaž ho —
-   držet ho „pro jistotu" je sám o sobě problém s GDPR.
+1. **V Google Forms se u nových formulářů neptej na telefon** — čísla by se
+   jinak dál hromadila v Sheetu, i když je aplikace neukládá.
+2. Pokud máš z doby před migrací export čísel, smaž ho — držet ho „pro jistotu"
+   je sám o sobě problém s GDPR.
 
 ---
 

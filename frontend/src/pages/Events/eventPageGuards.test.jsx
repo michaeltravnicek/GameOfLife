@@ -14,7 +14,7 @@ vi.mock('../../services/api', () => ({
 
 let auth;
 vi.mock('../../context/AuthContext', () => ({ useAuth: () => auth }));
-vi.mock('../../components/Toast/ToastProvider', () => ({ useToast: () => ({}) }));
+vi.mock('../../components/Toast/ToastProvider', () => ({ toast: {} }));
 vi.mock('../../services/errors', () => ({ reportError: vi.fn(), extractApiError: vi.fn() }));
 // The form body (map, pickers) is not what these tests are about.
 vi.mock('./EventFormSections', () => ({ default: () => <div>Formulář akce</div> }));

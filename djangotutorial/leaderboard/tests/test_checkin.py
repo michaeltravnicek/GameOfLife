@@ -9,7 +9,7 @@ from django.utils import timezone
 from rest_framework.test import APIClient
 
 from accounts.models import Profile
-from leaderboard.cache_config import CACHE_KEY_HOME_STATS
+from leaderboard.cache_config import season_leaderboard_key
 from leaderboard.checkin import haversine_distance_m
 from leaderboard.models import Event, UserToEvent
 
@@ -168,6 +168,6 @@ class EventCheckinApiTests(TestCase):
         self.assertIn("časové okno", resp.json()["error"])
 
     def test_successful_checkin_invalidates_caches(self):
-        cache.set(CACHE_KEY_HOME_STATS, "SENTINEL", 60)
+        cache.set(season_leaderboard_key("all"), "SENTINEL", 60)
         self._post(BRNO_LAT, BRNO_LON)
-        self.assertIsNone(cache.get(CACHE_KEY_HOME_STATS))
+        self.assertIsNone(cache.get(season_leaderboard_key("all")))

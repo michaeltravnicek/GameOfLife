@@ -1,10 +1,8 @@
-import tempfile
 from datetime import date, datetime
 
 from django.conf import settings
 from django.contrib.auth.models import User as AuthUser
-from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import TestCase, override_settings
+from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
@@ -12,7 +10,6 @@ from rest_framework.test import APIClient
 
 from accounts.models import Profile
 from leaderboard.models import Event, Season, User as LeaderboardUser, UserToEvent
-from leaderboard.tests.helpers import make_image_upload
 
 
 class ProfileApiTests(TestCase):
@@ -117,41 +114,6 @@ class ProfileUpdateSecurityTests(TestCase):
         self.user.refresh_from_db()
         self.assertEqual(self.user.username, "patnovak")
         self.assertEqual(self.user.email, "new@example.com")
-
-
-@override_settings(MEDIA_ROOT=tempfile.mkdtemp())
-class ProfilePhotoUploadApiTests(TestCase):
-    def setUp(self):
-        self.client = APIClient()
-        self.url = reverse("api-profile-photo")
-        self.user = AuthUser.objects.create_user(username="avatar", password="x")
-        Profile.objects.create(user=self.user)
-
-    def _img(self):
-        return make_image_upload("a.png")
-
-    def test_requires_auth(self):
-        resp = self.client.post(self.url, {"photo": self._img()}, format="multipart")
-        self.assertIn(resp.status_code, (401, 403))
-
-    def test_upload_sets_photo(self):
-        self.client.force_authenticate(user=self.user)
-        resp = self.client.post(self.url, {"photo": self._img()}, format="multipart")
-        self.assertEqual(resp.status_code, 200)
-        self.assertTrue(resp.json()["ok"])
-        self.user.refresh_from_db()
-        self.assertTrue(self.user.profile.photo)
-
-    def test_missing_file_returns_400(self):
-        self.client.force_authenticate(user=self.user)
-        resp = self.client.post(self.url, {}, format="multipart")
-        self.assertEqual(resp.status_code, 400)
-
-    def test_non_image_returns_400(self):
-        self.client.force_authenticate(user=self.user)
-        bad = SimpleUploadedFile("x.txt", b"nope", content_type="text/plain")
-        resp = self.client.post(self.url, {"photo": bad}, format="multipart")
-        self.assertEqual(resp.status_code, 400)
 
 
 class RegisterApiTests(TestCase):

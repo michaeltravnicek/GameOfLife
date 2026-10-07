@@ -54,8 +54,7 @@ h1,h2,h3,h4{font-weight:400}
    each scroll frame expensive to repaint. Desktop is untouched. ── */
 @media (max-width:768px){
   .auth-page,.feedbacks-page,.event-page,.leaderboard-page,.gallery-page,
-  .player-page,.events-page,.historie-page,.obodech-page,.editprofile-page{position:relative}
+  .events-page,.historie-page,.obodech-page,.editprofile-page{position:relative}
 
-  .stage,.grain,.ev-stage,.ev-grain,.ep-stage,.ep-grain,.bg-texture,
-  .page-stage,.page-grain{position:absolute;transform:none;filter:none}
+  .stage,.grain,.page-stage,.page-grain{position:absolute;transform:none;filter:none}
 }

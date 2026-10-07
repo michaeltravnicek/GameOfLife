@@ -65,7 +65,7 @@ urlpatterns = [
 # it is only hit during a cutover. Public + cacheable because filenames are
 # effectively immutable (Django appends a random suffix on collision); the
 # `immutable` directive is left off so a mistake can still be corrected within
-# a month. `Vary: origin` is kept off this route by CORS_URLS_REGEX in settings.
+# a month.
 _media_prefix = settings.MEDIA_URL.lstrip("/")
 _media_max_age = int(os.getenv("MEDIA_CACHE_SECONDS", 60 * 60 * 24 * 30))  # 30 days
 _cached_media = cache_control(public=True, max_age=_media_max_age)(serve_media)

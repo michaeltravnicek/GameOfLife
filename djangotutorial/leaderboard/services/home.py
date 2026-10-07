@@ -1,16 +1,14 @@
-"""Home page data: hero carousel, about-stats, and the active check-in feed."""
+"""Home page data: hero carousel and the active check-in feed."""
 from django.core.cache import cache
-from django.db.models import Q, Sum
+from django.db.models import Q
 from django.utils import timezone
 
 from leaderboard.cache_config import (
     CACHE_KEY_HERO_IMAGES,
-    CACHE_KEY_HOME_STATS,
     CACHE_TTL_HERO_IMAGES,
-    CACHE_TTL_HOME_STATS,
 )
 from leaderboard.image_utils import variant_url
-from leaderboard.models import Event, User, UserToEvent
+from leaderboard.models import Event, UserToEvent
 
 
 def pick_hero_events(count=5):
@@ -51,20 +49,6 @@ def pick_hero_events(count=5):
 
     cache.set(CACHE_KEY_HERO_IMAGES, result, CACHE_TTL_HERO_IMAGES)
     return result
-
-
-def home_stats():
-    """Player/event/point counters for the home 'about' block (cached 30 min)."""
-    cached = cache.get(CACHE_KEY_HOME_STATS)
-    if cached is not None:
-        return cached
-    stats = {
-        "players": User.objects.count(),
-        "events": Event.objects.count(),
-        "points": UserToEvent.objects.aggregate(s=Sum("points"))["s"] or 0,
-    }
-    cache.set(CACHE_KEY_HOME_STATS, stats, CACHE_TTL_HOME_STATS)
-    return stats
 
 
 def active_checkin_events(user):

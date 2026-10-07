@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 import './Lightbox.css';
 
 // Keep in sync with --lb-slide-dur in Lightbox.css — how long the outgoing
 // image layer stays mounted so its slide-out keyframe can finish.
 const LB_SLIDE_MS = 420;
-const FOCUSABLE = 'button:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 /**
  * Full-screen image lightbox rendered via React portal.
@@ -44,10 +44,8 @@ export default function Lightbox({
   const current = list[index] || null;
   const imgSrc = srcAt(index);
 
-  // Restore focus to whatever element the user activated to open the lightbox.
-  // Without this, closing the lightbox drops focus on document.body and the
-  // keyboard user loses their place in the page.
-  const previousFocusRef = useRef(null);
+  // The focus trap's container; it also hands focus back to whatever opened the
+  // lightbox, so a keyboard user keeps their place in the page.
   const overlayRef = useRef(null);
 
   // Directional slide state: the image currently sliding out (`out`), which way
@@ -78,38 +76,17 @@ export default function Lightbox({
     return () => clearTimeout(t);
   }, [index]);
 
+  useFocusTrap(overlayRef, open);
+
   useEffect(() => {
     if (!open) return undefined;
-    previousFocusRef.current = document.activeElement;
-    // Move focus in and keep Tab inside, as Modal does: a dialog the keyboard
-    // can tab out of leaves the user on the page underneath with no way back.
-    const overlay = overlayRef.current;
-    const focusables = () => Array.from(overlay?.querySelectorAll(FOCUSABLE) || []);
-    focusables()[0]?.focus();
     const onKey = (e) => {
       if (e.key === 'Escape') onClose();
       if (e.key === 'ArrowLeft') goPrev();
       if (e.key === 'ArrowRight') goNext();
-      if (e.key === 'Tab') {
-        const items = focusables();
-        if (items.length === 0) return;
-        const first = items[0];
-        const last = items[items.length - 1];
-        if (e.shiftKey && document.activeElement === first) {
-          e.preventDefault();
-          last.focus();
-        } else if (!e.shiftKey && document.activeElement === last) {
-          e.preventDefault();
-          first.focus();
-        }
-      }
     };
     document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('keydown', onKey);
-      const prev = previousFocusRef.current;
-      if (prev && typeof prev.focus === 'function') prev.focus();
-    };
+    return () => document.removeEventListener('keydown', onKey);
   }, [open, onClose, goNext, goPrev]);
 
   if (!open || !imgSrc) return null;

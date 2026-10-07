@@ -69,8 +69,8 @@ class Visitor(HttpUser):
     @tag("api")
     @task(10)
     def home(self):
-        self._get("/api/v1/stats/", name="API /stats")
         self._get("/api/v1/hero/", name="API /hero")
+        self._get("/api/v1/checkin-events/", name="API /checkin-events")
 
     @tag("api")
     @task(8)
@@ -163,8 +163,8 @@ class ApiProbeUser(HttpUser):
 
     @tag("media")
     @task(3)
-    def stats(self):
-        self._probe("/api/v1/stats/", name="PROBE API /stats")
+    def hero(self):
+        self._probe("/api/v1/hero/", name="PROBE API /hero")
 
     @tag("media")
     @task(2)

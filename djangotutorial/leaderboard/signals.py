@@ -1,13 +1,12 @@
 """Automatic badge awarding.
 
-Attendance (`UserToEvent`) is created from four different places -- geo check-in,
-the admin attendance editor, the award-points command, and the Google-Sheets
-sync. A post_save signal is the one hook that covers all of them without each
-call site having to remember to award.
+Attendance (`UserToEvent`) is created from several places -- geo check-in,
+the admin attendance editor, the award-points command, and player merges. A
+post_save signal is the one hook that covers all of them without each call site
+having to remember to award.
 
 Awarding is best-effort: it must never break the attendance write that triggered
-it. A sheets sync creating a thousand rows cannot fail because one badge insert
-hit a snag.
+it.
 """
 import logging
 
@@ -36,17 +35,15 @@ def award_badge(user, badge, event=None):
 def award_badge_on_attendance(sender, instance, created, **kwargs):
     """Award the event's badge when attendance is recorded.
 
-    Fires on every save (not just `created`): the sheets sync uses
-    update_or_create, so a row that existed before its event got a badge still
-    needs the badge on the next sync.
+    Fires on every save (not just `created`): a row that existed before its
+    event got a badge still earns the badge the next time it is saved.
     """
     badge_id = instance.event.badge_id
     if not badge_id:
         return
     try:
         # A savepoint isolates a badge failure: on Postgres an unhandled
-        # IntegrityError would otherwise poison the caller's whole transaction
-        # (e.g. abort the rest of a sheets sync batch).
+        # IntegrityError would otherwise poison the caller's whole transaction.
         with transaction.atomic():
             award_badge(instance.user, instance.event.badge, instance.event)
     except Exception:  # noqa: BLE001 -- badge award is derived data, never critical

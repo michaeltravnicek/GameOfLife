@@ -214,34 +214,6 @@ class LoginCsrfTests(TestCase):
         self.assertEqual(resp.status_code, 200)
 
 
-class HiddenEventSignupFormTests(TestCase):
-    """Every per-event endpoint goes through visible_event_or_404 so a draft
-    stays invisible; the sign-up form pair looked the event up directly and
-    handed out a hidden event's survey URL (and confirmed its slug) to any
-    signed-in user."""
-
-    def setUp(self):
-        self.client = APIClient()
-        self.client.force_authenticate(user=_user("member"))
-        self.event = Event.objects.create(
-            sheet_id="h", sheet_list_id="l", name="Tajná akce", place="Brno", points=10,
-            date=timezone.now(), visible_to_users=False,
-            survey_url="https://docs.google.com/forms/d/e/SECRETFORMID/viewform",
-        )
-
-    @override_settings(GOOGLE_FORM_NATIVE=False)
-    def test_hidden_event_form_link_is_404_for_ordinary_users(self):
-        resp = self.client.get(reverse("api-event-signup-form", kwargs={"slug": self.event.slug}))
-        self.assertEqual(resp.status_code, 404)
-        self.assertNotIn("SECRETFORMID", resp.content.decode())
-
-    @override_settings(GOOGLE_FORM_NATIVE=False)
-    def test_hidden_event_form_submit_is_404_for_ordinary_users(self):
-        resp = self.client.post(
-            reverse("api-event-signup-form-submit", kwargs={"slug": self.event.slug}), {})
-        self.assertEqual(resp.status_code, 404)
-
-
 class EmailShapedProfileLookupTests(SpaShellMixin, TestCase):
     """Google accounts carry the e-mail address as their username. The profile
     routes are keyed on the username, so looking one up by an address answered

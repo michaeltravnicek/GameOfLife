@@ -238,37 +238,34 @@ export default function EventsPage() {
           />
         )}
 
-        {upcoming.length > 0 && (
-          <>
-            <div className="gol-flank group-label">Nadcházející</div>
-            <div ref={upRef} className={`events-grid reveal-stagger${upIn ? ' in' : ''}`}>
-              {upcoming.map((ev) => (
-                <div key={ev.id} className={`ev-wrap${isAdmin && !ev.visible_to_users ? ' ev-hidden' : ''}`}>
-                  <EventCard event={ev} theme="light" />
-                  {isAdmin && !ev.visible_to_users && <Badge tone="gold" className="ev-hidden-badge">Skryto</Badge>}
-                </div>
-              ))}
-            </div>
-          </>
-        )}
-        {past.length > 0 && (
-          <>
-            <div className="gol-flank group-label past">Proběhlo</div>
-            <div ref={pastRef} className={`events-grid reveal-stagger${pastIn ? ' in' : ''}`}>
-              {past.map((ev) => (
-                <div key={ev.id} className={`ev-wrap${isAdmin && !ev.visible_to_users ? ' ev-hidden' : ''}`}>
-                  <EventCard event={ev} theme="light" />
-                  {isAdmin && !ev.visible_to_users && <Badge tone="gold" className="ev-hidden-badge">Skryto</Badge>}
-                </div>
-              ))}
-            </div>
-          </>
-        )}
+        <EventGroup label="Nadcházející" events={upcoming} isAdmin={isAdmin} revealRef={upRef} revealed={upIn} />
+        <EventGroup label="Proběhlo" past events={past} isAdmin={isAdmin} revealRef={pastRef} revealed={pastIn} />
 
         {hasMore && !loading && (
           <LoadMore onClick={loadMore} busy={loadingMore} remaining={totalCount - events.length} />
         )}
       </main>
     </div>
+  );
+}
+
+// One dated group of the list. Admins also see hidden events, marked "Skryto".
+function EventGroup({ label, past = false, events, isAdmin, revealRef, revealed }) {
+  if (!events.length) return null;
+  return (
+    <>
+      <div className={`gol-flank group-label${past ? ' past' : ''}`}>{label}</div>
+      <div ref={revealRef} className={`events-grid reveal-stagger${revealed ? ' in' : ''}`}>
+        {events.map((ev) => {
+          const hidden = isAdmin && !ev.visible_to_users;
+          return (
+            <div key={ev.id} className={`ev-wrap${hidden ? ' ev-hidden' : ''}`}>
+              <EventCard event={ev} theme="light" />
+              {hidden && <Badge tone="gold" className="ev-hidden-badge">Skryto</Badge>}
+            </div>
+          );
+        })}
+      </div>
+    </>
   );
 }

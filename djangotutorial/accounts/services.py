@@ -19,7 +19,7 @@ from leaderboard.models import (
     User as LeaderboardUser,
     UserToEvent,
 )
-from leaderboard.privacy import public_handle, visibility_for
+from leaderboard.privacy import hidden_sections, public_handle, visibility_for
 from leaderboard.services import all_time_rank, season_summaries
 from leaderboard.services.badges import badges_for
 from leaderboard.utils import event_logo_url, media_url
@@ -120,6 +120,17 @@ def ensure_leaderboard_user(user):
     return lb_user
 
 
+def _set_password(user, new_password):
+    """Validate and store `new_password`. Returns ``(ok, error)``."""
+    try:
+        validate_password(new_password, user)
+    except ValidationError as exc:
+        return False, " ".join(exc.messages)
+    user.set_password(new_password)
+    user.save(update_fields=["password"])
+    return True, None
+
+
 def change_password(user, old_password, new_password):
     """Change a signed-in user's password. Returns ``(ok, error)``.
 
@@ -137,13 +148,7 @@ def change_password(user, old_password, new_password):
         return False, "Staré heslo nesouhlasí."
     if old_password == new_password:
         return False, "Nové heslo musí být jiné než staré."
-    try:
-        validate_password(new_password, user)
-    except ValidationError as exc:
-        return False, " ".join(exc.messages)
-    user.set_password(new_password)
-    user.save(update_fields=["password"])
-    return True, None
+    return _set_password(user, new_password)
 
 
 def anonymize_account(user):
@@ -235,13 +240,7 @@ def reset_password(uid, token, new_password):
         return False, "Neplatný odkaz pro reset."
     if not default_token_generator.check_token(user, token):
         return False, "Odkaz pro reset je neplatný nebo vypršel."
-    try:
-        validate_password(new_password, user)
-    except ValidationError as exc:
-        return False, " ".join(exc.messages)
-    user.set_password(new_password)
-    user.save(update_fields=["password"])
-    return True, None
+    return _set_password(user, new_password)
 
 
 # ── Profile ────────────────────────────────────────────────────────────
@@ -438,14 +437,7 @@ def profile_payload(profile_user, request):
         # chose to display, and they carry no point totals or event dates.
         "badges":         badges_for(lb_user, request),
         "is_own_profile": is_own_profile,
-        # Tells the client which sections were withheld, so it can render
-        # "skryto" instead of silently showing an incomplete profile.
-        "hidden": [
-            name for name, hidden in (
-                ("points", gates.hide_pts),
-                ("events", gates.hide_events),
-            ) if hidden
-        ],
+        "hidden": hidden_sections(gates),
     }
     if not gates.hide_pts:
         payload["total_points"] = total_points
@@ -472,23 +464,11 @@ def profile_payload(profile_user, request):
     return payload
 
 
-def set_profile_photo(user, photo):
-    """Replace the user's avatar. Validated, then downscaled to 400×400 by Profile.save().
-
-    Raises ValueError for a non-image / oversized upload.
-    """
-    validate_upload(photo)
-    profile, _ = Profile.objects.get_or_create(user=user)
-    profile.photo = photo
-    profile.save()
-    return profile
-
-
 def update_profile(user, data, files):
     """Apply account + profile updates.
 
     Raises ValueError if the username is taken or the photo is not an acceptable
-    image -- the same gate as set_profile_photo, run before anything is written.
+    image -- checked before anything is written.
     """
     photo = files.get("photo")
     if photo is not None:

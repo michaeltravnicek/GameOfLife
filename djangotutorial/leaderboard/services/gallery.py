@@ -8,6 +8,7 @@ query behind `liked_photo_ids`, which the client overlays. See the note on
 from datetime import datetime, timezone as _tz
 
 from django.db.models import Count, F, Q
+from django.db.models.functions import TruncMonth
 from django.http import Http404
 
 from leaderboard.image_utils import validate_upload, variant_url
@@ -41,31 +42,84 @@ def create_user_photo(user, image, *, event_slug="", caption=""):
     )
 
 
-def gallery_page(offset, limit, request, season=None):
+def _sources(season=None, month=None):
+    """The two photo querysets, filtered the same way, unordered and unsliced.
+
+    ``month`` is ``(year, month)`` or ``"unknown"`` (photos whose event has no
+    date, or no event at all). Months are taken in the server's time zone, the
+    same one ``event_date`` is serialised in.
+    """
+    official = (
+        ImageToEvent.objects
+        .exclude(image="")
+        # One page for every viewer, cached at the edge: published events only.
+        .filter(image__isnull=False, event__visible_to_users=True)
+    )
+    user_photos = (
+        UserPhoto.objects
+        .exclude(image="")
+        .filter(image__isnull=False)
+        .filter(Q(event__isnull=True) | Q(event__visible_to_users=True))
+    )
+    filters = []
+    if season is not None:
+        filters.append(season.date_window())
+    if month == "unknown":
+        filters.append(Q(event__date__isnull=True))
+    elif month is not None:
+        year, mon = month
+        filters.append(Q(event__date__year=year, event__date__month=mon))
+    for q in filters:
+        official = official.filter(q)
+        user_photos = user_photos.filter(q)
+    return official, user_photos
+
+
+def gallery_months(season=None):
+    """Every month that has photos, newest first, as ``[{month, count}]``.
+
+    ``month`` is ``"YYYY-MM"``, or ``"unknown"`` (always last). Two grouped
+    counts, so the page can lay out every month heading without loading a
+    single photo.
+    """
+    counts = {}
+    for qs in _sources(season):
+        rows = (
+            qs.annotate(m=TruncMonth("event__date"))
+            .values("m")
+            .annotate(n=Count("pk"))
+            .order_by()
+        )
+        for row in rows:
+            key = row["m"].strftime("%Y-%m") if row["m"] else "unknown"
+            counts[key] = counts.get(key, 0) + row["n"]
+    dated = sorted((k for k in counts if k != "unknown"), reverse=True)
+    if "unknown" in counts:
+        dated.append("unknown")
+    return [{"month": k, "count": counts[k]} for k in dated]
+
+
+def gallery_page(offset, limit, request, season=None, month=None):
     """Merged, date-desc photo page. Returns ``(photos, total_count)``.
 
     Both sources are date-ordered in the DB, so we pull only ``offset+limit``
     rows from each, merge, and slice — bounded memory instead of loading every
-    photo. ``request`` is used to build absolute media URLs. When ``season`` is
-    given, only photos whose event falls inside the season window are included.
+    photo. ``request`` is used to build absolute media URLs. ``season`` keeps
+    photos whose event falls inside the season window; ``month`` narrows to one
+    month (see ``_sources``).
     """
     upper = offset + limit
 
+    official, user_photos = _sources(season, month)
     official = (
-        ImageToEvent.objects
+        official
         .select_related("event")
-        .exclude(image="")
-        # One page for every viewer, cached at the edge: published events only.
-        .filter(image__isnull=False, event__visible_to_users=True)
         .only("image", "event__name", "event__slug", "event__date")
         .order_by("-event__date")
     )
     user_photos = (
-        UserPhoto.objects
+        user_photos
         .select_related("auth_user", "event")
-        .exclude(image="")
-        .filter(image__isnull=False)
-        .filter(Q(event__isnull=True) | Q(event__visible_to_users=True))
         .only("image", "event__name", "event__slug", "event__date",
               "auth_user__first_name", "auth_user__last_name", "auth_user__username")
         # Counted in the same query rather than per photo: a 60-photo page would
@@ -73,10 +127,6 @@ def gallery_page(offset, limit, request, season=None):
         .annotate(like_count=Count("likes"))
         .order_by(F("event__date").desc(nulls_last=True))
     )
-
-    if season is not None:
-        official = official.filter(season.date_window())
-        user_photos = user_photos.filter(season.date_window())
 
     total = official.count() + user_photos.count()
 

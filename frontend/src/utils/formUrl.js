@@ -10,13 +10,9 @@
  * and preserves the query string while doing it, so we don't need to know the
  * responder id ourselves.
  *
- * Returns `{open, embed}`, or null when the URL is not a Google Form at all —
- * the caller's signal to use the raw value rather than a rewritten one.
- *
- * `open` is the live half: sign-up is link-only, so this is the href behind
- * "Otevřít formulář" in the survey modal. `embed` (with `embedded=true`, which
- * strips Google's chrome) is only meaningful when GOOGLE_FORM_NATIVE is on and
- * the iframe fallback comes back — see mysite/settings.py.
+ * Returns the respondent link (the href behind "Otevřít formulář" in the survey
+ * modal), or null when the URL is not a Google Form at all — the caller's
+ * signal to use the raw value rather than a rewritten one.
  */
 const FORM_HOSTS = ['docs.google.com', 'forms.gle'];
 
@@ -24,7 +20,7 @@ const FORM_HOSTS = ['docs.google.com', 'forms.gle'];
 // id — dropping it is a privacy fix, not a tidy-up.
 const AUTHOR_PARAMS = ['ouid', 'usp', 'ths', 'edit_requested'];
 
-export function toFormUrls(rawUrl) {
+export function toFormUrl(rawUrl) {
   if (!rawUrl) return null;
   let url;
   try {
@@ -37,10 +33,7 @@ export function toFormUrls(rawUrl) {
 
   // Short links resolve on Google's side, after which our query string is long
   // gone — nothing to rewrite, so pass them through untouched.
-  if (url.hostname === 'forms.gle') {
-    const short = url.toString();
-    return { embed: short, open: short };
-  }
+  if (url.hostname === 'forms.gle') return url.toString();
 
   // Both shapes: /forms/d/<file-id>/… (editor) and /forms/d/e/<responder-id>/…
   const match = url.pathname.match(/^\/forms\/d\/(e\/)?([^/]+)/);
@@ -52,9 +45,5 @@ export function toFormUrls(rawUrl) {
   AUTHOR_PARAMS.forEach((p) => url.searchParams.delete(p));
 
   // Any `entry.*` params survive on purpose: that is how a pre-filled link works.
-  const open = url.toString();
-  // `embedded=true` is what strips Google's own header/footer chrome, leaving
-  // the questions and nothing else.
-  url.searchParams.set('embedded', 'true');
-  return { embed: url.toString(), open };
+  return url.toString();
 }

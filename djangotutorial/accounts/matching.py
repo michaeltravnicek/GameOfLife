@@ -109,24 +109,29 @@ def _top_with_ambiguity(scored, limit):
     return top
 
 
+def _candidate(account, player, /, **subject):
+    """`account` scored against `player`, or None below MIN_SCORE. `subject` names
+    the side being ranked (`player=` or `account=`)."""
+    value, signal = score_player(account, player.name)
+    if value < MIN_SCORE:
+        return None
+    return {
+        **subject,
+        "score": value,
+        # Templates can't do arithmetic; hand them the display value.
+        "percent": round(value * 100),
+        "signal": signal,
+        "signal_label": SIGNAL_LABELS.get(signal, signal),
+    }
+
+
 def suggest_players(user, players, limit=5):
     """Rank `players` as merge candidates for `user`. Writes nothing.
 
     Returns dicts of ``{player, score, signal, signal_label, ambiguous}``, best
     first.
     """
-    scored = []
-    for player in players:
-        value, signal = score_player(user, player.name)
-        if value >= MIN_SCORE:
-            scored.append({
-                "player": player,
-                "score": value,
-                # Templates can't do arithmetic; hand them the display value.
-                "percent": round(value * 100),
-                "signal": signal,
-                "signal_label": SIGNAL_LABELS.get(signal, signal),
-            })
+    scored = [c for player in players if (c := _candidate(user, player, player=player))]
     return _top_with_ambiguity(scored, limit)
 
 
@@ -139,17 +144,7 @@ def suggest_accounts(player, accounts, limit=5):
     finite backlog that only shrinks. Same scoring, same shape, `account`
     instead of `player`.
     """
-    scored = []
-    for account in accounts:
-        value, signal = score_player(account, player.name)
-        if value >= MIN_SCORE:
-            scored.append({
-                "account": account,
-                "score": value,
-                "percent": round(value * 100),
-                "signal": signal,
-                "signal_label": SIGNAL_LABELS.get(signal, signal),
-            })
+    scored = [c for account in accounts if (c := _candidate(account, player, account=account))]
     return _top_with_ambiguity(scored, limit)
 
 

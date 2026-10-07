@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import Button from '../Button/Button';
 import { apiCheckin } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
-import { useToast } from '../Toast/ToastProvider';
+import { toast } from '../Toast/ToastProvider';
 import { invalidateEventLists, invalidateScores } from '../../services/queryKeys';
 import { extractApiError } from '../../services/errors';
 import { getPosition, GEO_ERROR_MESSAGES } from '../../utils/geolocation';
@@ -29,7 +29,6 @@ const readDismissed = () => {
  *   events: Array<{ slug, name, date, points, latitude, longitude, checkin_radius }>
  */
 export default function CheckinBanner({ events = [] }) {
-  const toast = useToast();
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
@@ -88,7 +87,7 @@ export default function CheckinBanner({ events = [] }) {
       toast.error(extractApiError(err, 'Check-in se nepodařil.'), { title: 'Check-in selhal' });
       setStatus(slug, 'error');
     }
-  }, [toast, setStatus, user, navigate, location.pathname]);
+  }, [setStatus, user, navigate, location.pathname]);
 
   const visible = events.filter((ev) => !dismissed.includes(ev.slug));
   if (!visible.length) return null;

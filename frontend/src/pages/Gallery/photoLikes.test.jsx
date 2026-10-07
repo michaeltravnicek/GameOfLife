@@ -11,6 +11,7 @@ vi.mock('react-router-dom', async () => {
 
 vi.mock('../../services/api', () => ({
   fetchGallery: vi.fn(),
+  fetchGalleryMonths: vi.fn(),
   fetchEvents: vi.fn(),
   fetchSeasons: vi.fn(),
   uploadGalleryPhoto: vi.fn(),
@@ -25,11 +26,22 @@ vi.mock('../../context/AuthContext', () => ({
   useAuth: () => ({ user: authUser, canUpload: false }),
 }));
 
+// Each month fetches its photos only once it scrolls near. The global stub in
+// test/setup.js never fires, so here everything is on screen straight away.
+class InViewObserver {
+  constructor(cb) { this.cb = cb; }
+  observe(el) { this.cb([{ isIntersecting: true, target: el }], this); }
+  unobserve() {}
+  disconnect() {}
+  takeRecords() { return []; }
+}
+vi.stubGlobal('IntersectionObserver', InViewObserver);
+
 const reportError = vi.fn();
 vi.mock('../../services/errors', () => ({ reportError: (...a) => reportError(...a) }));
 
 import {
-  fetchGallery, fetchEvents, fetchLikedPhotos, fetchSeasons, setPhotoLike,
+  fetchGallery, fetchGalleryMonths, fetchEvents, fetchLikedPhotos, fetchSeasons, setPhotoLike,
 } from '../../services/api';
 import { clearCache } from '../../services/queryCache';
 import GalleryPage from './GalleryPage';
@@ -47,8 +59,13 @@ const photo = (over = {}) => ({
   ...over,
 });
 
+const mockMonth = (photos, count = photos.length) => {
+  fetchGalleryMonths.mockResolvedValue({ months: [{ month: '2026-07', count }] });
+  fetchGallery.mockResolvedValue({ photos, count, has_more: count > photos.length });
+};
+
 const renderGallery = async (photos, { liked = [] } = {}) => {
-  fetchGallery.mockResolvedValue({ photos, count: photos.length, has_more: false });
+  mockMonth(photos);
   fetchEvents.mockResolvedValue({ events: [] });
   fetchSeasons.mockResolvedValue({ seasons: [] });
   fetchLikedPhotos.mockResolvedValue({ liked });
@@ -131,11 +148,7 @@ describe('gallery photo likes', () => {
 
   it('shows no like button on official event photos', async () => {
     // They arrive with id: null — PhotoLike hangs off UserPhoto only.
-    fetchGallery.mockResolvedValue({
-      photos: [photo({ id: null, is_user_photo: false, like_count: null })],
-      count: 1,
-      has_more: false,
-    });
+    mockMonth([photo({ id: null, is_user_photo: false, like_count: null })]);
     fetchEvents.mockResolvedValue({ events: [] });
     fetchSeasons.mockResolvedValue({ seasons: [] });
     fetchLikedPhotos.mockResolvedValue({ liked: [] });
@@ -143,5 +156,36 @@ describe('gallery photo likes', () => {
 
     await screen.findByText('Letní grilovačka');
     expect(screen.queryByRole('button', { name: /líbí se mi|zrušit lajk/i })).toBeNull();
+  });
+});
+
+describe('gallery months', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    clearCache();
+    authUser = null;
+    fetchEvents.mockResolvedValue({ events: [] });
+    fetchSeasons.mockResolvedValue({ seasons: [] });
+    fetchLikedPhotos.mockResolvedValue({ liked: [] });
+  });
+
+  it('shows a month\'s first page and loads the rest of that month on demand', async () => {
+    const first = [photo({ id: 1, event_name: 'První' })];
+    mockMonth(first, 2);
+    render(<MemoryRouter><GalleryPage /></MemoryRouter>);
+
+    await screen.findByText('První');
+    // The heading counts the whole month, not just what has loaded.
+    expect(screen.getByText(/^2 fotografie/)).toBeInTheDocument();
+    expect(fetchGallery).toHaveBeenCalledWith(expect.objectContaining({ month: '2026-07', offset: 0 }));
+
+    fetchGallery.mockResolvedValueOnce({
+      photos: [photo({ id: 2, event_name: 'Druhá' })], count: 2, has_more: false,
+    });
+    await userEvent.click(screen.getByRole('button', { name: 'Načíst další (1)' }));
+
+    await screen.findByText('Druhá');
+    expect(fetchGallery).toHaveBeenLastCalledWith(expect.objectContaining({ month: '2026-07', offset: 1 }));
+    expect(screen.queryByRole('button', { name: /načíst další/i })).toBeNull();
   });
 });

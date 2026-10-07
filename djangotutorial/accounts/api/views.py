@@ -27,7 +27,6 @@ from .serializers import (
     PasswordResetConfirmRequestSerializer,
     PasswordResetRequestSerializer,
     ProfileMutationResponseSerializer,
-    ProfilePhotoUploadRequestSerializer,
     ProfileSerializer,
     ProfileUpdateRequestSerializer,
     RegisterRequestSerializer,
@@ -51,7 +50,6 @@ from accounts.services import (
     reset_password,
     resolve_login_username,
     serialize_user,
-    set_profile_photo,
     update_profile,
 )
 
@@ -338,27 +336,6 @@ def profile_season_view(request, username, season_id):
     # enforcing hide_pts only on the main payload would hand out the total here.
     return Response(season_detail(lb_user, season, hide_pts=gates.hide_pts),
                     status=status.HTTP_200_OK)
-
-
-@extend_schema(
-    tags=["Profile"],
-    request=ProfilePhotoUploadRequestSerializer,
-    responses=ProfileMutationResponseSerializer,
-)
-@api_view(["POST"])
-@permission_classes([IsAuthenticated])
-def profile_photo_upload(request):
-    """Upload/replace the current user's avatar (downscaled to 400×400). Multipart: `photo`."""
-    photo = request.FILES.get("photo")
-    if not photo:
-        return Response({"error": "Nahraj prosím fotku."}, status=status.HTTP_400_BAD_REQUEST)
-    try:
-        with transaction.atomic():
-            set_profile_photo(request.user, photo)
-            payload = {"ok": True, "user": serialize_user(request.user, request)}
-    except ValueError as exc:
-        return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
-    return Response(payload, status=status.HTTP_200_OK)
 
 
 @extend_schema(

@@ -7,8 +7,7 @@ import Button from '../../components/Button/Button';
 import { extractApiError } from '../../services/errors';
 import GoogleSignInButton from '../../components/GoogleSignInButton/GoogleSignInButton';
 import { safeRedirect } from '../../utils/safeRedirect';
-import PageStage from '../../components/PageStage/PageStage';
-import '../Login/AuthPage.css';
+import AuthShell from '../Login/AuthShell';
 
 export default function RegisterPage() {
   const { register } = useAuth();
@@ -89,89 +88,74 @@ export default function RegisterPage() {
   };
 
   return (
-    // auth-poster — shared look of all auth pages: photo bg + one opaque
-    // poster card holding the page name; inputs are mini homepage-event-card
-    // tickets (AuthPage.css).
-    <div className="auth-page has-stage">
-      <PageStage image="gal12" position="center 30%" tint="alive" />
-
-      <section className="auth-container">
-        <div className="gol-card auth-card">
-          <div className="auth-card-inner">
-            <div className="auth-card-tag">Game of Life · Sezóna 2025/26</div>
-            <h2 className="auth-card-title">Registrace</h2>
-            <div className="auth-card-sub">Nový hráč · pár údajů a jsi ve hře</div>
-            <div className="auth-divider" />
-            <form onSubmit={handleSubmit} noValidate>
-              <FormInput
-                id="reg-first" label="Jméno" type="text"
-                placeholder="Jan" autoComplete="given-name"
-                value={first} onChange={(e) => setFirst(e.target.value)} required
-                errorText={fieldErrors.first_name}
-              />
-              <FormInput
-                id="reg-username" label="Přezdívka" type="text"
-                placeholder="honzic" autoComplete="username"
-                value={username} onChange={(e) => setUsername(e.target.value)} required
-                errorText={fieldErrors.username}
-              />
-              <FormInput
-                id="reg-email" label="E-mail" type="email"
-                placeholder="jan@example.com" autoComplete="email"
-                value={email} onChange={(e) => setEmail(e.target.value)} required
-                errorText={fieldErrors.email}
-              />
-              <FormInput
-                id="reg-pw" label="Heslo" type="password"
-                placeholder="········" autoComplete="new-password"
-                value={pw} onChange={(e) => setPw(e.target.value)} required
-                errorText={fieldErrors.password1}
-              />
-              <FormInput
-                id="reg-pw2" label="Potvrdit heslo" type="password"
-                placeholder="········" autoComplete="new-password"
-                value={pw2} onChange={(e) => setPw2(e.target.value)} required
-                errorText={fieldErrors.password2}
-              />
-              {/* Consent lives immediately above the submit button so it is
-                  read at the moment of deciding, not skimmed past earlier.
-                  The policy opens in a new tab — navigating away here would
-                  discard everything already typed into the form. */}
-              <div className="auth-consent">
-                <label className="auth-consent-row" htmlFor="reg-gdpr">
-                  <input
-                    id="reg-gdpr"
-                    className="gol-check"
-                    type="checkbox"
-                    checked={gdpr}
-                    onChange={(e) => setGdpr(e.target.checked)}
-                    aria-describedby={fieldErrors.gdpr_consent ? 'reg-gdpr-err' : undefined}
-                  />
-                  <span>
-                    Souhlasím se zpracováním osobních údajů a beru na vědomí{' '}
-                    <Link to="/gdpr" target="_blank" rel="noopener noreferrer">
-                      zásady ochrany osobních údajů
-                    </Link>.
-                  </span>
-                </label>
-                {fieldErrors.gdpr_consent && (
-                  <div className="auth-consent-err" id="reg-gdpr-err" role="alert">
-                    {fieldErrors.gdpr_consent}
-                  </div>
-                )}
-              </div>
-              {error && <div className="auth-error">{error}</div>}
-              <Button type="submit" variant="nav" size="lg" busy={busy} className="pts-btn-wrap">
-                {busy ? 'Registruji…' : <>Registrovat se <span className="arr" aria-hidden="true" /></>}
-              </Button>
-            </form>
-
-            <GoogleSignInButton label="Zaregistrovat se přes Google" />
-
-            <p className="auth-foot">Už máš účet? <Link to={{ pathname: '/prihlasit', search: location.search }} state={location.state}>Přihlásit se</Link></p>
-          </div>
+    <AuthShell title="Registrace" sub="Nový hráč · pár údajů a jsi ve hře">
+      <form onSubmit={handleSubmit} noValidate>
+        <FormInput
+          id="reg-first" label="Jméno" type="text"
+          placeholder="Jan" autoComplete="given-name"
+          value={first} onChange={(e) => setFirst(e.target.value)} required
+          errorText={fieldErrors.first_name}
+        />
+        <FormInput
+          id="reg-username" label="Přezdívka" type="text"
+          placeholder="honzic" autoComplete="username"
+          value={username} onChange={(e) => setUsername(e.target.value)} required
+          errorText={fieldErrors.username}
+        />
+        <FormInput
+          id="reg-email" label="E-mail" type="email"
+          placeholder="jan@example.com" autoComplete="email"
+          value={email} onChange={(e) => setEmail(e.target.value)} required
+          errorText={fieldErrors.email}
+        />
+        <FormInput
+          id="reg-pw" label="Heslo" type="password"
+          placeholder="········" autoComplete="new-password"
+          value={pw} onChange={(e) => setPw(e.target.value)} required
+          errorText={fieldErrors.password1}
+        />
+        <FormInput
+          id="reg-pw2" label="Potvrdit heslo" type="password"
+          placeholder="········" autoComplete="new-password"
+          value={pw2} onChange={(e) => setPw2(e.target.value)} required
+          errorText={fieldErrors.password2}
+        />
+        {/* Consent lives immediately above the submit button so it is
+            read at the moment of deciding, not skimmed past earlier.
+            The policy opens in a new tab — navigating away here would
+            discard everything already typed into the form. */}
+        <div className="auth-consent">
+          <label className="auth-consent-row" htmlFor="reg-gdpr">
+            <input
+              id="reg-gdpr"
+              className="gol-check"
+              type="checkbox"
+              checked={gdpr}
+              onChange={(e) => setGdpr(e.target.checked)}
+              aria-describedby={fieldErrors.gdpr_consent ? 'reg-gdpr-err' : undefined}
+            />
+            <span>
+              Souhlasím se zpracováním osobních údajů a beru na vědomí{' '}
+              <Link to="/gdpr" target="_blank" rel="noopener noreferrer">
+                zásady ochrany osobních údajů
+              </Link>.
+            </span>
+          </label>
+          {fieldErrors.gdpr_consent && (
+            <div className="auth-consent-err" id="reg-gdpr-err" role="alert">
+              {fieldErrors.gdpr_consent}
+            </div>
+          )}
         </div>
-      </section>
-    </div>
+        {error && <div className="auth-error">{error}</div>}
+        <Button type="submit" variant="nav" size="lg" busy={busy} className="pts-btn-wrap">
+          {busy ? 'Registruji…' : <>Registrovat se <span className="arr" aria-hidden="true" /></>}
+        </Button>
+      </form>
+
+      <GoogleSignInButton label="Zaregistrovat se přes Google" />
+
+      <p className="auth-foot">Už máš účet? <Link to={{ pathname: '/prihlasit', search: location.search }} state={location.state}>Přihlásit se</Link></p>
+    </AuthShell>
   );
 }

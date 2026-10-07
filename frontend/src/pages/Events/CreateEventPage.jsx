@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Link, Navigate, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
+import { Link, useNavigate } from 'react-router-dom';
+import RequireAdmin from '../../components/RequireAdmin/RequireAdmin';
 import { createEvent, fetchCategories, fetchBadges } from '../../services/api';
 import { invalidateEventLists } from '../../services/queryKeys';
 import { extractApiError, reportError } from '../../services/errors';
@@ -11,27 +11,20 @@ import PageState from '../../components/PageState/PageState';
 import '../../styles/edit-form.css';
 import './EventPage.css';
 
-// Admin-only. The guard renders before the form mounts, so a visitor without
-// the role never fires the form's fetches or sees fields they cannot save.
+const LOADING = <div className="gol-form-page event-page"><PageState kind="loading" fill text="Načítání…" /></div>;
+
 export default function CreateEventPage() {
-  const { user, loading, isAdmin } = useAuth();
-  if (loading) {
-    return <div className="gol-form-page event-page"><PageState kind="loading" fill text="Načítání…" /></div>;
-  }
-  if (!user || !isAdmin) return <Navigate to="/" replace />;
-  return <CreateEventForm />;
+  return <RequireAdmin fallback={LOADING}><CreateEventForm /></RequireAdmin>;
 }
 
 function CreateEventForm() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const eventForm = useEventForm();
   const {
-    form, setForm, categories, allCategories, setAllCategories,
-    badges, setBadges,
-    dirty, saving, setSaving, saveError, setSaveError,
-    markDirty, setField, handleCategories,
-    handleBadgeCreated, handleCategoryCreated, poster,
-  } = useEventForm();
+    form, categories, allCategories, setAllCategories, setBadges,
+    dirty, saving, setSaving, saveError, setSaveError, poster,
+  } = eventForm;
 
   useEffect(() => {
     let cancelled = false;
@@ -68,9 +61,7 @@ function CreateEventForm() {
     }
   };
 
-  if (loading) {
-    return <div className="gol-form-page event-page"><PageState kind="loading" fill text="Načítání…" /></div>;
-  }
+  if (loading) return LOADING;
 
   return (
     <div className="gol-form-page event-page has-stage">
@@ -83,19 +74,7 @@ function CreateEventForm() {
       </section>
 
       <main className="gol-main">
-        <EventFormSections
-          form={form}
-          setForm={setForm}
-          setField={setField}
-          markDirty={markDirty}
-          poster={poster}
-          badges={badges}
-          allCategories={allCategories}
-          categories={categories}
-          onCategories={handleCategories}
-          onBadgeCreated={handleBadgeCreated}
-          onCategoryCreated={handleCategoryCreated}
-        />
+        <EventFormSections state={eventForm} />
       </main>
 
       <section className="gol-commit-zone">

@@ -4,6 +4,24 @@ from django.db.models import Sum
 from leaderboard.models import Season, UserToEvent
 
 
+def attended_event_row(ute, *, hide_pts, points_key):
+    """One attended event as the profile/player pages list it.
+
+    Points are omitted, not zeroed, under `hide_pts`: the per-event numbers add up
+    to exactly the total the flag withholds.
+    """
+    event = ute.event
+    return {
+        "slug": event.slug,
+        "name": event.name,
+        "place": event.place,
+        "date": event.date,
+        **({} if hide_pts else {points_key: ute.points}),
+        "category": {"id": event.category.id, "name": event.category.name}
+                    if event.category else None,
+    }
+
+
 def season_rank(season, season_pts):
     """1-based rank for a points total within a season, or None if no points.
 
@@ -84,18 +102,7 @@ def season_detail(lb_user, season, hide_pts=False):
     season_pts = sum(u.points for u in utes)
     payload = {
         **_season_base(season),
-        "events": [
-            {
-                "slug":     u.event.slug,
-                "name":     u.event.name,
-                "place":    u.event.place,
-                "date":     u.event.date,
-                **({} if hide_pts else {"pts": u.points}),
-                "category": {"id": u.event.category.id, "name": u.event.category.name}
-                            if u.event.category else None,
-            }
-            for u in utes
-        ],
+        "events": [attended_event_row(u, hide_pts=hide_pts, points_key="pts") for u in utes],
     }
     if not hide_pts:
         payload["season_pts"] = season_pts

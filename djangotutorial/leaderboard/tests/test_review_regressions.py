@@ -29,8 +29,6 @@ from leaderboard.models import (
 )
 from leaderboard.services import active_checkin_events, player_payload
 from leaderboard.services.leaderboard import all_time_rank
-from leaderboard.sheet_columns import header_map
-from leaderboard.tasks import handle_attendance, insert_rec
 
 from .helpers import BRNO_LAT, BRNO_LON, make_image_upload
 
@@ -90,38 +88,6 @@ class FeedbackAdminSearchTests(TestCase):
         qs, _ = admin_obj.get_search_results(
             request, EventFeedback.objects.all(), "h@example.com")
         list(qs)  # evaluates the query; FieldError would raise here
-
-
-class BackfillEventDatesTests(TestCase):
-    """`sheet_id__isnull=False` matched every event (the field is "" on
-    manual ones), so `--apply` rewrote dates the form had set by hand."""
-
-    def setUp(self):
-        self.manual = Event.objects.create(
-            name="Bowling 12.3.2025", place="Brno", points=10,
-            date=timezone.make_aware(timezone.datetime(2025, 5, 5)),
-        )
-        self.synced = Event.objects.create(
-            sheet_id="s", sheet_list_id="1", name="Bowling 12.3.2025",
-            place="Brno", points=10,
-            date=timezone.make_aware(timezone.datetime(2025, 5, 5)),
-        )
-        self.dateless = Event.objects.create(
-            sheet_id="s", sheet_list_id="2", name="Karaoke 1.4.2025",
-            place="Brno", points=10, date=None,
-        )
-
-    def test_only_sheet_events_are_rewritten(self):
-        call_command("backfill_event_dates", "--apply", stdout=StringIO())
-        self.manual.refresh_from_db()
-        self.synced.refresh_from_db()
-        self.assertEqual(self.manual.date.date(), date(2025, 5, 5))
-        self.assertEqual(self.synced.date.date(), date(2025, 3, 12))
-
-    def test_event_without_date_does_not_crash(self):
-        call_command("backfill_event_dates", "--apply", stdout=StringIO())
-        self.dateless.refresh_from_db()
-        self.assertEqual(self.dateless.date.date(), date(2025, 4, 1))
 
 
 class EventsListQueryCountTests(TestCase):
@@ -204,60 +170,6 @@ class HiddenEventWriteGateTests(TestCase):
         self.client.force_authenticate(user=admin)
         url = reverse("api-event-rsvp", kwargs={"slug": self.event.slug})
         self.assertEqual(self.client.put(url).status_code, 201)
-
-
-class SheetSyncPointsTests(TestCase):
-    """The points column was read raw: a short row raised IndexError, an
-    empty cell ValueError, and `int != "50"` re-saved every row each sync."""
-
-    def setUp(self):
-        self.event = Event.objects.create(
-            sheet_id="pts", sheet_list_id="1", name="Body", place="Brno", points=50,
-            date=timezone.now(),
-        )
-        self.cols = header_map(["Jméno", "Body"])
-
-    def test_string_points_are_stored_as_int_once(self):
-        insert_rec(self.event, ["Jan Novák", "70"], self.cols)
-        row = UserToEvent.objects.get(event=self.event)
-        self.assertEqual(row.points, 70)
-        with mock.patch.object(UserToEvent, "save", autospec=True) as save:
-            insert_rec(self.event, ["Jan Novák", "70"], self.cols)
-        self.assertEqual(save.call_count, 0)
-
-    def test_short_or_empty_points_cell_falls_back_to_event_points(self):
-        insert_rec(self.event, ["Krátký Řádek"], self.cols)
-        insert_rec(self.event, ["Prázdná Buňka", ""], self.cols)
-        self.assertEqual(
-            set(UserToEvent.objects.filter(event=self.event).values_list("points", flat=True)),
-            {50},
-        )
-
-    def test_full_pass_imports_rows_after_a_web_checkin(self):
-        """Positional slicing by attendance count skipped sheet rows once a
-        web check-in had added a row that never came from the sheet."""
-        web_only = LeaderboardUser.objects.create(name="Web Checkin")
-        UserToEvent.objects.create(user=web_only, event=self.event, points=50)
-        records = [["Jméno", "Body"], ["A A", "10"], ["B B", "20"]]
-        handle_attendance("pts", "1", records)
-        self.assertEqual(
-            set(LeaderboardUser.objects.values_list("name", flat=True)),
-            {"Web Checkin", "A A", "B B"},
-        )
-
-    def test_daily_run_keeps_an_admin_points_correction(self):
-        records = [["Jméno", "Body"], ["A A", "10"]]
-        handle_attendance("pts", "1", records)
-        row = UserToEvent.objects.get(event=self.event)
-        row.points = 35
-        row.save()
-
-        handle_attendance("pts", "1", records + [["B B", "20"]], overwrite_points=False)
-        self.assertEqual(UserToEvent.objects.get(pk=row.pk).points, 35)
-        self.assertEqual(UserToEvent.objects.filter(event=self.event).count(), 2)
-
-        handle_attendance("pts", "1", records, overwrite_points=True)
-        self.assertEqual(UserToEvent.objects.get(pk=row.pk).points, 10)
 
 
 class AspectPredicateTests(TestCase):

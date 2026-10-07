@@ -1,4 +1,5 @@
-import { useCallback, useRef, useState } from 'react';
+import { useState } from 'react';
+import { useNearViewport } from '../../hooks/useNearViewport';
 import './LazyImg.css';
 
 /**
@@ -13,34 +14,8 @@ import './LazyImg.css';
  * (default 4:3 — masonry columns settle to the true ratio once loaded).
  */
 export default function LazyImg({ src, alt = '', className = '', margin = '400px', ratio = '4 / 3' }) {
-  const [near, setNear] = useState(false);
+  const [ref, near] = useNearViewport(margin);
   const [loaded, setLoaded] = useState(false);
-  const ioRef = useRef(null);
-
-  const ref = useCallback((el) => {
-    if (ioRef.current) {
-      ioRef.current.disconnect();
-      ioRef.current = null;
-    }
-    if (!el || near) return;
-    // No IntersectionObserver → load right away.
-    if (typeof IntersectionObserver === 'undefined') {
-      setNear(true);
-      return;
-    }
-    const io = new IntersectionObserver(
-      (entries) => {
-        if (entries.some((e) => e.isIntersecting)) {
-          setNear(true);
-          io.disconnect();
-          ioRef.current = null;
-        }
-      },
-      { rootMargin: `${margin} 0px` },
-    );
-    io.observe(el);
-    ioRef.current = io;
-  }, [near, margin]);
 
   return (
     <span ref={ref} className={`lazyimg${loaded ? ' is-loaded' : ''} ${className}`} style={!loaded ? { aspectRatio: ratio } : undefined}>

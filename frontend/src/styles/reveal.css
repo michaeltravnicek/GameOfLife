@@ -23,8 +23,7 @@
 .reveal-stagger.in>*:nth-child(11){transition-delay:.64s}
 .reveal-stagger.in>*:nth-child(12){transition-delay:.70s}
 .reveal-stagger.in>*:nth-child(n+13){transition-delay:.76s}
-.reveal-left.in,.reveal-right.in{opacity:1;transform:none}
 
 @media(prefers-reduced-motion:reduce){
-  .reveal,.reveal-stagger>*,.reveal-left,.reveal-right{opacity:1 !important;transform:none !important;transition:none !important}
+  .reveal,.reveal-stagger>*{opacity:1 !important;transform:none !important;transition:none !important}
 }

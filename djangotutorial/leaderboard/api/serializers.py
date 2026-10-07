@@ -156,13 +156,9 @@ class EventListSerializer(serializers.ModelSerializer):
         return bool(obj.date and obj.date < timezone.now())
 
 
-class EventDetailSerializer(serializers.ModelSerializer):
-    image = serializers.SerializerMethodField()
+class EventDetailSerializer(EventListSerializer):
     image_mobile = serializers.SerializerMethodField()
-    logo = serializers.SerializerMethodField()
-    logo_scale = serializers.SerializerMethodField()
     badge = BadgeSerializer(read_only=True)
-    is_past = serializers.SerializerMethodField()
     rsvp_count = serializers.SerializerMethodField()
     attendee_count = serializers.SerializerMethodField()
     is_full = serializers.SerializerMethodField()
@@ -171,10 +167,8 @@ class EventDetailSerializer(serializers.ModelSerializer):
     feedback_given = serializers.SerializerMethodField()
     official_images = serializers.SerializerMethodField()
     user_photos = serializers.SerializerMethodField()
-    category = CategorySerializer(read_only=True)
 
-    class Meta:
-        model = Event
+    class Meta(EventListSerializer.Meta):
         fields = [
             "id", "slug", "name", "description", "place", "date", "time_tbd", "end_date",
             "points", "image", "image_mobile", "logo", "logo_scale", "badge",
@@ -186,21 +180,8 @@ class EventDetailSerializer(serializers.ModelSerializer):
             "official_images", "user_photos",
         ]
 
-    def get_image(self, obj) -> str | None:
-        return media_url(obj.image, self.context.get("request"))
-
     def get_image_mobile(self, obj) -> str | None:
         return variant_url(obj.image, self.context.get("request"))
-
-    def get_logo(self, obj) -> str | None:
-        return event_logo_url(obj, self.context.get("request"))
-
-    def get_logo_scale(self, obj) -> float:
-        return obj.badge.image_scale if obj.badge else 1.0
-
-    def get_is_past(self, obj) -> bool:
-        from django.utils import timezone
-        return bool(obj.date and obj.date < timezone.now())
 
     def _rsvp_count(self, obj):
         # Memoize per instance — rsvp_count + is_full both need it.
@@ -431,12 +412,6 @@ class LeaderboardResponseSerializer(serializers.Serializer):
     entries = LeaderboardEntrySerializer(many=True)
 
 
-class StatsResponseSerializer(serializers.Serializer):
-    players = serializers.IntegerField()
-    events = serializers.IntegerField()
-    points = serializers.IntegerField()
-
-
 class HeroEventSerializer(serializers.Serializer):
     url = serializers.URLField()
     name = serializers.CharField()
@@ -476,7 +451,7 @@ class _PlayerEventSerializer(serializers.Serializer):
     category = CategorySerializer(allow_null=True)
 
 
-class _PlayerSeasonSummarySerializer(serializers.Serializer):
+class SeasonSummarySerializer(serializers.Serializer):
     id = serializers.IntegerField()
     label = serializers.CharField()
     start = serializers.DateField()
@@ -503,7 +478,7 @@ class PlayerDetailSerializer(serializers.Serializer):
     events_count = serializers.IntegerField(required=False)
     rank = serializers.IntegerField(allow_null=True, required=False)
     events = _PlayerEventSerializer(many=True, required=False)
-    seasons = _PlayerSeasonSummarySerializer(many=True, required=False)
+    seasons = SeasonSummarySerializer(many=True, required=False)
 
 
 class GalleryPhotoSerializer(serializers.Serializer):
@@ -525,6 +500,15 @@ class GalleryResponseSerializer(serializers.Serializer):
     photos = GalleryPhotoSerializer(many=True)
     count = serializers.IntegerField()
     has_more = serializers.BooleanField()
+
+
+class GalleryMonthSerializer(serializers.Serializer):
+    month = serializers.CharField(help_text='"YYYY-MM", or "unknown" for undated photos.')
+    count = serializers.IntegerField()
+
+
+class GalleryMonthsResponseSerializer(serializers.Serializer):
+    months = GalleryMonthSerializer(many=True)
 
 
 class _AdminFeedbackUserSerializer(serializers.Serializer):

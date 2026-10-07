@@ -7,6 +7,8 @@ payloads built in accounts.services.
 """
 from rest_framework import serializers
 
+from leaderboard.api.serializers import CategorySerializer, SeasonSummarySerializer
+
 # Privacy flags are enforced server-side by leaderboard.privacy.visibility_for.
 _PRIVACY_NOTE = (
     "Enforced server-side: hidden sections are omitted from profile/player "
@@ -64,10 +66,6 @@ class PasswordResetConfirmRequestSerializer(serializers.Serializer):
     new_password = serializers.CharField(style={"input_type": "password"})
 
 
-class ProfilePhotoUploadRequestSerializer(serializers.Serializer):
-    photo = serializers.ImageField()
-
-
 class ProfileUpdateRequestSerializer(serializers.Serializer):
     """All fields optional — send only what changes (accepted as multipart)."""
     first_name = serializers.CharField(required=False)
@@ -112,21 +110,6 @@ class MessageResponseSerializer(serializers.Serializer):
 class ProfileMutationResponseSerializer(serializers.Serializer):
     ok = serializers.BooleanField()
     user = UserSerializer()
-
-
-class _CategoryRefSerializer(serializers.Serializer):
-    id = serializers.IntegerField()
-    name = serializers.CharField()
-
-
-class _ProfileSeasonSummarySerializer(serializers.Serializer):
-    id = serializers.IntegerField()
-    label = serializers.CharField()
-    start = serializers.DateField()
-    end = serializers.DateField()
-    is_active = serializers.BooleanField()
-    season_pts = serializers.IntegerField()
-    rank = serializers.IntegerField(allow_null=True)
 
 
 class _ProfileUpcomingRsvpSerializer(serializers.Serializer):
@@ -178,7 +161,7 @@ class ProfileSerializer(serializers.Serializer):
     strava = serializers.CharField(allow_blank=True)
     spotify = serializers.CharField(allow_blank=True)
     tiktok = serializers.CharField(allow_blank=True)
-    favourite_categories = _CategoryRefSerializer(many=True)
+    favourite_categories = CategorySerializer(many=True)
     hidden = serializers.ListField(
         child=serializers.ChoiceField(choices=["points", "events"]),
         help_text='Sections withheld by the owner\'s privacy flags, e.g. ["points"].')
@@ -188,7 +171,7 @@ class ProfileSerializer(serializers.Serializer):
     rank = serializers.IntegerField(allow_null=True, required=False)
     upcoming_rsvps = _ProfileUpcomingRsvpSerializer(many=True, required=False)
     past_events = _ProfilePastEventSerializer(many=True, required=False)
-    seasons = _ProfileSeasonSummarySerializer(many=True, required=False)
+    seasons = SeasonSummarySerializer(many=True, required=False)
     is_own_profile = serializers.BooleanField()
     last_name = serializers.CharField(required=False)
     email = serializers.EmailField(required=False)
@@ -200,16 +183,9 @@ class SeasonEventSerializer(serializers.Serializer):
     place = serializers.CharField()
     date = serializers.DateTimeField()
     pts = serializers.IntegerField()
-    category = _CategoryRefSerializer(allow_null=True)
+    category = CategorySerializer(allow_null=True)
 
 
-class SeasonDetailSerializer(serializers.Serializer):
+class SeasonDetailSerializer(SeasonSummarySerializer):
     """One season's breakdown for a player (leaderboard.services.season_detail)."""
-    id = serializers.IntegerField()
-    label = serializers.CharField()
-    start = serializers.DateField()
-    end = serializers.DateField()
-    is_active = serializers.BooleanField()
-    season_pts = serializers.IntegerField()
-    rank = serializers.IntegerField(allow_null=True)
     events = SeasonEventSerializer(many=True)

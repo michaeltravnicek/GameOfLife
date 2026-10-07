@@ -159,3 +159,12 @@ def player_page_withheld(gates):
     that does not exist.
     """
     return gates.members_only and gates.hide_pts
+
+
+def hidden_sections(gates):
+    """Names of the sections `gates` withholds, so the client can render "skryto"
+    instead of silently showing an incomplete profile."""
+    return [
+        name for name, hidden in (("points", gates.hide_pts), ("events", gates.hide_events))
+        if hidden
+    ]

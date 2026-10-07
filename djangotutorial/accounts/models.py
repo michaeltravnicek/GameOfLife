@@ -91,14 +91,6 @@ class Profile(models.Model):
     def is_admin(self):
         return self.role == self.ROLE_ADMIN
 
-    @property
-    def is_photographer(self):
-        return self.role == self.ROLE_PHOTOGRAPHER
-
-    @property
-    def is_close(self):
-        return self.role == self.ROLE_CLOSE
-
     def save(self, *args, **kwargs):
         # Read the stored values before writing. All three end up inside the
         # *cached* leaderboard payload — hide_pts decides whether this player is

@@ -1,3 +1,5 @@
+import re
+
 from django.conf import settings
 from django.db import transaction
 from django.http import Http404
@@ -14,15 +16,15 @@ from drf_spectacular.utils import (
 )
 from rest_framework import serializers as drf_serializers
 from rest_framework import status
-from rest_framework.decorators import api_view, permission_classes, throttle_classes
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.exceptions import NotFound, ParseError
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.throttling import UserRateThrottle
 
 from accounts.models import leaderboard_user_for
 from accounts.permissions import IsAdmin, IsAdminOrPhotographer, is_admin, is_close_or_above
 from leaderboard.checkin import validate_and_record_checkin
-from leaderboard.google_form import fetch_schema, submit as submit_form
+from leaderboard.merging import resolve_player_id
 from leaderboard.models import (
     Badge,
     Event,
@@ -43,8 +45,8 @@ from leaderboard.services import (
     categories_cached,
     create_user_photo,
     event_cities,
+    gallery_months,
     gallery_page,
-    home_stats,
     liked_photo_ids,
     list_events,
     pick_hero_events,
@@ -79,6 +81,7 @@ from .serializers import (
     EventListSerializer,
     EventWriteSerializer,
     FeedbackSerializer,
+    GalleryMonthsResponseSerializer,
     GalleryResponseSerializer,
     HeroResponseSerializer,
     LeaderboardResponseSerializer,
@@ -86,11 +89,18 @@ from .serializers import (
     PlayerDetailSerializer,
     RsvpsResponseSerializer,
     SeasonsResponseSerializer,
-    StatsResponseSerializer,
 )
 
-_SEASON_NOT_FOUND = {"error": "Sezóna nenalezena."}
-_SEASON_INVALID = {"error": "Neplatný parametr 'season_id'."}
+
+def _season_param(request, resolve=resolve_season_filter):
+    """`?season_id=` passed through `resolve`; an unknown or malformed id becomes
+    the API's 404 / 400 error response."""
+    try:
+        return resolve(request.GET.get("season_id"))
+    except Season.DoesNotExist:
+        raise NotFound("Sezóna nenalezena.")
+    except ValueError:
+        raise ParseError("Neplatný parametr 'season_id'.")
 
 
 def _offset_param(default):
@@ -147,12 +157,7 @@ def events_list(request):
     """
     offset = parse_int_param(request.GET.get("offset"), 0, min_val=0)
     limit = parse_int_param(request.GET.get("limit"), 30, min_val=1, max_val=100)
-    try:
-        season = resolve_season_filter(request.GET.get("season_id"))
-    except Season.DoesNotExist:
-        return Response(_SEASON_NOT_FOUND, status=status.HTTP_404_NOT_FOUND)
-    except ValueError:
-        return Response(_SEASON_INVALID, status=status.HTTP_400_BAD_REQUEST)
+    season = _season_param(request)
 
     # Visibility tiers: admin sees everything, close + photographer see the
     # close-preview pool, everyone else sees only visible_to_users=True.
@@ -307,12 +312,7 @@ def leaderboard_view(request):
     cache publicly. 60 s rather than EDGE_TTL_PUBLIC because this is the page
     people refresh right after a check-in to watch themselves move.
     """
-    try:
-        season, cache_id = resolve_season(request.GET.get("season_id"))
-    except Season.DoesNotExist:
-        return Response(_SEASON_NOT_FOUND, status=status.HTTP_404_NOT_FOUND)
-    except ValueError:
-        return Response(_SEASON_INVALID, status=status.HTTP_400_BAD_REQUEST)
+    season, cache_id = _season_param(request, resolve_season)
 
     entries = cached_leaderboard_entries(season, cache_id)
     limit = parse_int_param(request.GET.get("limit"), 0, min_val=0, max_val=100)
@@ -349,8 +349,14 @@ def player_detail(request, user_id):
     linked account (so the frontend can redirect to the full /profiles/ page).
     A members-only player shows anonymous viewers only their public board row
     (or 404s when they are on no board) -- see `player_payload`.
+
+    The id of a merged-away player answers with the player it was merged into,
+    so links shared before the merge reach the history that now holds it; the
+    frontend sees the different `id` (or the new `profile_username`) and moves.
     """
-    lb_user = get_object_or_404(LeaderboardUser, id=user_id)
+    lb_user = resolve_player_id(user_id)
+    if lb_user is None:
+        raise Http404("No such player.")
     return Response(player_payload(lb_user, request), status=status.HTTP_200_OK)
 
 
@@ -366,7 +372,9 @@ def player_season_detail(request, user_id, season_id):
     """
     from accounts.models import Profile
     from leaderboard.privacy import visibility_for
-    lb_user = get_object_or_404(LeaderboardUser, id=user_id)
+    lb_user = resolve_player_id(user_id)
+    if lb_user is None:
+        raise Http404("No such player.")
     season = get_object_or_404(Season, pk=season_id)
     # Fourth and last way to reach one person's event history — see visibility_for.
     profile = Profile.objects.filter(leaderboard_user=lb_user).first()
@@ -379,9 +387,28 @@ def player_season_detail(request, user_id, season_id):
                     status=status.HTTP_200_OK)
 
 
+_GALLERY_MONTH_RE = re.compile(r"^(\d{4})-(0[1-9]|1[0-2])$")
+
+
+def _gallery_month_param(raw):
+    """?month= → None (no filter), "unknown", or (year, month). ValueError on junk."""
+    param = (raw or "").strip()
+    if not param:
+        return None
+    if param == "unknown":
+        return param
+    match = _GALLERY_MONTH_RE.match(param)
+    if match is None:
+        raise ValueError(param)
+    return int(match[1]), int(match[2])
+
+
 @extend_schema(
     tags=["Gallery"],
-    parameters=[_SEASON_FILTER_PARAM, _offset_param(0), _limit_param(60, 200)],
+    parameters=[
+        _SEASON_FILTER_PARAM, _offset_param(0), _limit_param(60, 200),
+        OpenApiParameter("month", str, description='"YYYY-MM", or "unknown" for undated photos.'),
+    ],
     responses=GalleryResponseSerializer,
 )
 @cache_control(public=True, max_age=60)
@@ -401,14 +428,13 @@ def gallery_view(request):
     """
     offset = parse_int_param(request.GET.get("offset"), 0, min_val=0)
     limit = parse_int_param(request.GET.get("limit"), 60, min_val=1, max_val=200)
+    season = _season_param(request)
     try:
-        season = resolve_season_filter(request.GET.get("season_id"))
-    except Season.DoesNotExist:
-        return Response(_SEASON_NOT_FOUND, status=status.HTTP_404_NOT_FOUND)
+        month = _gallery_month_param(request.GET.get("month"))
     except ValueError:
-        return Response(_SEASON_INVALID, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"error": "Neplatný parametr 'month'."}, status=status.HTTP_400_BAD_REQUEST)
 
-    photos, total = gallery_page(offset, limit, request, season=season)
+    photos, total = gallery_page(offset, limit, request, season=season, month=month)
     return Response({
         "photos": photos,
         "count": total,
@@ -416,13 +442,20 @@ def gallery_view(request):
     }, status=status.HTTP_200_OK)
 
 
-@extend_schema(tags=["Home"], responses=StatsResponseSerializer)
-@cache_control(public=True, max_age=EDGE_TTL_PUBLIC)
+@extend_schema(tags=["Gallery"], parameters=[_SEASON_FILTER_PARAM],
+               responses=GalleryMonthsResponseSerializer)
+@cache_control(public=True, max_age=60)
 @api_view(["GET"])
 @permission_classes([AllowAny])
-def stats_view(request):
-    """Global counters for the home 'about' block. Response: `{players, events, points}`."""
-    return Response(home_stats(), status=status.HTTP_200_OK)
+def gallery_months_view(request):
+    """Months that have photos, newest first, with a photo count each.
+
+    The gallery lays out every month heading from this, then pages each month's
+    photos separately through `gallery_view` with ?month=. Same audience and
+    cache lifetime as the gallery itself.
+    """
+    season = _season_param(request)
+    return Response({"months": gallery_months(season)}, status=status.HTTP_200_OK)
 
 
 @extend_schema(tags=["Home"], responses=HeroResponseSerializer)
@@ -821,99 +854,3 @@ def event_rsvps(request, slug):
     """
     event = get_object_or_404(Event, slug=slug)
     return Response({"rsvps": rsvps_for_event(event)}, status=status.HTTP_200_OK)
-
-
-class FormSubmitThrottle(UserRateThrottle):
-    """Rate for the one endpoint that makes an outbound POST per call."""
-    scope = "form_submit"
-
-
-@extend_schema(tags=["Events"], responses=OpenApiTypes.OBJECT)
-@never_cache
-@api_view(["GET"])
-@permission_classes([IsAuthenticated])
-def event_signup_form(request, slug):
-    """The event's Google Form, as a question list we can render ourselves.
-
-    Returns `{"embed_only": true, "url": …}` when the form can't be read — the
-    page then falls back to an iframe. That is a worse-looking page, not a
-    broken one, so it is deliberately not an error status.
-    """
-    # Same visibility gate as RSVP/feedback/check-in: a draft's survey link is
-    # not for members yet, and a 200 here would confirm the hidden slug exists.
-    event = visible_event_or_404(request.user, slug)
-    if not event.survey_url:
-        raise Http404("Tato akce nemá dotazník.")
-
-    # Native rendering is off by default (settings.GOOGLE_FORM_NATIVE). Reuse
-    # the existing parse-failure shape rather than inventing a second one: the
-    # client already knows "embed_only means link them out".
-    if not settings.GOOGLE_FORM_NATIVE:
-        return Response({"embed_only": True, "url": event.survey_url},
-                        status=status.HTTP_200_OK)
-
-    schema = fetch_schema(event.survey_url)
-    if schema is None:
-        return Response({"embed_only": True, "url": event.survey_url},
-                        status=status.HTTP_200_OK)
-    return Response({"embed_only": False, **schema}, status=status.HTTP_200_OK)
-
-
-@extend_schema(tags=["Events"], request=OpenApiTypes.OBJECT, responses=OpenApiTypes.OBJECT)
-@api_view(["POST"])
-@permission_classes([IsAuthenticated])
-@throttle_classes([FormSubmitThrottle])
-def event_signup_form_submit(request, slug):
-    """Forward the user's answers to the event's Google Form.
-
-    Validated against the form's own schema first: Google accepts more or less
-    anything posted at it, including answers to questions that no longer exist,
-    so a stale page would otherwise write junk into the response sheet and
-    report success.
-    """
-    event = visible_event_or_404(request.user, slug)
-    if not event.survey_url:
-        raise Http404("Tato akce nemá dotazník.")
-
-    # 410, not 404: the endpoint exists and used to work. Accepting answers we
-    # would not forward is the one outcome worth ruling out — the member would
-    # be told their sign-up landed when it went nowhere.
-    if not settings.GOOGLE_FORM_NATIVE:
-        return Response({"error": "Dotazník se vyplňuje přímo u Googlu."},
-                        status=status.HTTP_410_GONE)
-
-    schema = fetch_schema(event.survey_url)
-    if schema is None:
-        return Response({"error": "Formulář se nepodařilo načíst."},
-                        status=status.HTTP_503_SERVICE_UNAVAILABLE)
-
-    submitted = request.data if isinstance(request.data, dict) else {}
-    payload, errors = {}, {}
-    for field in schema["fields"]:
-        raw = submitted.get(field["entry_id"])
-        values = [str(v) for v in raw] if isinstance(raw, list) else ([str(raw)] if raw not in (None, "") else [])
-        values = [v for v in values if v != ""]
-
-        if not values:
-            if field["required"]:
-                errors[field["entry_id"]] = "Toto pole je povinné."
-            continue
-        if field["options"]:
-            unknown = [v for v in values if v not in field["options"]]
-            if unknown:
-                errors[field["entry_id"]] = "Neplatná volba."
-                continue
-        if field["type"] != "checkboxes" and len(values) > 1:
-            errors[field["entry_id"]] = "Očekávána jediná odpověď."
-            continue
-        payload[field["entry_id"]] = values
-
-    if errors:
-        return Response({"errors": errors}, status=status.HTTP_400_BAD_REQUEST)
-
-    if not submit_form(schema["form_id"], payload):
-        # The answers are still in the user's browser; telling them the truth
-        # lets them retry, which is better than a cheerful lie plus a lost row.
-        return Response({"error": "Google formulář odpověď nepřijal. Zkus to prosím znovu."},
-                        status=status.HTTP_502_BAD_GATEWAY)
-    return Response({"ok": True}, status=status.HTTP_201_CREATED)

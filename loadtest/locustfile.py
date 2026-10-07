@@ -117,8 +117,8 @@ class Visitor(HttpUser):
     @task(10)
     def home(self):
         # The landing page fires both of these on load.
-        self._get("/api/v1/stats/", name="API /stats")
         self._get("/api/v1/hero/", name="API /hero")
+        self._get("/api/v1/checkin-events/", name="API /checkin-events")
 
     @tag("api")
     @task(8)

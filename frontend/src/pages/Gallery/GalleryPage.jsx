@@ -1,10 +1,9 @@
 import { lazy, Suspense, useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  fetchEvents, fetchGallery, fetchLikedPhotos, fetchSeasons, setPhotoLike,
+  fetchEvents, fetchGallery, fetchGalleryMonths, fetchLikedPhotos, fetchSeasons, setPhotoLike,
   uploadGalleryPhoto,
 } from '../../services/api';
-import { usePaginatedQuery } from '../../services/usePaginatedQuery';
 import { refetchQuery, setQueryData, useCachedQuery } from '../../services/queryCache';
 import { queryKeys } from '../../services/queryKeys';
 import { useAuth } from '../../context/AuthContext';
@@ -13,36 +12,33 @@ import { CACHE_TTL, PAGE_SIZE_GALLERY } from '../../constants/config';
 import PageHero from '../../components/PageHero/PageHero';
 import PageStage from '../../components/PageStage/PageStage';
 import PageState from '../../components/PageState/PageState';
-import LoadMore from '../../components/LoadMore/LoadMore';
-import LazyImg from '../../components/LazyImg/LazyImg';
-import Reveal from '../../components/Reveal/Reveal';
 import PillTabs from '../../components/PillTabs/PillTabs';
 import Button from '../../components/Button/Button';
 import Modal from '../../components/Modal/Modal';
-import { fmtDateShort, monthLabel } from '../../utils/date';
-import { pressable } from '../../utils/a11y';
+import { fmtDateShort } from '../../utils/date';
+import { useImagePreview } from '../../hooks/useImagePreview';
+import GalleryMonth from './GalleryMonth';
 import '../../styles/edit-form.css';
 import './GalleryPage.css';
-import { plural } from '../../utils/plural';
 
 // Lightbox loaded only when user opens a fullscreen photo.
 const Lightbox = lazy(() => import('../../components/Lightbox/Lightbox'));
 
-const PAGE_SIZE = PAGE_SIZE_GALLERY;
-
 const EMPTY_OVERRIDES = {};
-const extractPhotos = (r) => r.photos || [];
-const extractHasMore = (r) => !!r.has_more;
-const extractCount = (r) => r.count ?? 0;
+const NO_MONTHS = [];
+
+// 'YYYY-MM' of an event date, in the server's time zone like the API's months.
+const monthOf = (iso) => (/^\d{4}-\d{2}/.test(iso || '') ? iso.slice(0, 7) : 'unknown');
 
 export default function GalleryPage() {
   const { canUpload, user } = useAuth();
   const navigate = useNavigate();
   // Like state the user has changed since the page loaded, keyed by photo id.
-  // The photo list itself is owned by usePaginatedQuery's cache, so overriding
-  // here is what lets a tap paint instantly without invalidating the page (and
-  // re-fetching 60 photos) on every heart. Tagged with the user it belongs to:
-  // after a logout on this page the hearts must not stay lit.
+  // The photo lists themselves are owned by each month's usePaginatedQuery
+  // cache, so overriding here is what lets a tap paint instantly without
+  // invalidating a month (and re-fetching its photos) on every heart. Tagged
+  // with the user it belongs to: after a logout on this page the hearts must
+  // not stay lit.
   const owner = user?.username ?? null;
   const [likeState, setLikeState] = useState({ owner, byId: {} });
   const likeOverrides = likeState.owner === owner ? likeState.byId : EMPTY_OVERRIDES;
@@ -58,23 +54,17 @@ export default function GalleryPage() {
   const [lbIndex, setLbIndex] = useState(0);
   const [uploading, setUploading] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
-  const [uploadFile, setUploadFile] = useState(null);
-  const [uploadPreview, setUploadPreview] = useState(null);
+  // 15 MB matches the server's upload limit (IMAGE_MAX_UPLOAD_MB).
+  const upload = useImagePreview({ maxSizeMB: 15 });
   const [uploadEvent, setUploadEvent] = useState('');
   const [uploadCaption, setUploadCaption] = useState('');
 
+  // Just the month headings and their counts. Each GalleryMonth fetches its
+  // own photos, a page at a time, once it scrolls near.
   const {
-    items: photos, hasMore, totalCount, loading, loadingMore, loadMore, error, retry,
-  } = usePaginatedQuery({
-    cacheKey: queryKeys.galleryFirst,
-    fetcher: (offset, limit) => fetchGallery({ limit, offset }),
-    pageSize: PAGE_SIZE,
-    ttl: CACHE_TTL.GALLERY,
-    errorMessage: 'Nepodařilo se načíst další fotografie.',
-    extractItems: extractPhotos,
-    extractHasMore,
-    extractCount,
-  });
+    data: monthsData, loading, error, refetch: retry,
+  } = useCachedQuery(queryKeys.galleryMonths, fetchGalleryMonths, { ttl: CACHE_TTL.GALLERY });
+  const months = monthsData?.months || NO_MONTHS;
 
   // Past events only — newest first — for the upload modal's event picker.
   // Fetched only once the modal is opened.
@@ -86,20 +76,15 @@ export default function GalleryPage() {
   const pastEvents = pastEventsData?.events || [];
 
   const resetUploadModal = () => {
-    setUploadFile(null);
-    setUploadPreview(null);
+    upload.clear();
     setUploadEvent('');
     setUploadCaption('');
   };
 
   const handleUploadFile = (e) => {
-    const file = e.target.files?.[0];
+    upload.onSelect(e);
+    // Cleared so picking the same file again still fires onChange.
     e.target.value = '';
-    if (!file) return;
-    setUploadFile(file);
-    const reader = new FileReader();
-    reader.onload = () => setUploadPreview(reader.result);
-    reader.readAsDataURL(file);
   };
 
   const handleUploadCancel = () => {
@@ -109,16 +94,24 @@ export default function GalleryPage() {
   };
 
   const handleUploadSubmit = async () => {
-    if (!uploadFile) return;
+    if (!upload.file) return;
     setUploading(true);
     try {
       await uploadGalleryPhoto({
-        image: uploadFile,
+        image: upload.file,
         event: uploadEvent,
         caption: uploadCaption.trim(),
       });
-      // In place, so the grid keeps showing while the new photo lands.
-      await refetchQuery(queryKeys.galleryFirst, () => fetchGallery({ limit: PAGE_SIZE, offset: 0 }));
+      // In place, so the grid keeps showing while the new photo lands: the
+      // headings, and the month the photo went into.
+      const month = monthOf(pastEvents.find((ev) => ev.slug === uploadEvent)?.date);
+      await Promise.all([
+        refetchQuery(queryKeys.galleryMonths, fetchGalleryMonths),
+        refetchQuery(
+          queryKeys.galleryMonth(month),
+          () => fetchGallery({ month, limit: PAGE_SIZE_GALLERY, offset: 0 }),
+        ),
+      ]);
       setUploadOpen(false);
       resetUploadModal();
     } catch (err) {
@@ -197,14 +190,16 @@ export default function GalleryPage() {
     [seasonsData],
   );
 
-  // Which season a photo's event falls into. Dates are 'YYYY-MM-DD', so a
-  // lexicographic compare on the date portion is correct. 'unknown' = no match
-  // (e.g. a photo whose event predates every configured season).
-  const seasonOf = useCallback((iso) => {
-    if (!iso) return 'unknown';
-    const d = String(iso).slice(0, 10);
-    const hit = seasons.find((s) => s.start <= d && d <= s.end);
-    return hit ? String(hit.id) : 'unknown';
+  // The seasons a month belongs to: every season whose window touches it.
+  // Months are compared as 'YYYY-MM' strings, so a month a season boundary
+  // splits counts towards both. 'unknown' = no season (undated photos, or a
+  // month between seasons).
+  const seasonsOf = useCallback((month) => {
+    if (month === 'unknown') return ['unknown'];
+    const hits = seasons
+      .filter((s) => s.start.slice(0, 7) <= month && month <= s.end.slice(0, 7))
+      .map((s) => String(s.id));
+    return hits.length ? hits : ['unknown'];
   }, [seasons]);
 
   const seasonLabel = useCallback((key) => {
@@ -213,13 +208,13 @@ export default function GalleryPage() {
   }, [seasons]);
 
   // Season buckets (newest-first) that actually contain photos, plus a trailing
-  // 'unknown' bucket when some photos don't map to any season.
+  // 'unknown' bucket when some months don't map to any season.
   const seasonKeys = useMemo(() => {
-    const present = new Set(photos.map((p) => seasonOf(p.event_date)));
+    const present = new Set(months.flatMap((m) => seasonsOf(m.month)));
     const ordered = seasons.map((s) => String(s.id)).filter((id) => present.has(id));
     if (present.has('unknown')) ordered.push('unknown');
     return ordered;
-  }, [photos, seasons, seasonOf]);
+  }, [months, seasons, seasonsOf]);
 
   // Season filter as leaderboard-style pill toggles: "Vše" + one per season.
   const seasonTabs = useMemo(
@@ -227,30 +222,16 @@ export default function GalleryPage() {
     [seasonKeys, seasonLabel],
   );
 
-  // ── Calendar grouping: filter by season chip, then bucket by YYYY-MM and
-  // sort month-buckets newest-first (see `monthLabel` in utils/date). Photos
-  // without a usable event_date land in a trailing 'unknown' bucket.
-  const monthGroups = useMemo(() => {
-    const filtered = activeSeason === 'all'
-      ? photos
-      : photos.filter((p) => seasonOf(p.event_date) === activeSeason);
-    const buckets = new Map();
-    filtered.forEach((p) => {
-      const iso = String(p.event_date || '').slice(0, 10);
-      const key = /^\d{4}-\d{2}/.test(iso) ? iso.slice(0, 7) : 'unknown';
-      if (!buckets.has(key)) buckets.set(key, []);
-      buckets.get(key).push(p);
-    });
-    // Newest month first; 'unknown' always last.
-    const keys = [...buckets.keys()].sort((a, b) => {
-      if (a === 'unknown') return 1;
-      if (b === 'unknown') return -1;
-      return a < b ? 1 : -1;
-    });
-    return keys.map((key) => ({ key, photos: buckets.get(key) }));
-  }, [photos, activeSeason, seasonOf]);
+  // Months arrive newest-first with 'unknown' last; the season chip only
+  // narrows them.
+  const visibleMonths = useMemo(
+    () => (activeSeason === 'all'
+      ? months
+      : months.filter((m) => seasonsOf(m.month).includes(activeSeason))),
+    [months, activeSeason, seasonsOf],
+  );
 
-  const n = photos.length;
+  const n = months.length;
 
   // A failed first page must not read as "the gallery is empty".
   const [retrying, setRetrying] = useState(false);
@@ -284,7 +265,7 @@ export default function GalleryPage() {
         </div>
       )}
 
-      {loading && <PageState kind="loading" text="Načítám galerii…" />}
+      {loading && n === 0 && <PageState kind="loading" text="Načítám galerii…" />}
 
       {!loading && error && n === 0 && (
         <PageState
@@ -304,51 +285,16 @@ export default function GalleryPage() {
           <div className="season-filters">
             <PillTabs tabs={seasonTabs} active={activeSeason} onChange={setActiveSeason} />
           </div>
-          {monthGroups.map(({ key, photos: monthPhotos }) => (
-            <div key={key} className="season-section">
-              <div className="season-heading">{monthLabel(key)}</div>
-              <div className="season-count">
-                {monthPhotos.length} {plural(monthPhotos.length, 'fotografie', 'fotografie', 'fotografií')}
-              </div>
-              <Reveal stagger className="photo-grid">
-                {monthPhotos.map((raw, i) => {
-                  const p = withLikes(raw);
-                  return (
-                    <div key={i} className="photo-item" {...pressable(() => openLb(monthPhotos, i))}>
-                      {/* Grid tiles are ~330px wide — the 768px variant is enough
-                          on every viewport; the lightbox opens the original.
-                          LazyImg fetches only on-screen tiles + ~one row ahead. */}
-                      <LazyImg src={p.url_mobile || p.url} alt={p.event_name} />
-                      {p.id != null && (
-                        <button
-                          type="button"
-                          className={`photo-like${p.liked_by_me ? ' is-liked' : ''}`}
-                          aria-pressed={!!p.liked_by_me}
-                          aria-label={p.liked_by_me ? 'Zrušit lajk' : 'Líbí se mi'}
-                          // The tile itself opens the lightbox; without this the
-                          // heart would do both.
-                          onClick={(e) => { e.stopPropagation(); toggleLike(p); }}
-                        >
-                          <span className="photo-like-ico" aria-hidden="true">♥</span>
-                          {p.like_count > 0 && (
-                            <span className="photo-like-n">{p.like_count}</span>
-                          )}
-                        </button>
-                      )}
-                      <div className="photo-item-caption">
-                        <div className="photo-item-label">{p.is_user_photo ? 'Komunita' : 'Akce'}</div>
-                        <div className="photo-item-title">{p.event_name}</div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </Reveal>
-            </div>
+          {visibleMonths.map(({ month, count }) => (
+            <GalleryMonth
+              key={month}
+              month={month}
+              count={count}
+              withLikes={withLikes}
+              onToggleLike={toggleLike}
+              onOpen={openLb}
+            />
           ))}
-
-          {hasMore && (
-            <LoadMore onClick={loadMore} busy={loadingMore} remaining={totalCount - n} />
-          )}
         </div>
       )}
 
@@ -380,8 +326,8 @@ export default function GalleryPage() {
         </h3>
 
         <label className="gal-upload-drop">
-          {uploadPreview ? (
-            <img src={uploadPreview} alt="Náhled" className="gal-upload-preview" />
+          {upload.preview ? (
+            <img src={upload.preview} alt="Náhled" className="gal-upload-preview" />
           ) : (
             <span className="gal-upload-drop-text">Klikni a vyber obrázek</span>
           )}
@@ -422,7 +368,7 @@ export default function GalleryPage() {
 
         <div className="gol-modal-buttons">
           <Button variant="frost" onClick={handleUploadCancel} disabled={uploading}>Zrušit</Button>
-          <Button variant="action" onClick={handleUploadSubmit} busy={uploading} disabled={!uploadFile || uploading}>
+          <Button variant="action" onClick={handleUploadSubmit} busy={uploading} disabled={!upload.file || uploading}>
             {uploading ? 'Nahrávám…' : 'Nahrát'}
           </Button>
         </div>
